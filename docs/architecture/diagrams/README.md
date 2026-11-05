@@ -28,3 +28,5 @@ and its runtime guide links for the whole implementation boundary.
 
 Proposed fields and relationships require implementation/provider qualification before they become
 runtime guarantees. The retained prototype diagram remains separate in prototype/diagrams/.
+
+- [financial-implemented](financial-implemented.mmd): exact collection/observation scope and reused operations/outbox.

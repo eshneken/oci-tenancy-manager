@@ -55,6 +55,8 @@ function eventLabel(kind: AuditEntry["kind"]) {
     onboarding_action: "Onboarding action",
     onboarding_outcome: "Onboarding check",
     configuration_outcome: "Configuration verification",
+    cost_refresh_requested: "Cost refresh requested",
+    cost_collection_outcome: "Cost collection result",
     configuration_check_outcome: "Configuration check result",
     configuration_retry: "Configuration retry",
     operation_responsibility_changed: "Operation responsibility changed",

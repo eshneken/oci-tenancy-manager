@@ -1,0 +1,53 @@
+erDiagram
+    org_workspace ||--o{ otm_tenancy : contains
+    org_workspace ||--o{ otm_operation : scopes
+    otm_tenancy ||--o{ otm_financial_collection : reads_managed_budget
+    otm_operation ||--o{ otm_financial_collection : collects_independently
+    otm_financial_collection ||--o| otm_financial_observation : exact_context_fk
+    otm_operation ||--o{ otm_operation_step : read_attempt_evidence
+    otm_operation ||--o{ audit_event : immutable_intent_and_outcomes
+    otm_operation ||--o{ otm_notification_outbox : exhausted_acquisition_notices
+    otm_tenancy {
+        uuid id PK
+        string workspace_id FK
+        string tenancy_ocid
+        string name
+        string home_region
+        jsonb configuration_observation "retained managed Budget binding"
+    }
+    otm_financial_collection {
+        uuid id PK
+        string workspace_id FK
+        uuid tenancy_id FK
+        uuid operation_id FK
+        jsonb context "exact child configuration access profile and cycle"
+        string context_hash
+        string source_hash "strict compatibility"
+        string failure_scope_hash "stable incident source"
+        string state
+        int attempts
+        uuid attempt_id
+        timestamp next_attempt_at
+        string safe_code
+        timestamp created_at
+        timestamp updated_at
+    }
+    otm_financial_observation {
+        uuid id PK
+        string workspace_id FK
+        uuid tenancy_id FK
+        uuid collection_id FK
+        string context_hash FK
+        string source_hash FK
+        string budget_ocid
+        decimal observed_budget_amount "numeric20_4 nullable"
+        decimal actual_spend "numeric20_4 nullable"
+        decimal forecasted_spend "numeric20_4 nullable"
+        string currency "nullable qualified profile"
+        timestamp time_spend_computed "nullable"
+        timestamp captured_at
+        timestamp period_start "nullable"
+        timestamp period_end "nullable"
+        jsonb snapshot "one immutable response"
+        string snapshot_hash
+    }

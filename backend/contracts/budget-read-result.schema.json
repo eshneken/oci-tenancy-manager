@@ -1,0 +1,167 @@
+{
+  "$defs": {
+    "BudgetCycleFacts": {
+      "additionalProperties": false,
+      "properties": {
+        "budget_processing_period_start_offset": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Budget Processing Period Start Offset"
+        },
+        "end_date": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "End Date"
+        },
+        "processing_period_type": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Processing Period Type",
+          "type": "string"
+        },
+        "reset_period": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Reset Period",
+          "type": "string"
+        },
+        "start_date": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Start Date"
+        }
+      },
+      "required": [
+        "reset_period",
+        "processing_period_type",
+        "budget_processing_period_start_offset"
+      ],
+      "title": "BudgetCycleFacts",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actual_spend": {
+      "anyOf": [
+        {
+          "pattern": "^-?(0|[1-9][0-9]{0,15})\\.[0-9]{4}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Actual Spend"
+    },
+    "amount": {
+      "anyOf": [
+        {
+          "pattern": "^-?(0|[1-9][0-9]{0,15})\\.[0-9]{4}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Amount"
+    },
+    "budget_ocid": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Budget Ocid",
+      "type": "string"
+    },
+    "captured_at": {
+      "format": "date-time",
+      "title": "Captured At",
+      "type": "string"
+    },
+    "compartment_ocid": {
+      "maxLength": 256,
+      "minLength": 15,
+      "pattern": "^ocid1\\.tenancy\\.[A-Za-z0-9.]+$",
+      "title": "Compartment Ocid",
+      "type": "string"
+    },
+    "cycle_facts": {
+      "$ref": "#/$defs/BudgetCycleFacts"
+    },
+    "forecasted_spend": {
+      "anyOf": [
+        {
+          "pattern": "^-?(0|[1-9][0-9]{0,15})\\.[0-9]{4}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Forecasted Spend"
+    },
+    "target_type": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Target Type",
+      "type": "string"
+    },
+    "targets": {
+      "items": {
+        "maxLength": 256,
+        "minLength": 15,
+        "pattern": "^ocid1\\.tenancy\\.[A-Za-z0-9.]+$",
+        "type": "string"
+      },
+      "title": "Targets",
+      "type": "array"
+    },
+    "time_spend_computed": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Time Spend Computed"
+    }
+  },
+  "required": [
+    "budget_ocid",
+    "compartment_ocid",
+    "target_type",
+    "targets",
+    "cycle_facts",
+    "amount",
+    "actual_spend",
+    "forecasted_spend",
+    "time_spend_computed",
+    "captured_at"
+  ],
+  "title": "BudgetReadResult",
+  "type": "object"
+}

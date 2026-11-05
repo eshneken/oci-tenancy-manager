@@ -31,7 +31,11 @@ class OperationSummary(Contract):
     can_take_responsibility: bool = False
     id: UUID
     kind: Literal[
-        "inspect_import", "organization_action", "configuration_update", "configuration_check"
+        "inspect_import",
+        "organization_action",
+        "configuration_update",
+        "configuration_check",
+        "cost_collection",
     ]
     state: OperationState
     stage: Text
@@ -63,7 +67,7 @@ class OperationStepView(Contract):
     step_key: Annotated[
         str,
         Field(
-            pattern=r"^(inspect_target|apply_lifecycle|handoff|inspect_bootstrap|establish_automation|verify_automation|configure_required|verify_required|retire_temporary|configure_baseline|verify_configured_access|configuration_check:[0-9a-f-]{36}|(remove_member_groups|delete_member_user):[0-9a-f-]{36}|configuration:[0-9a-f-]{36})$"
+            pattern=r"^(inspect_target|apply_lifecycle|handoff|inspect_bootstrap|establish_automation|verify_automation|configure_required|verify_required|retire_temporary|configure_baseline|verify_configured_access|configuration_check:[0-9a-f-]{36}|cost:[0-9a-f-]{36}|(remove_member_groups|delete_member_user):[0-9a-f-]{36}|configuration:[0-9a-f-]{36})$"
         ),
     ]
     state: Literal["running", "verified", "needs_attention"]
@@ -86,6 +90,7 @@ class OperationEventView(Contract):
         "configuration_outcome",
         "configuration_retry",
         "configuration_check_outcome",
+        "cost_collection_outcome",
     ]
     at: UtcInstant
     safe_code: Text | None

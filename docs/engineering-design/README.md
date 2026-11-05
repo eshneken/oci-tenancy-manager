@@ -6,8 +6,11 @@ and [implemented reference guides](../reference/README.md).
 
 The current application has real authentication, durable organization/tenancy workflows, baseline
 management, read-only drift visibility and lifecycle email capture. OCI effects are simulated;
-corporate SSO, real provider bindings, infrastructure deployment and hosted CI need separate
-qualification. Drift scheduling is explicitly deferred until staging/Kubernetes deployment.
+corporate SSO, real provider bindings and infrastructure deployment need separate qualification.
+Drift scheduling is explicitly deferred until staging/Kubernetes deployment. All five hosted CI jobs
+and administrator-enforced master protection are verified at baseline `db08b3b`. Use
+[one milestone PR](../how-to/github-checkpoints.md) for related implementation slices; the five
+required gates and protections apply to every reviewed candidate.
 
 ## Chapters
 
@@ -47,3 +50,5 @@ are grouped separately from proposals. Source and frozen migrations determine ac
 remain required. The [old design index](../history/engineering-design-index-2026-11-05.md) is preserved
 as history; dated receipts and progress do not supersede current requirements. Private source
 feeds, screenshots and unsanitized reports are not distributed.
+
+Current-month financial implementation and deferred/live boundaries: [cost visibility](../reference/cost-visibility.md).

@@ -1,0 +1,280 @@
+{
+  "$defs": {
+    "BudgetCycleFacts": {
+      "additionalProperties": false,
+      "properties": {
+        "budget_processing_period_start_offset": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Budget Processing Period Start Offset"
+        },
+        "end_date": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "End Date"
+        },
+        "processing_period_type": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Processing Period Type",
+          "type": "string"
+        },
+        "reset_period": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Reset Period",
+          "type": "string"
+        },
+        "start_date": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Start Date"
+        }
+      },
+      "required": [
+        "reset_period",
+        "processing_period_type",
+        "budget_processing_period_start_offset"
+      ],
+      "title": "BudgetCycleFacts",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actual": {
+      "anyOf": [
+        {
+          "pattern": "^-?(0|[1-9][0-9]{0,15})\\.[0-9]{4}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Actual"
+    },
+    "actual_over_budget": {
+      "default": false,
+      "title": "Actual Over Budget",
+      "type": "boolean"
+    },
+    "budget": {
+      "anyOf": [
+        {
+          "pattern": "^-?(0|[1-9][0-9]{0,15})\\.[0-9]{4}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Budget"
+    },
+    "can_refresh": {
+      "default": false,
+      "title": "Can Refresh",
+      "type": "boolean"
+    },
+    "computed_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Computed At"
+    },
+    "currency": {
+      "anyOf": [
+        {
+          "const": "USD",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Currency"
+    },
+    "cycle_facts": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BudgetCycleFacts"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "desired_budget": {
+      "anyOf": [
+        {
+          "pattern": "^-?(0|[1-9][0-9]{0,15})\\.[0-9]{4}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Desired Budget"
+    },
+    "forecast": {
+      "anyOf": [
+        {
+          "pattern": "^-?(0|[1-9][0-9]{0,15})\\.[0-9]{4}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Forecast"
+    },
+    "forecast_over_budget": {
+      "default": false,
+      "title": "Forecast Over Budget",
+      "type": "boolean"
+    },
+    "latest_failure": {
+      "anyOf": [
+        {
+          "enum": [
+            "COST_READ_COMPLETE",
+            "COST_READ_UNAVAILABLE",
+            "COST_SOURCE_UNQUALIFIED",
+            "COST_TARGET_CHANGED",
+            "COST_AUTHORIZATION_CHANGED",
+            "COST_CONTEXT_UNAVAILABLE",
+            "COST_READ_SUPERSEDED",
+            "COST_RETRIES_EXHAUSTED"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Latest Failure"
+    },
+    "minor_units": {
+      "anyOf": [
+        {
+          "const": 2,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Minor Units"
+    },
+    "operation_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Operation Id"
+    },
+    "pending": {
+      "default": false,
+      "title": "Pending",
+      "type": "boolean"
+    },
+    "period_end": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Period End"
+    },
+    "period_start": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Period Start"
+    },
+    "retrieved_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Retrieved At"
+    },
+    "state": {
+      "default": "not_collected",
+      "enum": [
+        "not_collected",
+        "current",
+        "partial",
+        "stale",
+        "prior_cycle",
+        "unavailable",
+        "unqualified"
+      ],
+      "title": "State",
+      "type": "string"
+    }
+  },
+  "title": "CostView",
+  "type": "object"
+}

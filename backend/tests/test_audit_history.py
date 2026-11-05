@@ -39,6 +39,28 @@ def event(kind="local_sign_in_succeeded", operator=False):
         display_name=None if operator else "Example administrator",
     )
     data = {"private_marker": "must-not-escape"}
+    if kind == "cost_collection_outcome":
+        from otm.financial.contracts import CostEvidence
+
+        data = CostEvidence(
+            collection_id=uuid4(),
+            tenancy_id=uuid4(),
+            state="succeeded",
+            attempts=1,
+            safe_code="COST_READ_COMPLETE",
+        ).model_dump(mode="json")
+    if kind == "cost_refresh_requested":
+        from otm.financial.contracts import CostRefreshReceipt
+
+        data = {
+            "receipt": CostRefreshReceipt(
+                operation_ids=(uuid4(),),
+                accepted_count=1,
+                joined_count=0,
+                skipped_count=0,
+                accepted_at=NOW,
+            ).model_dump(mode="json")
+        }
     if kind == "email_delivery":
         from otm.notifications.contracts import NotificationEvidence
 

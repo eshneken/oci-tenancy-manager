@@ -657,3 +657,12 @@ view is open. No new summary state, local scheduler or simulation-control UI is 
 [Current field/filter semantics](reference/configuration-drift.md#filter-and-counter-interpretation).
 The drift CronJob is explicitly deferred until staging/Kubernetes deployment; a stale threshold is
 not a schedule. Existing session-maintenance jobs are a separate feature.
+
+## Cost-visibility screen extension — 5 November 2026
+
+The React Tenancies list remains the single inventory and financial dashboard: Tenancy, Owner,
+Status, Actual/Budget and Forecast. Type/member count and segment are compact supporting lines;
+manager remains searchable and in employee/detail context. Independent monetary sorts share the
+Actual/Budget header. Per-value colors and accessible status use observed same-response budget;
+missing/stale/prior-month/source-unqualified labels stay visible. Retrieval tooltips show only OTM
+retrieval; optional source diagnostics belong on detail. See [runtime fields](reference/cost-visibility.md).

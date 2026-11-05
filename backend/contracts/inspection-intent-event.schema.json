@@ -687,6 +687,144 @@
       "title": "ConfigurationTarget",
       "type": "object"
     },
+    "CostIntent": {
+      "additionalProperties": false,
+      "properties": {
+        "administrator_id": {
+          "format": "uuid",
+          "title": "Administrator Id",
+          "type": "string"
+        },
+        "authorization_revision": {
+          "format": "uuid",
+          "title": "Authorization Revision",
+          "type": "string"
+        },
+        "contract_version": {
+          "const": "cost-collection-1",
+          "default": "cost-collection-1",
+          "title": "Contract Version",
+          "type": "string"
+        },
+        "kind": {
+          "const": "cost_collection",
+          "default": "cost_collection",
+          "title": "Kind",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/ConfigurationOperationTarget"
+        },
+        "targets": {
+          "items": {
+            "$ref": "#/$defs/CostTarget"
+          },
+          "maxItems": 500,
+          "minItems": 1,
+          "title": "Targets",
+          "type": "array"
+        },
+        "workspace_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Workspace Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "administrator_id",
+        "authorization_revision",
+        "targets",
+        "target"
+      ],
+      "title": "CostIntent",
+      "type": "object"
+    },
+    "CostPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "profile": {
+          "const": "simulated-usd-utc-1",
+          "default": "simulated-usd-utc-1",
+          "title": "Profile",
+          "type": "string"
+        },
+        "retrieval_max_age_seconds": {
+          "default": 86400,
+          "maximum": 604800,
+          "minimum": 1,
+          "title": "Retrieval Max Age Seconds",
+          "type": "integer"
+        },
+        "retry_delays_seconds": {
+          "default": [
+            30,
+            120
+          ],
+          "items": {
+            "maximum": 3600,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 0,
+          "title": "Retry Delays Seconds",
+          "type": "array"
+        },
+        "source_max_age_seconds": {
+          "default": 86400,
+          "maximum": 604800,
+          "minimum": 1,
+          "title": "Source Max Age Seconds",
+          "type": "integer"
+        }
+      },
+      "title": "CostPolicy",
+      "type": "object"
+    },
+    "CostTarget": {
+      "additionalProperties": false,
+      "properties": {
+        "budget_ocid": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Budget Ocid",
+          "type": "string"
+        },
+        "configuration": {
+          "$ref": "#/$defs/CheckTarget"
+        },
+        "period_end": {
+          "format": "date-time",
+          "title": "Period End",
+          "type": "string"
+        },
+        "period_start": {
+          "format": "date-time",
+          "title": "Period Start",
+          "type": "string"
+        },
+        "profile": {
+          "$ref": "#/$defs/CostPolicy"
+        },
+        "source_access_binding_id": {
+          "format": "uuid",
+          "title": "Source Access Binding Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "configuration",
+        "budget_ocid",
+        "source_access_binding_id",
+        "profile",
+        "period_start",
+        "period_end"
+      ],
+      "title": "CostTarget",
+      "type": "object"
+    },
     "EmailContacts": {
       "additionalProperties": false,
       "properties": {
@@ -1610,6 +1748,9 @@
         },
         {
           "$ref": "#/$defs/ConfigurationCheckIntent"
+        },
+        {
+          "$ref": "#/$defs/CostIntent"
         }
       ],
       "title": "Intent"

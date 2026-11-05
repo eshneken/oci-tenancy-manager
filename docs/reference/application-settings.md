@@ -298,3 +298,10 @@ Success returns environment, release_kind, settings_sha256, email_policy_hash an
 It does not deploy, fetch secrets or prove a real SMTP endpoint. Both protected deployment paths
 must invoke it independently before delivery/OCI credentials/apply. Hosted CI/OKE enforcement is
 not installed by the standalone validator.
+
+## Cost collection settings
+
+[costs] defines the qualified simulator profile, independent retrieval/source age thresholds
+(default 86400 seconds, each 1–604800) and 0–2 retry delays (each 1–3600 seconds; default30/120).
+See [cost visibility](cost-visibility.md). These do not start a daily scheduler. Coordinated
+configuration rollout/restart, rather than an image rebuild, applies changes.

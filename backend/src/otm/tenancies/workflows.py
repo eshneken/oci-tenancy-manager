@@ -65,12 +65,14 @@ class OrganizationWorkflows:
         facade=None,
         policy_loader=None,
         configuration_checks=None,
+        cost_collections=None,
         mail_policy=None,
         notifications=None,
     ):
         self.store, self.enqueuer, self.policy, self.facade = store, enqueuer, policy, facade
         self.mail_policy, self.notifications = mail_policy, notifications
         self.configuration_checks = configuration_checks
+        self.cost_collections = cost_collections
         self.policy_loader = policy_loader
         self.mode = "simulated" if policy and facade and enqueuer else "unavailable"
 
@@ -159,7 +161,15 @@ class OrganizationWorkflows:
                     pending_count=0,
                     issue_count=0,
                 )
-            directory = tenancy_directory(registry_state(connection, workspace), query)
+            state = registry_state(connection, workspace)
+            costs = (
+                self.cost_collections.summaries(
+                    connection, workspace, tuple(state.tenancies.values())
+                )
+                if self.cost_collections
+                else None
+            )
+            directory = tenancy_directory(state, query, costs)
             if self.configuration_checks:
                 checks = {
                     item.tenancy_id: item
@@ -195,13 +205,21 @@ class OrganizationWorkflows:
                 if candidate and candidate["intent"].get("onboarding_version") in {1, 2}:
                     onboarding_id = row["operation_id"]
             config_operation = row["operation_id"] or row.get("last_operation_id")
+            cost = (
+                self.cost_collections.summaries(connection, workspace, (row,)).get(identifier)
+                if self.cost_collections
+                else None
+            )
+            view = tenancy_view(state, row)
+            if cost is not None:
+                view = view.model_copy(update={"costs": cost})
             return TenancyDetail(
                 configuration_operation_id=config_operation
                 if state.operation_kinds.get(config_operation) == "configuration_update"
                 else None,
                 onboarding_operation_id=onboarding_id,
                 tenancy=self._check_view(
-                    tenancy_view(state, row),
+                    view,
                     self.configuration_checks.summaries(connection, workspace, identifier)[0]
                     if self.configuration_checks and row["status"] == "active"
                     else None,

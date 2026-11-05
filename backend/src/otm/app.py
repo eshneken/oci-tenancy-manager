@@ -73,10 +73,13 @@ def create_app(
     baseline_qualifier=None,
     configuration_rollouts=None,
     configuration_checks=None,
+    cost_collections=None,
     email_policy: MailPolicy | None = None,
 ) -> FastAPI:
     if (
-        configuration_rollouts is not None or configuration_checks is not None
+        configuration_rollouts is not None
+        or configuration_checks is not None
+        or cost_collections is not None
     ) and organization is None:
         raise ValueError("CONFIGURATION_ROLLOUT_REQUIRES_ORGANIZATION")
     if baseline_qualifier is not None and organization is None:
@@ -387,6 +390,11 @@ def create_app(
         from otm.configuration.rollout_http import rollout_router
 
         app.include_router(rollout_router(configuration_rollouts))
+
+    if cost_collections is not None:
+        from otm.financial.http import cost_router
+
+        app.include_router(cost_router(cost_collections))
 
     if configuration_checks is not None:
         from otm.configuration.drift_http import drift_router

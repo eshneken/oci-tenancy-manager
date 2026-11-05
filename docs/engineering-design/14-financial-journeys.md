@@ -260,3 +260,10 @@ collection/snapshot field to existing proposed storage, including same-response 
 `period_evidence` and profile-derived currency minor units. Its exact-decimal display rule expands
 precision when ordinary rounding would hide a strict over/under comparison; it does not round the
 comparison threshold. Production generated-client/query tests must carry these semantics forward.
+
+## Implemented local milestone — 5 November 2026
+
+The [runtime financial guide](../reference/cost-visibility.md) maps these journeys to real contracts,
+HTTP/worker/UI and SQL. One five-column Tenancies dashboard includes inventory and independent
+Actual/Budget/Forecast sorting. Retrieval-only tooltips, per-value unavailable labels, neutral retained
+degraded data and async refresh preserve the approved screen. No separate cost dashboard is added.

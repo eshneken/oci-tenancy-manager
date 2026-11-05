@@ -74,3 +74,15 @@ def register_configuration_check_task(app, worker, queue):
         worker.run(identifier)
 
     return configuration_check
+
+
+# Register a fixed read capability; reference-only jobs share the existing deployment queue.
+def register_cost_task(app, worker, queue):
+    from otm.storage.enqueue import COST_TASK
+
+    # Business retries use committed collection heads and native ETA, not unbounded task retry.
+    @app.task(name=COST_TASK, queue=queue, retry=False)
+    def collect_costs(operation_id):
+        worker.run(UUID(operation_id))
+
+    return collect_costs

@@ -15,7 +15,8 @@
     "event": {
       "enum": [
         "action_required",
-        "terminal_failure"
+        "terminal_failure",
+        "cost_read_failed"
       ],
       "title": "Event",
       "type": "string"

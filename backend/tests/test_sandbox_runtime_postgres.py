@@ -311,7 +311,15 @@ def run_browser_runtime(c, script, extra=None):
         )
         browser_env.update(extra or {})
         result = subprocess.run(
-            ["npm", "run", "test:ui", "--", script],
+            # Keep diagnostics in this owned runtime: another browser suite must not erase them.
+            [
+                "npm",
+                "run",
+                "test:ui",
+                "--",
+                script,
+                "--output=" + str(c.root / "browser-results" / Path(script).stem),
+            ],
             cwd=PROJECT / "frontend",
             env=browser_env,
             capture_output=True,
@@ -485,7 +493,8 @@ def test_local_organization_reset_cycle_and_rollback(runtime):
                 "SELECT count(*) FROM pg_trigger "
                 "WHERE (tgname LIKE 'org%no_truncate' "
                 "OR tgname LIKE 'otm_tenancy%no_truncate' OR tgname LIKE 'o"
-                "tm_baseline%no_truncate' OR tgname LIKE 'otm_configuration%no_truncate') "
+                "tm_baseline%no_truncate' OR tgname LIKE 'otm_configuration%no_truncate' "
+                "OR tgname LIKE 'otm_financial%no_truncate') "
                 "AND tgenabled='O'"
             )
         ) == len(TABLES)
@@ -525,7 +534,8 @@ def test_local_organization_reset_cycle_and_rollback(runtime):
                 "SELECT count(*) FROM pg_trigger "
                 "WHERE (tgname LIKE 'org%no_truncate' "
                 "OR tgname LIKE 'otm_tenancy%no_truncate' OR tgname LIKE 'o"
-                "tm_baseline%no_truncate' OR tgname LIKE 'otm_configuration%no_truncate') "
+                "tm_baseline%no_truncate' OR tgname LIKE 'otm_configuration%no_truncate' "
+                "OR tgname LIKE 'otm_financial%no_truncate') "
                 "AND tgenabled='O'"
             )
         ) == len(TABLES)

@@ -120,6 +120,21 @@ def create_local_application():
             else None,
         )
         workflow.configuration_checks = checks
+        from otm.financial.service import CostCollections
+        from otm.storage.enqueue import COST_TASK
+
+        costs = CostCollections(
+            organization_store,
+            policy=workflow.policy,
+            policy_loader=workflow.policy_loader,
+            profile=settings.costs,
+            enqueuer=InspectionEnqueuer(
+                queue=workspace_queue(settings.local_auth.workspace_id), task=COST_TASK
+            )
+            if workflow.policy
+            else None,
+        )
+        workflow.cost_collections = costs
         app = create_app(
             sessions,
             BrowserSettings(public_origin=origin),
@@ -133,6 +148,7 @@ def create_local_application():
             email_policy=settings.mail_policy(),
             baseline_qualifier=SimulatedBaselineQualifier(),
             configuration_checks=checks,
+            cost_collections=costs,
             configuration_rollouts=ConfigurationRollouts(
                 organization_store,
                 policy=workflow.policy,

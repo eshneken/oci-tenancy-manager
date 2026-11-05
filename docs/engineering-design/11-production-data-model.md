@@ -1905,3 +1905,12 @@ Directory counter alone accounts for the 83-field total. No physical ER update i
 
 
 The freshness validation record (private historical evidence; not distributed) records the passing unit/database/browser gates, completed reviews and both saved-instance updates with all existing rows preserved. No SQL migration was required.
+
+## Current implemented financial subset — 5 November 2026
+
+Migration 0021 adds 15-column otm_financial_collection and 17-column otm_financial_observation, for
+22 application tables. The [complete actual field dictionary](../reference/cost-visibility.md#storage-field-dictionary)
+and [implemented ER](../architecture/diagrams/financial-implemented.mmd) supersede generic proposed
+financial names for the local implementation. Exact context/source/child composite references, immutable
+observations, stable failure scope and current stored projections are implemented; live provider and
+daily scheduled collection remain unqualified.

@@ -49,6 +49,25 @@ class NotificationIntent(Contract):
     created_at: UtcInstant
 
 
+# Exhausted cost acquisitions retain administrator recipients independently of D50 takeover.
+class CostFailureNotice(Contract):
+    contract_version: Literal["cost-failure-email-1"] = "cost-failure-email-1"
+    operation_id: UUID
+    collection_id: UUID
+    tenancy_id: UUID
+    source_hash: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
+    failure_scope_hash: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
+    administrator_id: UUID
+    authorization_revision: UUID
+    original_recipient: Mailbox | None
+    delivery_recipient: Mailbox | None
+    route: EmailRoute
+    application_origin: HttpsOrigin | None = None
+    delivery_profile_hash: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")] | None = None
+    event: Literal["cost_read_failed"] = "cost_read_failed"
+    created_at: UtcInstant
+
+
 # The SMTP capability receives one bounded plain-text message; no HTML, attachments or custom
 # headers.
 class Envelope(Contract):
@@ -68,7 +87,7 @@ class DeliveryResult(Contract):
 class NotificationSummary(Contract):
     id: UUID
     state: DeliveryState
-    event: Literal["action_required", "terminal_failure"]
+    event: Literal["action_required", "terminal_failure", "cost_read_failed"]
     recipient: Mailbox | None
     original_recipient: Mailbox | None
     created_at: UtcInstant

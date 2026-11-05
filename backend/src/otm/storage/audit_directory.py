@@ -24,6 +24,7 @@ from otm.configuration.contracts import (
 from otm.configuration.drift_contracts import ConfigurationCheckEvidence
 from otm.configuration.override_contracts import ConfigurationReviewEvidence
 from otm.configuration.rollout_contracts import ConfigurationOutcome, ConfigurationRetryEvidence
+from otm.financial.contracts import CostEvidence, CostRefreshReceipt
 from otm.notifications.contracts import NotificationEvidence
 from otm.operations.contracts import ActorIdentity, IntentEventData, canonical_hash
 from otm.operations.execution_contracts import InspectionOutcome
@@ -49,6 +50,8 @@ EMAIL_DELIVERY = ("email_delivery",)
 OPERATIONS = (
     "operation_responsibility_changed",
     "configuration_check_outcome",
+    "cost_collection_outcome",
+    "cost_refresh_requested",
     "operation_intent",
     "inspection_dispatch",
     "inspection_outcome",
@@ -139,7 +142,7 @@ def entry(row):
         )
     if kind == "email_delivery":
         mail = NotificationEvidence.model_validate_json(json.dumps(row["data"]))
-        summary = "Lifecycle email: " + mail.state
+        summary = "Email delivery: " + mail.state
     if kind == "operation_responsibility_changed":
         proof = decode_evidence(row)
         summary = "Administrator responsibility changed"
@@ -147,6 +150,12 @@ def entry(row):
             f"{proof.before_name or 'Previous administrator'} → "
             f"{proof.after_actor.display_name or 'Administrator'}",
         )
+    if kind == "cost_collection_outcome":
+        cost = CostEvidence.model_validate_json(json.dumps(row["data"]))
+        summary = "Cost collection: " + cost.state
+    if kind == "cost_refresh_requested":
+        receipt = CostRefreshReceipt.model_validate_json(json.dumps(row["data"]["receipt"]))
+        summary = f"Cost refresh: {receipt.accepted_count} queued, {receipt.joined_count} joined"
     if kind == "configuration_check_outcome":
         check = ConfigurationCheckEvidence.model_validate_json(json.dumps(row["data"]))
         summary = "Read-only configuration check: " + check.state
@@ -318,8 +327,15 @@ def resource_context(connection, workspace, rows):
             continue
         resources = []
         wanted = set()
-        if intent.kind in {"configuration_update", "configuration_check"}:
-            wanted = {target.tenancy_id for target in intent.targets}
+        if intent.kind in {"configuration_update", "configuration_check", "cost_collection"}:
+            wanted = {
+                target.configuration.tenancy_id
+                if intent.kind == "cost_collection"
+                else target.tenancy_id
+                for target in intent.targets
+            }
+            if row["kind"] == "cost_collection_outcome":
+                wanted &= {CostEvidence.model_validate_json(json.dumps(row["data"])).tenancy_id}
             if row["kind"] == "configuration_check_outcome":
                 wanted &= {
                     ConfigurationCheckEvidence.model_validate_json(

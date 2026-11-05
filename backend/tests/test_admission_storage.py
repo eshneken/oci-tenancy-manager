@@ -195,6 +195,7 @@ def test_native_enqueue_has_fixed_capability_and_reference_only_payload():
         queue=OPERATIONS_QUEUE,
         connection=raw,
         lock="operation:" + str(identifier),
+        schedule_in={"seconds": 0},
     )
     app.configure_task.return_value.defer.assert_called_once_with(operation_id=str(identifier))
     app.open.assert_not_called()

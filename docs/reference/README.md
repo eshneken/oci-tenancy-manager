@@ -32,3 +32,5 @@ is in [the engineering chapters](../engineering-design/README.md).
 Python models and validators are authoritative for implemented contracts. Generated JSON schemas
 remain under backend/contracts/, with TypeScript generated for the frontend. Frozen migrations
 establish actual database fields; diagrams explain relationships rather than adding a second schema.
+
+- [Current-month cost visibility and financial field dictionary](cost-visibility.md)

@@ -20,3 +20,5 @@ These procedures do not authorize deployment, repository publication or live OCI
 
 Workflow definitions are repository artifacts; hosted runs, branch protection and deployment
 qualification must be verified separately. This guide does not authorize cloud deployment.
+
+- [Manual review: current-month cost visibility](test-cost-visibility.md)
