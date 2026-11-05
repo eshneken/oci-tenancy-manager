@@ -170,3 +170,9 @@ become a persisted observation. Retained financial facts remain unchanged, it do
 failure-episode recovery, and its unqualified indicator remains visible through a later pending
 refresh until a new usable acquisition replaces it. Unit and disposable PostgreSQL regressions
 cover this response fence and recovery transition.
+
+
+CI failure summaries expose only bounded test identifiers and, for browser failures, deduplicated
+file/line/column positions in the explicitly known public browser sources. They never export raw
+assertions, path prefixes, database values, screenshots or browser context. This permits diagnosis
+of hosted-only failures while retaining the publication boundary.

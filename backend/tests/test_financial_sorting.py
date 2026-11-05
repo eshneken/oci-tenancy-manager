@@ -64,3 +64,35 @@ def test_ci_failure_names_exclude_parameters_and_raw_errors(monkeypatch):
         {"module": "unknown", "test": "unknown"},
     ]
     assert all("private" not in str(row) for row in result)
+
+
+# Browser diagnostics strip private path prefixes and errors, reject unknown files and bound output.
+def test_ci_browser_locations_are_public_bounded_and_deduplicated(monkeypatch):
+    import importlib
+    from pathlib import Path
+    from xml.etree.ElementTree import Element, SubElement
+
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "scripts"))
+    locations = importlib.import_module("run_backend_postgres_tests").browser_failure_locations
+    case = Element("testcase")
+    failure = SubElement(case, "failure")
+    failure.text = "private assertion with private data\n" + "\n".join(
+        [
+            "E   \x1b[2m at /private/user/frontend/e2e/financial-costs.spec.ts:38:14\x1b[0m",
+            " at /private/user/frontend/e2e/financial-costs.spec.ts:38:14",
+            " at /private/user/frontend/e2e/private-person.ts:7:4",
+            " at /private/user/frontend/e2e/financial-costs.spec.ts:0:4",
+            " at /private/user/frontend/e2e/financial-costs.spec.ts:999999:4",
+            " at /private/user/frontend/e2e/financial-costs.spec.ts:38:9999",
+            " at /private/user/frontend/e2e/../../private.ts:7:4",
+            " at /private/user/backend/private.py:7:4",
+        ]
+    )
+    expected = {"file": "frontend/e2e/financial-costs.spec.ts", "line": 38, "column": 14}
+    assert locations([case]) == [expected]
+    assert "private" not in str(locations([case]))
+    assert locations([Element("testcase")]) == []
+    failure.text = "\n".join(
+        f" at /private/user/frontend/e2e/financial-costs.spec.ts:{n}:1" for n in range(1, 30)
+    )
+    assert len(locations([case])) == 10
