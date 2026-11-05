@@ -447,3 +447,33 @@ def test_failure_stays_visible_through_new_pending_work(workflow_case):
         c.clock.return_value += timedelta(seconds=2)
     service.start(c.principal, request(identifier))
     assert c.workflow.tenancy_detail(c.principal, identifier).tenancy.costs.state == "unavailable"
+
+
+# Real worker-written audit identities must render, search and export without rewriting history.
+def test_completed_cost_audit_directory_search_and_csv(workflow_case):
+    import csv
+    from io import StringIO
+
+    from otm.audit.contracts import AuditExportQuery, AuditQuery
+    from otm.storage.audit_directory import SqlAuditDirectory
+    from otm.storage.audit_export import SqlAuditExport
+
+    c = workflow_case
+    identifier = children(c, 1)[0]
+    service, worker, _ = costs(c)
+    receipt = service.start(c.principal, request(identifier))
+    worker.run(receipt.operation_ids[0])
+    reader = SqlAuditDirectory(c.engine)
+    assert reader.directory(c.policy.workspace_id, AuditQuery()).total > 0
+    found = reader.directory(c.policy.workspace_id, AuditQuery(query="Cost collection worker"))
+    assert found.total == 1
+    item = found.items[0]
+    assert item.kind == "cost_collection_outcome" and item.actor_name == "Cost collection worker"
+    assert item.safe_code == "COST_READ_COMPLETE" and item.operation_id == receipt.operation_ids[0]
+    assert item.resources[0].id == identifier
+    content = SqlAuditExport(c.engine, c.clock).export(
+        c.principal, AuditExportQuery(query="Cost collection worker")
+    )
+    rows = list(csv.DictReader(StringIO(content.decode("utf-8-sig"))))
+    assert len(rows) == 1 and rows[0]["actor_name"] == "Cost collection worker"
+    assert rows[0]["safe_code"] == "COST_READ_COMPLETE"

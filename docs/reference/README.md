@@ -34,3 +34,5 @@ remain under backend/contracts/, with TypeScript generated for the frontend. Fro
 establish actual database fields; diagrams explain relationships rather than adding a second schema.
 
 - [Current-month cost visibility and financial field dictionary](cost-visibility.md)
+
+Audit history includes strict cost-worker identity projection and shared directory/CSV validation; see [audit reference](audit-history.md).

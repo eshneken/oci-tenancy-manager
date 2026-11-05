@@ -57,3 +57,5 @@ See the [implemented ER](architecture/diagrams/financial-implemented.mmd) and
 [manual cost test runbook](how-to/test-cost-visibility.md).
 
 Financial validation and saved-data preservation: [5 November checkpoint](history/cost-visibility-checkpoint-2026-11-05.md).
+
+Cost-refresh audit regression coverage: [Audit history](reference/audit-history.md#cost-collection-worker-events).

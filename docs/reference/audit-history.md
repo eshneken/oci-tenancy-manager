@@ -403,3 +403,12 @@ SQL column/migration, send/retry behavior, recipient, outbox state or user data 
 
 
 5 November category refinement validation (private historical evidence; not distributed): both unit coverage gates and focused PostgreSQL/SMTP/Playwright tests pass; documentation, security and responsive UI reviews pass. Both saved applications were updated without schema changes or rewriting any existing rows.
+
+## Cost collection worker events
+
+Cost outcomes validate the exact worker identity: actor_subject otm-worker:costs with
+actor_snapshot {kind: worker, subject: costs}. They display and search as **Cost collection worker**;
+the outcome code comes from validated CostEvidence. The directory and CSV export use the same
+projection. Human-shaped or mismatched worker identities remain invalid. Existing immutable events
+are read correctly without deleting, rewriting or skipping history. Regression coverage includes
+real worker-written records through PostgreSQL search/export and browser navigation after a refresh.

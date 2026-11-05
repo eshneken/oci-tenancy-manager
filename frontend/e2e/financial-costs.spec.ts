@@ -65,6 +65,13 @@ test("check a qualified child through HTTPS and the separate native worker", asy
   await page.getByText("Source details",{exact:true}).click();await expect(page.getByText("OCI calculation time",{exact:true})).toBeVisible();
   await page.screenshot({path:resolve(".local-dev/browser","cost-detail-1280.png"),fullPage:true});
   for(const width of [390,320]){await page.setViewportSize({width,height:900});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:resolve(".local-dev/browser",`cost-detail-${width}.png`),fullPage:true});}
+  // The actual worker's audit records must load and remain searchable after a real cost refresh.
+  await page.getByRole("link",{name:"Audit history",exact:true}).click();
+  await expect(page.getByRole("heading",{name:"Audit history",exact:true})).toBeVisible();
+  const search=page.getByRole("searchbox",{name:"Search audit history"});
+  await search.fill("Cost collection worker");
+  await expect(page.getByRole("cell",{name:"Cost collection worker",exact:true}).first()).toBeVisible();
+  await expect(page.getByText(/Unable to load audit history/)).toHaveCount(0);
   // These explicit browser-only response fixtures qualify rendering, not real worker/provider facts.
   // The preceding fleet/detail flow proves actual HTTPS/native-worker behavior independently.
   let fixture: {state:string;actual:string;budget:string;forecast:string|null;actual_over_budget:boolean;forecast_over_budget:boolean}={state:"current",actual:"201.0000",budget:"200.0000",forecast:"320.0000",actual_over_budget:true,forecast_over_budget:true};

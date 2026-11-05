@@ -32,3 +32,7 @@ provider error behavior must later be qualified in a staging tenancy.
 
 Daily acquisition is future staging/Kubernetes work. Do not expect a local daily timer; this runbook
 uses explicit manual refresh. Historical reports and over-budget emails are outside V1.
+
+After refreshing costs, open **Audit history** and search for **Cost collection worker**. Completed
+read events should load with their operation/tenancy links and outcome code. Export CSV should
+include the same worker identity. This exercises actual worker evidence, not a human-shaped fixture.

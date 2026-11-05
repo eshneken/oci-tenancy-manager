@@ -182,7 +182,9 @@ def event(kind="local_sign_in_succeeded", operator=False):
         workspace_id="audit-org",
         at=NOW,
         kind=kind,
-        actor_subject="otm-worker:email"
+        actor_subject="otm-worker:costs"
+        if kind == "cost_collection_outcome"
+        else "otm-worker:email"
         if kind == "email_delivery"
         else "otm-worker:configuration-check"
         if kind == "configuration_check_outcome"
@@ -193,7 +195,9 @@ def event(kind="local_sign_in_succeeded", operator=False):
         else "otm-worker:inspection"
         if worker
         else actor.key,
-        actor_snapshot={"kind": "worker", "subject": "email"}
+        actor_snapshot={"kind": "worker", "subject": "costs"}
+        if kind == "cost_collection_outcome"
+        else {"kind": "worker", "subject": "email"}
         if kind == "email_delivery"
         else {"kind": "worker", "subject": "configuration-check"}
         if kind == "configuration_check_outcome"
@@ -255,6 +259,8 @@ def test_public_projection_all_kinds(kind):
     )
     if kind == "local_sign_in_failed":
         assert result.actor_name is None
+    elif kind == "cost_collection_outcome":
+        assert result.actor_name == "Cost collection worker"
     elif kind == "email_delivery":
         assert result.actor_name == "Email delivery worker"
     elif kind == "configuration_check_outcome":
@@ -268,7 +274,9 @@ def test_public_projection_all_kinds(kind):
     else:
         assert result.actor_name == "Example administrator"
     assert result.safe_code == (
-        "CONFIGURATION_VERIFIED"
+        "COST_READ_COMPLETE"
+        if kind == "cost_collection_outcome"
+        else "CONFIGURATION_VERIFIED"
         if kind == "configuration_outcome"
         else "CONFIGURATION_RETRY_ACCEPTED"
         if kind == "configuration_retry"
@@ -527,3 +535,22 @@ def test_offboarding_audit_summary_distinguishes_accepted_and_completed(queued):
     assert entry(row).summary == (
         "Requested employee offboarding" if queued else "Offboarded employee"
     )
+
+
+# Cost-worker identity remains strict; recognizing its shape cannot permit actor impersonation.
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("actor_subject", "otm-worker:other"),
+        ("actor_snapshot", {"kind": "worker", "subject": "other"}),
+        (
+            "actor_snapshot",
+            ActorIdentity(issuer="urn:test:other", subject="other").model_dump(mode="json"),
+        ),
+    ],
+)
+def test_cost_worker_rejects_forged_audit_actor(field, value):
+    row = event("cost_collection_outcome")
+    row[field] = value
+    with pytest.raises(ValueError, match="INVALID_AUDIT_ACTOR"):
+        entry(row)

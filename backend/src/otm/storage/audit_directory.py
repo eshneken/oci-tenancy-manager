@@ -73,6 +73,7 @@ ORGANIZATION = (
 # Failed proofs expose no verified actor or attempted username; operator labels stay generic.
 def actor_expression():
     return case(
+        (audit_event.c.kind == "cost_collection_outcome", "Cost collection worker"),
         (audit_event.c.kind == "local_sign_in_failed", None),
         (
             audit_event.c.kind.in_(("inspection_dispatch", "inspection_outcome")),
@@ -184,6 +185,13 @@ def entry(row):
         }:
             raise ValueError("INVALID_AUDIT_ACTOR")
         actor_name = "Email delivery worker"
+    elif kind == "cost_collection_outcome":
+        if row["actor_subject"] != "otm-worker:costs" or row["actor_snapshot"] != {
+            "kind": "worker",
+            "subject": "costs",
+        }:
+            raise ValueError("INVALID_AUDIT_ACTOR")
+        actor_name = "Cost collection worker"
     elif kind == "configuration_check_outcome":
         if row["actor_subject"] != "otm-worker:configuration-check" or row["actor_snapshot"] != {
             "kind": "worker",
@@ -274,7 +282,11 @@ def entry(row):
         operation_id=row["operation_id"],
         administrator_id=row["administrator_id"],
         administrator_name=row["administrator_name"],
-        safe_code=outcome.safe_code if outcome else None,
+        safe_code=cost.safe_code
+        if kind == "cost_collection_outcome"
+        else outcome.safe_code
+        if outcome
+        else None,
         organization_subject_name=row["data"].get("subject_name")
         if kind == "organization_review_decided"
         else None,
