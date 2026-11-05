@@ -52,3 +52,33 @@ Protected master is unchanged; this milestone checkpoint creates no PR. Daily co
 live OCI response/currency/cycle qualification, OKE deployment and historical financial reporting
 remain separate staging/post-V1 work. Over-budget emails and resource actions remain outside V1;
 D48 exhausted acquisition emails use the existing environment-routed outbox.
+
+
+## Final local qualification before the milestone PR
+
+Application commit `5375aa6` includes the native cost-worker audit-reader correction, immediate-job
+clock-skew regression and root-manager display-name setting. The earlier table records its original
+checkpoint; final source validation supersedes those counts:
+
+| Gate | Final application result |
+| --- | --- |
+| Backend unit-only, all 119 application source files | 1,264 pass; 8,306/8,654 lines, 95.9787% |
+| Frontend unit-only, all 33 application source files | 409 pass; 1,693/1,736 lines, 97.52% |
+| Full disposable PostgreSQL/native worker/HTTPS Playwright | 1,546 pass; zero failures, errors or skips (before the final retrieval-fence regression) |
+| Documentation, security/privacy and UI/UX reviews | Pass for the final application content |
+| Generated contracts, inline comments, documentation and credential checks | Pass |
+
+The final root-name change was qualified locally; the successful hosted
+[preceding application run](https://github.com/eshneken/oci-tenancy-manager/actions/runs/42097305231)
+covers `f21b02b`, not `5375aa6`. Its cost-browser job needed an unchanged retry, so its first-attempt
+failure remains visible in the run history. The milestone PR must pass all five protected checks on
+its final candidate before merge; this note does not substitute older hosted evidence for that gate.
+Both saved local previews have the final application with private backups and preserved existing data.
+Live OCI, daily scheduling, OKE deployment and post-V1 financial-history boundaries above are unchanged.
+
+
+Final pre-merge adversarial review found a response-publication defect: a rejected old retrieval
+could retain its normalized candidate in memory. The correction validates all response fences before
+assigning a publishable snapshot, preserves the unqualified indicator through pending refreshes and
+adds a regression for retained facts, failure-episode evidence and recovery. The unit regression was
+observed failing before the correction; final post-correction qualification is required before merge.
