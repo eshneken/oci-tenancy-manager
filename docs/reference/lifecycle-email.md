@@ -223,3 +223,11 @@ Email delivery category/filter, separate from Operations in Audit History and ma
 All categories retains every authorized event. The operation-detail notification panel and retained
 delivery state/history are unchanged; no new message, recipient change or retry is triggered by
 filtering. Category is derived at read time, with no migration or audit rewrite.
+
+## Independent D48 financial notices
+
+[Cost acquisition failure notices](cost-visibility.md#failure-emails-and-settings) reuse this outbox,
+contact policy, SMTP guard and separate Email delivery audit category. They notify active
+administrators after bounded read retries, deduplicate one continuing stable-source episode and
+reset only on a normalized observation. They do not adopt lifecycle D50 responsibility or send
+over-budget, optional-field, stale-data or qualification warnings.

@@ -570,3 +570,12 @@ Email delivery audit category rather than Operations. Directory/export use the s
 retained kinds/hashes/history remain immutable. Normal operation-detail delivery evidence is
 unchanged. This is visibility only, with no new routing, send/retry policy, notification family or
 database migration. [Current audit guide](../reference/audit-history.md).
+
+## Local implementation boundary — 5 November 2026
+
+[Current-month collection](../reference/cost-visibility.md) now uses two financial tables and the
+existing native worker/outbox. Strict source context fences publication; a stable child/budget/access
+failure scope deduplicates D48 incidents across configuration/timing edits. A normalized observation,
+including coherent partial facts, proves acquisition recovery; malformed no-observation completion does
+not. Unavailable facts remain visible through retries/new pending work. Daily admission remains a
+staging/Kubernetes slice; no local scheduler or temporary simulator controls are introduced.

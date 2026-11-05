@@ -9,6 +9,7 @@ from sqlalchemy.engine import Connection
 from otm.storage.transaction import require_transaction
 
 INSPECTION_TASK = "otm.inspect_import"
+COST_TASK = "otm.cost_collection"
 CONFIGURATION_CHECK_TASK = "otm.configuration_check"
 CONFIGURATION_TASK = "otm.configuration_update"
 ORGANIZATION_TASK = "otm.organization_action"
@@ -26,6 +27,7 @@ class InspectionEnqueuer:
     # Use native external-connection deferral without opening a private pool.
     def __init__(self, queue: str = OPERATIONS_QUEUE, *, task: str = INSPECTION_TASK):
         if task not in {
+            COST_TASK,
             INSPECTION_TASK,
             ORGANIZATION_TASK,
             CONFIGURATION_TASK,
@@ -37,9 +39,9 @@ class InspectionEnqueuer:
 
     # Defer one fixed capability without inventing a no-op worker or claiming completion.
     #
-    # The registered handler currently supports simulated inspection only, with an injected
-    # authority. Real OCI and corporate entitlement composition remain separate work.
-    def enqueue(self, connection: Connection, operation_id: UUID) -> None:
+    # Registered simulated handlers cover inspection, lifecycle, configuration and cost reads.
+    # Real OCI and corporate entitlement composition remain separate work.
+    def enqueue(self, connection: Connection, operation_id: UUID, *, delay_seconds=0) -> None:
         raw = require_transaction(connection)
         # Prefer builtins, then migration-owned objects; explicitly put temp relations last.
         # Runtime roles must not have CREATE on public (qualified during deployment).
@@ -50,4 +52,6 @@ class InspectionEnqueuer:
             queue=self.queue,
             connection=raw,
             lock="operation:" + str(operation_id),
+            # None means immediately eligible; host-derived zero ETAs can be ahead of DB time.
+            schedule_in={"seconds": delay_seconds} if delay_seconds else None,
         ).defer(operation_id=str(operation_id))

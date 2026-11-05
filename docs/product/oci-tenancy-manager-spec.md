@@ -1462,3 +1462,10 @@ and completed documentation/security/UI reviews. Existing stored rows and schema
 The drift-detection CronJob is explicitly deferred until staging/Kubernetes deployment and scheduled
 noninteractive authority is qualified. Local checks remain explicitly triggered; progress polling
 only reads results and never schedules a check. No local scheduler or mock-drift controls were added.
+
+### Current-month financial milestone
+
+The [implemented cost guide](../reference/cost-visibility.md) delivers the accepted unified Tenancies
+inventory/cost view through a read-only facade and saved observations. On-demand local refresh is
+implemented in simulation; daily scheduling and OCI response qualification await staging. Historical
+budget reporting and over-budget email/resource actions remain outside V1.

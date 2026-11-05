@@ -55,7 +55,7 @@ operation = Table(
     ),
     CheckConstraint(
         "kind IN ('inspect_import','organization_action"
-        "','configuration_update','configuration_check')",
+        "','configuration_update','configuration_check','cost_collection')",
         name="ck_operation_kind",
     ),
     CheckConstraint(
@@ -108,7 +108,7 @@ audit_event = Table(
         "((kind='operation_intent' AND intent_revision IS NOT NULL AND intent_revision>=1) "
         "OR (kind IN ('inspection_dispatch','inspection_outcome','organization_action_out"
         "come','onboarding_action','onboarding_outcome','configuration_outcome',"
-        "'configuration_retry','configuration_check_outcome','operation_responsibility_changed',"
+        "'configuration_retry','configuration_check_outcome','cost_collection_outcome','operation_responsibility_changed',"
         "'email_delivery') "
         "AND intent_revision IS NULL))) "
         "OR (kind IN ('administrator_revoked','administrator_bootstrapped',"
@@ -118,7 +118,7 @@ audit_event = Table(
         "AND intent_revision IS NULL AND administrator_id IS NOT NULL) "
         "OR (kind IN ('organization_configured','organization_feed_received',"
         "'organization_feed_rejected','organization_published','organization_review_decid"
-        "ed') AND operation_id IS NULL "
+        "ed','cost_refresh_requested') AND operation_id IS NULL "
         "AND administrator_id IS NULL AND intent_revision IS NULL) "
         "OR (kind IN "
         "('configuration_review_staged','baseline_draft_saved','baseline_published',"
@@ -183,7 +183,8 @@ operation_step = Table(
         "'retire_temporary','configure_baseline','verify_configured_access')) "
         "OR (command_kind='configuration_update' AND step_key ~ '^configuration:[0-9a-f-]{36}$') "
         "OR (command_kind='configuration_check' AND ste"
-        "p_key ~ '^configuration_check:[0-9a-f-]{36}$')",
+        "p_key ~ '^configuration_check:[0-9a-f-]{36}$') "
+        "OR (command_kind='cost_collection' AND step_key ~ '^cost:[0-9a-f-]{36}$')",
         name="ck_inspection_step_kind",
     ),
     CheckConstraint(
@@ -195,7 +196,7 @@ operation_step = Table(
     ),
     CheckConstraint(
         "(command_kind IN ('inspect_tenancy','configur"
-        "ation_check') AND effect_knowledge='none') OR "
+        "ation_check','cost_collection') AND effect_knowledge='none') OR "
         "(command_kind IN ('organization_action','onboarding','configuration_update') "
         "AND effect_knowledge IN ('none','known'))",
         name="ck_inspection_read_only",
@@ -1128,4 +1129,145 @@ Index(
     notification_outbox.c.workspace_id,
     notification_outbox.c.state,
     notification_outbox.c.next_attempt_at,
+)
+
+
+# One bounded child acquisition head reuses the operation/audit/native queue authorities.
+financial_collection = Table(
+    "otm_financial_collection",
+    metadata,
+    Column("id", Uuid(as_uuid=True), primary_key=True),
+    Column("workspace_id", String(256), nullable=False),
+    Column("tenancy_id", Uuid(as_uuid=True), nullable=False),
+    Column("operation_id", Uuid(as_uuid=True), nullable=False),
+    Column("context", JSONB, nullable=False),
+    Column("context_hash", String(64), nullable=False),
+    Column("source_hash", String(64), nullable=False),
+    Column("failure_scope_hash", String(64), nullable=False),
+    Column("state", String(16), nullable=False),
+    Column("attempts", Integer, nullable=False),
+    Column("attempt_id", Uuid(as_uuid=True)),
+    Column("next_attempt_at", DateTime(timezone=True)),
+    Column("safe_code", String(64)),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
+    UniqueConstraint("workspace_id", "id", name="uq_financial_collection_scope"),
+    UniqueConstraint(
+        "workspace_id",
+        "id",
+        "tenancy_id",
+        "context_hash",
+        "source_hash",
+        name="uq_financial_collection_exact",
+    ),
+    UniqueConstraint("workspace_id", "operation_id", "tenancy_id", name="uq_financial_child"),
+    ForeignKeyConstraint(
+        ["workspace_id", "tenancy_id"],
+        ["public.otm_tenancy.workspace_id", "public.otm_tenancy.id"],
+        name="fk_financial_collection_child",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "operation_id"],
+        ["public.otm_operation.workspace_id", "public.otm_operation.id"],
+        name="fk_financial_collection_operation",
+    ),
+    CheckConstraint(
+        "state IN ('queued','reading','retry','succeeded','failed','superseded')",
+        name="ck_financial_collection_state",
+    ),
+    CheckConstraint(
+        "attempts>=0 AND attempts<=3 AND updated_at>=created_at "
+        "AND ((attempts=0 AND attempt_id IS NULL) OR "
+        "(attempts>0 AND attempt_id IS NOT NULL))",
+        name="ck_financial_collection_attempt",
+    ),
+    CheckConstraint(
+        "context_hash ~ '^[0-9a-f]{64}$' AND source_hash ~ '^[0-9a-f]{64}$' "
+        "AND failure_scope_hash ~ '^[0-9a-f]{64}$' AND jsonb_typeof(context)='object'",
+        name="ck_financial_collection_context",
+    ),
+)
+Index(
+    "uq_financial_active_context",
+    financial_collection.c.workspace_id,
+    financial_collection.c.tenancy_id,
+    financial_collection.c.context_hash,
+    unique=True,
+    postgresql_where=financial_collection.c.state.in_(("queued", "reading", "retry")),
+)
+Index(
+    "ix_financial_collection_child",
+    financial_collection.c.workspace_id,
+    financial_collection.c.tenancy_id,
+    financial_collection.c.created_at.desc(),
+)
+
+
+# Immutable same-response snapshots expose queryable numeric values without a cost-history API.
+financial_observation = Table(
+    "otm_financial_observation",
+    metadata,
+    Column("id", Uuid(as_uuid=True), primary_key=True),
+    Column("workspace_id", String(256), nullable=False),
+    Column("tenancy_id", Uuid(as_uuid=True), nullable=False),
+    Column("collection_id", Uuid(as_uuid=True), nullable=False),
+    Column("context_hash", String(64), nullable=False),
+    Column("source_hash", String(64), nullable=False),
+    Column("budget_ocid", String(256), nullable=False),
+    Column("observed_budget_amount", Numeric(20, 4)),
+    Column("actual_spend", Numeric(20, 4)),
+    Column("forecasted_spend", Numeric(20, 4)),
+    Column("currency", String(3)),
+    Column("time_spend_computed", DateTime(timezone=True)),
+    Column("captured_at", DateTime(timezone=True), nullable=False),
+    Column("period_start", DateTime(timezone=True)),
+    Column("period_end", DateTime(timezone=True)),
+    Column("snapshot", JSONB, nullable=False),
+    Column("snapshot_hash", String(64), nullable=False),
+    UniqueConstraint("workspace_id", "collection_id", name="uq_financial_observation_collection"),
+    ForeignKeyConstraint(
+        ["workspace_id", "collection_id", "tenancy_id", "context_hash", "source_hash"],
+        [
+            "public.otm_financial_collection.workspace_id",
+            "public.otm_financial_collection.id",
+            "public.otm_financial_collection.tenancy_id",
+            "public.otm_financial_collection.context_hash",
+            "public.otm_financial_collection.source_hash",
+        ],
+        name="fk_financial_observation_collection",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "tenancy_id"],
+        ["public.otm_tenancy.workspace_id", "public.otm_tenancy.id"],
+        name="fk_financial_observation_child",
+    ),
+    CheckConstraint(
+        "context_hash ~ '^[0-9a-f]{64}$' AND snapshot_hash ~ '^[0-9a-f]{64}$' "
+        "AND jsonb_typeof(snapshot)='object'",
+        name="ck_financial_observation_hash",
+    ),
+    CheckConstraint(
+        "observed_budget_amount IS NULL OR observed_budget_amount>=0",
+        name="ck_financial_budget_nonnegative",
+    ),
+    CheckConstraint(
+        "(period_start IS NULL AND period_end IS NULL) OR "
+        "(period_start IS NOT NULL AND period_end IS NOT NULL AND period_end>period_start)",
+        name="ck_financial_observation_period",
+    ),
+)
+Index(
+    "ix_financial_observation_current",
+    financial_observation.c.workspace_id,
+    financial_observation.c.tenancy_id,
+    financial_observation.c.source_hash,
+    financial_observation.c.time_spend_computed.desc(),
+    financial_observation.c.captured_at.desc(),
+)
+
+Index(
+    "ix_financial_collection_failure_scope",
+    financial_collection.c.workspace_id,
+    financial_collection.c.failure_scope_hash,
+    financial_collection.c.updated_at.desc(),
 )

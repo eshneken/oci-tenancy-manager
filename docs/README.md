@@ -48,3 +48,17 @@ is retained for reproducible contract checking, not as production/provider certi
 When adding, moving or removing documentation, update this table and the affected section indexes
 in the same change. Each intentional subdirectory must remain discoverable; generated/private
 outputs are not an excuse to leave a broken public link.
+
+## Cost-visibility milestone
+
+The [implemented current-month cost reference](reference/cost-visibility.md) covers the unified
+Tenancies dashboard, durable reads, two financial tables, failure emails and deferred staging schedule.
+See the [implemented ER](architecture/diagrams/financial-implemented.mmd) and
+[manual cost test runbook](how-to/test-cost-visibility.md).
+
+Financial validation and saved-data preservation: [5 November checkpoint](history/cost-visibility-checkpoint-2026-11-05.md).
+
+Cost-refresh audit regression coverage: [Audit history](reference/audit-history.md#cost-collection-worker-events).
+
+Root manager naming and paired settings controls are specified in the
+[implemented Organization Mapping guide](reference/organization-mapping.md#root-manager-display-name).

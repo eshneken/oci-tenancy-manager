@@ -48,3 +48,13 @@ display_name = "Atlas"
 logo_url = "/branding-assets/atlas-wordmark.png"
 # Packaged same-origin raster browser icon path; omit for no custom browser icon.
 icon_url = "/branding-assets/atlas-icon.png"
+
+[costs]
+# Local simulator only; production currency/calendar behavior requires live provider qualification.
+profile = "simulated-usd-utc-1"
+# Retrieval and calculation age limits in seconds, 1–604800, independently checked.
+retrieval_max_age_seconds = 86400
+# Provider calculation age in seconds, 1–604800; a new retrieval does not renew old source facts.
+source_max_age_seconds = 86400
+# Read retry delays, 0–2 entries, each 1–3600 seconds; no local daily scheduler is started.
+retry_delays_seconds = [30, 120]

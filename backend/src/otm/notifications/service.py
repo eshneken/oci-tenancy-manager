@@ -7,6 +7,7 @@ from sqlalchemy import select, update
 
 from otm.email_policy import EmailPolicyBlocked
 from otm.notifications.contracts import (
+    CostFailureNotice,
     NotificationEvidence,
     NotificationIntent,
     NotificationSummary,
@@ -22,7 +23,12 @@ from otm.tenancies.onboarding import load_intent
 def decode_intent(row):
     if canonical_hash(row["intent"]) != row["intent_hash"]:
         raise ValueError("NOTIFICATION_INTENT_INVALID")
-    frozen = NotificationIntent.model_validate_json(json.dumps(row["intent"]))
+    model = (
+        CostFailureNotice
+        if row["intent"].get("contract_version") == "cost-failure-email-1"
+        else NotificationIntent
+    )
+    frozen = model.model_validate_json(json.dumps(row["intent"]))
     if (
         frozen.operation_id != row["operation_id"]
         or frozen.original_recipient != frozen.route.original_email

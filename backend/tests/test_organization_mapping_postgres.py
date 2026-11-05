@@ -669,3 +669,55 @@ def test_mapping_repair_clears_employee_reviews_and_unblocks_provisioning(
         r.kind == "LOB_MAPPING_REVIEW" and r.email == engineer.email
         for r in c.workflow.reviews(c.principal, ReviewQuery(page_size=50)).items
     )
+
+
+# Real mapping Apply persists the display name and audit evidence without refreshing census facts.
+def test_root_name_apply_directory_history_and_stale_preview(workflow_case):
+    from otm.audit.contracts import AuditQuery
+    from otm.organization.views import OrganizationQuery
+    from otm.storage.audit_directory import SqlAuditDirectory
+
+    c = workflow_case
+    service = MappingService(c.store, c.config, c.workflow)
+    settings = service.read(c.principal)
+    before = c.store.head(c.principal)
+    request = MappingRequest(
+        context=settings.context,
+        candidate=settings.candidate.model_copy(update={"root_name": "Organization Director"}),
+        change_root=True,
+    )
+    checked = service.preview(c.principal, request)
+    command = MappingApply(**request.model_dump(), preview_token=checked.preview_token)
+    saved = service.apply(c.principal, command)
+    assert saved.candidate.root_name == "Organization Director"
+    after = c.store.head(c.principal)
+    assert (
+        after.snapshot_id == before.snapshot_id
+        and after.source_captured_at == before.source_captured_at
+    )
+    for old in before.people:
+        current = next(p for p in after.people if p.id == old.id)
+        assert current.last_row_observed_at == old.last_row_observed_at
+        assert current.absence_review == old.absence_review
+    web = OrganizationWeb(c.store, c.clock, c.config, workflows=c.workflow)
+    directory = web.directory(c.principal, OrganizationQuery())
+    assert {
+        p.manager_name
+        for p in directory.items
+        if p.email in {"one@example.test", "two@example.test"}
+    } == {"Organization Director"}
+    entries = SqlAuditDirectory(c.engine).directory(c.policy.workspace_id, AuditQuery())
+    assert any(
+        "Organization leader name: Not configured → Organization Director" in entry.changes
+        for entry in entries.items
+    )
+    with pytest.raises(OrganizationConflict, match="PREVIEW_CHANGED"):
+        service.apply(c.principal, command)
+    feed(c, example_records())
+    assert service.read(c.principal).candidate.root_name == "Organization Director"
+    assert (
+        next(
+            p for p in c.store.head(c.principal).people if p.email == "root@example.test"
+        ).full_name
+        == "Organization Director"
+    )

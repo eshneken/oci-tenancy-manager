@@ -2,6 +2,7 @@
 
 import json
 from dataclasses import dataclass, field
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import select
@@ -452,12 +453,16 @@ def review_directory(state, query):
 
 # Registry cards count registered nonterminated tenancies and include owner associations in
 # membership.
-def tenancy_directory(state, query):
+def tenancy_directory(state, query, costs=None):
     all_rows = [
         tenancy_view(state, t)
         for t in state.tenancies.values()
         if t["status"] not in {"terminated", "cancelled"}
     ]
+    if costs:
+        all_rows = [
+            t.model_copy(update={"costs": costs[t.id]}) if t.id in costs else t for t in all_rows
+        ]
     rows = [
         t
         for t in all_rows
@@ -474,18 +479,33 @@ def tenancy_directory(state, query):
             )
         ).casefold()
     ]
-    rows.sort(
-        key=lambda t: (
-            getattr(t, query.sort)
-            if query.sort == "member_count"
-            else (getattr(t, query.sort) or "").casefold(),
-            str(t.id),
-        ),
-        reverse=query.direction == "desc",
-    )
+    if query.sort in {"actual", "budget", "forecast"}:
+        usable = [
+            t
+            for t in rows
+            if t.costs.state in {"current", "partial"} and getattr(t.costs, query.sort) is not None
+        ]
+        missing = [t for t in rows if t not in usable]
+        usable.sort(key=lambda t: str(t.id))
+        usable.sort(
+            key=lambda t: Decimal(getattr(t.costs, query.sort)), reverse=query.direction == "desc"
+        )
+        rows = usable + sorted(missing, key=lambda t: str(t.id))
+    else:
+        rows.sort(
+            key=lambda t: (
+                getattr(t, query.sort)
+                if query.sort == "member_count"
+                else (getattr(t, query.sort) or "").casefold(),
+                str(t.id),
+            ),
+            reverse=query.direction == "desc",
+        )
     pages = max(1, (len(rows) + query.page_size - 1) // query.page_size)
     page = min(query.page, pages)
     return TenancyDirectory(
+        costs_pending_count=sum(t.costs.pending for t in all_rows),
+        can_refresh_costs=any(t.costs.can_refresh for t in all_rows),
         latest_baseline_id=state.latest_baseline["id"] if state.latest_baseline else None,
         latest_baseline_version_number=state.latest_baseline["version_number"]
         if state.latest_baseline

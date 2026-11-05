@@ -9,6 +9,7 @@ from pydantic import Field, TypeAdapter, model_validator
 
 from otm.contracts import Contract, HttpsOrigin, Text, UtcInstant
 from otm.email_policy import Environment, MailPolicy, mailbox
+from otm.financial.contracts import CostPolicy
 
 PositiveSeconds = Annotated[int, Field(ge=1, le=2_147_483_647)]
 
@@ -139,6 +140,8 @@ class ApplicationSettings(Contract):
     environment: Environment = "local"
     # Explicit testing routing; staging requires its address and production forbids this section.
     testing: TestingSettings | None = None
+    # Qualified local financial source/freshness/retry policy; real OCI qualification is separate.
+    costs: CostPolicy = CostPolicy()
     # Durable lifecycle notification connection policy; disabled until an operator enables it.
     notifications: NotificationSettings = NotificationSettings()
     # Supported schema version, exactly integer1; unknown keys/versions fail closed.

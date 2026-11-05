@@ -41,6 +41,9 @@ class OrganizationEvidence(Contract):
     person_count: Annotated[int, Field(ge=0, le=10000)] = 0
     mapping_root_before: Annotated[str, Field(max_length=320)] | None = None
     mapping_root_after: Annotated[str, Field(max_length=320)] | None = None
+    # Display-only before/after names; null preserves absent evidence in historical records.
+    mapping_root_name_before: Annotated[str, Field(max_length=256)] | None = None
+    mapping_root_name_after: Annotated[str, Field(max_length=256)] | None = None
     mapping_changes: tuple[MappingChange, ...] = ()
     diagnostic_count: Annotated[int, Field(ge=0, le=30000)] = 0
 

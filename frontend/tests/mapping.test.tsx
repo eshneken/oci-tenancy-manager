@@ -25,6 +25,7 @@ const saved: MappingSettings = {
   },
   candidate: {
     root_email: "root@example.test",
+    root_name: null,
     segments: [
       {
         id: "one",
@@ -38,6 +39,7 @@ const saved: MappingSettings = {
 };
 const checked: MappingPreview = {
   root_before: "root@example.test",
+  root_name_before: null,
   root_present: true,
   unresolved_count: 0,
   context: saved.context,
@@ -503,4 +505,22 @@ it("changes the organization leader with explicit intent, confirmation and retai
   await userEvent.click(screen.getByRole("button", { name: "Cancel edits" }));
   expect(root).toHaveAttribute("readonly");
   expect(root).toHaveValue("successor@example.test");
+});
+
+
+// A single deliberate edit control unlocks both root fields and binds name-only changes to preview.
+it("edits and previews the root name alongside its email", async () => {
+  const c = mount();
+  const name = await screen.findByLabelText("Root manager name");
+  expect(name).toHaveAttribute("readonly");
+  await userEvent.click(screen.getByRole("button", { name: "Change organization leader" }));
+  expect(name).not.toHaveAttribute("readonly");
+  fireEvent.change(name, { target: { value: "Organization Director" } });
+  await userEvent.click(screen.getByRole("button", { name: "Preview changes" }));
+  await screen.findByRole("dialog");
+  expect(screen.getByLabelText("Organization leader name change")).toHaveTextContent("Organization Director");
+  expect(screen.queryByRole("checkbox", {name: /I reviewed this leader replacement/})).toBeNull();
+  expect(c.preview).toHaveBeenCalledWith(expect.objectContaining({change_root: true, candidate: expect.objectContaining({root_name: "Organization Director", root_email: "root@example.test"})}), 1, expect.anything());
+  await userEvent.click(screen.getByRole("button", { name: "Apply changes" }));
+  await waitFor(() => expect(c.apply).toHaveBeenCalledWith(expect.objectContaining({candidate: expect.objectContaining({root_name: "Organization Director"})}), expect.any(AbortSignal)));
 });

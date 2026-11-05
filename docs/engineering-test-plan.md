@@ -907,3 +907,22 @@ and completed documentation/security/UI reviews. Existing stored rows and schema
 The drift-detection CronJob is explicitly deferred until staging/Kubernetes deployment and scheduled
 noninteractive authority is qualified. Local checks remain explicitly triggered; progress polling
 only reads results and never schedules a check. No local scheduler or mock-drift controls were added.
+
+## Implemented current-month financial regression matrix
+
+Unit suites: test_financial_values, test_financial_units, test_financial_http and
+test_financial_notifications qualify canonical decimals/overflow/NaN, independent nullable values,
+calendar/freshness/qualification, immutable hashes, source/authorization fences, replay/join,
+continuing failure visibility, stable email episodes and environment recipient override. Unit-only
+coverage remains >=95% independently per application source tree.
+
+Disposable PostgreSQL test_financial_postgres qualifies exact composite FK/immutability, concurrent
+admission, no DB transaction across GET, partial replacement, late older calculation, cycle rollover,
+finite retries/peer isolation, grant/config/profile changes during GET, and email dedup/delivery/recovery.
+The real HTTPS/native-worker test_financial_browser_postgres plus e2e/financial-costs.spec.ts covers
+list/detail manual refresh, automatic results/ack clearing, sort controls, retrieval tooltip, route
+reload and desktop/mobile320/390 layouts. Saved-instance data is never a mutating test target.
+
+Daily scheduling, live Budget response/billing semantics, provider timeouts/permissions and OKE CronJob
+qualification remain staging work. No new simulator-control page or test-only production endpoint is
+a prerequisite for these checks. [Field/run contract](reference/cost-visibility.md).

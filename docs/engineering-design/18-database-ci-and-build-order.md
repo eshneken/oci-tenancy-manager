@@ -954,3 +954,16 @@ none is created or deployed by this checkpoint.
 
 
 The 5 November local freshness qualification (private historical evidence; not distributed) completes the display/counter/refetch refinement only. Daily scheduled drift admission remains deferred to staging/Kubernetes; it is not implemented by the manual read-check UI or its progress polling.
+
+## Cost visibility milestone — 5 November 2026
+
+The [current-month read implementation](../reference/cost-visibility.md) follows the approved next
+milestone: immutable collection/storage, exact read facade, native bounded retries, unified inventory
+UI and D48 email episodes. All related slices share one milestone branch/PR under the
+[checkpoint policy](../how-to/github-checkpoints.md). Daily cost/drift admission remains deferred to
+staging/Kubernetes alongside live OCI qualification; current-month history is internal evidence, not
+a historical reporting product.
+
+Local financial gates and both preserved-preview upgrades are qualified in the
+[5 November cost checkpoint](../history/cost-visibility-checkpoint-2026-11-05.md). Hosted results
+remain bound to each checked commit; scheduling/live-provider qualification remains deferred.

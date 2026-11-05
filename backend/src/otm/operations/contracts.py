@@ -8,6 +8,7 @@ from uuid import UUID
 from otm.configuration.drift_contracts import ConfigurationCheckIntent
 from otm.configuration.rollout_contracts import ConfigurationIntent
 from otm.contracts import Contract, Text, UtcInstant
+from otm.financial.contracts import CostIntent
 from otm.providers.inspection_contracts import InspectionTarget, TenancyOcid
 from otm.tenancies.contracts import OrganizationIntent
 
@@ -79,7 +80,13 @@ class InspectionIntent(Contract):
 
 # Freeze nonsecret intent and allowlisted actor evidence.
 class IntentEventData(Contract):
-    intent: InspectionIntent | OrganizationIntent | ConfigurationIntent | ConfigurationCheckIntent
+    intent: (
+        InspectionIntent
+        | OrganizationIntent
+        | ConfigurationIntent
+        | ConfigurationCheckIntent
+        | CostIntent
+    )
     actor: ActorIdentity
 
 

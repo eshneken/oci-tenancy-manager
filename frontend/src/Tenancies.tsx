@@ -1,3 +1,4 @@
+import { CostCells, CostPanel, RefreshCosts } from "./FinancialCosts";
 import { configurationMessages, configurationMessageClass } from "./configurationStatus";
 import {TenancyOverride} from "./TenancyOverride";
 import { ConfigurationRollout } from "./ConfigurationRollout";
@@ -34,22 +35,29 @@ const overrideNames: Record<"policy" | "quota" | "budget", string> = { policy: "
 // Expose creation time without using a completed operation as an inventory action.
 function TenancyStatus({ tenancy }: { tenancy: TenancyView }) {
   const [dismissed, setDismissed] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({left:8,top:8});
+  // Consolidated inventory can scroll the status column near either viewport edge.
+  function showCreated(event: React.MouseEvent<HTMLElement> | React.FocusEvent<HTMLElement>) {
+    const box=event.currentTarget.getBoundingClientRect();
+    setTooltipPosition({left:Math.max(8,Math.min(box.left,window.innerWidth-264)),top:Math.max(8,box.top-72)});
+    setDismissed(false);
+  }
   const tooltipId = "tenancy-created-" + tenancy.id;
   const created = "Created " + new Date(tenancy.created_at).toLocaleString("en-US", {
     timeZone: "UTC", timeZoneName: "short",
   });
   return (
-    <span className="tenancy-status-info" data-tooltip-dismissed={dismissed ? "" : undefined} onMouseEnter={() => setDismissed(false)}>
+    <span className="tenancy-status-info" data-tooltip-dismissed={dismissed ? "" : undefined} onMouseEnter={showCreated}>
       <span
         className={"badge tenancy-status-label " + (tenancy.status === "active" ? "active" : "review-open")}
         tabIndex={0}
         aria-describedby={tooltipId}
-        onFocus={() => setDismissed(false)}
+        onFocus={showCreated}
         onKeyDown={event => { if (event.key === "Escape") setDismissed(true); }}
       >
         {tenancy.status === "active" ? "✓ " : ""}{statusNames[tenancy.status]}
       </span>
-      <span id={tooltipId} role="tooltip" className="tenancy-created-tooltip">{created}</span>
+      <span id={tooltipId} role="tooltip" style={tooltipPosition} className="tenancy-created-tooltip">{created}</span>
     </span>
   );
 }
@@ -103,7 +111,7 @@ export function Tenancies({
         : undefined,
     retry: false,
     refetchInterval: (value) =>
-      value.state.data?.pending_count ? 2000 : false,
+      (value.state.data?.pending_count || value.state.data?.costs_pending_count) ? 2000 : false,
   });
   const detail = useQuery({
     queryKey: ["tenancies", "detail", identifier],
@@ -113,7 +121,7 @@ export function Tenancies({
     refetchInterval: (value) =>
       ["queued", "running", "waiting"].includes(
         value.state.data?.tenancy.operation_state ?? "",
-      )
+      ) || value.state.data?.tenancy.costs?.pending
         ? 2000
         : false,
   });
@@ -168,6 +176,7 @@ export function Tenancies({
           </p>
         </div>
         <div className="page-actions">
+          {!identifier && <RefreshCosts disabled={!data?.can_refresh_costs || !!data?.costs_pending_count} expired={expired}/>}
           {identifier &&
             tenant?.status === "active" &&
             detail.data &&
@@ -275,9 +284,6 @@ export function Tenancies({
                           {[
                             ["name", "Tenancy"],
                             ["owner_name", "Owner"],
-                            ["manager_name", "Direct manager"],
-                            ["lob_name", "Industry segment"],
-                            ["member_count", "Members"],
                           ].map(([key, label]) => (
                             <th
                               scope="col"
@@ -308,6 +314,8 @@ export function Tenancies({
                             </th>
                           ))}
                           <th scope="col">Status</th>
+                          <th scope="col" aria-sort={["actual", "budget"].includes(query.sort ?? "") ? query.direction === "asc" ? "ascending" : "descending" : "none"}><div className="cost-header-pair">{(["actual", "budget"] as const).map(key => <button key={key} className="sort-button" aria-label={`Sort by ${key}`} aria-pressed={query.sort === key} title={query.sort === key ? `Sorted ${query.direction === "asc" ? "ascending" : "descending"}` : `Sort by ${key}`} onClick={() => sort(key)}>{key === "actual" ? "Actual" : "Budget"} <span aria-hidden="true">{query.sort === key ? query.direction === "asc" ? "↑" : "↓" : "↕"}</span></button>)}</div></th>
+                          <th scope="col" aria-sort={query.sort === "forecast" ? query.direction === "asc" ? "ascending" : "descending" : "none"}><button className="sort-button" onClick={() => sort("forecast")}>Forecast <span aria-hidden="true">{query.sort === "forecast" ? query.direction === "asc" ? "↑" : "↓" : "↕"}</span></button></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -327,7 +335,7 @@ export function Tenancies({
                                 {row.name}
                               </a>
                               <span className="cell-secondary">
-                                {row.kind} · {row.home_region}
+                                {row.kind} · {row.member_count} {row.member_count === 1 ? "member" : "members"}
                               </span>
                             </td>
                             <td>
@@ -347,19 +355,7 @@ export function Tenancies({
                               )}
                               <span className="cell-secondary">
                                 {row.owner_email}
-                              </span>
-                            </td>
-                            <td>{row.manager_name ?? "—"}</td>
-                            <td>
-                              {row.lob_name ?? "Unmapped"}
-                              <span className="cell-secondary">
-                                {row.leader_name}
-                              </span>
-                            </td>
-                            <td>
-                              {row.member_count}
-                              <span className="cell-secondary">
-                                Includes owner
+                                <span className="cell-secondary">{row.lob_name ?? "Unmapped"}</span>
                               </span>
                             </td>
                             <td>
@@ -382,6 +378,7 @@ export function Tenancies({
                                 </a>
                               )}
                             </td>
+                            <CostCells cost={row.costs} name={row.name}/>
                           </tr>
                         ))}
                       </tbody>
@@ -559,6 +556,7 @@ export function Tenancies({
                   </a>
                 )}
               </section>
+              <CostPanel key={"costs-"+tenant.id} cost={tenant.costs} tenancyId={tenant.id} expired={expired}/>
               {tenant.status === "active" && (
                 <section className="operation-panel tenancy-overrides" aria-labelledby="tenancy-overrides-title">
                   <h2 id="tenancy-overrides-title">Overrides</h2>

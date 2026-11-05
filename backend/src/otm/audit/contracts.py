@@ -11,6 +11,8 @@ AuditKind = Literal[
     "email_delivery",
     "operation_responsibility_changed",
     "configuration_check_outcome",
+    "cost_collection_outcome",
+    "cost_refresh_requested",
     "configuration_review_staged",
     "baseline_draft_saved",
     "baseline_published",

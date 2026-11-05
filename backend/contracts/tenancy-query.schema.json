@@ -45,7 +45,10 @@
         "owner_name",
         "manager_name",
         "lob_name",
-        "member_count"
+        "member_count",
+        "actual",
+        "budget",
+        "forecast"
       ],
       "title": "Sort",
       "type": "string"

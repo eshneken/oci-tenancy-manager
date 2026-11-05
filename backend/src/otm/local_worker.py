@@ -17,6 +17,7 @@ from otm.operations.execution import SimulatedInspectionWorker
 from otm.operations.runner import (
     register_configuration_check_task,
     register_configuration_task,
+    register_cost_task,
     register_inspection_task,
     register_organization_task,
 )
@@ -101,6 +102,10 @@ def run_worker(*, once=False):
                     transport,
                     email_enqueuer,
                     application_origin=settings.local_server.public_origin,
+                    cost_context_loader=lambda: (
+                        load_sandbox(path, policy.workspace_id),
+                        load_settings(Path(os.environ["OTM_APPLICATION_CONFIG"])).costs,
+                    ),
                 ),
                 queue,
             )
@@ -142,6 +147,29 @@ def run_worker(*, once=False):
                 clock,
                 organization_policy,
                 SimulatedConfigurationFacade(organization_policy().policy),
+            ),
+            queue,
+        )
+        from otm.financial.worker import CostCollectionWorker
+        from otm.providers.budget import SimulatedBudgetFacade
+        from otm.storage.enqueue import COST_TASK, InspectionEnqueuer
+
+        # Reload only operator settings; old work cannot silently adopt changed cost policy.
+        def cost_policy():
+            return load_settings(Path(os.environ["OTM_APPLICATION_CONFIG"])).costs
+
+        register_cost_task(
+            native,
+            CostCollectionWorker(
+                engine,
+                policy.workspace_id,
+                clock,
+                organization_policy,
+                SimulatedBudgetFacade(organization_policy().policy),
+                InspectionEnqueuer(queue=queue, task=COST_TASK),
+                profile=settings.costs,
+                profile_loader=cost_policy,
+                notifications=notifier,
             ),
             queue,
         )

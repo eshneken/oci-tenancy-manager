@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 import secrets
 import subprocess
 import tempfile
@@ -17,6 +18,86 @@ from process_groups import run_python_group
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ROOT = PROJECT_ROOT / "backend"
 IMAGE = "postgres:16@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d"
+
+
+# Expose bounded source-style identifiers; parameters, failures, SQL and credentials stay private.
+def failing_test_identifiers(cases):
+    failing_tests = []
+    for case in cases:
+        if any(case.find(kind) is not None for kind in ("failure", "error", "skipped")):
+            module = case.get("classname", "")
+            name = case.get("name", "").split("[", 1)[0]
+            failing_tests.append(
+                {
+                    "module": module
+                    if len(module) <= 160
+                    and re.fullmatch(r"tests\.[A-Za-z0-9_.]+", module)
+                    else "unknown",
+                    "test": name
+                    if len(name) <= 160 and re.fullmatch(r"test_[A-Za-z0-9_]+", name)
+                    else "unknown",
+                }
+            )
+    return failing_tests
+
+
+# Reveal only bounded locations in known public browser sources, never raw assertion/context text.
+def browser_failure_locations(cases):
+    names = {
+        "auth.spec.ts",
+        "simulation.spec.ts",
+        "financial-costs.spec.ts",
+        "configuration-drift.spec.ts",
+        "email-delivery.spec.ts",
+        "operation-responsibility.spec.ts",
+        "mapping-helpers.ts",
+        "configuration-updates.ts",
+        "tenancy-overrides.ts",
+        "select-audit.ts",
+        "baseline-authoring.ts",
+        "configuration-drift.ts",
+        "shared-membership.ts",
+    }
+    pattern = re.compile(
+        r"^\s*(?:E\s+)?at\s+[^\r\n]*?frontend[/\\]e2e[/\\]"
+        r"([a-z0-9][a-z0-9.-]{0,80}\.ts):([1-9][0-9]{0,5}):([1-9][0-9]{0,3})\)?\s*$",
+        re.MULTILINE,
+    )
+    locations = []
+    for case in cases:
+        for kind in ("failure", "error"):
+            failure = case.find(kind)
+            if failure is None:
+                continue
+            text = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", failure.text or "")
+            for match in pattern.finditer(text):
+                name, line, column = match.groups()
+                if name not in names:
+                    continue
+                # Bound numeric positions to public source too, rather than echoing arbitrary IDs.
+                try:
+                    lines = (
+                        (PROJECT_ROOT / "frontend" / "e2e" / name)
+                        .read_text()
+                        .splitlines()
+                    )
+                except OSError:
+                    continue
+                if (
+                    int(line) > len(lines)
+                    or int(column) > len(lines[int(line) - 1]) + 1
+                ):
+                    continue
+                location = {
+                    "file": "frontend/e2e/" + name,
+                    "line": int(line),
+                    "column": int(column),
+                }
+                if location not in locations:
+                    locations.append(location)
+                if len(locations) >= 10:
+                    return locations
+    return locations
 
 
 # Require real tests in isolated state, then remove only this owned container.
@@ -86,7 +167,16 @@ def main() -> int:
         created = True
         for _ in range(60):
             ready = subprocess.run(
-                ["docker", "exec", name, "pg_isready", "-h", "127.0.0.1", "-U", "otm_test"],
+                [
+                    "docker",
+                    "exec",
+                    name,
+                    "pg_isready",
+                    "-h",
+                    "127.0.0.1",
+                    "-U",
+                    "otm_test",
+                ],
                 capture_output=True,
                 check=False,
             )
@@ -116,7 +206,9 @@ def main() -> int:
             # The full suite includes real HTTPS lifecycle flows and their bounded worker waits.
             timeout=420,
         )
-        (directory / "pytest.log").write_text(result.stdout.replace(password, "[REDACTED]"))
+        (directory / "pytest.log").write_text(
+            result.stdout.replace(password, "[REDACTED]")
+        )
         evidence_valid = True
         try:
             cases = list(ElementTree.parse(directory / "junit.xml").iter("testcase"))
@@ -133,8 +225,11 @@ def main() -> int:
             and bool(cases)
             and not any(counts.values())
         )
+        failing_tests = failing_test_identifiers(cases)
         summary = {
             "status": "pass" if passed else "fail",
+            "failing_tests": failing_tests,
+            "browser_failure_locations": browser_failure_locations(cases),
             "tests": len(cases),
             **counts,
             "pytest_exit": result.returncode,
@@ -175,7 +270,9 @@ def main() -> int:
         finally:
             # Report cleanup must never prevent removal of the container owned by this run.
             if created:
-                subprocess.run(["docker", "stop", name], check=True, capture_output=True)
+                subprocess.run(
+                    ["docker", "stop", name], check=True, capture_output=True
+                )
 
 
 if __name__ == "__main__":

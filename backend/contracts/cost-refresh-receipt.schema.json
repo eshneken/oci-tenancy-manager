@@ -1,0 +1,45 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "accepted_at": {
+      "format": "date-time",
+      "title": "Accepted At",
+      "type": "string"
+    },
+    "accepted_count": {
+      "title": "Accepted Count",
+      "type": "integer"
+    },
+    "joined_count": {
+      "title": "Joined Count",
+      "type": "integer"
+    },
+    "operation_ids": {
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "title": "Operation Ids",
+      "type": "array"
+    },
+    "provider_mode": {
+      "const": "simulated",
+      "default": "simulated",
+      "title": "Provider Mode",
+      "type": "string"
+    },
+    "skipped_count": {
+      "title": "Skipped Count",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "operation_ids",
+    "accepted_count",
+    "joined_count",
+    "skipped_count",
+    "accepted_at"
+  ],
+  "title": "CostRefreshReceipt",
+  "type": "object"
+}

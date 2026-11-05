@@ -260,6 +260,13 @@ def prepare(
             updates["manager_provenance"] = "admin override: " + override.reason
         people[override.email] = person.model_copy(update=updates)
 
+    # Root display metadata is explicitly configured, including when the feed omits its row.
+    # It never invents a source observation, employee profile, membership or reporting edge.
+    if config.root_name is not None:
+        people[policy.root_email] = people[policy.root_email].model_copy(
+            update={"full_name": config.root_name}
+        )
+
     # Partial input can retain old edges/hints without calling ensure again. Such references
     # also conflict with an explicit removal; surface each identity once and block publication.
     excluded_references.update(

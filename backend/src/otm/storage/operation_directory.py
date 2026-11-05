@@ -9,6 +9,7 @@ from sqlalchemy.engine import Engine
 
 from otm.configuration.drift_contracts import ConfigurationCheckEvidence
 from otm.configuration.rollout_contracts import ConfigurationOutcome, ConfigurationRetryEvidence
+from otm.financial.contracts import CostEvidence
 from otm.notifications.contracts import NotificationEvidence
 from otm.notifications.service import list_for_operation
 from otm.operations.contracts import IntentEventData, canonical_hash
@@ -103,13 +104,20 @@ class SqlOperationDirectory:
             result_tenancy_id=row.get("registered_tenancy_id")
             if row["state"] == "succeeded"
             and frozen.intent.kind
-            in {"organization_action", "configuration_update", "configuration_check"}
+            in {
+                "organization_action",
+                "configuration_update",
+                "configuration_check",
+                "cost_collection",
+            }
             else None,
             guided_onboarding=frozen.intent.kind == "organization_action"
             and frozen.intent.onboarding_version in {1, 2},
             target_tenancy_ocid=frozen.intent.target.tenancy_ocid,
             title=ACTION_LABELS[frozen.intent.action]
             if frozen.intent.kind == "organization_action"
+            else "Refresh current month costs"
+            if frozen.intent.kind == "cost_collection"
             else "Check configuration"
             if frozen.intent.kind == "configuration_check"
             else "Update tenancy overrides"
@@ -120,7 +128,12 @@ class SqlOperationDirectory:
             else None,
             target_label=frozen.intent.target.display_name
             if frozen.intent.kind
-            in {"organization_action", "configuration_update", "configuration_check"}
+            in {
+                "organization_action",
+                "configuration_update",
+                "configuration_check",
+                "cost_collection",
+            }
             else None,
         )
 
@@ -288,7 +301,9 @@ class SqlOperationDirectory:
     def step(self, row):
         outcome = (
             (
-                ConfigurationCheckEvidence
+                CostEvidence
+                if row["command_kind"] == "cost_collection"
+                else ConfigurationCheckEvidence
                 if row["command_kind"] == "configuration_check"
                 else ConfigurationOutcome
                 if row["command_kind"] == "configuration_update"
@@ -319,7 +334,9 @@ class SqlOperationDirectory:
             ResponsibilityEvidence.model_validate_json(json.dumps(row["data"]))
         outcome = (
             (
-                ConfigurationCheckEvidence
+                CostEvidence
+                if row["kind"] == "cost_collection_outcome"
+                else ConfigurationCheckEvidence
                 if row["kind"] == "configuration_check_outcome"
                 else ConfigurationOutcome
                 if row["kind"] == "configuration_outcome"
@@ -336,6 +353,7 @@ class SqlOperationDirectory:
                 "inspection_outcome",
                 "configuration_outcome",
                 "configuration_check_outcome",
+                "cost_collection_outcome",
                 "configuration_retry",
                 "organization_action_outcome",
                 "onboarding_action",

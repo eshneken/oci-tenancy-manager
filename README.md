@@ -11,8 +11,10 @@ The implemented local application includes Organization intake/mapping/reviews, 
 Tenancies, guided onboarding and deletion, immutable administrative Audit History and CSV export,
 Operations, administrator responsibility takeover, baseline publication/overrides/updates, read-only
 configuration-drift checks, and lifecycle email with safe nonproduction routing and local capture.
-Real OCI integration, corporate SSO, managed-service deployment and hosted CI remain separately
-unqualified. Daily drift scheduling is deferred until staging/Kubernetes deployment.
+Real OCI integration, corporate SSO and managed-service deployment remain separately unqualified.
+Daily drift scheduling is deferred until staging/Kubernetes deployment. All five hosted CI jobs and
+administrator-enforced protected `master` are verified at baseline `db08b3b`; development uses
+[one PR per completed milestone](docs/how-to/github-checkpoints.md), grouping its related slices.
 
 | Location | Authority |
 | --- | --- |

@@ -7,13 +7,26 @@ slice commits. Public hosting does not itself grant an open-source license. No p
 
 ## Development workflow
 
-1. Create a short-lived feature branch from current `master`.
-2. Implement one bounded slice, updating its tests, reference guide and affected diagrams/screens.
-3. Update [the documentation index](../README.md) and the affected section indexes when documentation changes.
-4. Run the required checks and independent documentation, security and UI reviews as applicable.
-5. Open a pull request describing the problem, resulting behavior, validation and limitations.
-6. Merge only after all required checks pass against the reviewed candidate. Use ordinary merges;
-   do not force-push, bypass protections or rewrite checkpoints that have been reviewed.
+1. Create a feature branch from current `master` for one coherent milestone.
+2. Implement related slices in small local commits, updating tests, reference guides and affected
+   diagrams/screens alongside the work. A slice, follow-up fix or documentation correction does
+   not need its own pull request.
+3. Keep [the documentation index](../README.md) and affected section indexes current. Run the
+   required checks and independent documentation, security and UI reviews as applicable.
+4. Optional branch backup pushes may preserve unfinished work without opening a pull request.
+   They require the same publication/privacy safeguards and never update protected `master`.
+5. Normally keep one active development pull request. Open it for the completed milestone,
+   grouping its related slices and describing the resulting behavior, validation and limitations.
+6. Merge only after all five required checks pass against the reviewed candidate, with administrator
+   protection enforced. Use ordinary merges; do not force-push, bypass protections or rewrite
+   reviewed checkpoints. A backup push is not merge approval or a completed milestone.
+
+## Verified hosted baseline
+
+For checkpoint `db08b3b`, all five hosted Checkpoint jobs passed and protected `master` was verified,
+including administrator enforcement. This establishes the CI/protection baseline, not a waiver for
+later milestones: each reviewed candidate must pass its required checks. Preserve PR-only merges,
+no force pushes and no branch deletion. Real OCI/deployment qualification remains separate.
 
 ## Required checks
 
@@ -29,8 +42,8 @@ slice commits. Public hosting does not itself grant an open-source license. No p
 
 All lanes run for every pull request to `master`, every push to `master`, and manual workflow dispatch.
 There are no path-based skips. No private logs, test databases, screenshots or credential files are
-uploaded as CI artifacts. Defining a workflow does not prove it has run successfully on GitHub.
-Hosted required checks and branch protections must be configured and verified separately.
+uploaded as CI artifacts. The hosted jobs and protections are verified at the baseline above;
+workflow or protection changes still require execution and read-back verification, not YAML alone.
 
 ## Publication checks
 
@@ -55,14 +68,11 @@ license attribution; do not remove it merely to make a scanner quiet.
 
 ## Initial repository setup
 
-The repository remains empty until public-release sanitization and local qualification pass.
-The empty repository has no existing base branch. The first reviewed, fully qualified checkpoint
-must establish `master` before normal pull requests can target it. This is the one-time repository
-bootstrap, not an ongoing direct-push exception. Verify the initial hosted checks, configure PR-only
-protected `master` with all five required checks, enforce administrator coverage, prohibit force pushes
-and branch deletion, and read back the resulting controls. If the GitHub account cannot enforce these
-controls for the repository, report that limitation and stop normal merges; do not describe
-local policy or workflow YAML as hosted enforcement.
+The initial reviewed checkpoint established the previously empty `master` branch. Bootstrap was a
+one-time setup, not an ongoing direct-push exception. The hosted baseline above now has all five
+required checks and administrator-enforced protection. If a later account/repository change prevents
+those controls being enforced, report the limitation and stop normal merges; do not substitute a
+local policy for hosted enforcement.
 
 Git commit metadata must use an explicitly chosen publication-safe identity. Prefer the GitHub
 account's verified no-reply address rather than a corporate mailbox. Never put private names,

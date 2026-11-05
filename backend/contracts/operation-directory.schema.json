@@ -53,7 +53,8 @@
             "inspect_import",
             "organization_action",
             "configuration_update",
-            "configuration_check"
+            "configuration_check",
+            "cost_collection"
           ],
           "title": "Kind",
           "type": "string"

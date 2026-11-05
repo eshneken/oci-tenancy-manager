@@ -431,11 +431,31 @@ export async function replaceOrganizationLeader(page: Page) {
     .click();
   // Helper text and its action share a vertical center on desktop; mobile may wrap naturally.
   const leaderButton = await page.getByRole("button", { name: "Change organization leader" }).boundingBox();
-  const helperText = await page.getByText("A replacement changes the reporting boundary. Review the impact before applying.").boundingBox();
+  const helperText = await page.getByText("Changing the email replaces the reporting boundary. Changing the name updates display metadata only.").boundingBox();
   expect(leaderButton && helperText).toBeTruthy();
   expect(Math.abs((leaderButton!.y + leaderButton!.height / 2) - (helperText!.y + helperText!.height / 2))).toBeLessThan(2);
   await page.screenshot({ path: resolve(".local-dev/browser", "mapping-helper-alignment-1280.png"), fullPage: true });
   const root = page.getByLabel("Root manager email", { exact: true });
+  const rootName = page.getByLabel("Root manager name", { exact: true });
+  await expect(rootName).toHaveAttribute("readonly", "");
+  const emailBox = await root.boundingBox(), nameBox = await rootName.boundingBox();
+  expect(Math.abs(emailBox!.y - nameBox!.y)).toBeLessThan(2);
+  // A display-only edit uses the same preview/apply without a boundary-replacement confirmation.
+  await page.getByRole("button", { name: "Change organization leader" }).click();
+  await rootName.fill("Organization Director");
+  await page.getByRole("button", { name: "Preview changes" }).click();
+  await expect(page.getByLabel("Organization leader name change")).toContainText("Organization Director");
+  await expect(page.getByRole("checkbox", {name: /I reviewed this leader replacement/})).toHaveCount(0);
+  await page.getByRole("button", { name: "Apply changes" }).click();
+  await expect(rootName).toHaveAttribute("readonly", "");
+  await page.reload();
+  await expect(rootName).toHaveValue("Organization Director");
+  for (const width of [390, 320]) {
+    await page.setViewportSize({width, height:900});
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({path: resolve(".local-dev/browser", `mapping-root-${width}.png`), fullPage:true});
+  }
+  await page.setViewportSize({width:1280, height:900});
   await expect(root).toHaveAttribute("readonly", "");
   await page
     .getByRole("button", { name: "Change organization leader" })
@@ -449,6 +469,7 @@ export async function replaceOrganizationLeader(page: Page) {
     .getByRole("button", { name: "Change organization leader" })
     .click();
   await root.fill("successor@example.test");
+  await rootName.fill("Successor Director");
   await page.getByRole("button", { name: "Preview changes" }).click();
   const modal = page.getByRole("dialog", { name: "Mapping change preview" });
   await expect(

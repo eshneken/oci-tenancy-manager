@@ -7,6 +7,20 @@
           "title": "Root Email",
           "type": "string"
         },
+        "root_name": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Root Name"
+        },
         "segments": {
           "items": {
             "$ref": "#/$defs/MappingSegment"

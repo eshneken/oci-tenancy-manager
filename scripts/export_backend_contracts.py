@@ -40,6 +40,12 @@ from otm.configuration.rollout_contracts import (
     ConfigurationUpdate,
 )
 from otm.email_policy import EmailContacts, EmailPolicyView, EmailRoute
+from otm.financial.contracts import (
+    BudgetReadResult,
+    CostRefreshReceipt,
+    CostRefreshRequest,
+    CostView,
+)
 from otm.notifications.contracts import NotificationSummary
 from otm.operations.contracts import Acceptance, InspectImportRequest, IntentEventData
 from otm.operations.execution_contracts import DispatchEvent, InspectionOutcome
@@ -77,6 +83,10 @@ ROOT = Path(__file__).resolve().parents[1]
 # Export implemented auth, history, branding and operation contracts, not design-only APIs.
 def contracts() -> dict[str, dict]:
     return {
+        "cost-refresh-request.schema.json": CostRefreshRequest.model_json_schema(),
+        "cost-refresh-receipt.schema.json": CostRefreshReceipt.model_json_schema(),
+        "cost-view.schema.json": CostView.model_json_schema(),
+        "budget-read-result.schema.json": BudgetReadResult.model_json_schema(),
         "email-policy-view.schema.json": EmailPolicyView.model_json_schema(),
         "email-contacts.schema.json": EmailContacts.model_json_schema(),
         "email-route.schema.json": EmailRoute.model_json_schema(),

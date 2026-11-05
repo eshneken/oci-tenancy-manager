@@ -7,7 +7,7 @@ import procrastinate
 from sqlalchemy import select, update
 
 from otm.email_policy import EmailPolicyBlocked
-from otm.notifications.contracts import Envelope
+from otm.notifications.contracts import CostFailureNotice, Envelope
 from otm.notifications.service import decode_intent, record_evidence
 from otm.operations.contracts import canonical_hash
 from otm.operations.responsibility import execution_authority
@@ -35,7 +35,8 @@ class NotificationEnqueuer:
             queue=self.queue,
             connection=raw,
             lock="email:" + str(notification_id),
-            schedule_in={"seconds": delay_seconds},
+            # None means immediately eligible; host-derived zero ETAs can be ahead of DB time.
+            schedule_in={"seconds": delay_seconds} if delay_seconds else None,
         ).defer(notification_id=str(notification_id))
 
 
@@ -63,10 +64,12 @@ class NotificationDeliveryWorker:
         enqueuer,
         *,
         application_origin=None,
+        cost_context_loader=None,
     ):
         self.engine, self.workspace, self.clock = engine, workspace, clock
         self.policy_loader, self.transport, self.enqueuer = policy_loader, transport, enqueuer
         self.application_origin = application_origin
+        self.cost_context_loader = cost_context_loader
 
     # A committed sending head precedes all SMTP; a crash/replayed sending head becomes unknown.
     def run(self, identifier):
@@ -179,6 +182,16 @@ class NotificationDeliveryWorker:
                 safe_code=None,
                 at=at,
             )
+            if isinstance(intent, CostFailureNotice):
+                return Envelope(
+                    notification_id=identifier,
+                    recipient=recipient,
+                    subject="Tenancy cost collection failed",
+                    body="Current-month cost collection failed after automatic retries.\n\n"
+                    + f"Review tenancy: {intent.application_origin}/tenancies/{intent.tenancy_id}\n"
+                    if intent.application_origin
+                    else "Sign in and open Tenancies to retry cost collection.",
+                ), attempt
             return Envelope(
                 notification_id=identifier,
                 recipient=recipient,
@@ -197,6 +210,8 @@ class NotificationDeliveryWorker:
     # Reuse the same exact authority, assignment, route and transport fences at both send
     # boundaries.
     def _context_issue(self, connection, row, op, intent):
+        if isinstance(intent, CostFailureNotice):
+            return self._cost_context_issue(connection, row, op, intent)
         frozen = load_intent(connection, op)
         authority_id, authority_revision, _ = execution_authority(connection, op, frozen)
         if (
@@ -266,6 +281,89 @@ class NotificationDeliveryWorker:
             self._change(connection, row, state, code, at)
             if state == "pending":
                 self.enqueuer.enqueue(connection, identifier, delay_seconds=30)
+
+    # Cost notices follow current grant/source/route authority, without lifecycle responsible
+    # claims.
+    def _cost_context_issue(self, connection, row, op, intent):
+        from otm.financial.context import current_failure_source
+        from otm.financial.notifications import recovered_after
+        from otm.financial.records import decode_collection
+        from otm.storage.tables import financial_collection, tenancy
+
+        collection = (
+            connection.execute(
+                select(financial_collection).where(
+                    financial_collection.c.workspace_id == self.workspace,
+                    financial_collection.c.id == intent.collection_id,
+                    financial_collection.c.operation_id == op["id"],
+                    financial_collection.c.tenancy_id == intent.tenancy_id,
+                )
+            )
+            .mappings()
+            .one_or_none()
+        )
+        grant = (
+            connection.execute(
+                select(administrator).where(
+                    administrator.c.workspace_id == self.workspace,
+                    administrator.c.id == intent.administrator_id,
+                )
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if (
+            not grant
+            or grant["status"] != "active"
+            or grant["authorization_revision"] != intent.authorization_revision
+            or grant["email"] != intent.original_recipient
+        ):
+            return "blocked", "EMAIL_RESPONSIBLE_ADMIN_UNAVAILABLE"
+        if (
+            not collection
+            or collection["state"] != "failed"
+            or collection["safe_code"] != "COST_RETRIES_EXHAUSTED"
+            or collection["source_hash"] != intent.source_hash
+            or collection["failure_scope_hash"] != intent.failure_scope_hash
+        ):
+            return "superseded", "EMAIL_CONTEXT_CHANGED"
+        recovered = recovered_after(connection, self.workspace, intent.failure_scope_hash)
+        if recovered and recovered >= intent.created_at:
+            return "superseded", "EMAIL_CONTEXT_CHANGED"
+        decode_collection(collection)
+        registered = (
+            connection.execute(
+                select(tenancy).where(
+                    tenancy.c.workspace_id == self.workspace,
+                    tenancy.c.id == intent.tenancy_id,
+                )
+            )
+            .mappings()
+            .one_or_none()
+        )
+        # The captured target is authoritative only while registry generation/budget stay unchanged.
+        if not registered or registered["status"] != "active":
+            return "superseded", "EMAIL_CONTEXT_CHANGED"
+        if self.cost_context_loader is None:
+            return "blocked", "EMAIL_CONTEXT_CHANGED"
+        current, profile = self.cost_context_loader()
+        if current.execution_paused:
+            return "blocked", "EMAIL_CONTEXT_CHANGED"
+        policy = current.policy
+        source = current_failure_source(registered, policy, profile)
+        if source != intent.failure_scope_hash:
+            return "superseded", "EMAIL_CONTEXT_CHANGED"
+        try:
+            recipient = self.policy_loader().guard(intent.route)
+        except EmailPolicyBlocked:
+            return "blocked", "EMAIL_ROUTE_BLOCKED"
+        if recipient != intent.delivery_recipient:
+            raise ValueError("NOTIFICATION_ROUTE_INVALID")
+        if intent.application_origin != self.application_origin:
+            return "blocked", "EMAIL_APPLICATION_ORIGIN_CHANGED"
+        if intent.delivery_profile_hash != getattr(self.transport, "profile_hash", None):
+            return "blocked", "EMAIL_TRANSPORT_CHANGED"
+        return None
 
     # Head transition and append-only safe evidence always succeed or roll back together.
     def _change(self, connection, row, state, code, at):

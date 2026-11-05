@@ -1263,7 +1263,7 @@ episodes, with no new table or column. The editor's segment statement is Configu
 (id,label,leader_email,designee_emails), while root is the single permitted policy field. Apply
 pins a new immutable configuration in both recalculated versions without changing source identity
 or observation clocks. Audit JSON adds root-before/root-after and small typed mapping changes.
-[Complete59-field public DTO map and storage relationships](../reference/organization-mapping.md#public-contracts-and-fields).
+[Complete61-field public DTO map and storage relationships](../reference/organization-mapping.md#public-contracts-and-fields).
 
 ### Explicit root replacement in existing configuration JSON — 2 November 2026
 
@@ -1277,7 +1277,7 @@ retain the change; no new table, column or audit-field addition is needed for th
 MappingPreview adds nullable root_before, root_present (row supplied by the latest applied feed) and
 unresolved_count (all projected employee profiles with incomplete ancestry). MappingImpact adds
 before_ancestry/after_ancestry. These read models, not stored columns, bring the ten mapping DTOs to
-59 effective fields. MappingSettings.root_editable continues to describe ordinary editor locking;
+61 effective fields. MappingSettings.root_editable continues to describe ordinary editor locking;
 the deliberate replacement command is available after import. Changing the root does not rewrite
 feed data, source clocks, membership/owner records, managed status or accepted operation intents.
 A missing successor row is allowed with explicit warnings; a later feed supplies actual reporting
@@ -1321,7 +1321,7 @@ previews), bringing that DTO to fifteen fields. It is the inverse of the shared 
 predicate: exact configured root email with ancestry=root, or ancestry=resolved with active lob_id
 and accountable_leader_email equal to that segment's configured leader. These use existing pinned
 configuration and member evidence; no boolean column is stored. Mapping editor DTOs remain ten
-models/59 effective fields.
+models/61 effective fields.
 
 The derived actions omit create_tenancy/import_tenancy/join_shared while invalid; current command
 admission independently rejects them. Cleanup and other available decisions retain their own guards.
@@ -1905,3 +1905,29 @@ Directory counter alone accounts for the 83-field total. No physical ER update i
 
 
 The freshness validation record (private historical evidence; not distributed) records the passing unit/database/browser gates, completed reviews and both saved-instance updates with all existing rows preserved. No SQL migration was required.
+
+## Current implemented financial subset — 5 November 2026
+
+Migration 0021 adds 15-column otm_financial_collection and 17-column otm_financial_observation, for
+22 application tables. The [complete actual field dictionary](../reference/cost-visibility.md#storage-field-dictionary)
+and [implemented ER](../architecture/diagrams/financial-implemented.mmd) supersede generic proposed
+financial names for the local implementation. Exact context/source/child composite references, immutable
+observations, stable failure scope and current stored projections are implemented; live provider and
+daily scheduled collection remain unqualified.
+
+
+### Root manager display metadata — 5 November 2026
+
+`Configuration.root_name` is an optional trimmed 1–256-character display name stored in existing
+`org_workspace.configuration` and pinned `org_version.configuration` JSON. `MappingCandidate.root_name`
+is the editable input, and `MappingPreview.root_name_before` retains the saved value. The existing
+Change organization leader action unlocks both email and name; `MappingRequest.change_root` binds
+post-import changes of either field. A name-only edit does not need the email-boundary confirmation.
+
+Reconciliation copies a configured root name into the existing effective root person's `full_name`,
+so Organization derives direct-report manager names through its normal lookup. The configured name
+wins over feed names but does not create an employee profile or source observation, advance absence
+clocks, change email identity or touch tenancy associations. Historical null/omitted names retain
+feed/reference fallback. `OrganizationEvidence.mapping_root_name_before` and
+`mapping_root_name_after` record immutable display-name changes alongside the existing email fields.
+No table or column is added. See the [implemented root-name guide](../reference/organization-mapping.md#root-manager-display-name).

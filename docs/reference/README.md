@@ -18,7 +18,7 @@ is in [the engineering chapters](../engineering-design/README.md).
 - [Local recovery authentication](local-authentication.md)
 - [Read-only Operations list and detail](operations.md)
 - [Organization intake and reconciliation domain](organization-domain.md)
-- [Organization Mapping implementation and operator guide](organization-mapping.md)
+- [Organization Mapping implementation and operator guide](organization-mapping.md), including [root manager names](organization-mapping.md#root-manager-display-name)
 - [Organization directory and CSV intake](organization-screens.md)
 - [Production organization snapshot storage](organization-storage.md)
 - [Organization reviews and tenancy workflows](organization-workflows.md)
@@ -32,3 +32,7 @@ is in [the engineering chapters](../engineering-design/README.md).
 Python models and validators are authoritative for implemented contracts. Generated JSON schemas
 remain under backend/contracts/, with TypeScript generated for the frontend. Frozen migrations
 establish actual database fields; diagrams explain relationships rather than adding a second schema.
+
+- [Current-month cost visibility and financial field dictionary](cost-visibility.md)
+
+Audit history includes strict cost-worker identity projection and shared directory/CSV validation; see [audit reference](audit-history.md).

@@ -509,6 +509,8 @@ def test_native_deferral_and_registration(notice):
         app.return_value.configure_task.return_value.defer.assert_called_once_with(
             notification_id=str(c.row["id"])
         )
+        enqueue.enqueue(c.connection, c.row["id"])
+        assert app.return_value.configure_task.call_args.kwargs["schedule_in"] is None
     native = Mock()
     native.task.return_value = lambda function: function
     handler = register_notification_task(native, c.worker, "synthetic-email")

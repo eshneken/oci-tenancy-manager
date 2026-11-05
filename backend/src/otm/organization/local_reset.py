@@ -10,6 +10,8 @@ from otm.storage.tables import metadata
 from otm.storage.transaction import require_transaction
 
 TABLES = (
+    "otm_financial_observation",
+    "otm_financial_collection",
     "otm_configuration_check",
     "otm_tenancy_configuration",
     "otm_configuration_plan",
@@ -79,6 +81,7 @@ def clear_organization(connection, workspace, issuer):
                 "SELECT tablename FROM pg_tables WHERE schemaname='public' "
                 "AND (left(tablename,4)='org_' OR left(tablename,11)='otm_tenancy' "
                 "OR left(tablename,12)='otm_baseline' OR left(tablename,17)='otm_configuration' "
+                "OR left(tablename,13)='otm_financial' "
                 ")"
             )
         )
@@ -105,7 +108,7 @@ def clear_organization(connection, workspace, issuer):
         text(
             "SELECT EXISTS(SELECT 1 FROM public.otm_operation WHERE workspace_id=:workspace A"
             "ND kind IN ('organization_action','configurati"
-            "on_update','configuration_check') AND state IN "
+            "on_update','configuration_check','cost_collection') AND state IN "
             "('queued','running','waiting','needs_"
             "attention'))"
         ),

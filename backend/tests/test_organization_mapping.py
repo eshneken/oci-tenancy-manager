@@ -577,3 +577,60 @@ def test_explicit_root_replacement_previews_reporting_gaps_without_new_observati
     assert fresh.rejected and any(
         d.code == "MANAGER_REQUIRED" and d.fatal for d in fresh.diagnostics
     )
+
+
+# Root display names are bounded and preview-bound, independent of identity and source trust.
+def test_root_name_normalization_guard_and_projection():
+    from otm.organization.contracts import Configuration
+    from otm.organization.web import project
+
+    c = mapping_case()
+    body = editable(c.config).model_dump()
+    body["root_name"] = "  Organization Director  "
+    candidate = MappingCandidate.model_validate(body)
+    assert candidate.root_name == "Organization Director"
+    request = MappingRequest(context=c.context, candidate=candidate, change_root=True)
+    updated = candidate_configuration("w", c.config, None, request)
+    assert updated.root_name == "Organization Director" and updated.policy == c.config.policy
+    assert (
+        Configuration.model_validate(
+            {**updated.model_dump(), "root_name": "  Director  "}
+        ).root_name
+        == "Director"
+    )
+    with pytest.raises(OrganizationConflict, match="ROOT_FIXED"):
+        candidate_configuration(
+            "w", c.config, None, request.model_copy(update={"change_root": False})
+        )
+    for invalid in ("   ", "x" * 257):
+        with pytest.raises(ValueError):
+            MappingCandidate.model_validate({**body, "root_name": invalid})
+        with pytest.raises(ValueError):
+            Configuration.model_validate({**updated.model_dump(), "root_name": invalid})
+    assert editable(updated).root_name == "Organization Director"
+    # Omitted root rows retain their true observation history and configured/reference profile.
+    for records in (
+        c.records,
+        tuple(r for r in c.records if r.email != c.config.policy.root_email),
+    ):
+        computed = prepare(
+            records,
+            c.source,
+            updated,
+            c.head,
+            NOW + timedelta(hours=1),
+            trusted_reapply=True,
+            configuration_only=True,
+        )
+        root = next(p for p in computed.people if p.email == updated.policy.root_email)
+        old = next(p for p in c.head.people if p.email == updated.policy.root_email)
+        assert root.full_name == "Organization Director" and root.id == old.id
+        assert root.last_row_observed_at == old.last_row_observed_at
+        rows, _ = project(updated, revision(computed), c.head)
+        assert {
+            p.manager_name for p in rows if p.email in {"one@example.test", "two@example.test"}
+        } == {"Organization Director"}
+    view, _ = c.service._compute(
+        c.connection, "w", request, c.config, c.head, c.context, (), NOW, 1
+    )
+    assert view.root_name_before is None and view.candidate.root_name == "Organization Director"

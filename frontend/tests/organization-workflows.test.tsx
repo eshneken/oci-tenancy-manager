@@ -583,9 +583,9 @@ describe("Tenancy inventory and organization inbox", () => {
     for (const label of [
       "Tenancy",
       "Owner",
-      "Direct manager",
-      "Industry segment",
-      "Members",
+      "Sort by actual",
+      "Sort by budget",
+      "Forecast",
     ]) {
       await userEvent.click(
         screen.getByRole("button", { name: new RegExp("^" + label + "$") }),

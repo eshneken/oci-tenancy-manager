@@ -136,8 +136,13 @@ labels, private feeds or internal project observations. The required public cand
 addition to application tests, independent reviews and dependency scans. Asset-manifest changes need
 privacy/provenance review; never add broad secret-scanner exceptions to silence findings.
 
-The initial qualified checkpoint establishes the previously empty master branch once. Thereafter use
-focused feature branches and pull requests with all five Checkpoint checks required on protected master.
-Do not use initial-bootstrap authorization for routine direct pushes or bypasses. Keep commit metadata
-publication-safe and use the repository's configured GitHub no-reply identity. Update the central
-`docs/README.md` table of contents and affected section indexes with every documentation structure change.
+The initial qualified checkpoint established master; baseline `db08b3b` has all five hosted
+Checkpoint jobs passing and protected master verified with administrator enforcement. Thereafter
+use one pull request per completed coherent milestone, grouping related implementation slices,
+fixes, tests and documentation. Keep small local commits; optional privacy-checked feature-branch
+backup pushes may preserve unfinished work without opening a PR. Normally maintain one active
+development PR. Every reviewed milestone must pass all five required gates; administrator
+protection, PR-only master merges, no force pushes and no branch deletion remain unchanged.
+Do not use initial-bootstrap or backup-push authorization for routine direct master updates or
+bypasses. Keep commit metadata publication-safe and use the configured GitHub no-reply identity.
+Update docs/README.md and affected section indexes with documentation structure changes.

@@ -8,6 +8,7 @@ from pydantic import Field
 from otm.configuration.contracts import BaselineVersion
 from otm.contracts import Contract, UtcInstant
 from otm.email_policy import EmailContacts
+from otm.financial.contracts import CostView
 from otm.tenancies.contracts import Action, OrganizationContext
 
 
@@ -76,6 +77,7 @@ class AssociationView(Contract):
 
 # A registered tenancy includes its accountable owner in the count and exposes pending work.
 class TenancyView(Contract):
+    costs: CostView = CostView()
     # Confirmed missing/different categories; freshness and read availability are separate.
     configuration_issue_count: int = 0
     configuration_confirmed_issue_count: int = 0
@@ -151,12 +153,23 @@ class TenancyQuery(Contract):
     page: Annotated[int, Field(ge=1, le=100000)] = 1
     page_size: Literal[10, 25, 50] = 10
     query: Annotated[str, Field(max_length=128)] = ""
-    sort: Literal["name", "owner_name", "manager_name", "lob_name", "member_count"] = "name"
+    sort: Literal[
+        "name",
+        "owner_name",
+        "manager_name",
+        "lob_name",
+        "member_count",
+        "actual",
+        "budget",
+        "forecast",
+    ] = "name"
     direction: Literal["asc", "desc"] = "asc"
 
 
 # Inventory cards count active/pending registered children rather than organization employees.
 class TenancyDirectory(Contract):
+    costs_pending_count: int = 0
+    can_refresh_costs: bool = False
     latest_baseline_id: UUID | None = None
     latest_baseline_version_number: int | None = None
     items: tuple[TenancyView, ...]

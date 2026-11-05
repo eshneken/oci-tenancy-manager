@@ -437,6 +437,23 @@ def setup_database(root: Path, state: LocalState, project: Path) -> LocalState:
                 "GRANT UPDATE(state,attempts,attempt_id,last_attempt_at,next_attempt_at,sent_at,"
                 "safe_code,updated_at) ON public.otm_notification_outbox TO otm_local_worker"
             )
+            # API admits bounded financial heads; only workers publish immutable observations.
+            connection.exec_driver_sql(
+                "GRANT SELECT,INSERT ON public.otm_financial_collection TO otm_local_api"
+            )
+            connection.exec_driver_sql(
+                "GRANT SELECT ON public.otm_financial_collection TO otm_local_worker"
+            )
+            connection.exec_driver_sql(
+                "GRANT UPDATE(state,attempts,attempt_id,next_attempt_at,safe_code,updated_at) "
+                "ON public.otm_financial_collection TO otm_local_worker"
+            )
+            connection.exec_driver_sql(
+                "GRANT SELECT ON public.otm_financial_observation TO otm_local_api,otm_local_worker"
+            )
+            connection.exec_driver_sql(
+                "GRANT INSERT ON public.otm_financial_observation TO otm_local_worker"
+            )
             from otm.organization.reviews import initialize_existing_reviews
 
             initialize_existing_reviews(connection)

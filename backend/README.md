@@ -226,3 +226,7 @@ table through 0020 brings source to 20 application tables. Both release kinds us
 otm-validate-release gate against a trusted expected environment; hosted CI remains uninstalled.
 [Local capture runbook](../docs/how-to/lifecycle-email-runbook.md). Local capture and saved-instance
 qualification pass; OCI/Vault/production-SMTP and uncontrolled provider mail remain unqualified.
+
+[Current-month cost visibility](../docs/reference/cost-visibility.md) adds coherent stored Budget reads,
+bounded worker retries and the consolidated Tenancies dashboard behind an explicitly simulated facade.
+Daily scheduling and live OCI qualification remain staging work.

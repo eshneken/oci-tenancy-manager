@@ -40,6 +40,48 @@
       "title": "BrandingSettings",
       "type": "object"
     },
+    "CostPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "profile": {
+          "const": "simulated-usd-utc-1",
+          "default": "simulated-usd-utc-1",
+          "title": "Profile",
+          "type": "string"
+        },
+        "retrieval_max_age_seconds": {
+          "default": 86400,
+          "maximum": 604800,
+          "minimum": 1,
+          "title": "Retrieval Max Age Seconds",
+          "type": "integer"
+        },
+        "retry_delays_seconds": {
+          "default": [
+            30,
+            120
+          ],
+          "items": {
+            "maximum": 3600,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 0,
+          "title": "Retry Delays Seconds",
+          "type": "array"
+        },
+        "source_max_age_seconds": {
+          "default": 86400,
+          "maximum": 604800,
+          "minimum": 1,
+          "title": "Source Max Age Seconds",
+          "type": "integer"
+        }
+      },
+      "title": "CostPolicy",
+      "type": "object"
+    },
     "LocalAuthSettings": {
       "additionalProperties": false,
       "properties": {
@@ -287,6 +329,18 @@
         "display_name": "OCI Tenancy Manager",
         "icon_url": null,
         "logo_url": null
+      }
+    },
+    "costs": {
+      "$ref": "#/$defs/CostPolicy",
+      "default": {
+        "profile": "simulated-usd-utc-1",
+        "retrieval_max_age_seconds": 86400,
+        "retry_delays_seconds": [
+          30,
+          120
+        ],
+        "source_max_age_seconds": 86400
       }
     },
     "environment": {
