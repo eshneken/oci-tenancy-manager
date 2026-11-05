@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 import secrets
 import subprocess
 import tempfile
@@ -17,6 +18,26 @@ from process_groups import run_python_group
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ROOT = PROJECT_ROOT / "backend"
 IMAGE = "postgres:16@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d"
+
+
+# Expose bounded source-style identifiers; parameters, failures, SQL and credentials stay private.
+def failing_test_identifiers(cases):
+    failing_tests = []
+    for case in cases:
+        if any(case.find(kind) is not None for kind in ("failure", "error", "skipped")):
+            module = case.get("classname", "")
+            name = case.get("name", "").split("[", 1)[0]
+            failing_tests.append(
+                {
+                    "module": module
+                    if len(module) <= 160 and re.fullmatch(r"tests\.[A-Za-z0-9_.]+", module)
+                    else "unknown",
+                    "test": name
+                    if len(name) <= 160 and re.fullmatch(r"test_[A-Za-z0-9_]+", name)
+                    else "unknown",
+                }
+            )
+    return failing_tests
 
 
 # Require real tests in isolated state, then remove only this owned container.
@@ -86,7 +107,16 @@ def main() -> int:
         created = True
         for _ in range(60):
             ready = subprocess.run(
-                ["docker", "exec", name, "pg_isready", "-h", "127.0.0.1", "-U", "otm_test"],
+                [
+                    "docker",
+                    "exec",
+                    name,
+                    "pg_isready",
+                    "-h",
+                    "127.0.0.1",
+                    "-U",
+                    "otm_test",
+                ],
                 capture_output=True,
                 check=False,
             )
@@ -133,8 +163,10 @@ def main() -> int:
             and bool(cases)
             and not any(counts.values())
         )
+        failing_tests = failing_test_identifiers(cases)
         summary = {
             "status": "pass" if passed else "fail",
+            "failing_tests": failing_tests,
             "tests": len(cases),
             **counts,
             "pytest_exit": result.returncode,
