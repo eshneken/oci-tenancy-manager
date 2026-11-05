@@ -89,9 +89,12 @@ class CostCollectionWorker:
                     if not isinstance(result, BudgetReadResult):
                         raise ValueError("COST_SOURCE_UNQUALIFIED")
                     result = BudgetReadResult.model_validate(result)
-                    snapshot = normalize(target, result, self.clock())
-                    if snapshot.retrieved_at < row["updated_at"]:
+                    candidate = normalize(target, result, self.clock())
+                    if candidate.retrieved_at < row["updated_at"]:
                         raise ValueError("COST_SOURCE_UNQUALIFIED")
+                    # Publish only after every response fence passes; rejected candidates cannot
+                    # replace retained facts or become evidence that a failure episode recovered.
+                    snapshot = candidate
                     code = (
                         "COST_READ_COMPLETE"
                         if snapshot.source_state == "qualified"

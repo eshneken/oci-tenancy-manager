@@ -477,3 +477,68 @@ def test_completed_cost_audit_directory_search_and_csv(workflow_case):
     rows = list(csv.DictReader(StringIO(content.decode("utf-8-sig"))))
     assert len(rows) == 1 and rows[0]["actor_name"] == "Cost collection worker"
     assert rows[0]["safe_code"] == "COST_READ_COMPLETE"
+
+
+# An older retrieval is not publishable or recovery, and its warning survives a new pending read.
+def test_rejected_retrieval_preserves_facts_and_failure_until_recovery(workflow_case):
+    from otm.financial.notifications import recovered_after
+
+    c = workflow_case
+    identifier = children(c, 1)[0]
+    service, worker, facade = costs(c)
+    original = facade.read_managed_budget
+    first = service.start(c.principal, request(identifier))
+    worker.run(first.operation_ids[0])
+    initial = c.workflow.tenancy_detail(c.principal, identifier).tenancy.costs
+    c.clock.return_value += timedelta(seconds=2)
+
+    # This response is from the right month/child but predates this exact read attempt.
+    def outdated(target, stored, at):
+        return original(target, stored, at).model_copy(
+            update={
+                "actual_spend": "999.0000",
+                "forecasted_spend": "999.0000",
+                "captured_at": at - timedelta(seconds=1),
+                "time_spend_computed": at - timedelta(seconds=1),
+            }
+        )
+
+    facade.read_managed_budget = outdated
+    second = service.start(c.principal, request(identifier))
+    worker.run(second.operation_ids[0])
+    rejected = c.workflow.tenancy_detail(c.principal, identifier).tenancy.costs
+    assert rejected.state == "unqualified" and rejected.actual == initial.actual
+    assert rejected.retrieved_at == initial.retrieved_at and not rejected.actual_over_budget
+    with c.engine.connect() as connection:
+        collection = (
+            connection.execute(
+                select(financial_collection).where(
+                    financial_collection.c.operation_id == second.operation_ids[0]
+                )
+            )
+            .mappings()
+            .one()
+        )
+        assert (
+            connection.scalar(
+                select(func.count())
+                .select_from(financial_observation)
+                .where(
+                    financial_observation.c.workspace_id == c.policy.workspace_id,
+                    financial_observation.c.tenancy_id == identifier,
+                )
+            )
+            == 1
+        )
+        assert (
+            recovered_after(connection, c.policy.workspace_id, collection["failure_scope_hash"])
+            == initial.retrieved_at
+        )
+    c.clock.return_value += timedelta(seconds=2)
+    third = service.start(c.principal, request(identifier))
+    pending = c.workflow.tenancy_detail(c.principal, identifier).tenancy.costs
+    assert pending.pending and pending.state == "unqualified" and pending.actual == initial.actual
+    facade.read_managed_budget = original
+    worker.run(third.operation_ids[0])
+    recovered = c.workflow.tenancy_detail(c.principal, identifier).tenancy.costs
+    assert recovered.state == "current" and recovered.retrieved_at > initial.retrieved_at

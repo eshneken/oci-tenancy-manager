@@ -375,6 +375,8 @@ def test_worker_dispatch_outcomes(cost_case, case, expected):
     ):
         c.worker.run(c.operation["id"])
         assert finish.call_args.args[-1] == expected
+        if case == "old":
+            assert finish.call_args.args[-2] is None
     with (
         patch.object(c.worker, "_prepare", return_value=None),
         patch.object(c.worker, "_finish") as finish,

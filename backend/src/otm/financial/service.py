@@ -81,6 +81,7 @@ class CostCollections:
             if head and head.get("continuing_outcome") in {
                 "COST_READ_UNAVAILABLE",
                 "COST_RETRIES_EXHAUSTED",
+                "COST_SOURCE_UNQUALIFIED",
             }:
                 failure = head["continuing_outcome"]
             if head and head["safe_code"] == "COST_SOURCE_UNQUALIFIED":

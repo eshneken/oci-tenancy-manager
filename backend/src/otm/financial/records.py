@@ -79,7 +79,9 @@ def current_records(connection, workspace, sources):
             history.c.workspace_id == financial_collection.c.workspace_id,
             history.c.source_hash == financial_collection.c.source_hash,
             (
-                history.c.safe_code.in_(("COST_READ_UNAVAILABLE", "COST_RETRIES_EXHAUSTED"))
+                history.c.safe_code.in_(
+                    ("COST_READ_UNAVAILABLE", "COST_RETRIES_EXHAUSTED", "COST_SOURCE_UNQUALIFIED")
+                )
                 | normalized
             ),
         )

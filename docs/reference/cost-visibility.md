@@ -163,3 +163,10 @@ anchors the notice/recovery episode. This does not store a mailbox password or p
 | `TenancyQuery.sort` values `actual`, `budget`, `forecast` | Allowlisted Decimal sort over qualified current/partial observed values; missing or unusable last in both directions, stable child-ID ties |
 
 No amount, failure state, sorting projection or navigation affordance is a second source of truth.
+
+
+A response whose retrieval timestamp precedes its exact read attempt is rejected before it can
+become a persisted observation. Retained financial facts remain unchanged, it does not count as
+failure-episode recovery, and its unqualified indicator remains visible through a later pending
+refresh until a new usable acquisition replaces it. Unit and disposable PostgreSQL regressions
+cover this response fence and recovery transition.
