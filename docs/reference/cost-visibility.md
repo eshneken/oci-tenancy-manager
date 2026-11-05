@@ -1,6 +1,7 @@
 # Current-month cost visibility
 
-Status: implementation candidate; final validation and saved-instance installation are pending.
+Status: implemented and locally validated on 5 November 2026; both saved preview instances upgraded.
+Hosted checks run on the milestone branch; live OCI and daily scheduled admission remain deferred.
 
 This milestone adds stored current-month financial visibility to the existing Tenancies list and
 detail. It uses a read-only Budget facade and the native durable worker. Local reads are explicitly

@@ -963,3 +963,7 @@ UI and D48 email episodes. All related slices share one milestone branch/PR unde
 [checkpoint policy](../how-to/github-checkpoints.md). Daily cost/drift admission remains deferred to
 staging/Kubernetes alongside live OCI qualification; current-month history is internal evidence, not
 a historical reporting product.
+
+Local financial gates and both preserved-preview upgrades are qualified in the
+[5 November cost checkpoint](../history/cost-visibility-checkpoint-2026-11-05.md). Hosted results
+remain bound to each checked commit; scheduling/live-provider qualification remains deferred.
