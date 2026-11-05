@@ -90,7 +90,14 @@ is restored; existing cleanup and other administrator decisions remain available
 No automatic reassignment to an unrelated
 segment is allowed. Keep at least one validly configured segment; deleting the last mapping is
 rejected. The approved root-replacement extension supersedes the original post-import root lock.
-Ordinary editing keeps that field read-only; Change organization leader explicitly unlocks it.
+Ordinary editing keeps root email and root display name read-only; Change organization leader
+explicitly unlocks both fields on one responsive row. The optional, trimmed 1–256-character
+`Configuration.root_name` is administrator-owned display metadata; it populates the effective root
+person name and hence direct-report manager names, even when the feed omits the root row. It does
+not confer source presence or change any identity, tenancy association or observation timestamp.
+Preview and immutable audit retain before/after names. Name-only edits do not require the boundary
+replacement checkbox; email replacements keep the existing confirmation. Legacy null names retain
+feed/reference fallback. No new table or migration is required.
 Preview shows old/new root, latest-feed row presence, unresolved employee paths and before/after
 ancestry/classification. A missing replacement row is allowed with a warning, not an invented reporting
 edge or automatic successor. Deliberate Apply is followed by an updated feed to resolve reporting gaps.

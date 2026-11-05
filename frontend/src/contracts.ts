@@ -309,6 +309,7 @@ export type ExpectedRevision3 = number;
 export type Available = boolean;
 export type Blockers2 = string[];
 export type RootEmail = string;
+export type RootName = string | null;
 /**
  * @minItems 1
  * @maxItems 50
@@ -366,6 +367,7 @@ export type Pages2 = number;
 export type PreviewToken1 = string;
 export type Roles1 = MappingRole[];
 export type RootBefore = string | null;
+export type RootNameBefore = string | null;
 export type RootPresent = boolean;
 export type UnassignedCount = number;
 export type UnresolvedCount = number;
@@ -1388,6 +1390,7 @@ export interface MappingSettings {
 }
 export interface MappingCandidate {
   root_email: RootEmail;
+  root_name?: RootName;
   segments: Segments;
 }
 export interface MappingSegment {
@@ -1433,6 +1436,7 @@ export interface MappingPreview {
   preview_token: PreviewToken1;
   roles: Roles1;
   root_before: RootBefore;
+  root_name_before?: RootNameBefore;
   root_present: RootPresent;
   unassigned_count: UnassignedCount;
   unresolved_count: UnresolvedCount;

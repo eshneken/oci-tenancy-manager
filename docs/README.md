@@ -59,3 +59,6 @@ See the [implemented ER](architecture/diagrams/financial-implemented.mmd) and
 Financial validation and saved-data preservation: [5 November checkpoint](history/cost-visibility-checkpoint-2026-11-05.md).
 
 Cost-refresh audit regression coverage: [Audit history](reference/audit-history.md#cost-collection-worker-events).
+
+Root manager naming and paired settings controls are specified in the
+[implemented Organization Mapping guide](reference/organization-mapping.md#root-manager-display-name).

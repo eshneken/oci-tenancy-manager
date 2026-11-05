@@ -1773,3 +1773,7 @@ dialog p {
 @media(max-width:640px) { .cost-panel-heading { align-items:flex-start; } .cost-detail-values { gap:1rem; } }
 
 .cost-panel-heading h2 { margin:0; }
+
+/* Paired root identity fields share a row and stack naturally on small screens. */
+.mapping-root-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 1rem; margin-top: 1rem; }
+.mapping-root-fields label { display: grid; gap: .5rem; min-width: 0; }

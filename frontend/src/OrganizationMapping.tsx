@@ -10,6 +10,7 @@ import type {
 
 type Draft = {
   root_email: string;
+  root_name: string;
   segments: {
     id: string | null;
     label: string;
@@ -19,6 +20,7 @@ type Draft = {
 };
 const empty: Draft = {
   root_email: "",
+  root_name: "",
   segments: [{ id: null, label: "", leader_email: "", designees: "" }],
 };
 const ancestryLabels: Record<string, string> = {
@@ -41,6 +43,7 @@ function draft(candidate: MappingCandidate | null): Draft {
   return candidate
     ? {
         root_email: candidate.root_email,
+        root_name: candidate.root_name ?? "",
         segments: candidate.segments.map((s) => ({
           id: s.id ?? null,
           label: s.label,
@@ -281,6 +284,7 @@ export function OrganizationMapping({
         if (!segments[0]) return;
         const candidate: MappingCandidate = {
           root_email: form.root_email,
+          root_name: form.root_name.trim() || null,
           segments: [segments[0], ...segments.slice(1)],
         };
         const checked = await api.previewMapping(
@@ -386,19 +390,32 @@ export function OrganizationMapping({
               ? "Saved settings"
               : "Not configured"}
         </span>
-        <label>
-          Root manager email
-          <input
-            required
-            type="email"
-            maxLength={320}
-            ref={rootEmail}
-            value={form.root_email}
-            readOnly={!data.root_editable && !changingRoot}
-            disabled={busy}
-            onChange={(e) => edit({ ...form, root_email: e.target.value })}
-          />
-        </label>
+        <div className="mapping-root-fields">
+          <label>
+            Root manager email
+            <input
+              required
+              type="email"
+              maxLength={320}
+              ref={rootEmail}
+              value={form.root_email}
+              readOnly={!data.root_editable && !changingRoot}
+              disabled={busy}
+              onChange={(e) => edit({ ...form, root_email: e.target.value })}
+            />
+          </label>
+          <label>
+            Root manager name
+            <input
+              type="text"
+              maxLength={256}
+              value={form.root_name}
+              readOnly={!data.root_editable && !changingRoot}
+              disabled={busy}
+              onChange={(e) => edit({ ...form, root_name: e.target.value })}
+            />
+          </label>
+        </div>
         {!data.root_editable && (
           <div className="mapping-actions">
             <button
@@ -413,8 +430,8 @@ export function OrganizationMapping({
               Change organization leader
             </button>
             <p className="muted">
-              A replacement changes the reporting boundary. Review the impact
-              before applying.
+              Changing the email replaces the reporting boundary. Changing the
+              name updates display metadata only.
             </p>
           </div>
         )}
@@ -618,6 +635,18 @@ export function OrganizationMapping({
             Review the proposed assignments before applying. Your saved settings
             stay unchanged until you apply.
           </p>
+          {preview.root_name_before !== (preview.candidate.root_name ?? null) && (
+            <section
+              className="notice"
+              aria-label="Organization leader name change"
+            >
+              <strong>Root manager name</strong>
+              <p>
+                {preview.root_name_before ?? "Not configured"} →{" "}
+                {preview.candidate.root_name ?? "Not configured"}
+              </p>
+            </section>
+          )}
           {preview.root_before &&
             preview.root_before !== preview.candidate.root_email && (
               <section

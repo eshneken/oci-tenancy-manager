@@ -50,10 +50,20 @@ class MappingSegment(Contract):
 class MappingCandidate(Contract):
     # Exact email, at most320characters; post-import replacement requires explicit intent.
     root_email: str
+    # Optional trimmed root display name (1–256 characters); null keeps legacy feed-name fallback.
+    root_name: Annotated[str, Field(min_length=1, max_length=256)] | None = None
     # Complete active set of1–50 mappings; omission removes a segment only after preview/Apply.
     segments: Annotated[tuple[MappingSegment, ...], Field(min_length=1, max_length=50)]
 
     _root = field_validator("root_email")(mapping_email)
+
+    # Reject blank names while allowing older mapping documents to omit this display metadata.
+    @field_validator("root_name")
+    @classmethod
+    def clean_root_name(cls, value):
+        if value is not None and not value.strip():
+            raise ValueError("ROOT_NAME_REQUIRED")
+        return value.strip() if value is not None else None
 
     # Labels, leaders and existing IDs must identify one unambiguous segment each.
     @model_validator(mode="after")
@@ -82,7 +92,7 @@ class MappingContext(Contract):
 class MappingRequest(Contract):
     context: MappingContext
     candidate: MappingCandidate
-    # Explicit administrator intent to replace a saved root; included in the preview binding.
+    # Explicit intent to edit a saved root email or display name; included in the preview binding.
     change_root: bool = False
 
 
@@ -147,6 +157,8 @@ class MappingSettings(Contract):
 class MappingPreview(Contract):
     # Saved boundary before this proposal; null only before initial configuration.
     root_before: str | None
+    # Saved display name; null for revisions created before root display names were configured.
+    root_name_before: Annotated[str, Field(max_length=256)] | None = None
     # Exact employee-row presence in the latest accepted source, not proof of eligibility.
     root_present: bool
     # Whole projected employee population with incomplete paths, independent of impact pagination.

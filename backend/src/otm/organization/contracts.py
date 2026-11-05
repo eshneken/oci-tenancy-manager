@@ -217,6 +217,9 @@ class Configuration(Contract):
     id: UUID
     # Trusted source/population, coverage, freshness and alert policy for this revision.
     policy: SourcePolicy
+    # Optional trimmed display name (1–256 characters) for the configured root; legacy settings
+    # retain feed/reference names until an administrator supplies this display-only value.
+    root_name: str | None = Field(default=None, min_length=1, max_length=256)
     # Optional business branches with unique IDs/leaders and explicit accountability designees.
     lobs: tuple[Lob, ...] = ()
     # Explicit manager relationships with provenance; at most one edge per employee key.
@@ -231,6 +234,14 @@ class Configuration(Contract):
     identity_merges: tuple[IdentityMerge, ...] = ()
     # Directory eligibility is separate from the source/reporting graph and immutable history.
     managed_exclusions: tuple[UUID, ...] = ()
+
+    # Share bounded root-name normalization with the mapping input without changing email identity.
+    @field_validator("root_name")
+    @classmethod
+    def normalize_root_name(cls, value):
+        if value is not None and not value.strip():
+            raise ValueError("ROOT_NAME_REQUIRED")
+        return value.strip() if value is not None else None
 
     # Keep durable organization removals normalized without deleting historical identity.
     @field_validator("excluded_emails")

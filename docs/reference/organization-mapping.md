@@ -65,7 +65,7 @@ selected segment leader must still satisfy the existing eligibility guard. Uploa
 containing the intended reporting relationships afterward to resolve those gaps. Presence alone is
 not a healthy-role or complete-graph guarantee.
 
-The API requires change_root=true for a post-import root change. That flag, candidate and revision
+The API requires change_root=true for a post-import root email or display-name change. That flag, candidate and revision
 context are part of the preview digest; changing any of them invalidates the reviewed request. The
 checkbox is a browser review affordance, not a separate server authorization field. Apply rechecks
 current administrator authority, blockers and exact context, and permits only root_email to differ
@@ -115,7 +115,7 @@ available, and the old root becomes an ordinary retained identity rather than be
 
 ## Public contracts and fields
 
-Ten mapping DTOs expose 59 effective fields, including inherited Apply fields. They are exported to
+Ten mapping DTOs expose 61 effective fields, including inherited Apply fields. They are exported to
 JSON Schema and generated TypeScript. Public mapping endpoints are authenticated, workspace-scoped,
 and use existing same-origin protections. JSON commands are bounded to 64 KiB and reject unknown fields.
 Neither source trust nor actor/workspace can be submitted through this form.
@@ -123,15 +123,15 @@ Neither source trust nor actor/workspace can be submitted through this form.
 | Contract | Fields and authority |
 | --- | --- |
 | `MappingSegment` (4) | `id` (null for new, existing active server ID for edits), `label`, `leader_email`, `designee_emails`. Persist as `Configuration.lobs` (`id`, `label`, `leader_email`, `designee_emails`). |
-| `MappingCandidate` (2) | `root_email` → allowed `Configuration.policy.root_email`; `segments` → complete active `lobs`. All other policy/configuration fields remain server-owned and unchanged. |
+| `MappingCandidate` (3) | `root_email` → allowed `Configuration.policy.root_email`; optional `root_name` → `Configuration.root_name` (trimmed 1–256 characters); `segments` → complete active `lobs`. All other policy/configuration fields remain server-owned and unchanged. |
 | `MappingContext` (4) | `configuration_id`, `applied_version_id`, `proposed_version_id`, `registry_revision`, from `org_workspace`; null heads/configuration and revision0 represent an unconfigured workspace. |
-| `MappingRequest` (3) | `context`, `candidate`, `change_root` (false by default). The flag explicitly permits a post-import boundary replacement and is included in the candidate/context digest; no computed employee impacts are accepted. |
+| `MappingRequest` (3) | `context`, `candidate`, `change_root` (false by default). The flag explicitly permits a post-import root email or name edit and is included in the candidate/context digest; no computed employee impacts are accepted. |
 | `MappingApply` (4) | Inherited `context`, `candidate`, `change_root`; `preview_token` is the canonical request digest including replacement intent. It is a consistency binding, not administrator authorization. Apply independently reauthorizes and recomputes. |
 | `MappingChange` (3) | `segment_id`, `before`, `after`: small old/new mapping records; null side denotes addition/removal. Also stored as administrative audit evidence. |
 | `MappingRole` (5) | `segment_id`, `segment_name`, `role` (`leader`/`designee`), `email`, `status`. Derived from saved nominations and latest applied evidence; never a new identity or tenancy grant. |
 | `MappingImpact` (11) | `person_id`, `name`, `email`, `before_ancestry`, `after_ancestry`, `before_segment`, `after_segment`, `before_leader`, `after_leader`, `before_designees`, `after_designees`. Derived, paginated preview only; ancestry is root/resolved/incomplete from the old and recalculated graphs. |
 | `MappingSettings` (8) | `configured`, `available`, `context`, `candidate`, `root_editable`, `has_feed`, `roles`, `blockers`. `available` depends on existing settings or explicitly composed trusted source policy. `root_editable` describes ordinary editing before a feed; false requires the explicit replacement flow rather than permanently prohibiting replacement. |
-| `MappingPreview` (15) | `root_before`, `root_present`, `unresolved_count`, `context`, `candidate`, `preview_token`, `changes`, `roles`, `affected_count`, `unassigned_count`, `items`, `page`, `pages`, `blockers`, `has_feed`. `root_before` is the nullable saved root; `root_present` means an actual row in the latest applied source (false before a feed), not inferred presence or eligibility. `unresolved_count` covers all projected employee profiles with incomplete ancestry, not just the impact page. No persistence or authority is inferred from rendering the preview. |
+| `MappingPreview` (16) | `root_before`, `root_name_before`, `root_present`, `unresolved_count`, `context`, `candidate`, `preview_token`, `changes`, `roles`, `affected_count`, `unassigned_count`, `items`, `page`, `pages`, `blockers`, `has_feed`. `root_before` is the nullable saved root; `root_present` means an actual row in the latest applied source (false before a feed), not inferred presence or eligibility. `unresolved_count` covers all projected employee profiles with incomplete ancestry, not just the impact page. No persistence or authority is inferred from rendering the preview. |
 
 Role statuses: `healthy`, `departed`, `excluded`, `profile_missing`, `ancestry_incomplete`,
 `branch_changed`, `not_verified`. The last is a neutral pre-feed nomination state. A healthy designee's
@@ -151,7 +151,8 @@ its configuration in `org_version.configuration`. Employee assignment, leader an
 designee fields remain in the existing `org_member` projection/data. Existing `org_person`
 lifecycle controls are not changed by mapping-only Apply. Existing recommendations hold role episodes.
 
-`OrganizationEvidence` gains `mapping_root_before`, `mapping_root_after` and `mapping_changes`.
+`OrganizationEvidence` records `mapping_root_before`, `mapping_root_after`,
+`mapping_root_name_before`, `mapping_root_name_after` and `mapping_changes`.
 The existing immutable `organization_configured` audit event records the verified actor and new
 configuration identity with these small changes; it does not log a whole HR feed. Failed transactions
 roll back configuration, head pointers, versions, recommendations and audit together. Initial/pre-feed
@@ -244,9 +245,30 @@ new create/import/shared-join provisioning is blocked.
 
 PersonWorkflow adds derived mapping_required (false by compatibility default, explicitly computed by
 the server); its fifteen-field preview and current command checks share the same accountability rule.
-This is separate from the ten mapping DTOs (59 effective fields in total), which are unchanged. The UI warning/repair link
+This is separate from the ten mapping DTOs (61 effective fields in total), which include root display metadata. The UI warning/repair link
 is an affordance; the server independently removes/rejects blocked actions and repeats a defensive
 admission check. No new table, column, migration or audit-event kind is introduced.
 
 The correction passed 1,041 backend/database/browser tests and 177 frontend unit tests. Separate
 unit coverage is 96.18% backend and 97.52% frontend; earlier receipts retain their original scope. See the [workflow field map](organization-workflows.md#personworkflow).
+
+
+## Root manager display name
+
+Root manager email and Root manager name share one responsive row and the existing **Change
+organization leader** button. The same Preview/Apply transaction saves both. Name-only editing
+requires no boundary-replacement confirmation; email replacement retains its existing confirmation.
+The preview shows the saved and proposed name; audit details retain those values at the time of Apply.
+
+`Configuration.root_name` is optional for existing records; missing values preserve existing
+feed/reference-name fallback. A supplied name is administrator-owned display metadata and wins over
+root names in subsequent feeds. It is copied into the effective root person so direct reports show
+the same friendly manager name as other employees. It does not change email identity, source rows,
+profile type, observation/census timestamps, absence eligibility or tenancy associations. A configured
+root name never proves that the leader is present in a feed. Storage uses the existing configuration
+JSON and effective member name; no new table or migration is required.
+
+Manual check: unlock the root fields, enter a name without changing email, Preview and Apply.
+Refresh Organization and confirm direct reports display the configured manager name. Reload settings
+to confirm persistence. Load another feed and confirm the name persists and role-health checks still
+reflect actual feed presence. A replacement should update both fields before Preview.

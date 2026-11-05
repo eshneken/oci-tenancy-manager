@@ -31,6 +31,12 @@ def describe_organization(kind, evidence):
                 f"{evidence.mapping_root_before or 'Not configured'} → "
                 f"{evidence.mapping_root_after or 'Not recorded'}"
             )
+        if evidence.mapping_root_name_before != evidence.mapping_root_name_after:
+            details.append(
+                "Organization leader name: "
+                f"{evidence.mapping_root_name_before or 'Not configured'} → "
+                f"{evidence.mapping_root_name_after or 'Not configured'}"
+            )
         for change in evidence.mapping_changes:
             before, after = change.before, change.after
             label = after.label if after else before.label

@@ -18,7 +18,7 @@ is in [the engineering chapters](../engineering-design/README.md).
 - [Local recovery authentication](local-authentication.md)
 - [Read-only Operations list and detail](operations.md)
 - [Organization intake and reconciliation domain](organization-domain.md)
-- [Organization Mapping implementation and operator guide](organization-mapping.md)
+- [Organization Mapping implementation and operator guide](organization-mapping.md), including [root manager names](organization-mapping.md#root-manager-display-name)
 - [Organization directory and CSV intake](organization-screens.md)
 - [Production organization snapshot storage](organization-storage.md)
 - [Organization reviews and tenancy workflows](organization-workflows.md)

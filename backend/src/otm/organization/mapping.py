@@ -29,6 +29,7 @@ from otm.storage.tables import operation, org_feed, org_workspace
 def editable(config):
     return MappingCandidate(
         root_email=config.policy.root_email,
+        root_name=config.root_name,
         segments=tuple(MappingSegment(**s.model_dump()) for s in config.lobs),
     )
 
@@ -40,7 +41,10 @@ def candidate_configuration(workspace, current, template, request):
         raise OrganizationConflict("MAPPING_SETUP_UNAVAILABLE")
     if (
         request.context.applied_version_id
-        and request.candidate.root_email != base.policy.root_email
+        and (
+            request.candidate.root_email != base.policy.root_email
+            or request.candidate.root_name != base.root_name
+        )
         and not request.change_root
     ):
         raise OrganizationConflict("MAPPING_ROOT_FIXED")
@@ -62,6 +66,7 @@ def candidate_configuration(workspace, current, template, request):
         {
             **base.model_dump(),
             "id": config_id,
+            "root_name": request.candidate.root_name,
             "policy": {**base.policy.model_dump(), "root_email": request.candidate.root_email},
             "lobs": segments,
         }
@@ -237,6 +242,7 @@ class MappingService:
         page = min(max(page, 1), pages)
         view = MappingPreview(
             root_before=config.policy.root_email if config else None,
+            root_name_before=config.root_name if config else None,
             root_present=candidate.policy.root_email in supplied,
             unresolved_count=sum(
                 p.profile == "employee" and p.ancestry == "incomplete" for p in projected.people
@@ -327,5 +333,7 @@ class MappingService:
                 mapping_changes=view.changes,
                 mapping_root_before=config.policy.root_email if config else None,
                 mapping_root_after=candidate.policy.root_email,
+                mapping_root_name_before=config.root_name if config else None,
+                mapping_root_name_after=candidate.root_name,
             )
         return self.read(principal)

@@ -225,6 +225,32 @@
       "default": null,
       "title": "Mapping Root Before"
     },
+    "mapping_root_name_after": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mapping Root Name After"
+    },
+    "mapping_root_name_before": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mapping Root Name Before"
+    },
     "person_count": {
       "default": 0,
       "maximum": 10000,
