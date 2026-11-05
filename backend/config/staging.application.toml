@@ -1,0 +1,40 @@
+# Nonsecret application settings; operator-reviewed per deployment target.
+# Trusted release target must independently match this environment.
+environment = "staging"
+# Supported settings schema version; exactly 1.
+schema_version = 1
+
+[sessions]
+# Idle session lifetime in seconds.
+idle_timeout_seconds = 1800
+# Maximum session lifetime in seconds.
+absolute_timeout_seconds = 28800
+[sessions.cleanup]
+# Daily UTC cleanup hour.
+hour_utc = 2
+# Daily UTC cleanup minute.
+minute_utc = 0
+# Maximum deleted sessions per transaction.
+batch_size = 500
+# Maximum transactions per cleanup invocation.
+max_batches = 20
+
+[notifications]
+# Explicitly enable after qualifying SMTP secret custody and deployment composition.
+enabled = false
+# Replace with your approved TLS-capable delivery service DNS name.
+smtp_host = "smtp.example.test"
+# STARTTLS SMTP port; never expose a local capture endpoint in hosted deployments.
+smtp_port = 587
+# Replace with the organization-approved sender mailbox.
+sender_email = "no-reply@example.test"
+# Hosted delivery requires verified TLS.
+tls_mode = "starttls"
+# Replace with the trusted HTTPS application origin; links never derive from browser headers.
+application_origin = "https://otm.example.test"
+# Authenticated SMTP requires both username and a separately managed password_secret_reference.
+# No actual credential values belong in this document or CI artifacts.
+
+[testing]
+# Required single destination; replace with the testing administrator's controlled mailbox.
+email_override = "testing-admin@example.test"

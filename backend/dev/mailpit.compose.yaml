@@ -1,0 +1,21 @@
+# Local-only capture. SMTP relay is not configured; published ports bind loopback only.
+services:
+  mailpit:
+    image: axllent/mailpit:v1.32.0@sha256:0790692be935ea4420d085694f7985b1f692ca6a8771ab0e0bd8ba75ac180498
+    labels:
+      otm.local.instance: "${OTM_MAIL_INSTANCE:?Select the owned local instance ID}"
+    user: "1000:1000"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    environment:
+      MP_DISABLE_VERSION_CHECK: "true"
+      MP_SMTP_DISABLE_RDNS: "true"
+      MP_MAX_MESSAGES: "200"
+      MP_DATABASE: /tmp/mailpit.db
+    ports:
+      - "127.0.0.1:${OTM_MAIL_SMTP_PORT:?Select a free SMTP port}:1025"
+      - "127.0.0.1:${OTM_MAIL_UI_PORT:?Select a free capture UI port}:8025"
+    mem_limit: 128m

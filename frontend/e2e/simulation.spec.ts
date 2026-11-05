@@ -1,0 +1,808 @@
+import {tenancyOverrides} from "./tenancy-overrides";
+import {existingCompartmentMembership} from "./shared-membership";
+import {configurationUpdates} from "./configuration-updates";
+import { baselineAuthoring } from "./baseline-authoring";
+import { auditSelectPickers } from "./select-audit";
+import { initialMapping, mappingInventory } from "./mapping-helpers";
+import { test, expect, type Page } from "@playwright/test";
+import { createHmac } from "node:crypto";
+import { resolve } from "node:path";
+
+// Hold fixture factors only in memory; no live enrollment, browser storage, URLs or traces.
+function authenticatorCode() {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  const bits = [...process.env.OTM_E2E_SEED!]
+    .map((character) =>
+      alphabet.indexOf(character).toString(2).padStart(5, "0"),
+    )
+    .join("");
+  const key = Buffer.from(
+    bits.match(/.{8}/g)!.map((byte) => parseInt(byte, 2)),
+  );
+  const counter = Buffer.alloc(8);
+  counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 30000)));
+  const digest = createHmac("sha1", key).update(counter).digest();
+  const offset = digest[19] & 15;
+  return ((digest.readUInt32BE(offset) & 0x7fffffff) % 1000000)
+    .toString()
+    .padStart(6, "0");
+}
+
+// Submit through real HTTPS/SQL admission and wait for an independent native worker's publication.
+test("submit simulated success and access failure through a real separate worker", async ({
+  page,
+}) => {
+  test.setTimeout(210_000);
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.name));
+  await page.goto("/login");
+  await page
+    .getByLabel("Password", { exact: true })
+    .fill(process.env.OTM_E2E_PASSWORD!);
+  await page
+    .getByLabel("Authenticator code", { exact: true })
+    .fill(authenticatorCode());
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.getByRole("link", { name: "Operations", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Run simulated inspection", exact: true })
+    .click();
+  const modal = page.getByRole("dialog");
+  await expect(modal.getByRole("button", { name: "Cancel" })).toBeFocused();
+  await modal
+    .getByLabel("Synthetic target")
+    .selectOption("ocid1.tenancy.oc1..otmsimhealthy");
+  for (const width of [1280, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await page.screenshot({
+      path: resolve(".local-dev/browser", `simulation-form-${width}.png`),
+      fullPage: true,
+    });
+  }
+  const response = page.waitForResponse(
+    (value) =>
+      value.url().endsWith("/api/operations/inspect") &&
+      value.request().method() === "POST",
+  );
+  await modal
+    .getByRole("button", { name: "Run simulated inspection", exact: true })
+    .click();
+  const accepted = await response;
+  expect(accepted.status()).toBe(202);
+  expect(Object.keys(accepted.request().postDataJSON()).sort()).toEqual([
+    "client_request_key",
+    "tenancy_ocid",
+  ]);
+  await expect(page.getByText("Succeeded", { exact: true })).toBeVisible({
+    timeout: 20000,
+  });
+  await expect(
+    page.getByText("TENANCY_INSPECTED", { exact: true }),
+  ).toHaveCount(2);
+  await page.getByRole("link", { name: /Back to operations/ }).click();
+  await page
+    .getByRole("button", { name: "Run simulated inspection", exact: true })
+    .click();
+  await modal
+    .getByLabel("Synthetic target")
+    .selectOption("ocid1.tenancy.oc1..otmsimaccessdenied");
+  await modal
+    .getByRole("button", { name: "Run simulated inspection", exact: true })
+    .click();
+  await expect(page.getByText("ACCESS_DENIED", { exact: true })).toHaveCount(
+    2,
+    { timeout: 20000 },
+  );
+  await expect(
+    page.getByText("Simulation issue", { exact: true }).first(),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Simulation ended with an issue. No action is required.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  // A read-only failed diagnostic stays in history but creates no actionable workload badge.
+  await expect.poll(async () => (await (await page.request.get("/api/operations")).json()).attention_count).toBe(0);
+  const operationsNavigation = page.getByRole("link", { name: "Operations", exact: true });
+  await expect(operationsNavigation.locator(".nav-count")).toHaveCount(0, { timeout: 10000 });
+  for (const width of [1280, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.screenshot({
+      path: resolve(".local-dev/browser", `simulation-issue-${width}.png`),
+      fullPage: true,
+    });
+  }
+  await page.getByRole("link", { name: /Back to operations/ }).click();
+  await expect(
+    page
+      .getByRole("table")
+      .getByText("Simulation issue", { exact: true })
+      .first(),
+  ).toBeVisible();
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.getByRole("table").scrollIntoViewIfNeeded();
+  await page.screenshot({
+    path: resolve(".local-dev/browser/simulation-issue-list-1280.png"),
+    fullPage: true,
+  });
+  await page.goBack();
+  await page.reload();
+  await expect(page.getByText("ACCESS_DENIED", { exact: true })).toHaveCount(2);
+  await organizationFlows(page);
+  expect(errors).toEqual([]);
+});
+
+// Exercise the actual organization UI, restricted API role and native lifecycle worker with synthetic feeds.
+async function organizationFlows(page: Page) {
+  page.setDefaultTimeout(10_000);
+  const rows = [
+    "Root,root@example.test,,",
+    "Leader One,one@example.test,root@example.test,root@example.test",
+    "Leader Two,two@example.test,root@example.test,root@example.test",
+    "Delegate,delegate@example.test,one@example.test,one@example.test",
+    "Engineer,engineer@example.test,one@example.test,one@example.test",
+  ];
+  let uploadIndex = 0;
+  const modal = page.getByRole("dialog");
+
+  // Distinct qualified source times keep successive observations ordered without wall-clock waits.
+  async function upload(values: string[]) {
+    await page.getByRole("link", { name: "Organization", exact: true }).click();
+    await page.getByRole("button", { name: "Upload organization CSV" }).click();
+    await page.getByLabel("Organization CSV", { exact: true }).setInputFiles({
+      name: "synthetic.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from(
+        "EMPLOYEE_FULL_NAME,EMAIL,MGR,TOP_MGR\n" + values.join("\n") + "\n",
+      ),
+    });
+    await page
+      .getByLabel("Organization data as of (UTC)", { exact: true })
+      .fill(
+        new Date(Date.now() - (40 - uploadIndex++) * 60_000)
+          .toISOString()
+          .slice(0, 16),
+      );
+    await page
+      .getByRole("button", { name: "Process feed", exact: true })
+      .click();
+    await expect(
+      page.getByText(
+        "Organization feed processed. Valid metadata is up to date.",
+        { exact: true },
+      ),
+    ).toBeVisible();
+  }
+
+  let sharedName = "",
+    personalName = "";
+  // Acceptance closes the handoff; verified completion is observed separately in real Operations.
+  let defaultAdvanced=false;
+  let latestVersion=1;
+  async function finish(action: string) {
+    if (action === "Create tenancy") {
+      await modal
+        .getByLabel("Requested tenancy name", { exact: true })
+        .fill("sandbox" + Date.now().toString());
+      await modal
+        .getByRole("combobox", { name: "Home region", exact: true })
+        .selectOption("us-phoenix-1");
+      const requestedName=await modal.getByLabel("Requested tenancy name",{exact:true}).inputValue();
+      await modal.getByRole("link",{name:`Version ${latestVersion}`,exact:true}).click();
+      await expect(modal.getByRole("heading",{name:`Published baseline v${latestVersion}`,exact:true})).toBeVisible();
+      await page.goBack();
+      await expect(modal.getByLabel("Requested tenancy name",{exact:true})).toHaveValue(requestedName);
+      await page.goForward();
+      await expect(modal.getByRole("heading",{name:`Published baseline v${latestVersion}`,exact:true})).toBeVisible();
+      await modal.getByRole("link",{name:/Back to create tenancy/}).click();
+      await expect(modal.getByLabel("Requested tenancy name",{exact:true})).toHaveValue(requestedName);
+      await expect(modal.getByRole("combobox",{name:"Home region",exact:true})).toHaveValue("us-phoenix-1");
+      for (const width of [1280, 390, 320]) {
+        await page.setViewportSize({ width, height: 900 });
+        expect(
+          await modal.evaluate(
+            (element) => element.scrollWidth <= element.clientWidth,
+          ),
+        ).toBe(true);
+        await page.screenshot({
+          path: resolve(
+            ".local-dev/browser",
+            `create-metadata-form-${width}.png`,
+          ),
+          fullPage: true,
+        });
+      }
+      await page.setViewportSize({ width: 1280, height: 900 });
+    }
+    const response = page.waitForResponse(
+      (value) =>
+        value.url().endsWith("/api/organization/actions") &&
+        value.request().method() === "POST",
+    );
+    await modal.getByRole("button", { name: action, exact: true }).click();
+    const result = await response;
+    expect(result.status()).toBe(202);
+    await expect(
+      modal.getByText("Operation accepted", { exact: true }),
+    ).toBeVisible();
+    if (action === "Create tenancy") {
+      const target = await modal.getByRole("link", { name: "View operation" }).getAttribute("href");
+      await modal.getByRole("button", { name: "Done", exact: true }).click();
+      // A queued request may become waiting after admission; navigating elsewhere must refresh it.
+      await expect.poll(async () => {
+        const response = await page.request.get("/api" + target);
+        return (await response.json()).operation.state;
+      }, { timeout: 20_000 }).toBe("waiting");
+      await page.getByRole("link", { name: "Audit history", exact: true }).click();
+      const link = page.getByRole("link", { name: "Operations", exact: true });
+      await expect(link.locator(".nav-count")).toBeVisible();
+      const count = await (await page.request.get("/api/operations")).json();
+      await expect(link.locator(".nav-count")).toHaveText(String(count.attention_count));
+      await page.getByRole("link", { name: "Administrators", exact: true }).click();
+      await expect(link.locator(".nav-count")).toBeVisible();
+      await page.goto(target!);
+    } else await modal.getByRole("link", { name: "View operation" }).click();
+    if (action === "Create tenancy" || action === "Import tenancy") {
+      const panel = page.getByRole("region", {
+        name: "Administrator action required",
+      });
+      await expect(panel).toBeVisible({ timeout: 20_000 });
+      const expectedVersion=latestVersion;
+      await expect(panel.getByRole("link",{name:`Version ${expectedVersion}`,exact:true})).toBeVisible();
+      if (!defaultAdvanced) {
+        const originalUrl=page.url();
+        await page.getByRole("link",{name:"Configuration",exact:true}).click();
+        await page.getByRole("button",{name:"Publish",exact:true}).click();
+        await page.getByRole("button",{name:"Publish baseline",exact:true}).click();
+        await expect(page.getByRole("heading",{name:"Published baseline v2",exact:true})).toBeVisible();
+        defaultAdvanced=true;latestVersion=2;
+        await page.goto(originalUrl);
+        await expect(panel.getByRole("link",{name:"Version 1",exact:true})).toBeVisible();
+        await page.screenshot({path:resolve(".local-dev/browser","baseline-pinned-after-publication-1280.png"),fullPage:true});
+      }
+      if (action === "Import tenancy") {
+        const target = panel.getByLabel("Tenancy OCID", { exact: true });
+        await expect(target).toHaveAttribute("readonly", "");
+        await expect(target).not.toHaveValue("");
+      } else {
+        await expect(
+          panel.getByLabel("Tenancy OCID", { exact: true }),
+        ).toBeEditable();
+      }
+      await expect(
+        panel.getByRole("heading", { name: "OCI administrator checklist" }),
+      ).toBeVisible();
+      await expect(
+        panel.getByText(/A work-request ID is not a tenancy OCID/),
+      ).toBeVisible();
+      await expect(
+        panel.getByRole("link", { name: "Upload an API public key" }),
+      ).toHaveAttribute(
+        "href",
+        "https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm",
+      );
+      if (action === "Create tenancy") {
+        await expect(
+          panel.getByRole("link", { name: "Oracle activation guide" }),
+        ).toBeVisible();
+      } else {
+        await panel.getByText("Oracle transfer procedures").click();
+        await expect(
+          panel.getByRole("link", {
+            name: "Transfer a created child (approval uses the CLI)",
+          }),
+        ).toBeVisible();
+      }
+      for (const width of [1280, 390, 320]) {
+        await page.setViewportSize({ width, height: 900 });
+        expect(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth,
+          ),
+        ).toBe(true);
+        await page.screenshot({
+          path: resolve(
+            ".local-dev/browser",
+            `onboarding-${action === "Create tenancy" ? "create" : "import"}-handoff-${width}.png`,
+          ),
+          fullPage: true,
+        });
+      }
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await panel
+        .getByRole("button", { name: "Use simulated handoff" })
+        .click();
+      if (!sharedName) {
+        await panel
+          .getByLabel("Bootstrap user OCID", { exact: true })
+          .fill("ocid1.user.oc1..otmsimwrong");
+        await panel
+          .getByRole("button", { name: "Verify handoff", exact: true })
+          .click();
+        const blocked = page.getByRole("region", {
+          name: "Setup needs attention",
+        });
+        await expect(blocked).toBeVisible({ timeout: 20_000 });
+        await page.reload();
+        await expect(
+          blocked.getByLabel("Bootstrap user OCID", { exact: true }),
+        ).toHaveValue("ocid1.user.oc1..otmsimwrong");
+        await blocked
+          .getByRole("button", { name: "Use simulated handoff" })
+          .click();
+        await blocked
+          .getByRole("button", { name: "Verify handoff", exact: true })
+          .click();
+      } else {
+        await panel
+          .getByRole("button", { name: "Verify handoff", exact: true })
+          .click();
+      }
+
+      const review = page.getByRole("region", {
+        name: "Ready for your review",
+      });
+      await expect(review).toBeVisible({ timeout: 20_000 });
+      if (action === "Create tenancy")
+        await expect(
+          review.getByText("us-phoenix-1", { exact: true }),
+        ).toBeVisible();
+      // Read the named discovery fact; read-only contact fields may appear earlier in this panel.
+      const text = await review.getByText("Discovered tenancy",{exact:true}).locator("..").locator("dd").textContent();
+      if (!sharedName) sharedName = text!.split("ocid1")[0].trim();
+      else personalName = text!.split("ocid1")[0].trim();
+      await page.reload();
+      await expect(review).toBeVisible();
+      await expect(
+        review.getByRole("button", { name: "Start setup" }),
+      ).toBeDisabled();
+      await reviewCheckboxControl(
+        page,
+        "I confirm the exact temporary accounts above may be removed after replacement access is verified.",
+        "onboarding-cleanup",
+      );
+      await review.getByRole("checkbox").check();
+      await review.getByRole("button", { name: "Start setup" }).click();
+      await expect(
+        page.getByRole("heading", {
+          name: "Local setup verified",
+          exact: true,
+        }),
+      ).toBeVisible({ timeout: 20_000 });
+    }
+    await expect(page.getByText("Succeeded", { exact: true })).toBeVisible({
+      timeout: 20_000,
+    });
+    if (action === "Create tenancy" || action === "Import tenancy") {
+      const link = page.getByRole("link", {
+        name: "Open tenancy",
+        exact: true,
+      });
+      await expect(link).toHaveCount(1);
+      await expect(link).toHaveAttribute("href", /\/tenancies\/[a-f0-9-]+$/);
+      await link.click();
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+        action === "Create tenancy" && sharedName && !personalName
+          ? sharedName
+          : personalName,
+      );
+    }
+  }
+
+  await initialMapping(page);
+  await baselineAuthoring(page);
+  await upload(rows);
+  await page
+    .getByRole("link", { name: "Organization drift", exact: true })
+    .click();
+  await expect(
+    page.getByText("No actionable organization drift", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Organization", exact: true }).click();
+  await page.getByRole("button", { name: "Leader One", exact: true }).click();
+  await expect(
+    modal.getByRole("combobox", { name: "Action", exact: true }),
+  ).toHaveValue("");
+  await expect(
+    modal.getByRole("button", { name: "Continue", exact: true }),
+  ).toBeDisabled();
+  await expect(modal.getByLabel("Tenancy name", { exact: true })).toHaveCount(
+    0,
+  );
+  await page.screenshot({
+    path: resolve(".local-dev/browser/employee-action-choice-1280.png"),
+    fullPage: true,
+  });
+  await modal
+    .getByRole("combobox", { name: "Action", exact: true })
+    .selectOption("create_tenancy");
+  await reviewSelectControl(page);
+  await modal
+    .getByRole("combobox", { name: "Tenancy type", exact: true })
+    .selectOption("shared");
+  await finish("Create tenancy");
+  await mappingInventory(page, sharedName);
+
+  const joinedRows = [
+    ...rows,
+    "New Employee,new@example.test,one@example.test,one@example.test",
+  ];
+  await upload(joinedRows);
+  await page
+    .getByRole("link", { name: "Organization drift", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Review", exact: true }).click();
+  await expect(
+    modal.getByRole("combobox", { name: "Action", exact: true }),
+  ).toHaveValue("");
+  await modal
+    .getByRole("combobox", { name: "Action", exact: true })
+    .selectOption("create_tenancy");
+  for (const width of [1280, 390, 320]) {
+    await page.setViewportSize({ width, height: 760 });
+    expect(
+      await modal.evaluate(
+        (element) => element.scrollWidth <= element.clientWidth,
+      ),
+    ).toBe(true);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await page.screenshot({
+      path: resolve(".local-dev/browser", `organization-create-${width}.png`),
+      fullPage: true,
+    });
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await finish("Create tenancy");
+  await page
+    .getByRole("link", { name: "Organization drift", exact: true })
+    .click();
+  await expect(
+    page.getByText("No actionable organization drift", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Organization", exact: true }).click();
+  await page.getByRole("button", { name: "New Employee", exact: true }).click();
+  await modal
+    .getByRole("combobox", { name: "Action", exact: true })
+    .selectOption("join_shared");
+  await modal
+    .getByRole("combobox", { name: "Shared tenancy", exact: true })
+    .selectOption({ label: sharedName + " · owner Leader One" });
+  const parents = modal.getByRole("combobox", {
+    name: "Existing parent compartment",
+    exact: true,
+  });
+  await expect(parents).toBeEnabled();
+  const parent = await parents.locator("option").nth(1).getAttribute("value");
+  await parents.selectOption(parent!);
+  await finish("Add to shared tenancy");
+  await page.getByRole("link", { name: "Tenancies", exact: true }).click();
+  const sharedRow = page.getByRole("row").filter({
+    has: page.getByRole("link", { name: sharedName, exact: true }),
+  });
+  await expect(sharedRow).toContainText("2");
+  await page.getByLabel("Shared tenancies only", { exact: true }).check();
+  await expect(
+    page.getByRole("link", { name: personalName, exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: sharedName, exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Total tenancies", { exact: true }).locator(".."),
+  ).toContainText("2");
+  await reviewCheckboxControl(page, "Shared tenancies only", "shared-only");
+  await page.getByLabel("Shared tenancies only", { exact: true }).uncheck();
+  await expect(
+    page.getByRole("link", { name: personalName, exact: true }),
+  ).toBeVisible();
+  for (const width of [1280, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await page.screenshot({
+      path: resolve(".local-dev/browser", `tenancy-inventory-${width}.png`),
+      fullPage: true,
+    });
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await configurationUpdates(page,sharedName);latestVersion=3;
+  latestVersion=await tenancyOverrides(page,sharedName);
+  await existingCompartmentMembership(page,sharedName);
+  await upload(rows);
+  await page
+    .getByRole("link", { name: "Organization drift", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Review", exact: true }).click();
+  await modal
+    .getByRole("combobox", { name: "Action", exact: true })
+    .selectOption("offboard_person");
+  await modal
+    .getByRole("combobox", {
+      name: "Action for " + personalName,
+      exact: true,
+    })
+    .selectOption("delete");
+  await modal
+    .getByRole("combobox", {
+      name: "Action for " + sharedName,
+      exact: true,
+    })
+    .selectOption("remove");
+  await reviewCheckboxControl(
+    page,
+    "I reviewed the shared tenancy impact",
+    "shared-impact",
+  );
+  await modal.getByLabel(/I reviewed the shared tenancy impact/).check();
+  await page.screenshot({
+    path: resolve(".local-dev/browser/organization-offboard-1280.png"),
+    fullPage: true,
+  });
+  await finish("Offboard employee");
+  await page.getByRole("link", { name: "Organization", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "New Employee", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("link", { name: "Tenancies", exact: true }).click();
+  await page.getByRole("link", { name: sharedName, exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Manual cleanup guidance", exact: true }),
+  ).toBeVisible();
+  await upload(joinedRows);
+  await page
+    .getByRole("link", { name: "Organization drift", exact: true })
+    .click();
+  await expect(page.getByText("New employee", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Review", exact: true }).click();
+  await modal
+    .getByRole("combobox", { name: "Action", exact: true })
+    .selectOption("import_tenancy");
+  await finish("Import tenancy");
+
+  // Exclusion is a real organization decision; the visibility toggle must reach the backend filter.
+  await page.getByRole("link", { name: "Organization", exact: true }).click();
+  await page.getByRole("button", { name: "Delegate", exact: true }).click();
+  await modal
+    .getByRole("combobox", { name: "Action", exact: true })
+    .selectOption("no_tenancy_required");
+  await modal
+    .getByRole("button", { name: "No tenancy required", exact: true })
+    .click();
+  await expect(
+    modal.getByText("Decision saved", { exact: true }),
+  ).toBeVisible();
+  await modal.getByRole("button", { name: "Done", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Delegate", exact: true }),
+  ).toHaveCount(0);
+  await reviewCheckboxControl(page);
+  await page.getByLabel("Include excluded profiles", { exact: true }).check();
+  await expect(
+    page.getByRole("button", { name: "Delegate", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("No tenancy required", { exact: true }),
+  ).toBeVisible();
+  await page.getByLabel("Include excluded profiles", { exact: true }).uncheck();
+  await expect(
+    page.getByRole("button", { name: "Delegate", exact: true }),
+  ).toHaveCount(0);
+  // Whole-tenancy deletion is distinct from member removal and uses the installed API/worker roles.
+  await page.getByRole("link", { name: "Organization", exact: true }).click();
+  await page.getByRole("button", { name: "New Employee", exact: true }).click();
+  await modal
+    .getByRole("combobox", { name: "Action", exact: true })
+    .selectOption("join_shared");
+  await modal
+    .getByRole("combobox", { name: "Shared tenancy", exact: true })
+    .selectOption({ label: sharedName + " · owner Leader One" });
+  const returningParent = modal.getByRole("combobox", {
+    name: "Existing parent compartment",
+    exact: true,
+  });
+  await expect(returningParent).toBeEnabled();
+  const projects = await returningParent
+    .getByRole("option", { name: /^Projects/ })
+    .getAttribute("value");
+  await returningParent.selectOption(projects!);
+  await modal
+    .getByLabel("Employee compartment name", { exact: true })
+    .fill("returning-shared-member");
+  await finish("Add to shared tenancy");
+  for (const name of [sharedName, personalName]) {
+    await page.getByRole("link", { name: "Tenancies", exact: true }).click();
+    await page.getByRole("link", { name, exact: true }).click();
+    await expect(
+      page.getByRole("button", { name: "Delete tenancy", exact: true }),
+    ).toBeVisible();
+    // Synthetic long-title stress changes only this disposable page DOM, never registry data.
+    if (name === sharedName) {
+      const heading = page.getByRole("heading", { level: 1 });
+      const original = await heading.textContent();
+      await heading.evaluate((node) => {
+        node.textContent = "SyntheticLongTenancyName".repeat(8);
+      });
+      for (const width of [1280, 900, 768, 390, 320]) {
+        await page.setViewportSize({ width, height: 900 });
+        expect(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth,
+          ),
+        ).toBe(true);
+        const buttons = await page
+          .locator(".page-actions button")
+          .evaluateAll((nodes) =>
+            nodes.map((node) => node.getBoundingClientRect().height),
+          );
+        expect(buttons).toHaveLength(2);
+        expect(Math.abs(buttons[0] - buttons[1])).toBeLessThanOrEqual(1);
+      }
+      await heading.evaluate((node, value) => {
+        node.textContent = value;
+      }, original);
+      await page.setViewportSize({ width: 1280, height: 900 });
+    }
+    await page
+      .getByRole("button", { name: "Delete tenancy", exact: true })
+      .click();
+    await expect(
+      modal.getByRole("button", { name: "Initiate termination" }),
+    ).toBeDisabled();
+    if (name === sharedName) {
+      await expect(
+        modal.getByText("New Employee", { exact: true }),
+      ).toBeVisible();
+      await expect(
+        modal.getByText(/1 other tenancy association/),
+      ).toBeVisible();
+      await reviewCheckboxControl(
+        page,
+        "I have reviewed the affected people and confirm termination of this entire tenancy.",
+        "tenancy-deletion",
+      );
+      for (const width of [390, 320]) {
+        await page.setViewportSize({ width, height: 900 });
+        const consent = modal.getByRole("checkbox");
+        await consent.check();
+        await expect(consent).toBeChecked();
+        await expect(
+          modal.getByRole("button", { name: "Initiate termination" }),
+        ).toBeEnabled();
+        await consent.uncheck();
+      }
+      await page.setViewportSize({ width: 1280, height: 900 });
+    }
+    await modal.getByRole("checkbox").check();
+    const accepted = page.waitForResponse(
+      (value) =>
+        value.url().endsWith("/api/tenancy-deletions") &&
+        value.request().method() === "POST",
+    );
+    await modal.getByRole("button", { name: "Initiate termination" }).click();
+    expect((await accepted).status()).toBe(202);
+    await expect(
+      modal.getByText("Termination requested", { exact: true }),
+    ).toBeVisible();
+    await modal.getByRole("link", { name: "View operation" }).click();
+    await expect(page.getByText("Succeeded", { exact: true })).toBeVisible({
+      timeout: 20_000,
+    });
+  }
+}
+
+// Inspect real native picker geometry and pointer/keyboard behavior inside the scrolling dialog.
+async function reviewSelectControl(page: Page) {
+  const select = page
+    .getByRole("dialog")
+    .getByRole("combobox", { name: "Tenancy type", exact: true });
+  expect(
+    await page.evaluate(() => CSS.supports("appearance", "base-select")),
+  ).toBe(true);
+  for (const width of [1280, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await select.selectOption("individual");
+    await select.scrollIntoViewIfNeeded();
+    await page.screenshot({
+      path: resolve(".local-dev/browser", `select-closed-${width}.png`),
+      fullPage: true,
+    });
+    await select.click();
+    const option = page.getByRole("option", { name: "Shared", exact: true });
+    await expect(option).toBeVisible();
+    const field = (await select.boundingBox())!;
+    const first = (await page
+      .getByRole("option", { name: "Individual", exact: true })
+      .boundingBox())!;
+    const last = (await option.boundingBox())!;
+    expect(first.x).toBeGreaterThanOrEqual(field.x - 1);
+    expect(last.x + last.width).toBeLessThanOrEqual(field.x + field.width + 1);
+    if (900 - field.y - field.height >= 130) {
+      expect(first.y).toBeGreaterThanOrEqual(field.y + field.height);
+    } else {
+      expect(
+        first.y >= field.y + field.height || last.y + last.height <= field.y,
+      ).toBe(true);
+    }
+    expect(last.x + last.width).toBeLessThanOrEqual(width);
+    await page.screenshot({
+      path: resolve(".local-dev/browser", `select-open-${width}.png`),
+      fullPage: true,
+    });
+    await option.click();
+    await expect(select).toHaveValue("shared");
+    await expect(select).toBeFocused();
+    await select.click();
+    await page.keyboard.press("Escape");
+    await expect(select).toHaveValue("shared");
+    await expect(select).toBeFocused();
+    await select.click();
+    await page.keyboard.press("Home");
+    await page.keyboard.press("Enter");
+    await expect(select).toHaveValue("individual");
+  }
+  await page.emulateMedia({ forcedColors: "active" });
+  await expect(select).toHaveCSS("appearance", "auto");
+  await expect(select).toBeVisible();
+  await page.emulateMedia({ forcedColors: "none" });
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await auditSelectPickers(page, "workflow-dialog");
+}
+
+// Compare the actual text line and checkbox centers, not just their inherited container heights.
+async function reviewCheckboxControl(
+  page: Page,
+  labelText = "Include excluded profiles",
+  snapshot = "checkbox-alignment",
+) {
+  const checkbox = page.getByLabel(labelText);
+  for (const width of [1280, 900, 768, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await checkbox.scrollIntoViewIfNeeded();
+    if (labelText === "Shared tenancies only") {
+      const search = await page
+        .getByRole("searchbox", { name: "Search tenancies" })
+        .boundingBox();
+      expect(search!.width).toBeGreaterThanOrEqual(220);
+    }
+    const geometry = await checkbox.evaluate((element, expectedText) => {
+      const label = element.closest("label")!;
+      const walker = document.createTreeWalker(label, NodeFilter.SHOW_TEXT);
+      let node: Node | null;
+      while ((node = walker.nextNode())) {
+        if (node.textContent?.includes(expectedText)) break;
+      }
+      const range = document.createRange();
+      range.selectNodeContents(node!);
+      const line = [...range.getClientRects()].find((rect) => rect.width > 0)!;
+      const box = element.getBoundingClientRect();
+      return {
+        centerDifference: Math.abs(
+          box.y + box.height / 2 - line.y - line.height / 2,
+        ),
+        height: box.height,
+        labelHeight: label.getBoundingClientRect().height,
+      };
+    }, labelText);
+    expect(geometry.centerDifference).toBeLessThanOrEqual(2);
+    expect(geometry.height).toBeGreaterThanOrEqual(16);
+    expect(geometry.height).toBeLessThanOrEqual(24);
+    expect(geometry.labelHeight).toBeGreaterThanOrEqual(44);
+    await page.screenshot({
+      path: resolve(".local-dev/browser", `${snapshot}-${width}.png`),
+      fullPage: true,
+    });
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
+}

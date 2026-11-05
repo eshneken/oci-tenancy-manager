@@ -1,0 +1,483 @@
+{
+  "checked_on": "2026-10-29",
+  "status": "pass",
+  "validation_kind": "design-shape-and-reference-predicates-only",
+  "schema_validator": "jsonschema 4.25.1",
+  "positive_examples": 49,
+  "negative_examples": 43,
+  "checks": [
+    {
+      "id": "coherent-actual-and-forecast-over",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "available-actual-missing-forecast",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "valid-zero-not-null",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "negative-actual-credit",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "exactly-at-budget-neutral",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "sub-minor-unit-overrun-display-expanded",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "sub-minor-unit-under-budget-display-expanded",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "unknown-computation-not-retrieval-time",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "recent-get-old-calculation-stays-stale",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "prior-cycle-not-current-after-read",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "unknown-currency-no-default-usd",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "retrieval-age-independent-of-source-age",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "timeout",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "ambiguous-not-found",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "precision-qualification",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "select-new-coherent-snapshot",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "late-older-source-does-not-win",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "same-computation-new-capture-budget-remains-coherent",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "new-partial-never-borrows-old-forecast",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "duplicate-identical-collection-noop",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "obsolete-binding-cannot-publish",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "obsolete-source-context-cannot-publish",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "obsolete-policy-cannot-publish",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "obsolete-worker-cannot-publish",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "obsolete-configuration-cannot-publish",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "obsolete-cycle-cannot-publish",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "failed-read-retains-prior-facts",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "email-accepted",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "email-delivered",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "email-rejected",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "email-unknown",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "partial-recipient-acceptance-partition",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "dispatch-current-responsible-only",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "inactive-responsible-blocks-without-broadcast",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "changed-responsible-stops-old-unsent-notice",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "uncertain-original-not-rerouted",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "accepted-original-is-not-recalled",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "known-unsent-correction-new-immutable-intent",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "authorized-credential-rotation-keeps-service-and-submission",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "qualified-currency-minor-units-jpy",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "qualified-currency-minor-units-kwd",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "new-source-not-blocked-by-prior-source_access_context_id",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "failed-read-cannot-retain-obsolete-source_access_context_id",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "new-source-not-blocked-by-prior-source_context_generation",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "failed-read-cannot-retain-obsolete-source_context_generation",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "new-source-not-blocked-by-prior-billing_timezone",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "failed-read-cannot-retain-obsolete-billing_timezone",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "signer-rotation-does-not-change-source-domain",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "unqualified-cycle-facts-remain-visible-unverified",
+      "kind": "positive",
+      "pass": true
+    },
+    {
+      "id": "number-not-decimal-string",
+      "kind": "shape",
+      "pass": true
+    },
+    {
+      "id": "nonfinite-string",
+      "kind": "shape",
+      "pass": true
+    },
+    {
+      "id": "excess-scale",
+      "kind": "shape",
+      "pass": true
+    },
+    {
+      "id": "numeric20-overflow",
+      "kind": "shape",
+      "pass": true
+    },
+    {
+      "id": "exponent-notation",
+      "kind": "shape",
+      "pass": true
+    },
+    {
+      "id": "arbitrary-sdk-endpoint-rejected",
+      "kind": "shape",
+      "pass": true
+    },
+    {
+      "id": "provider-budget-does-not-invent-currency",
+      "kind": "shape",
+      "pass": true
+    },
+    {
+      "id": "remaining-forecast-not-accepted",
+      "kind": "shape",
+      "pass": true
+    },
+    {
+      "id": "slack-dispatch-not-v1",
+      "kind": "shape",
+      "pass": true
+    },
+    {
+      "id": "private-key-field-not-in-email",
+      "kind": "shape",
+      "pass": true
+    },
+    {
+      "id": "response-from-other-attempt",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "snapshot-cross-workspace",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "response-other-root",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "forecast-borrowed-from-another-read",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "desired-budget-cannot-replace-observed",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "capture-from-other-response",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "currency-without-matching-profile",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "retrieval-cannot-extend-source-freshness",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "missing-computation-cannot-get-fresh-until",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "null-forecast-is-not-available",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "expected-cycle-is-not-proof-of-source-cycle",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "future-source-calculation",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "same-collection-different-snapshot",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "no-lifecycle-admin-team-fallback",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "owner-is-not-responsible-admin",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "no-routine-lifecycle-notice",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "acceptance-cannot-set-delivery-time",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "duplicate-recipient-outcome",
+      "kind": "shape",
+      "pass": true
+    },
+    {
+      "id": "result-recipient-not-requested",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "service-change-cannot-retarget-reconciliation",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "accepted-without-provider-correlation",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "cannot-correct-around-unknown-send",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "correction-does-not-rewrite-original-intent",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "previous-row-cannot-cross-workspaces",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "corrected-intent-needs-new-submission-key",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "authorized-attempt-cannot-switch-service-namespace",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "failed-read-cannot-retain-other-workspace_id",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "failed-read-cannot-retain-other-tenancy_id",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "unqualified-monthly-scope-single-use",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "unqualified-monthly-scope-invoice",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "unqualified-monthly-scope-offset-changed",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "unqualified-monthly-scope-unknown-reset",
+      "kind": "semantic",
+      "pass": true
+    },
+    {
+      "id": "cycle-facts-cannot-come-from-old-baseline",
+      "kind": "semantic",
+      "pass": true
+    }
+  ],
+  "runtime_workflows_tested": false,
+  "database_transactions_tested": false,
+  "provider_qualification_tested": false,
+  "oci_calls": 0,
+  "emails_sent": 0,
+  "application_dependencies_changed": false,
+  "artifact_sha256": {
+    "docs/contracts/c5-collection-delivery.schema.json": "9b252ab250b8302829b2e630135e7f6130a4f2809f4717805ff7dd84a581ca51",
+    "docs/contracts/c5-collection-delivery-examples.json": "da35778c59d1213826aad87da02f7cc4d89ea89214a0ed527a0e34ed8c6f31b8",
+    "docs/contracts/oci-execution.schema.json": "1d46c97448dc37d814c065f301b4ff32ea4c6a833ee9fcef1bef604abd6da97a",
+    "docs/contracts/oci-provider-call-inventory.json": "40943d217ac24d7f3b3a02dee7853158bc5adcbc1999456a9b95bf395047bf4e",
+    "scripts/check_c5_contracts.py": "4feaa3db5fbe2bedb7e26c36a80b9e605f143ca96d60d9ae0919046a78cc89ad"
+  }
+}

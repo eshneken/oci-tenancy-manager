@@ -1,0 +1,3 @@
+-- Add only the reviewed local authentication event family; operation-kind constraints remain.
+ALTER TABLE public.audit_event DROP CONSTRAINT ck_audit_event_revision;
+ALTER TABLE public.audit_event ADD CONSTRAINT ck_audit_event_revision CHECK ((operation_id IS NOT NULL AND administrator_id IS NULL AND ((kind='operation_intent' AND intent_revision IS NOT NULL AND intent_revision>=1) OR (kind IN ('inspection_dispatch','inspection_outcome') AND intent_revision IS NULL))) OR (kind IN ('administrator_revoked','administrator_bootstrapped','local_credentials_reset','local_sign_in_succeeded','local_sign_in_failed','session_logged_out') AND operation_id IS NULL AND intent_revision IS NULL AND administrator_id IS NOT NULL));

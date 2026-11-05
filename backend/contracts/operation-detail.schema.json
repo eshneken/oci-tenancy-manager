@@ -1,0 +1,463 @@
+{
+  "$defs": {
+    "NotificationSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "attempts": {
+          "maximum": 3,
+          "minimum": 0,
+          "title": "Attempts",
+          "type": "integer"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "event": {
+          "enum": [
+            "action_required",
+            "terminal_failure"
+          ],
+          "title": "Event",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "last_attempt_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Last Attempt At"
+        },
+        "original_recipient": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Original Recipient"
+        },
+        "recipient": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Recipient"
+        },
+        "redirected": {
+          "title": "Redirected",
+          "type": "boolean"
+        },
+        "safe_code": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Safe Code"
+        },
+        "state": {
+          "enum": [
+            "pending",
+            "blocked",
+            "sending",
+            "sent",
+            "failed",
+            "unknown",
+            "superseded"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "state",
+        "event",
+        "recipient",
+        "original_recipient",
+        "created_at",
+        "updated_at",
+        "redirected",
+        "attempts"
+      ],
+      "title": "NotificationSummary",
+      "type": "object"
+    },
+    "OperationEventView": {
+      "additionalProperties": false,
+      "properties": {
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "operation_responsibility_changed",
+            "email_delivery",
+            "operation_intent",
+            "inspection_dispatch",
+            "inspection_outcome",
+            "organization_action_outcome",
+            "onboarding_action",
+            "onboarding_outcome",
+            "configuration_outcome",
+            "configuration_retry",
+            "configuration_check_outcome"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "safe_code": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Safe Code"
+        }
+      },
+      "required": [
+        "kind",
+        "at",
+        "safe_code"
+      ],
+      "title": "OperationEventView",
+      "type": "object"
+    },
+    "OperationStepView": {
+      "additionalProperties": false,
+      "properties": {
+        "attempt_number": {
+          "minimum": 1,
+          "title": "Attempt Number",
+          "type": "integer"
+        },
+        "safe_code": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Safe Code"
+        },
+        "state": {
+          "enum": [
+            "running",
+            "verified",
+            "needs_attention"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "step_key": {
+          "pattern": "^(inspect_target|apply_lifecycle|handoff|inspect_bootstrap|establish_automation|verify_automation|configure_required|verify_required|retire_temporary|configure_baseline|verify_configured_access|configuration_check:[0-9a-f-]{36}|(remove_member_groups|delete_member_user):[0-9a-f-]{36}|configuration:[0-9a-f-]{36})$",
+          "title": "Step Key",
+          "type": "string"
+        },
+        "verified_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Verified At"
+        }
+      },
+      "required": [
+        "step_key",
+        "state",
+        "attempt_number",
+        "verified_at",
+        "safe_code"
+      ],
+      "title": "OperationStepView",
+      "type": "object"
+    },
+    "OperationSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "accepted_at": {
+          "format": "date-time",
+          "title": "Accepted At",
+          "type": "string"
+        },
+        "can_take_responsibility": {
+          "default": false,
+          "title": "Can Take Responsibility",
+          "type": "boolean"
+        },
+        "completed_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Completed At"
+        },
+        "guided_onboarding": {
+          "default": false,
+          "title": "Guided Onboarding",
+          "type": "boolean"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "initiated_by": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Initiated By"
+        },
+        "kind": {
+          "enum": [
+            "inspect_import",
+            "organization_action",
+            "configuration_update",
+            "configuration_check"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "provider_mode": {
+          "const": "simulated",
+          "default": "simulated",
+          "title": "Provider Mode",
+          "type": "string"
+        },
+        "responsibility_revision": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Responsibility Revision"
+        },
+        "responsible_administrator_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Responsible Administrator Id"
+        },
+        "responsible_administrator_name": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Responsible Administrator Name"
+        },
+        "result_tenancy_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Result Tenancy Id"
+        },
+        "stage": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Stage",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "queued",
+            "running",
+            "waiting",
+            "needs_attention",
+            "succeeded",
+            "cancelled",
+            "failed"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "target_label": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target Label"
+        },
+        "target_tenancy_ocid": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 15,
+              "pattern": "^ocid1\\.tenancy\\.[A-Za-z0-9.]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Target Tenancy Ocid"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "state",
+        "stage",
+        "accepted_at",
+        "updated_at",
+        "completed_at",
+        "initiated_by",
+        "target_tenancy_ocid"
+      ],
+      "title": "OperationSummary",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "events": {
+      "items": {
+        "$ref": "#/$defs/OperationEventView"
+      },
+      "title": "Events",
+      "type": "array"
+    },
+    "events_limited": {
+      "title": "Events Limited",
+      "type": "boolean"
+    },
+    "notifications": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/NotificationSummary"
+      },
+      "title": "Notifications",
+      "type": "array"
+    },
+    "operation": {
+      "$ref": "#/$defs/OperationSummary"
+    },
+    "steps": {
+      "items": {
+        "$ref": "#/$defs/OperationStepView"
+      },
+      "title": "Steps",
+      "type": "array"
+    }
+  },
+  "required": [
+    "operation",
+    "steps",
+    "events",
+    "events_limited"
+  ],
+  "title": "OperationDetail",
+  "type": "object"
+}

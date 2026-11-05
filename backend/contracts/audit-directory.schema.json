@@ -1,0 +1,263 @@
+{
+  "$defs": {
+    "AuditEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "actor_name": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Actor Name"
+        },
+        "administrator_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Administrator Id"
+        },
+        "administrator_name": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Administrator Name"
+        },
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "baseline_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Baseline Id"
+        },
+        "category": {
+          "enum": [
+            "authentication",
+            "administration",
+            "operations",
+            "organization",
+            "email_delivery"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "changes": {
+          "default": [],
+          "items": {
+            "maxLength": 18000,
+            "type": "string"
+          },
+          "maxItems": 512,
+          "title": "Changes",
+          "type": "array"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "email_delivery",
+            "operation_responsibility_changed",
+            "configuration_check_outcome",
+            "configuration_review_staged",
+            "baseline_draft_saved",
+            "baseline_published",
+            "baseline_default_changed",
+            "operation_intent",
+            "inspection_dispatch",
+            "inspection_outcome",
+            "organization_action_outcome",
+            "onboarding_action",
+            "onboarding_outcome",
+            "configuration_outcome",
+            "configuration_retry",
+            "administrator_revoked",
+            "administrator_bootstrapped",
+            "local_credentials_reset",
+            "local_sign_in_succeeded",
+            "local_sign_in_failed",
+            "session_logged_out",
+            "audit_export",
+            "organization_configured",
+            "organization_feed_received",
+            "organization_feed_rejected",
+            "organization_published",
+            "organization_review_decided"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "operation_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Operation Id"
+        },
+        "organization_subject_name": {
+          "anyOf": [
+            {
+              "maxLength": 320,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Organization Subject Name"
+        },
+        "resources": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/AuditResource"
+          },
+          "maxItems": 501,
+          "title": "Resources",
+          "type": "array"
+        },
+        "safe_code": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Safe Code"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        }
+      },
+      "required": [
+        "id",
+        "at",
+        "kind",
+        "category",
+        "actor_name",
+        "operation_id",
+        "administrator_id",
+        "administrator_name",
+        "safe_code"
+      ],
+      "title": "AuditEntry",
+      "type": "object"
+    },
+    "AuditResource": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "tenancy",
+            "person"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 320,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "id",
+        "name"
+      ],
+      "title": "AuditResource",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "items": {
+      "items": {
+        "$ref": "#/$defs/AuditEntry"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "page": {
+      "title": "Page",
+      "type": "integer"
+    },
+    "page_size": {
+      "title": "Page Size",
+      "type": "integer"
+    },
+    "pages": {
+      "title": "Pages",
+      "type": "integer"
+    },
+    "total": {
+      "title": "Total",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "items",
+    "total",
+    "page",
+    "page_size",
+    "pages"
+  ],
+  "title": "AuditDirectory",
+  "type": "object"
+}

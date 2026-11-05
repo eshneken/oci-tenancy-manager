@@ -1,0 +1,76 @@
+{
+  "$defs": {
+    "ActorIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "display_name": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Display Name"
+        },
+        "issuer": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Issuer",
+          "type": "string"
+        },
+        "subject": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Subject",
+          "type": "string"
+        }
+      },
+      "required": [
+        "issuer",
+        "subject"
+      ],
+      "title": "ActorIdentity",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actor": {
+      "$ref": "#/$defs/ActorIdentity"
+    },
+    "administrator_id": {
+      "format": "uuid",
+      "title": "Administrator Id",
+      "type": "string"
+    },
+    "authorization_revision": {
+      "format": "uuid",
+      "title": "Authorization Revision",
+      "type": "string"
+    },
+    "contract_version": {
+      "const": "administrator-revocation-1",
+      "title": "Contract Version",
+      "type": "string"
+    },
+    "prior_revision": {
+      "format": "uuid",
+      "title": "Prior Revision",
+      "type": "string"
+    }
+  },
+  "required": [
+    "contract_version",
+    "administrator_id",
+    "prior_revision",
+    "authorization_revision",
+    "actor"
+  ],
+  "title": "AdministratorRevoked",
+  "type": "object"
+}

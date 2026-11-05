@@ -1,0 +1,151 @@
+{
+  "$defs": {
+    "BaselineContent": {
+      "additionalProperties": false,
+      "properties": {
+        "budget_currency": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Budget Currency",
+          "type": "string"
+        },
+        "budget_period": {
+          "const": "MONTHLY",
+          "default": "MONTHLY",
+          "title": "Budget Period",
+          "type": "string"
+        },
+        "monthly_budget_amount": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Monthly Budget Amount"
+        },
+        "policy_statements": {
+          "items": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Policy Statements",
+          "type": "array"
+        },
+        "quota_statements": {
+          "items": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Quota Statements",
+          "type": "array"
+        },
+        "tag_defaults": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/TagDefault"
+          },
+          "maxItems": 100,
+          "title": "Tag Defaults",
+          "type": "array"
+        },
+        "tag_namespace": {
+          "const": "OTM",
+          "default": "OTM",
+          "title": "Tag Namespace",
+          "type": "string"
+        }
+      },
+      "required": [
+        "policy_statements",
+        "quota_statements",
+        "monthly_budget_amount",
+        "budget_currency"
+      ],
+      "title": "BaselineContent",
+      "type": "object"
+    },
+    "TagDefault": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Key",
+          "type": "string"
+        },
+        "value": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "value"
+      ],
+      "title": "TagDefault",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "based_on_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Based On Id"
+    },
+    "baseline_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Baseline Id"
+    },
+    "content": {
+      "$ref": "#/$defs/BaselineContent",
+      "description": "Monthly budget must be a positive whole currency amount."
+    },
+    "expected_revision": {
+      "anyOf": [
+        {
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Expected Revision"
+    }
+  },
+  "required": [
+    "content"
+  ],
+  "title": "SaveBaselineDraft",
+  "type": "object"
+}

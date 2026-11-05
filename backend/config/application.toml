@@ -1,0 +1,50 @@
+# Nonsecret operational settings; credentials and MFA seeds never belong in this file.
+# Supported schema version, exactly integer 1; unknown fields/versions fail closed.
+schema_version = 1
+
+[sessions]
+# Issued idle timeout in seconds (1–2147483647); polling does not extend it.
+idle_timeout_seconds = 1800
+# Issued hard lifetime in seconds (1–2147483647), at least the idle timeout.
+absolute_timeout_seconds = 28800
+
+[sessions.cleanup]
+# Daily UTC hour (0–23); schedule changes also require updating the CronJob.
+hour_utc = 2
+# Daily UTC minute (0–59).
+minute_utc = 0
+# Maximum revoked/expired rows per transaction (1–10000).
+batch_size = 500
+# Maximum transactions per invocation (1–1000); excess work waits for a later run.
+max_batches = 20
+
+# Explicit local recovery policy; parsing it never creates an account or enables a route.
+[local_auth]
+# Deployment workspace (1–256 nonblank characters); set before bootstrap and retain it.
+workspace_id = "example-org"
+# Installation-specific local issuer (1–256 nonblank characters); replace before bootstrap, then retain.
+issuer = "urn:otm:local:00000000-0000-4000-8000-000000000001"
+# Failures per window before cooldown (1–20), shared through PostgreSQL.
+max_failures = 5
+# Failed-attempt counting window in seconds (30–3600).
+failure_window_seconds = 300
+# Cooldown in seconds (1–300); rejected attempts do not extend it.
+cooldown_seconds = 60
+# Concurrent password checks per API process (1–4); tune with pod memory limits.
+max_password_workers = 2
+
+# Laptop-only serving; production uses qualified ingress configuration instead.
+[local_server]
+# Canonical HTTPS origin with explicit local port; no path/query/credentials/default443.
+public_origin = "https://localhost:8443"
+# Local testing only; true shows reset instructions and permits the confirmed owner CLI command.
+organization_reset_enabled = false
+
+# Public per-instance identity; these values contain no credentials or authorization settings.
+[branding]
+# Display name, 1–80 nonblank characters; internal OTM names and database tables stay unchanged.
+display_name = "Atlas"
+# Packaged same-origin raster logo path; omit for text-only branding.
+logo_url = "/branding-assets/atlas-wordmark.png"
+# Packaged same-origin raster browser icon path; omit for no custom browser icon.
+icon_url = "/branding-assets/atlas-icon.png"

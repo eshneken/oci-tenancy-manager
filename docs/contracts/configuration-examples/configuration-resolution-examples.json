@@ -1,0 +1,705 @@
+{
+  "positive": [
+    {
+      "id": "inherit-baseline",
+      "baseline": "baseline-v1.json",
+      "override": null,
+      "expected": {
+        "policy": {
+          "statements": [
+            "Allow group OTMOperators to read all-resources in tenancy"
+          ]
+        },
+        "quota": {
+          "statements": [
+            "set compute-core quota standard2-core-count to 8 in tenancy",
+            "set compute-core quota standard-e4-core-count to 4 in tenancy"
+          ]
+        }
+      }
+    },
+    {
+      "id": "full-block-replacement",
+      "baseline": "baseline-v1.json",
+      "override": "grant-overlay.json",
+      "expected": {
+        "policy": {
+          "statements": [
+            "Allow group OTMOperators to read instance-family in tenancy"
+          ]
+        },
+        "quota": {
+          "statements": [
+            "set compute-core quota standard2-core-count to 16 in tenancy"
+          ]
+        }
+      }
+    },
+    {
+      "id": "shared-budget-only",
+      "baseline": "baseline-v1.json",
+      "override": "team-overlay.json",
+      "expected": {
+        "budget": {
+          "monthly_amount": 500,
+          "currency": "USD",
+          "period": "MONTHLY",
+          "alerts": []
+        }
+      }
+    },
+    {
+      "id": "new-tenancy-v2",
+      "baseline": "baseline-v2.json",
+      "override": null,
+      "expected": {
+        "tags": {
+          "namespace": "OTM",
+          "defaults": [
+            {
+              "key": "ManagedBy",
+              "value": "OTM"
+            },
+            {
+              "key": "Environment",
+              "value": "Engineering"
+            },
+            {
+              "key": "Service",
+              "value": "Engineering"
+            }
+          ]
+        },
+        "budget": {
+          "monthly_amount": 300,
+          "currency": "USD",
+          "period": "MONTHLY",
+          "alerts": []
+        }
+      }
+    },
+    {
+      "id": "budget-carries-no-statement-review",
+      "baseline": "baseline-v2.json",
+      "override": "team-overlay.json",
+      "update": true,
+      "expected": {
+        "budget": {
+          "monthly_amount": 500,
+          "currency": "USD",
+          "period": "MONTHLY",
+          "alerts": []
+        },
+        "policy": {
+          "statements": [
+            "Allow group OTMOperators to read all-resources in tenancy",
+            "Allow group OTMOperators to read audit-events in tenancy"
+          ]
+        }
+      }
+    },
+    {
+      "id": "review-both-changed-blocks",
+      "baseline": "baseline-v2.json",
+      "override": "grant-overlay.json",
+      "update": true,
+      "review": [
+        "policy",
+        "quota"
+      ],
+      "expected": {
+        "policy": {
+          "statements": [
+            "Allow group OTMOperators to read instance-family in tenancy"
+          ]
+        },
+        "quota": {
+          "statements": [
+            "set compute-core quota standard2-core-count to 16 in tenancy"
+          ]
+        }
+      }
+    },
+    {
+      "id": "tag-only-change-needs-no-block-review",
+      "baseline": "baseline-v2.json",
+      "override": "grant-overlay.json",
+      "update": true,
+      "baseline_changes": [
+        {
+          "path": [
+            "policy"
+          ],
+          "value": {
+            "statements": [
+              "Allow group OTMOperators to read all-resources in tenancy"
+            ]
+          }
+        },
+        {
+          "path": [
+            "quota"
+          ],
+          "value": {
+            "statements": [
+              "set compute-core quota standard2-core-count to 8 in tenancy",
+              "set compute-core quota standard-e4-core-count to 4 in tenancy"
+            ]
+          }
+        }
+      ],
+      "expected": {
+        "tags": {
+          "namespace": "OTM",
+          "defaults": [
+            {
+              "key": "ManagedBy",
+              "value": "OTM"
+            },
+            {
+              "key": "Environment",
+              "value": "Engineering"
+            },
+            {
+              "key": "Service",
+              "value": "Engineering"
+            }
+          ]
+        },
+        "policy": {
+          "statements": [
+            "Allow group OTMOperators to read instance-family in tenancy"
+          ]
+        }
+      }
+    },
+    {
+      "id": "clear-policy-inherits-new-base",
+      "baseline": "baseline-v2.json",
+      "override": "grant-overlay.json",
+      "update": true,
+      "review": [
+        "quota"
+      ],
+      "override_changes": [
+        {
+          "path": [
+            "policy_statements"
+          ],
+          "remove": true
+        },
+        {
+          "path": [
+            "reviewed_against",
+            "policy"
+          ],
+          "remove": true
+        }
+      ],
+      "expected": {
+        "policy": {
+          "statements": [
+            "Allow group OTMOperators to read all-resources in tenancy",
+            "Allow group OTMOperators to read audit-events in tenancy"
+          ]
+        }
+      }
+    },
+    {
+      "id": "multiline-is-one-string",
+      "baseline": "baseline-v1.json",
+      "override": "grant-overlay.json",
+      "override_changes": [
+        {
+          "path": [
+            "policy_statements"
+          ],
+          "value": [
+            "Allow group OTMOperators\n to read all-resources in tenancy"
+          ]
+        }
+      ],
+      "expected": {
+        "policy": {
+          "statements": [
+            "Allow group OTMOperators\n to read all-resources in tenancy"
+          ]
+        }
+      }
+    }
+  ],
+  "negative": [
+    {
+      "id": "policy-scalar",
+      "baseline": "baseline-v1.json",
+      "override": "grant-overlay.json",
+      "override_changes": [
+        {
+          "path": [
+            "policy_statements"
+          ],
+          "value": "not a list"
+        }
+      ]
+    },
+    {
+      "id": "quota-scalar",
+      "baseline": "baseline-v1.json",
+      "override": "grant-overlay.json",
+      "override_changes": [
+        {
+          "path": [
+            "quota_statements"
+          ],
+          "value": "not a list"
+        }
+      ]
+    },
+    {
+      "id": "policy-empty",
+      "baseline": "baseline-v1.json",
+      "override": "grant-overlay.json",
+      "override_changes": [
+        {
+          "path": [
+            "policy_statements"
+          ],
+          "value": []
+        }
+      ]
+    },
+    {
+      "id": "quota-empty",
+      "baseline": "baseline-v1.json",
+      "override": "grant-overlay.json",
+      "override_changes": [
+        {
+          "path": [
+            "quota_statements"
+          ],
+          "value": []
+        }
+      ]
+    },
+    {
+      "id": "policy-blank",
+      "baseline": "baseline-v1.json",
+      "override": "grant-overlay.json",
+      "override_changes": [
+        {
+          "path": [
+            "policy_statements"
+          ],
+          "value": [
+            " "
+          ]
+        }
+      ]
+    },
+    {
+      "id": "quota-blank",
+      "baseline": "baseline-v1.json",
+      "override": "grant-overlay.json",
+      "override_changes": [
+        {
+          "path": [
+            "quota_statements"
+          ],
+          "value": [
+            " "
+          ]
+        }
+      ]
+    },
+    {
+      "id": "policy-null",
+      "baseline": "baseline-v1.json",
+      "override": "grant-overlay.json",
+      "override_changes": [
+        {
+          "path": [
+            "policy_statements"
+          ],
+          "value": null
+        }
+      ]
+    },
+    {
+      "id": "quota-null",
+      "baseline": "baseline-v1.json",
+      "override": "grant-overlay.json",
+      "override_changes": [
+        {
+          "path": [
+            "quota_statements"
+          ],
+          "value": null
+        }
+      ]
+    },
+    {
+      "id": "policy-number",
+      "baseline": "baseline-v1.json",
+      "override": "grant-overlay.json",
+      "override_changes": [
+        {
+          "path": [
+            "policy_statements"
+          ],
+          "value": [
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "id": "quota-number",
+      "baseline": "baseline-v1.json",
+      "override": "grant-overlay.json",
+      "override_changes": [
+        {
+          "path": [
+            "quota_statements"
+          ],
+          "value": [
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "id": "budget-text",
+      "baseline": "baseline-v1.json",
+      "override": "team-overlay.json",
+      "override_changes": [
+        {
+          "path": [
+            "budget_amount"
+          ],
+          "value": "500"
+        }
+      ]
+    },
+    {
+      "id": "budget-zero",
+      "baseline": "baseline-v1.json",
+      "override": "team-overlay.json",
+      "override_changes": [
+        {
+          "path": [
+            "budget_amount"
+          ],
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "budget-negative",
+      "baseline": "baseline-v1.json",
+      "override": "team-overlay.json",
+      "override_changes": [
+        {
+          "path": [
+            "budget_amount"
+          ],
+          "value": -1
+        }
+      ]
+    },
+    {
+      "id": "budget-boolean",
+      "baseline": "baseline-v1.json",
+      "override": "team-overlay.json",
+      "override_changes": [
+        {
+          "path": [
+            "budget_amount"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "budget-null",
+      "baseline": "baseline-v1.json",
+      "override": "team-overlay.json",
+      "override_changes": [
+        {
+          "path": [
+            "budget_amount"
+          ],
+          "value": null
+        }
+      ]
+    },
+    {
+      "id": "changed-block-review-required",
+      "baseline": "baseline-v2.json",
+      "override": "grant-overlay.json",
+      "update": true
+    },
+    {
+      "id": "partial-review-still-blocked",
+      "baseline": "baseline-v2.json",
+      "override": "grant-overlay.json",
+      "update": true,
+      "review": [
+        "policy"
+      ]
+    },
+    {
+      "id": "stale-review-rejected",
+      "baseline": "baseline-v2.json",
+      "override": "grant-overlay.json",
+      "update": true,
+      "review": [
+        "quota"
+      ],
+      "stale_review": true
+    },
+    {
+      "id": "wrong-version-pin",
+      "baseline": "baseline-v2.json",
+      "override": "grant-overlay.json"
+    },
+    {
+      "id": "wrong-lineage",
+      "baseline": "baseline-v2.json",
+      "override": "grant-overlay.json",
+      "update": true,
+      "override_changes": [
+        {
+          "path": [
+            "baseline_id"
+          ],
+          "value": "other"
+        }
+      ]
+    },
+    {
+      "id": "missing-review-context",
+      "baseline": "baseline-v1.json",
+      "override": "grant-overlay.json",
+      "override_changes": [
+        {
+          "path": [
+            "reviewed_against",
+            "policy"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "id": "tag-override-not-supported",
+      "baseline": "baseline-v1.json",
+      "override": "grant-overlay.json",
+      "override_changes": [
+        {
+          "path": [
+            "tags"
+          ],
+          "value": {
+            "namespace": "Other"
+          }
+        }
+      ]
+    },
+    {
+      "id": "scope-override-not-supported",
+      "baseline": "baseline-v1.json",
+      "override": "grant-overlay.json",
+      "override_changes": [
+        {
+          "path": [
+            "root_compartment_id"
+          ],
+          "value": "other"
+        }
+      ]
+    },
+    {
+      "id": "old-numeric-quota-not-supported",
+      "baseline": "baseline-v1.json",
+      "override": "grant-overlay.json",
+      "override_changes": [
+        {
+          "path": [
+            "quota_limit"
+          ],
+          "value": 16
+        }
+      ]
+    },
+    {
+      "id": "budget-alerts-not-supported",
+      "baseline": "baseline-v1.json",
+      "override": null,
+      "baseline_changes": [
+        {
+          "path": [
+            "budget",
+            "alerts"
+          ],
+          "value": [
+            {
+              "threshold": 90
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "budget-context-change",
+      "baseline": "baseline-v1.json",
+      "override": "team-overlay.json",
+      "override_changes": [
+        {
+          "path": [
+            "budget_context",
+            "currency"
+          ],
+          "value": "EUR"
+        }
+      ]
+    },
+    {
+      "id": "tag-namespace-fixed",
+      "baseline": "baseline-v1.json",
+      "override": null,
+      "baseline_changes": [
+        {
+          "path": [
+            "tags",
+            "namespace"
+          ],
+          "value": "Custom"
+        }
+      ]
+    },
+    {
+      "id": "duplicate-defined-tag-key",
+      "baseline": "baseline-v1.json",
+      "override": null,
+      "baseline_changes": [
+        {
+          "path": [
+            "tags",
+            "defaults"
+          ],
+          "value": [
+            {
+              "key": "ManagedBy",
+              "value": "OTM"
+            },
+            {
+              "key": "managedby",
+              "value": "Other"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tag-values-static",
+      "baseline": "baseline-v1.json",
+      "override": null,
+      "baseline_changes": [
+        {
+          "path": [
+            "tags",
+            "defaults"
+          ],
+          "value": [
+            {
+              "key": "Creator",
+              "value": "${iam.principal.name}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "invalid-tag-name",
+      "baseline": "baseline-v1.json",
+      "override": null,
+      "baseline_changes": [
+        {
+          "path": [
+            "tags",
+            "defaults"
+          ],
+          "value": [
+            {
+              "key": "Has.Space",
+              "value": "x"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "multiple-policy-objects",
+      "baseline": "baseline-v1.json",
+      "override": "grant-overlay.json",
+      "baseline_changes": [
+        {
+          "path": [
+            "policies"
+          ],
+          "value": [
+            {
+              "statements": [
+                "Allow group OTMOperators to read all-resources in tenancy"
+              ]
+            },
+            {
+              "statements": [
+                "Allow group OTMOperators to read all-resources in tenancy"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "invalid-policy-shape",
+      "baseline": "baseline-v1.json",
+      "override": null,
+      "baseline_changes": [
+        {
+          "path": [
+            "policy"
+          ],
+          "value": []
+        }
+      ]
+    },
+    {
+      "id": "invalid-budget-shape",
+      "baseline": "baseline-v1.json",
+      "override": null,
+      "baseline_changes": [
+        {
+          "path": [
+            "budget"
+          ],
+          "value": []
+        }
+      ]
+    },
+    {
+      "id": "invalid-tags-shape",
+      "baseline": "baseline-v1.json",
+      "override": null,
+      "baseline_changes": [
+        {
+          "path": [
+            "tags"
+          ],
+          "value": []
+        }
+      ]
+    }
+  ]
+}

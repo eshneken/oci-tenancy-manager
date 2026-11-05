@@ -1,0 +1,66 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "direction": {
+      "default": "desc",
+      "enum": [
+        "asc",
+        "desc"
+      ],
+      "title": "Direction",
+      "type": "string"
+    },
+    "page": {
+      "default": 1,
+      "maximum": 100000,
+      "minimum": 1,
+      "title": "Page",
+      "type": "integer"
+    },
+    "page_size": {
+      "default": 10,
+      "enum": [
+        10,
+        25,
+        50,
+        100
+      ],
+      "title": "Page Size",
+      "type": "integer"
+    },
+    "query": {
+      "default": "",
+      "maxLength": 128,
+      "title": "Query",
+      "type": "string"
+    },
+    "sort": {
+      "default": "accepted_at",
+      "enum": [
+        "accepted_at",
+        "updated_at",
+        "state",
+        "stage"
+      ],
+      "title": "Sort",
+      "type": "string"
+    },
+    "state": {
+      "default": "",
+      "enum": [
+        "",
+        "queued",
+        "running",
+        "waiting",
+        "needs_attention",
+        "succeeded",
+        "cancelled",
+        "failed"
+      ],
+      "title": "State",
+      "type": "string"
+    }
+  },
+  "title": "OperationQuery",
+  "type": "object"
+}

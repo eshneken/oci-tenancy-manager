@@ -1,0 +1,139 @@
+---
+config:
+  theme: neutral
+---
+erDiagram
+  direction TB
+  org_person {
+    uuid id PK
+    string email UK
+  }
+  org_workspace {
+    string id PK,FK
+    uuid configuration_id
+    jsonb configuration
+    uuid applied_version_id FK "nullable"
+    uuid proposed_version_id FK "nullable"
+    string applied_kind FK
+    string proposed_kind FK
+  }
+  org_feed {
+    uuid id PK
+    string workspace_id FK
+    string source_id
+    string external_id
+    timestamptz captured_at "nullable"
+    string digest
+    jsonb data
+    string state
+    jsonb diagnostics
+    uuid proposed_version_id "nullable"
+    uuid applied_version_id "nullable"
+  }
+  org_version {
+    uuid id PK
+    string workspace_id FK
+    string kind
+    uuid base_version_id FK "nullable"
+    uuid feed_id FK
+    uuid configuration_id
+    jsonb configuration
+    boolean sealed
+    jsonb data
+  }
+  org_member {
+    uuid version_id PK,FK
+    uuid person_id PK,FK
+    string email
+    string full_name "nullable"
+    uuid manager_person_id FK "nullable"
+    string manager_email "nullable"
+    string profile
+    string evidence
+    string lob_id "nullable"
+    string accountable_leader_email "nullable"
+    jsonb designee_emails
+    string ancestry
+    boolean absence_review
+    jsonb data
+  }
+  org_recommendation {
+    uuid id PK
+    string workspace_id FK
+    uuid feed_id FK
+    uuid proposed_version_id FK
+    uuid applied_version_id FK "nullable"
+    uuid person_id FK "nullable"
+    string category
+    string kind
+    string target
+    string field "nullable"
+    jsonb before_value "nullable"
+    jsonb after_value "nullable"
+    string status
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz resolved_at "nullable"
+    string reason "nullable"
+    string actor "nullable"
+  }
+  audit_event {
+    uuid id PK
+    string workspace_id FK
+    uuid feed_id FK "nullable"
+    uuid version_id FK "nullable"
+    string actor
+    string kind
+    timestamptz at
+    jsonb data
+  }
+  notification_outbox {
+    uuid id PK
+    uuid recommendation_id FK,UK
+    uuid version_id FK
+    jsonb recipients
+    string state
+  }
+  org_tenancy {
+    uuid id PK
+    string workspace_id FK
+    string name
+    string kind "individual/shared"
+    string status "active/deleted"
+    boolean legacy
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  org_tenancy_association {
+    uuid id PK
+    string workspace_id FK
+    uuid tenancy_id FK
+    uuid person_id FK
+    string role "owner/member"
+    string status "active/removed"
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  org_version |o--o| org_workspace : "id, proposed_version_id, proposed_kind"
+  org_version |o--o| org_workspace : "id, applied_version_id, applied_kind"
+  org_workspace ||--o{ org_feed : "workspace_id"
+  org_workspace ||--o{ org_version : "workspace_id"
+  org_feed ||--o{ org_version : "workspace_id, feed_id"
+  org_version |o--o{ org_version : "workspace_id, base_version_id"
+  org_member |o--o{ org_member : "version_id, manager_person_id"
+  org_version ||--o{ org_member : "version_id"
+  org_person ||--o{ org_member : "person_id"
+  org_version |o--o{ org_recommendation : "applied_version_id"
+  org_feed ||--o{ org_recommendation : "feed_id"
+  org_workspace ||--o{ org_recommendation : "workspace_id"
+  org_person |o--o{ org_recommendation : "person_id"
+  org_version ||--o{ org_recommendation : "proposed_version_id"
+  org_version |o--o{ audit_event : "version_id"
+  org_workspace ||--o{ audit_event : "workspace_id"
+  org_feed |o--o{ audit_event : "feed_id"
+  org_version ||--o{ notification_outbox : "version_id"
+  org_recommendation ||--o| notification_outbox : "recommendation_id"
+  org_workspace ||--o{ org_tenancy : "workspace_id"
+  org_workspace ||--o{ org_tenancy_association : "workspace_id"
+  org_tenancy ||--o{ org_tenancy_association : "workspace_id, tenancy_id"
+  org_person ||--o{ org_tenancy_association : "person_id"

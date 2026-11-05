@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>OCI Tenancy Manager · Organization</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="/" aria-label="OCI Tenancy Manager home"><span class="brandmark">O</span><span>OCI Tenancy<br><strong>Manager</strong></span></a>
+    <div class="nav-label">WORKSPACE</div>
+    <nav aria-label="Main navigation">
+      <a href="/tenancies" id="nav-tenancies"><span aria-hidden="true">▦</span> Tenancies</a>
+      <a href="/" id="nav-employees"><span aria-hidden="true">▤</span> Employees</a>
+      <a href="/exceptions" id="nav-exceptions"><span aria-hidden="true">◇</span> Exceptions <span class="nav-count" id="nav-count">0</span></a>
+    </nav>
+    <div class="sidebar-bottom"><span class="local-dot"></span> Local organization lab<br><small>No OCI operations or notifications</small></div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar"><span>Organization management <span class="slash">/</span> <span id="breadcrumb">Employees</span></span><span class="environment">LOCAL PROTOTYPE</span></header>
+    <main>
+      <div class="page-heading"><div><p class="eyebrow">ORGANIZATION MANAGEMENT</p><h1 id="page-title">Employee directory</h1><p class="subtitle" id="page-description">Your organization, mapped to the people accountable for it.</p></div><div class="heading-actions"><button class="secondary" id="open-clean" hidden>Clean workspace</button><button class="primary" id="open-upload"><span class="button-icon" aria-hidden="true">↑</span> Upload organization CSV</button></div></div>
+      <div id="notice" class="notice" role="status" hidden></div>
+      <section id="organization-stats" class="stats" aria-label="Organization summary">
+        <div class="stat"><span>Employees</span><strong id="stat-employees">—</strong><small>Current and retained profiles</small></div>
+        <div class="stat"><span>Lines of business</span><strong id="stat-lobs">—</strong><small>From leader configuration</small></div>
+        <a class="stat" href="/exceptions?kind=TENANCY_SETUP_REVIEW"><span>New employee reviews</span><strong id="stat-new">—</strong><small>New and returning employees ↗</small></a>
+        <a class="stat" href="/exceptions?kind=PERSON_ABSENCE_REVIEW"><span>Absence reviews</span><strong id="stat-absent">—</strong><small>Verify before taking action ↗</small></a>
+      </section>
+      <section id="tenancy-stats" class="stats" aria-label="Tenancy summary" hidden>
+        <div class="stat"><span>Total tenancies</span><strong id="stat-tenancies-total">—</strong><small>Active registered tenancies</small></div>
+        <div class="stat"><span>Individual tenancies</span><strong id="stat-tenancies-individual">—</strong><small>Individual environments</small></div>
+        <div class="stat"><span>Shared tenancies</span><strong id="stat-tenancies-shared">—</strong><small>Shared environments</small></div>
+        <div class="stat"><span>Ownership reviews</span><strong id="stat-tenancies-unassigned">—</strong><small>Tenancies without an owner</small></div>
+      </section>
+      <div id="registry-warnings" class="notice" role="status" hidden></div>
+      <div class="feed-info"><span class="feed-dot"></span><span id="feed-summary">No organization feed loaded</span><span id="feed-coverage"></span></div>
+      <nav id="review-tabs" class="review-tabs" aria-label="Exception categories" hidden>
+        <a id="tab-actionable" href="/exceptions">Actionable <span id="actionable-count">0</span></a>
+        <a id="tab-informational" href="/exceptions?tab=informational">Informational &amp; history <span id="informational-count">0</span></a>
+      </nav>
+      <section class="panel" aria-labelledby="table-title">
+        <div class="panel-heading"><div><h2 id="table-title">All employees <span class="count" id="table-count">0</span></h2><p id="table-description">Automatically synchronized metadata. Human review for exceptions.</p></div><a id="exceptions-link" class="text-link" href="/exceptions">View exceptions <span aria-hidden="true">→</span></a></div>
+        <div class="toolbar"><label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Search people, managers or LOB…" aria-label="Search employees"></label><label class="filter"><span id="filter-label">Line of business</span><select id="filter" aria-label="Line of business"><option value="">All lines of business</option></select></label></div>
+        <div class="table-scroll"><table><thead id="table-head"></thead><tbody id="table-body"></tbody></table></div>
+        <div id="empty" class="empty" hidden><div class="empty-symbol" aria-hidden="true">▤</div><h3 id="empty-title">Start with your organization</h3><p id="empty-description">Upload a CSV to build the directory and identify review items.</p><button id="empty-upload" class="secondary">Upload organization CSV</button><a id="empty-employees" class="secondary" href="/" hidden>View employees</a></div>
+        <footer class="pagination"><div id="range">0 employees</div><div class="page-controls"><label>Rows <select id="page-size" aria-label="Rows per page"><option>10</option><option selected>25</option><option>50</option><option>100</option></select></label><div id="pages" class="pages" aria-label="Pagination"></div></div></footer>
+      </section>
+      <details id="offboarded-panel" class="panel offboarded-panel" hidden>
+        <summary>Previously offboarded employees <span class="count" id="offboarded-count">0</span></summary>
+        <p>These employees remain excluded from the managed directory. Re-onboard explicitly to start a tenancy setup review. Employees marked No tenancy required stay excluded across feed updates.</p>
+        <div id="offboarded-people" class="offboarded-people"></div>
+      </details>
+      <p class="footnote" id="footnote">Email is the identity key. Renames update automatically; changed email addresses require identity review.</p>
+    </main>
+  </div>
+  <dialog id="upload-dialog" aria-labelledby="upload-title">
+    <form id="upload-form">
+      <div class="dialog-heading"><h2 id="upload-title">Upload organization CSV</h2><button type="button" id="close-upload" class="icon-button" aria-label="Close upload">×</button></div>
+      <p>Each upload is a new snapshot, including an unchanged file. Valid metadata updates automatically. Missing employees stay in the directory for review; nothing is deleted.</p>
+      <label class="file-label" for="csv-file">Choose your organization export<input id="csv-file" type="file" accept=".csv,text/csv" required><small>UTF-8 CSV · up to 2 MiB</small></label>
+      <p class="format-label">Required columns</p><code>EMPLOYEE_FULL_NAME, EMAIL, MGR, TOP_MGR</code>
+      <label class="checkbox"><input id="complete" type="checkbox" checked><span><strong>This is a full organization snapshot</strong><small>Enable absence reviews for missing employees. Uncheck for partial feeds.</small></span></label>
+      <p class="dialog-note">Upload time is used as the snapshot time in this local environment. Organization-boundary requirements follow workspace configuration.</p>
+      <div id="upload-error" class="error" role="alert" hidden></div>
+      <div class="dialog-actions"><button type="button" id="cancel-upload" class="secondary">Cancel</button><button id="submit-upload" class="primary" type="submit">Process CSV</button></div>
+    </form>
+  </dialog>
+  <dialog id="clean-dialog" aria-labelledby="clean-title" aria-describedby="clean-description">
+    <form id="clean-form">
+      <div class="dialog-heading"><h2 id="clean-title">Clean workspace?</h2><button type="button" id="close-clean" class="icon-button" aria-label="Close clean workspace">×</button></div>
+      <p id="clean-description">Archive this test run and start an empty workspace with no employee profiles, active tenancies or review items.</p>
+      <p id="clean-counts" class="dialog-note"></p>
+      <p>Your LOB configuration is kept. Previous test history is archived. Other workspaces and OCI tenancies are unaffected.</p>
+      <div class="dialog-actions"><button type="button" id="cancel-clean" class="secondary">Cancel</button><button id="confirm-clean" class="danger" type="submit">Clean workspace</button></div>
+    </form>
+  </dialog>
+  <dialog id="review-dialog" aria-labelledby="review-dialog-title">
+    <form id="review-form">
+      <div class="dialog-heading"><h2 id="review-dialog-title">Review employee</h2><button type="button" id="close-review" class="icon-button" aria-label="Close review">×</button></div>
+      <p id="review-person"></p><p id="review-explanation"></p>
+      <div id="review-actions" class="review-actions" role="group" aria-label="Available actions"></div>
+      <p id="operation-description" class="dialog-note"></p>
+      <label id="merge-choice" class="field" hidden>Match with employee<select id="merge-partner"><option value="">Choose a record…</option></select></label>
+      <p id="merge-preview" class="dialog-note" hidden></p>
+      <div id="review-error" class="error" role="alert" hidden></div>
+      <div class="dialog-actions"><button type="button" id="cancel-review" class="secondary">Cancel</button><button id="confirm-review" class="primary" type="submit">Confirm</button></div>
+    </form>
+  </dialog>
+  <dialog id="person-dialog" aria-labelledby="person-title" aria-describedby="person-status">
+    <div class="dialog-heading"><h2 id="person-title">Employee tenancy associations</h2><button type="button" class="icon-button" id="close-person" aria-label="Close employee">×</button></div>
+    <p id="person-identity"></p><p id="person-status" class="dialog-note"></p>
+    <p>Tenancies and memberships below are managed by this prototype. No OCI resources, users or access are changed.</p>
+    <h3>Active tenancy associations</h3><div id="person-associations" class="association-list"></div>
+    <div class="dialog-actions association-commands" id="person-commands"></div>
+    <div id="person-error" class="error" role="alert" hidden></div>
+  </dialog>
+  <dialog id="tenancy-dialog" aria-labelledby="tenancy-title" aria-describedby="tenancy-owner">
+    <form id="tenancy-form">
+      <div class="dialog-heading"><h2 id="tenancy-title">Manage tenancy</h2><button type="button" class="icon-button" id="close-tenancy" aria-label="Close tenancy">×</button></div>
+      <p id="tenancy-owner"></p><p class="dialog-note">These changes update the prototype registry. No OCI resources, users or access are changed.</p>
+      <label class="field">Tenancy name<input id="tenancy-name" required maxlength="200"></label>
+      <label class="field">Tenancy type<select id="tenancy-kind"><option value="individual">Individual</option><option value="shared">Shared</option></select></label>
+      <h3>Owner and members</h3><div id="tenancy-members" class="association-list"></div>
+      <div id="tenancy-commands" class="dialog-actions association-commands"></div>
+      <div id="tenancy-error" class="error" role="alert" hidden></div>
+      <div class="dialog-actions"><button type="button" class="secondary" id="cancel-tenancy">Cancel</button><button class="primary" type="submit">Save tenancy details</button></div>
+    </form>
+  </dialog>
+  <dialog id="registry-dialog" aria-labelledby="registry-title" aria-describedby="registry-person registry-description">
+    <form id="registry-form">
+      <div class="dialog-heading"><h2 id="registry-title">Update tenancy associations</h2><button type="button" class="icon-button" id="close-registry" aria-label="Close association action">×</button></div>
+      <p id="registry-person"></p><p id="registry-description" class="dialog-note"></p>
+      <label class="field" id="registry-name-field" hidden>Tenancy name<input id="registry-name" maxlength="200"></label>
+      <label class="field" id="registry-kind-field" hidden>Tenancy type<select id="registry-kind"><option value="individual">Individual</option><option value="shared">Shared</option></select></label>
+      <label class="field" id="registry-target-field" hidden>Shared tenancy<select id="registry-target"></select></label>
+      <label class="field" id="registry-owner-field" hidden>New owner<select id="registry-owner"></select></label>
+      <div id="registry-error" class="error" role="alert" hidden></div>
+      <div class="dialog-actions"><button type="button" class="secondary" id="cancel-registry">Cancel</button><button class="primary" type="submit" id="confirm-registry">Confirm</button></div>
+    </form>
+  </dialog>
+  <dialog id="offboard-dialog" aria-labelledby="offboard-title" aria-describedby="offboard-person offboard-plan-summary">
+    <form id="offboard-form">
+      <div class="dialog-heading"><h2 id="offboard-title">Offboard employee</h2><button type="button" class="icon-button" id="close-offboard" aria-label="Close offboarding">×</button></div>
+      <p id="offboard-person"></p><p id="offboard-manager-warning" class="notice" hidden>This employee manages other people. Review tenancy ownership and shared memberships carefully before confirming. The plan affects this employee’s associations only.</p><p class="dialog-note">Choose an action for every active tenancy association. This prototype simulates tenancy changes; it does not change OCI resources, users or access.</p>
+      <div id="offboard-associations" class="association-list"></div>
+      <label class="checkbox" id="offboard-empty-field" hidden><input id="offboard-empty" type="checkbox"><span>I verified no tenancy associations remain.</span></label>
+      <p id="offboard-plan-summary" class="dialog-note"></p>
+      <div id="offboard-error" class="error" role="alert" hidden></div>
+      <div class="dialog-actions"><button type="button" class="secondary" id="cancel-offboard">Cancel</button><button class="primary" type="submit" id="confirm-offboard">Simulate offboarding</button></div>
+    </form>
+  </dialog>
+</body>
+</html>

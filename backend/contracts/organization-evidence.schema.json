@@ -1,0 +1,344 @@
+{
+  "$defs": {
+    "ActionReceipt": {
+      "additionalProperties": false,
+      "properties": {
+        "accepted_at": {
+          "format": "date-time",
+          "title": "Accepted At",
+          "type": "string"
+        },
+        "operation_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Operation Id"
+        },
+        "provider_mode": {
+          "enum": [
+            "simulated",
+            "application"
+          ],
+          "title": "Provider Mode",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "queued",
+            "succeeded",
+            "running",
+            "needs_attention",
+            "failed",
+            "cancelled",
+            "waiting"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "operation_id",
+        "state",
+        "provider_mode",
+        "accepted_at"
+      ],
+      "title": "ActionReceipt",
+      "type": "object"
+    },
+    "MappingChange": {
+      "additionalProperties": false,
+      "properties": {
+        "after": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MappingSegment"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "before": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MappingSegment"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "segment_id": {
+          "title": "Segment Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "segment_id",
+        "before",
+        "after"
+      ],
+      "title": "MappingChange",
+      "type": "object"
+    },
+    "MappingSegment": {
+      "additionalProperties": false,
+      "properties": {
+        "designee_emails": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Designee Emails",
+          "type": "array"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "label": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "leader_email": {
+          "title": "Leader Email",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "leader_email"
+      ],
+      "title": "MappingSegment",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "anyOf": [
+        {
+          "maxLength": 64,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Action"
+    },
+    "applied_version_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Applied Version Id"
+    },
+    "configuration_id": {
+      "format": "uuid",
+      "title": "Configuration Id",
+      "type": "string"
+    },
+    "contract_version": {
+      "const": "organization-1",
+      "default": "organization-1",
+      "title": "Contract Version",
+      "type": "string"
+    },
+    "diagnostic_count": {
+      "default": 0,
+      "maximum": 30000,
+      "minimum": 0,
+      "title": "Diagnostic Count",
+      "type": "integer"
+    },
+    "feed_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Feed Id"
+    },
+    "mapping_changes": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/MappingChange"
+      },
+      "title": "Mapping Changes",
+      "type": "array"
+    },
+    "mapping_root_after": {
+      "anyOf": [
+        {
+          "maxLength": 320,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mapping Root After"
+    },
+    "mapping_root_before": {
+      "anyOf": [
+        {
+          "maxLength": 320,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mapping Root Before"
+    },
+    "person_count": {
+      "default": 0,
+      "maximum": 10000,
+      "minimum": 0,
+      "title": "Person Count",
+      "type": "integer"
+    },
+    "person_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Person Id"
+    },
+    "population_id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Population Id",
+      "type": "string"
+    },
+    "proposed_version_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Proposed Version Id"
+    },
+    "receipt": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ActionReceipt"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "request_digest": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Request Digest"
+    },
+    "request_key": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Request Key"
+    },
+    "review_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Review Id"
+    },
+    "source_id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Source Id",
+      "type": "string"
+    },
+    "subject_name": {
+      "anyOf": [
+        {
+          "maxLength": 320,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Subject Name"
+    }
+  },
+  "required": [
+    "source_id",
+    "population_id",
+    "configuration_id"
+  ],
+  "title": "OrganizationEvidence",
+  "type": "object"
+}

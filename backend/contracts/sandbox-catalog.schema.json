@@ -1,0 +1,66 @@
+{
+  "$defs": {
+    "SandboxTarget": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "scenario": {
+          "enum": [
+            "healthy",
+            "access_denied",
+            "timeout",
+            "unsupported",
+            "unobservable"
+          ],
+          "title": "Scenario",
+          "type": "string"
+        },
+        "tenancy_ocid": {
+          "maxLength": 256,
+          "minLength": 15,
+          "pattern": "^ocid1\\.tenancy\\.[A-Za-z0-9.]+$",
+          "title": "Tenancy Ocid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenancy_ocid",
+        "name",
+        "scenario"
+      ],
+      "title": "SandboxTarget",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "execution_paused": {
+      "title": "Execution Paused",
+      "type": "boolean"
+    },
+    "provider_mode": {
+      "const": "simulated",
+      "default": "simulated",
+      "title": "Provider Mode",
+      "type": "string"
+    },
+    "targets": {
+      "items": {
+        "$ref": "#/$defs/SandboxTarget"
+      },
+      "title": "Targets",
+      "type": "array"
+    }
+  },
+  "required": [
+    "execution_paused",
+    "targets"
+  ],
+  "title": "SandboxCatalog",
+  "type": "object"
+}

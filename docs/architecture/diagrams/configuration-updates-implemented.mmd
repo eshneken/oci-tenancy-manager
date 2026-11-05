@@ -1,0 +1,80 @@
+%% Baseline-only update checkpoint, implemented/validated in local simulation;15application tables remain.
+%% This is an abridged relationship map of existing tables, not five new tables or the full30-table target.
+%% Composite FKs include workspace; baseline and organization/workflow ERs retain all other columns.
+%% Inventory latest/completed fields are derived reads of baseline publications/operation.completed_at.
+%% Audit resource labels derive from immutable intent plus scoped registry; no new resource table.
+erDiagram
+  org_workspace ||--o{ otm_tenancy : workspace_FK
+  org_workspace ||--o{ otm_baseline_version : workspace_FK
+  otm_baseline_version o|--o{ otm_tenancy : selected_baseline_scoped_FK
+  otm_baseline_version o|--o{ otm_tenancy : last_verified_baseline_scoped_FK
+  otm_operation o|--o{ otm_tenancy : current_or_last_operation_scoped_FKs
+  otm_operation ||--o{ otm_operation_step : scoped_operation_FK
+  otm_operation o|--o{ audit_event : scoped_operation_FK
+  org_workspace {
+    string id PK
+    int registry_revision "preview/admission/publication fence"
+  }
+  otm_baseline_version {
+    uuid id PK
+    string workspace_id FK
+    int version_number
+    string content_hash
+    timestamptz published_at
+    string publication_mode "simulated"
+  }
+  otm_tenancy {
+    uuid id PK
+    string workspace_id FK
+    uuid baseline_version_id FK "existing selected/desired pin"
+    uuid verified_baseline_version_id FK "NEW nullable last complete simulated verification"
+    timestamptz configuration_verified_at "NEW nullable; paired with verified baseline"
+    jsonb configuration_observation "NEW nullable fake-object category records; partial state retained"
+    uuid operation_id FK "current reservation"
+    uuid last_operation_id FK
+    int revision "frozen source plus acceptance/completion increments"
+  }
+  otm_operation {
+    uuid id PK
+    string workspace_id
+    string kind "configuration_update added to existing kinds"
+    uuid current_intent_event_id "immutable audit pointer"
+    string state
+    string request_digest
+    string responsible_actor_subject
+  }
+  otm_operation_step {
+    string workspace_id
+    uuid operation_id FK
+    int intent_revision "1"
+    string step_key "configuration:tenancy-UUID"
+    string state
+    int attempt_number
+    jsonb last_outcome "typed ConfigurationOutcome"
+    uuid evidence_event_id "immutable audit correlation"
+  }
+  audit_event {
+    uuid id PK
+    string workspace_id
+    uuid operation_id FK
+    string kind "operation_intent, configuration_outcome, configuration_retry"
+    jsonb data "closed intent, per-child outcome or human retry"
+    string data_hash
+    timestamptz at
+  }
+%% Only the three NEW tenancy columns are added by0015; no plan/override/config-revision table.
+%% verified_baseline_version_id and configuration_verified_at must both be NULL or both present.
+%% configuration_observation maps policy/quota/budget/tags to typed synthetic object/payload/hash records.
+%% Fake objects are not separately keyed provider-binding rows and are not real OCI observations.
+%% One accepted operation freezes full BaselineVersion and1–500ConfigurationTarget snapshots in audit JSON.
+%% Target IDs/baseline IDs inside JSON are validated correlations, not additional relational FKs.
+%% One native operation UUID job loops children in independent local transactions; no second queue/store.
+%% All candidate reservations/pins/audit/enqueue are atomic; child completion is independent afterward.
+%% Last-verified pointer advances only after all four local category readbacks; partial state is retained.
+%% Step attempts update current projection; immutable audit retains past outcomes and retry acceptance.
+%% Deprecated org_workspace.current_baseline_id remains physically stored but is not selection authority.
+%% Retry skips already verified children; incomplete category state is re-read and compared before any write.
+%% Exact matching stored categories skip mutation; full verification still requires all four readbacks.
+%% Queued start/retry ActionReceipts use HTTP202; nonqueued existing-state receipts use HTTP200.
+%% Each category payload is a bounded JSON string up to700000characters, Unicode-preserving, with canonical hash.
+%% Runtime badge adds one currently responsible supported retry per incomplete batch; not a failed-child count.

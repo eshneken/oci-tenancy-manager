@@ -1,0 +1,31 @@
+%% Qualified/installed local 0018 configuration-check subset. Not the full proposed OCI model.
+erDiagram
+  org_workspace ||--o{ otm_tenancy : scopes
+  otm_tenancy ||--o{ otm_configuration_check : immutable_attempts
+  otm_operation ||--o{ otm_configuration_check : accepts_targets
+  audit_event ||--o| otm_configuration_check : sealed_outcome
+  otm_operation ||--o{ otm_operation_step : read_progress
+  otm_configuration_check {
+    uuid id PK
+    string workspace_id FK
+    uuid tenancy_id FK
+    uuid operation_id FK
+    bigint acquisition_sequence UK
+    string contract_version
+    timestamptz started_at
+    timestamptz checked_at
+    jsonb context "closed CheckTarget"
+    string context_hash
+    string state "matching drifted unavailable superseded"
+    jsonb results "exactly four typed category results"
+    uuid evidence_event_id FK
+  }
+
+%% workspace_id + tenancy_id scope the child FK; workspace_id + operation_id + evidence_event_id
+%% scope the immutable audit FK. Unique workspace/operation/child prevents duplicate sealed attempts.
+%% Existing operation/steps/audit/native queue are reused. No desired/verified head is changed by checks.
+%% Database ordinal is allocated at sealed insertion under serialized local acquisition/read locks.
+%% Four complete categories required for confirmation/resolution; later unknown retains prior
+%% same-context confirmed drift. Old assignment generations never make current intent green.
+%% ManagedObservation envelopes use existing tenancy.configuration_observation local fake-cloud state;
+%% checks do not mutate it. Real bindings, daily scheduling, repair and email remain future work.

@@ -1,0 +1,16 @@
+{
+  "artifact_kind": "design_example_not_runtime_configuration",
+  "accepted_decisions": [
+    "D51",
+    "D52"
+  ],
+  "workspace_runtime_policy_fragment": {
+    "recovery": {
+      "objectives_revision": "d51-d52-v1",
+      "rpo_seconds": 900,
+      "rto_seconds": 14400,
+      "disaster_scope": "in_region"
+    }
+  },
+  "qualification_status": "restore_drill_not_executed"
+}

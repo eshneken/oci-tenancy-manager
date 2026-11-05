@@ -1,0 +1,22 @@
+{
+  "contract": "D30-full-object-blocks-design-only",
+  "production_implemented": false,
+  "root_objects": {
+    "policy": 1,
+    "quota": 1,
+    "budget": 1,
+    "namespace_OTM": 1
+  },
+  "allowed_overrides": [
+    "policy_statements",
+    "quota_statements",
+    "budget_amount"
+  ],
+  "statement_mode": "replace-full-list",
+  "tag_overrides": false,
+  "budget_alerts": false,
+  "notes": [
+    "Each defined tag also has a root default; those are individual OCI objects.",
+    "Required-access validation and real OCI statement syntax are not implemented here."
+  ]
+}

@@ -1,0 +1,62 @@
+[project]
+name = "otm-organization-prototype"
+version = "0.1.0"
+description = "Local organization reconciliation prototype for OCI Tenancy Manager"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "openpyxl>=3.1,<4",
+  "pydantic>=2.11,<3",
+  "sqlalchemy>=2.0,<2.1",
+  "psycopg[binary]>=3.2,<4",
+  "uvicorn>=0.30,<1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8,<10",
+    "httpx>=0.28,<1",
+    "ruff>=0.12,<1",
+    "pytest-cov==7.1.0",
+    "coverage==7.17.0",
+    "pip-audit==2.10.1",
+    "bandit==1.9.4",
+    "defusedxml==0.7.1",
+    "hatchling==1.33.0",
+]
+
+[build-system]
+requires = ["hatchling==1.33.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend/otm"]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+# Tests exercise local CLI helpers with either pytest entry point.
+pythonpath = ["."]
+markers = ["postgres: requires a disposable local PostgreSQL database"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.uv]
+# Keep environment synchronization from restoring certificates affected by the emSign incident.
+constraint-dependencies = ["certifi>=2026.10.19"]
+
+[tool.coverage.run]
+# Backend application source includes modules never imported by the unit suite.
+source = ["backend/otm"]
+branch = true
+relative_files = true
+
+[tool.coverage.report]
+# The gate compares raw line counts; branch coverage is diagnostic, not a second 95% gate.
+precision = 2
+show_missing = true
+exclude_lines = []

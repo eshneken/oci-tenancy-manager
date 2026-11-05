@@ -1,0 +1,27 @@
+{
+  "source": "Procrastinate3.10.0 packaged schema/license; application SQL frozen from initial metadata",
+  "sha256": {
+    "0001-application.sql": "699f3fc3d4ed03c878a6f461bd67a65b093264b71f6d41d3fa092f7ca9f97996",
+    "procrastinate-3.10.0.sql": "c70ec4b400a60ad9592787653aae5ae77ae41bf801d56b5bd2712751a07f2009",
+    "procrastinate-LICENSE.md": "51ae5fb9f40ec3980959a1195d9b0a46a134008e54d6985e099399c24323074e",
+    "0002-inspection-worker.sql": "2923b36138d1d675dd44c4cf7430c958939b777a835817be36dcb41af1a89278",
+    "0003-admin-session.sql": "c26bd67ada1d6dbd2b7180b79b2b1caed92255ce77825ac3713f9b74a31cdbf8",
+    "0004-session-idle-policy.sql": "25cc54723f46ded40426bb440ec9ac0a4a53b6c1253b85de271cba6be560c8a7",
+    "0005-administrator-grants.sql": "e7a4323c3e0ecbf1588749df0aba632393f195059d0861b7a7f1ba4ca85a0584",
+    "0006-local-authentication.sql": "0c6e885be08820ac2443c44b83817ed5dce7b7bf9169ec1cb0921444f02635bd",
+    "0007-audit-export.sql": "ba93ef5849ada6cfc4abb63dc04e08fd7e0c1cc36ead275a59d53b1229ae3edc",
+    "0008-organization-snapshots.sql": "9d58d6479bbb1df7dd486bbfc6b6c65b24e11b50777c12215bf33375daf84c70",
+    "0009-organization-workflows.sql": "d90923556f05c9995230b046dd9cbf2df8b3aadda9869c28f790d207c1d7d770",
+    "0010-guided-onboarding.sql": "5d6ab1f13c8fec4fc984ca40c288f5b0530f77320bef19f1b54f00aadf78fd5c",
+    "0011-baseline-drafts.sql": "5fc226142ed58adb93f9f27c92cbd5f587793076a6db7cf545c0c0029fa9a6a7",
+    "0012-baseline-publication.sql": "77f89b6bbc86cfb552d60a69292132c8751a34759ef726a137bd6c2d2bb71cb2",
+    "0013-baseline-pinning.sql": "09d0e906cecd7865ce4eb1bd19ebbb1f8d7c4c9899ffa3094afab7c6d2fe580c",
+    "0014-latest-baseline.sql": "cf278fd5495825703d16c398d8fd127fb4bc17c8434e39a83f10122c4c017799",
+    "0015-configuration-updates.sql": "8a38620ca0cc4d5ba2c69f78c2ac61003c6151dfde25775436c7a3685c88edc6",
+    "0016-tenancy-overrides.sql": "fc245112049bc0656eecebe6343fc2fe614afff489384fbb59abc1a39c348357",
+    "0017-membership-onboarding.sql": "3e90069c0221f8e8e519843918e30ebe59ea9dc651cc7cfa2e9daabca0fd2721",
+    "0018-configuration-drift.sql": "6f47d62be29f6dac0b3ec2390f3a5d5bef10314c713f9c4abb9400f1c5b53c5e",
+    "0019-operation-responsibility.sql": "6ff2c1bb07b5da28422b14fd0855dce0f47710af2688cfcf2ce9a59f276196b5",
+    "0020-email-delivery.sql": "4a5508f04922c2c4250b87c6aba52ac9a6b0a567ee46d8a511620ea56b8a04bf"
+  }
+}

@@ -1,0 +1,75 @@
+erDiagram
+  org_workspace ||--o{ org_person : owns
+  org_workspace ||--o{ org_feed : receives
+  org_workspace ||--o{ org_version : scopes
+  org_workspace ||--o| org_version : selects_applied
+  org_workspace ||--o| org_version : selects_proposed
+  org_feed ||--o{ org_version : source_for
+  org_version ||--o{ org_member : freezes
+  org_person ||--o{ org_member : stable_identity
+  org_member o|--o{ org_member : same_version_manager
+  org_workspace {
+    int registry_revision
+    string id PK
+    uuid configuration_id
+    jsonb configuration
+    uuid applied_version_id FK
+    uuid proposed_version_id FK
+    string applied_kind
+    string proposed_kind
+  }
+  org_person {
+    uuid id PK
+    string workspace_id FK
+    string email
+    string directory_status
+    boolean setup_required
+    uuid setup_episode_id
+    timestamptz removed_capture_at
+    uuid pending_operation_id FK
+  }
+  org_feed {
+    uuid id PK
+    string workspace_id FK
+    string source_id
+    string population_id
+    string external_id
+    timestamptz received_at
+    timestamptz captured_at
+    string digest
+    string raw_digest
+    jsonb data
+    string state
+    jsonb diagnostics
+    uuid proposed_version_id FK
+    uuid applied_version_id FK
+  }
+  org_version {
+    uuid id PK
+    string workspace_id FK
+    string kind
+    uuid base_version_id FK
+    uuid feed_id FK
+    uuid configuration_id
+    jsonb configuration
+    int member_count
+    boolean sealed
+    jsonb data
+  }
+  org_member {
+    string workspace_id PK,FK
+    uuid version_id PK,FK
+    uuid person_id PK,FK
+    string email
+    string full_name
+    uuid manager_person_id FK
+    string manager_email
+    string profile
+    string evidence
+    string lob_id
+    string accountable_leader_email
+    jsonb designee_emails
+    string ancestry
+    boolean absence_review
+    jsonb data
+  }

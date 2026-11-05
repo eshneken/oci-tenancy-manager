@@ -1,0 +1,510 @@
+{
+  "$defs": {
+    "ExecutionContext": {
+      "additionalProperties": false,
+      "properties": {
+        "access_binding_id": {
+          "format": "uuid",
+          "title": "Access Binding Id",
+          "type": "string"
+        },
+        "attempt_id": {
+          "format": "uuid",
+          "title": "Attempt Id",
+          "type": "string"
+        },
+        "credential_generation": {
+          "minimum": 1,
+          "title": "Credential Generation",
+          "type": "integer"
+        },
+        "execution_generation": {
+          "minimum": 1,
+          "title": "Execution Generation",
+          "type": "integer"
+        },
+        "intent_revision": {
+          "minimum": 1,
+          "title": "Intent Revision",
+          "type": "integer"
+        },
+        "operation_id": {
+          "format": "uuid",
+          "title": "Operation Id",
+          "type": "string"
+        },
+        "step_key": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Step Key",
+          "type": "string"
+        },
+        "workspace_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Workspace Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "operation_id",
+        "step_key",
+        "attempt_id",
+        "intent_revision",
+        "execution_generation",
+        "access_binding_id",
+        "credential_generation"
+      ],
+      "title": "ExecutionContext",
+      "type": "object"
+    },
+    "InspectionConfirmed": {
+      "additionalProperties": false,
+      "properties": {
+        "attempt_id": {
+          "format": "uuid",
+          "title": "Attempt Id",
+          "type": "string"
+        },
+        "contract_version": {
+          "const": "execution-1-draft",
+          "title": "Contract Version",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/ReadBackEvidence"
+          },
+          "maxItems": 32,
+          "minItems": 1,
+          "title": "Evidence",
+          "type": "array"
+        },
+        "identity": {
+          "title": "Identity",
+          "type": "null"
+        },
+        "kind": {
+          "const": "confirmed",
+          "title": "Kind",
+          "type": "string"
+        },
+        "milestone": {
+          "const": "tenancy_inspected",
+          "title": "Milestone",
+          "type": "string"
+        },
+        "observed_at": {
+          "format": "date-time",
+          "title": "Observed At",
+          "type": "string"
+        },
+        "provider_operation_id": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Provider Operation Id"
+        },
+        "provider_request_id": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Provider Request Id"
+        },
+        "safe_code": {
+          "const": "TENANCY_INSPECTED",
+          "title": "Safe Code",
+          "type": "string"
+        },
+        "tenancy": {
+          "$ref": "#/$defs/TenancyFacts"
+        }
+      },
+      "required": [
+        "contract_version",
+        "attempt_id",
+        "observed_at",
+        "provider_request_id",
+        "provider_operation_id",
+        "kind",
+        "safe_code",
+        "milestone",
+        "tenancy",
+        "identity",
+        "evidence"
+      ],
+      "title": "InspectionConfirmed",
+      "type": "object"
+    },
+    "InspectionUnobservable": {
+      "additionalProperties": false,
+      "properties": {
+        "attempt_id": {
+          "format": "uuid",
+          "title": "Attempt Id",
+          "type": "string"
+        },
+        "continuation": {
+          "enum": [
+            "manual",
+            "observe"
+          ],
+          "title": "Continuation",
+          "type": "string"
+        },
+        "contract_version": {
+          "const": "execution-1-draft",
+          "title": "Contract Version",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/ReadBackEvidence"
+          },
+          "maxItems": 32,
+          "title": "Evidence",
+          "type": "array"
+        },
+        "kind": {
+          "const": "unobservable",
+          "title": "Kind",
+          "type": "string"
+        },
+        "observed_at": {
+          "format": "date-time",
+          "title": "Observed At",
+          "type": "string"
+        },
+        "provider_operation_id": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Provider Operation Id"
+        },
+        "provider_request_id": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Provider Request Id"
+        },
+        "safe_code": {
+          "enum": [
+            "ACCESS_UNVERIFIED",
+            "ACCESS_DENIED",
+            "READ_TIMEOUT",
+            "READ_DELAYED",
+            "TENANCY_UNOBSERVABLE"
+          ],
+          "title": "Safe Code",
+          "type": "string"
+        }
+      },
+      "required": [
+        "contract_version",
+        "attempt_id",
+        "observed_at",
+        "provider_request_id",
+        "provider_operation_id",
+        "kind",
+        "safe_code",
+        "continuation",
+        "evidence"
+      ],
+      "title": "InspectionUnobservable",
+      "type": "object"
+    },
+    "InspectionUnsupported": {
+      "additionalProperties": false,
+      "properties": {
+        "attempt_id": {
+          "format": "uuid",
+          "title": "Attempt Id",
+          "type": "string"
+        },
+        "continuation": {
+          "const": "manual",
+          "title": "Continuation",
+          "type": "string"
+        },
+        "contract_version": {
+          "const": "execution-1-draft",
+          "title": "Contract Version",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/ReadBackEvidence"
+          },
+          "maxItems": 32,
+          "title": "Evidence",
+          "type": "array"
+        },
+        "kind": {
+          "const": "unsupported",
+          "title": "Kind",
+          "type": "string"
+        },
+        "observed_at": {
+          "format": "date-time",
+          "title": "Observed At",
+          "type": "string"
+        },
+        "provider_operation_id": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Provider Operation Id"
+        },
+        "provider_request_id": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Provider Request Id"
+        },
+        "safe_code": {
+          "const": "UNSUPPORTED_CAPABILITY",
+          "title": "Safe Code",
+          "type": "string"
+        }
+      },
+      "required": [
+        "contract_version",
+        "attempt_id",
+        "observed_at",
+        "provider_request_id",
+        "provider_operation_id",
+        "kind",
+        "safe_code",
+        "continuation",
+        "evidence"
+      ],
+      "title": "InspectionUnsupported",
+      "type": "object"
+    },
+    "ReadBackEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "const": "READ_BACK",
+          "title": "Code",
+          "type": "string"
+        },
+        "evidence_ref": {
+          "format": "uuid",
+          "title": "Evidence Ref",
+          "type": "string"
+        },
+        "observed_at": {
+          "format": "date-time",
+          "title": "Observed At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "evidence_ref",
+        "observed_at"
+      ],
+      "title": "ReadBackEvidence",
+      "type": "object"
+    },
+    "TenancyFacts": {
+      "additionalProperties": false,
+      "properties": {
+        "actual_name": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Actual Name",
+          "type": "string"
+        },
+        "home_region_identifier": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Home Region Identifier"
+        },
+        "home_region_key": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Home Region Key",
+          "type": "string"
+        },
+        "observed_at": {
+          "format": "date-time",
+          "title": "Observed At",
+          "type": "string"
+        },
+        "organization_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Organization Id",
+          "type": "string"
+        },
+        "parent_tenancy_ocid": {
+          "maxLength": 256,
+          "minLength": 15,
+          "pattern": "^ocid1\\.tenancy\\.[A-Za-z0-9.]+$",
+          "title": "Parent Tenancy Ocid",
+          "type": "string"
+        },
+        "role": {
+          "const": "CHILD",
+          "title": "Role",
+          "type": "string"
+        },
+        "tenancy_ocid": {
+          "maxLength": 256,
+          "minLength": 15,
+          "pattern": "^ocid1\\.tenancy\\.[A-Za-z0-9.]+$",
+          "title": "Tenancy Ocid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "organization_id",
+        "parent_tenancy_ocid",
+        "tenancy_ocid",
+        "actual_name",
+        "home_region_key",
+        "home_region_identifier",
+        "role",
+        "observed_at"
+      ],
+      "title": "TenancyFacts",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "context": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ExecutionContext"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "contract_version": {
+      "const": "inspection-worker-1",
+      "default": "inspection-worker-1",
+      "title": "Contract Version",
+      "type": "string"
+    },
+    "intent_event_id": {
+      "format": "uuid",
+      "title": "Intent Event Id",
+      "type": "string"
+    },
+    "provider_mode": {
+      "const": "simulated",
+      "default": "simulated",
+      "title": "Provider Mode",
+      "type": "string"
+    },
+    "result": {
+      "anyOf": [
+        {
+          "discriminator": {
+            "mapping": {
+              "confirmed": "#/$defs/InspectionConfirmed",
+              "unobservable": "#/$defs/InspectionUnobservable",
+              "unsupported": "#/$defs/InspectionUnsupported"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/InspectionConfirmed"
+            },
+            {
+              "$ref": "#/$defs/InspectionUnobservable"
+            },
+            {
+              "$ref": "#/$defs/InspectionUnsupported"
+            }
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Result"
+    },
+    "safe_code": {
+      "enum": [
+        "TENANCY_INSPECTED",
+        "ACCESS_UNVERIFIED",
+        "ACCESS_DENIED",
+        "READ_TIMEOUT",
+        "READ_DELAYED",
+        "TENANCY_UNOBSERVABLE",
+        "UNSUPPORTED_CAPABILITY",
+        "DISPATCH_NOT_AUTHORIZED",
+        "DISPATCH_CONTEXT_CHANGED",
+        "INSPECTION_PROVIDER_REJECTED"
+      ],
+      "title": "Safe Code",
+      "type": "string"
+    }
+  },
+  "required": [
+    "context",
+    "intent_event_id",
+    "safe_code",
+    "result"
+  ],
+  "title": "InspectionOutcome",
+  "type": "object"
+}

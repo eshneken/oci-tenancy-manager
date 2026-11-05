@@ -1,0 +1,35 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "accepted_at": {
+      "format": "date-time",
+      "title": "Accepted At",
+      "type": "string"
+    },
+    "operation_id": {
+      "format": "uuid",
+      "title": "Operation Id",
+      "type": "string"
+    },
+    "state": {
+      "enum": [
+        "queued",
+        "running",
+        "waiting",
+        "needs_attention",
+        "succeeded",
+        "cancelled",
+        "failed"
+      ],
+      "title": "State",
+      "type": "string"
+    }
+  },
+  "required": [
+    "operation_id",
+    "state",
+    "accepted_at"
+  ],
+  "title": "Acceptance",
+  "type": "object"
+}

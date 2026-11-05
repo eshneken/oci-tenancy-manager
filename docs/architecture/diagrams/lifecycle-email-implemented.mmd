@@ -1,0 +1,31 @@
+%% Authored local lifecycle email subset; qualification pending. No real OCI/Vault qualification.
+erDiagram
+  otm_operation ||--o{ otm_notification_outbox : owns
+  otm_operation ||--o{ audit_event : records
+  otm_notification_outbox ||--o{ audit_event : delivery_evidence
+  otm_notification_outbox {
+    uuid id PK
+    string workspace_id FK
+    uuid operation_id FK
+    string transition_key "scoped unique"
+    jsonb intent "immutable route and context"
+    string intent_hash
+    string state "closed delivery state"
+    int attempts "0 to 3"
+    uuid attempt_id
+    timestamptz last_attempt_at
+    timestamptz next_attempt_at
+    timestamptz sent_at
+    string safe_code
+    timestamptz created_at
+    timestamptz updated_at
+  }
+
+%% FK is workspace_id + operation_id; unique transition key is scoped by workspace/operation.
+%% notification_id in typed email_delivery audit is a retained correlation, not a physical audit FK.
+%% Identity/intent/transition/created_at immutable; only guarded bounded delivery head changes.
+%% Native otm.lifecycle_email carries notification UUID only; SMTP is outside database transactions.
+%% OrganizationIntent.email_contacts optional/excluded when null preserves legacy proof hashes.
+%% Canonical org/SSO/employee keys stay unchanged; original and effective email are distinct.
+%% Profile/route/origin changes block queued egress; sending/unknown never blindly resubmits.
+%% Existing owned organization reset retains outbox/operations/audit and blocks pending/sending.

@@ -1,0 +1,228 @@
+{
+  "$defs": {
+    "MappingCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "root_email": {
+          "title": "Root Email",
+          "type": "string"
+        },
+        "segments": {
+          "items": {
+            "$ref": "#/$defs/MappingSegment"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Segments",
+          "type": "array"
+        }
+      },
+      "required": [
+        "root_email",
+        "segments"
+      ],
+      "title": "MappingCandidate",
+      "type": "object"
+    },
+    "MappingContext": {
+      "additionalProperties": false,
+      "properties": {
+        "applied_version_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Applied Version Id"
+        },
+        "configuration_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Configuration Id"
+        },
+        "proposed_version_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Proposed Version Id"
+        },
+        "registry_revision": {
+          "default": 0,
+          "title": "Registry Revision",
+          "type": "integer"
+        }
+      },
+      "title": "MappingContext",
+      "type": "object"
+    },
+    "MappingRole": {
+      "additionalProperties": false,
+      "properties": {
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "leader",
+            "designee"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "segment_id": {
+          "title": "Segment Id",
+          "type": "string"
+        },
+        "segment_name": {
+          "title": "Segment Name",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "healthy",
+            "departed",
+            "excluded",
+            "profile_missing",
+            "ancestry_incomplete",
+            "branch_changed",
+            "not_verified"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "segment_id",
+        "segment_name",
+        "role",
+        "email",
+        "status"
+      ],
+      "title": "MappingRole",
+      "type": "object"
+    },
+    "MappingSegment": {
+      "additionalProperties": false,
+      "properties": {
+        "designee_emails": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Designee Emails",
+          "type": "array"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "label": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "leader_email": {
+          "title": "Leader Email",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "leader_email"
+      ],
+      "title": "MappingSegment",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "available": {
+      "title": "Available",
+      "type": "boolean"
+    },
+    "blockers": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Blockers",
+      "type": "array"
+    },
+    "candidate": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MappingCandidate"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "configured": {
+      "title": "Configured",
+      "type": "boolean"
+    },
+    "context": {
+      "$ref": "#/$defs/MappingContext"
+    },
+    "has_feed": {
+      "title": "Has Feed",
+      "type": "boolean"
+    },
+    "roles": {
+      "items": {
+        "$ref": "#/$defs/MappingRole"
+      },
+      "title": "Roles",
+      "type": "array"
+    },
+    "root_editable": {
+      "title": "Root Editable",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "configured",
+    "available",
+    "context",
+    "candidate",
+    "root_editable",
+    "has_feed",
+    "roles",
+    "blockers"
+  ],
+  "title": "MappingSettings",
+  "type": "object"
+}

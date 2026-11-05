@@ -1,0 +1,30 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "client_request_key": {
+      "format": "uuid",
+      "title": "Client Request Key",
+      "type": "string"
+    },
+    "tenancy_ocid": {
+      "maxLength": 256,
+      "minLength": 15,
+      "pattern": "^ocid1\\.tenancy\\.[A-Za-z0-9.]+$",
+      "title": "Tenancy Ocid",
+      "type": "string"
+    },
+    "workspace_id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Workspace Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "workspace_id",
+    "client_request_key",
+    "tenancy_ocid"
+  ],
+  "title": "InspectImportRequest",
+  "type": "object"
+}

@@ -1,0 +1,53 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "expected_revision": {
+      "minimum": 1,
+      "title": "Expected Revision",
+      "type": "integer"
+    },
+    "policy_choice": {
+      "anyOf": [
+        {
+          "enum": [
+            "use_new_baseline",
+            "keep_override"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Policy Choice"
+    },
+    "quota_choice": {
+      "anyOf": [
+        {
+          "enum": [
+            "use_new_baseline",
+            "keep_override"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Quota Choice"
+    },
+    "tenancy_id": {
+      "format": "uuid",
+      "title": "Tenancy Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "expected_revision",
+    "tenancy_id"
+  ],
+  "title": "SaveConfigurationReview",
+  "type": "object"
+}

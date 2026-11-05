@@ -1,0 +1,39 @@
+{
+  "baseline_id": "organization-baseline",
+  "version": 2,
+  "policy": {
+    "statements": [
+      "Allow group OTMOperators to read all-resources in tenancy",
+      "Allow group OTMOperators to read audit-events in tenancy"
+    ]
+  },
+  "quota": {
+    "statements": [
+      "set compute-core quota standard2-core-count to 12 in tenancy",
+      "set compute-core quota standard-e4-core-count to 4 in tenancy"
+    ]
+  },
+  "budget": {
+    "monthly_amount": 300,
+    "currency": "USD",
+    "period": "MONTHLY",
+    "alerts": []
+  },
+  "tags": {
+    "namespace": "OTM",
+    "defaults": [
+      {
+        "key": "ManagedBy",
+        "value": "OTM"
+      },
+      {
+        "key": "Environment",
+        "value": "Engineering"
+      },
+      {
+        "key": "Service",
+        "value": "Engineering"
+      }
+    ]
+  }
+}

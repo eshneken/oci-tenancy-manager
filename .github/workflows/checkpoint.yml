@@ -1,0 +1,133 @@
+name: Checkpoint
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checkpoint-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-unit:
+    name: Backend unit coverage
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          version: '0.13.5'
+          enable-cache: false
+      - run: uv sync --project backend --locked
+      - run: uv run --project backend python scripts/check_unit_coverage.py
+      - run: uv run --project backend ruff check --config backend/pyproject.toml backend scripts
+      - run: uv run --project backend python scripts/check_inline_docs.py
+
+  frontend-unit:
+    name: Frontend unit coverage
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts
+        working-directory: frontend
+      - run: npm test
+        working-directory: frontend
+      - run: npm run contracts:check && npm run build
+        working-directory: frontend
+
+  integration:
+    name: PostgreSQL and Playwright
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          version: '0.13.5'
+          enable-cache: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - run: uv sync --project backend --locked
+      - run: npm ci --ignore-scripts
+        working-directory: frontend
+      - run: npx --no-install playwright install --with-deps chromium
+        working-directory: frontend
+      # The runner owns a disposable loopback database and fails on skipped/missing tests.
+      # Backend HTTP tests launch the real app/worker and execute all required UI suites.
+      - run: uv run --project backend python scripts/run_backend_postgres_tests.py
+
+  security:
+    name: Security and publication
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          version: '0.13.5'
+          enable-cache: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - run: uv sync --project backend --locked
+      - run: uv run --project backend python scripts/publication_guard.py
+      - run: uv run --project backend python scripts/install_security_tools.py
+      - run: uv run --project backend python scripts/check_secrets.py
+      - run: uv run --project backend bandit -q -r backend/src/otm
+      - run: uv export --project backend --locked --no-dev --no-emit-project --format requirements-txt --output-file .local-dev/runtime-requirements.txt
+      - run: uv run --project backend pip-audit -r .local-dev/runtime-requirements.txt
+      - run: npm ci --ignore-scripts && npm audit --audit-level=low
+        working-directory: frontend
+      # No logs, DB dumps, browser captures, private inputs or secrets are uploaded as artifacts.
+
+  documentation:
+    name: Documentation and contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          version: '0.13.5'
+          enable-cache: false
+      - run: uv sync --project backend --locked
+      - run: uv run --project backend python scripts/export_backend_contracts.py --check
+      - run: uv run --project backend python scripts/check_design_docs.py
+      - run: uv run --no-project scripts/check_c5_contracts.py
+      - run: uv run --with jsonschema==4.25.1 --no-project scripts/design/check-execution-contracts.py docs/contracts
+      - run: uv run --no-project scripts/design/check-configuration-resolution.py docs/contracts/configuration-examples
+      - run: uv run --no-project scripts/design/check-bulk-baseline-gate.py docs/contracts/configuration-examples --resolver scripts/design/check-configuration-resolution.py

@@ -1,0 +1,33 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "administrator_id": {
+      "format": "uuid",
+      "title": "Administrator Id",
+      "type": "string"
+    },
+    "at": {
+      "format": "date-time",
+      "title": "At",
+      "type": "string"
+    },
+    "authorization_revision": {
+      "format": "uuid",
+      "title": "Authorization Revision",
+      "type": "string"
+    },
+    "status": {
+      "const": "revoked",
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "administrator_id",
+    "status",
+    "authorization_revision",
+    "at"
+  ],
+  "title": "AdministratorChange",
+  "type": "object"
+}

@@ -1,0 +1,54 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "effective_email": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Effective Email"
+    },
+    "environment": {
+      "enum": [
+        "local",
+        "staging",
+        "production"
+      ],
+      "title": "Environment",
+      "type": "string"
+    },
+    "original_email": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Original Email"
+    },
+    "policy_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Policy Hash",
+      "type": "string"
+    },
+    "redirected": {
+      "title": "Redirected",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "original_email",
+    "effective_email",
+    "environment",
+    "policy_hash",
+    "redirected"
+  ],
+  "title": "EmailRoute",
+  "type": "object"
+}

@@ -1,0 +1,136 @@
+erDiagram
+  direction TB
+  org_workspace {
+    string id PK
+    string hosting_tenancy_ocid
+    string organization_parent_tenancy_ocid
+    uuid hosting_access_context_id FK
+    uuid parent_access_context_id FK
+  }
+  org_person {
+    uuid id PK
+    string email "original identity"
+  }
+  org_tenancy {
+    uuid id PK
+    string name "observed OCI name"
+    string tenancy_ocid UK "nullable pending creation"
+    string home_region_key
+    string home_region_identifier
+    string parent_tenancy_ocid
+    string management_state
+  }
+  org_tenancy_association {
+    uuid id PK
+    uuid tenancy_id FK
+    uuid person_id FK
+    string role
+    string state
+    uuid desired_access_assignment_id FK
+  }
+  otm_operation {
+    uuid id PK
+    uuid tenancy_id FK "nullable batch root"
+    uuid parent_operation_id FK
+    uuid current_intent_event_id FK
+    string state
+  }
+  otm_operation_step {
+    uuid operation_id PK,FK
+    int intent_revision PK
+    string step_key PK
+    uuid access_context_id FK
+    string provider_submission_id
+    string effect_knowledge
+  }
+  otm_managed_object_binding {
+    uuid id PK
+    uuid tenancy_id FK
+    string kind
+    string provider_ocid "required for OCI config objects"
+    string scim_resource_id "separate domain ID"
+    jsonb domain_metadata "display name and qualified console destination"
+    string ownership_mode
+    bigint access_generation "canonical operational head"
+  }
+  otm_access_context {
+    uuid id PK
+    string purpose
+    uuid tenancy_id FK "null for host or parent"
+    string target_tenancy_ocid
+    uuid principal_binding_id FK "child principal"
+    uuid credential_id FK "null for workload identity"
+  }
+  otm_credential {
+    uuid id PK
+    uuid access_context_id FK "when signer-owned"
+    uuid principal_binding_id FK
+    string kind
+    uuid current_version_id FK "password evidence; API-key selection"
+    uuid staged_version_id FK
+    bigint exposure_generation
+    uuid active_window_grant_id FK
+    timestamptz rotation_due_at
+    uuid rotation_operation_id FK "canonical C2 rotation"
+  }
+  otm_credential_version {
+    uuid id PK
+    uuid credential_id FK
+    string vault_secret_ocid
+    int vault_version_number
+    string public_key_fingerprint
+  }
+  otm_access_assignment {
+    uuid id PK
+    uuid tenancy_id FK
+    uuid association_id FK "one owner variant"
+    uuid operational_subject_binding_id FK "or operational purpose"
+    int revision_number
+    string profile_reference
+    jsonb parameters
+  }
+  otm_human_access_grant {
+    uuid id PK
+    uuid tenancy_id FK
+    string requesting_subject
+    jsonb requester_snapshot
+    string lifetime_policy_version
+    int duration_seconds
+    string deadline_anchor
+    uuid credential_id FK
+    uuid disclosed_version_id FK "exact recovery version"
+    uuid window_root_grant_id FK "shared exposure window"
+    bigint exposure_generation
+    timestamptz accepted_at
+    timestamptz first_disclosure_attempt_at
+    timestamptz due_at
+    timestamptz verified_rotation_at
+    uuid resolution_evidence_event_id FK
+    timestamptz resolved_at
+  }
+  otm_admin_session {
+    uuid id PK
+    string workspace_id FK
+    string issuer
+    string subject
+    string session_token_hash UK
+    timestamptz expires_at
+  }
+  org_workspace ||--o{ org_tenancy : registers_children
+  org_workspace ||--o{ otm_access_context : configures_authority
+  org_workspace ||--o{ otm_admin_session : authorizes_admin
+  org_person ||--o{ org_tenancy_association : retains_identity
+  org_tenancy ||--o{ org_tenancy_association : owner_or_member
+  org_tenancy ||--o{ otm_managed_object_binding : bound_objects
+  org_tenancy |o--o{ otm_operation : target
+  otm_operation ||--o{ otm_operation_step : exact_intent_steps
+  otm_access_context ||--o{ otm_operation_step : signs_request
+  otm_access_context |o--o{ otm_credential : signer_material
+  otm_credential ||--o{ otm_credential_version : immutable_versions
+  otm_managed_object_binding |o--o{ otm_credential : principal
+  org_tenancy_association |o--o{ otm_access_assignment : immutable_access
+  otm_managed_object_binding |o--o{ otm_access_assignment : operational_access
+  org_tenancy ||--o{ otm_human_access_grant : recovery_disclosure_requests
+  otm_credential ||--o{ otm_human_access_grant : exposure_requests
+  otm_credential_version ||--o{ otm_human_access_grant : exact_disclosed_version
+  otm_human_access_grant |o--o{ otm_human_access_grant : shared_window_root

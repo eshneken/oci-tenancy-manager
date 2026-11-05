@@ -1,0 +1,12 @@
+{
+  "override_id": "shared-monthly-budget",
+  "revision": 1,
+  "baseline_id": "organization-baseline",
+  "baseline_version": 1,
+  "reviewed_against": {},
+  "budget_amount": 500,
+  "budget_context": {
+    "currency": "USD",
+    "period": "MONTHLY"
+  }
+}

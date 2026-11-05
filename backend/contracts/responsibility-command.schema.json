@@ -1,0 +1,21 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "client_request_key": {
+      "format": "uuid",
+      "title": "Client Request Key",
+      "type": "string"
+    },
+    "expected_revision": {
+      "minimum": 1,
+      "title": "Expected Revision",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "client_request_key",
+    "expected_revision"
+  ],
+  "title": "ResponsibilityCommand",
+  "type": "object"
+}

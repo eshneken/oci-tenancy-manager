@@ -1,0 +1,84 @@
+{
+  "$defs": {
+    "OnboardingHandoff": {
+      "additionalProperties": false,
+      "properties": {
+        "activation_user_ocid": {
+          "anyOf": [
+            {
+              "pattern": "^ocid1\\.user\\.oc1\\.\\.otmsim[a-z0-9]{1,100}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Activation User Ocid"
+        },
+        "bootstrap_user_ocid": {
+          "pattern": "^ocid1\\.user\\.oc1\\.\\.otmsim[a-z0-9]{1,100}$",
+          "title": "Bootstrap User Ocid",
+          "type": "string"
+        },
+        "tenancy_ocid": {
+          "maxLength": 256,
+          "minLength": 15,
+          "pattern": "^ocid1\\.tenancy\\.[A-Za-z0-9.]+$",
+          "title": "Tenancy Ocid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenancy_ocid",
+        "bootstrap_user_ocid"
+      ],
+      "title": "OnboardingHandoff",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "enum": [
+        "verify_handoff",
+        "start_setup"
+      ],
+      "title": "Action",
+      "type": "string"
+    },
+    "client_request_key": {
+      "format": "uuid",
+      "title": "Client Request Key",
+      "type": "string"
+    },
+    "confirm_cleanup": {
+      "default": false,
+      "title": "Confirm Cleanup",
+      "type": "boolean"
+    },
+    "handoff": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OnboardingHandoff"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "revision": {
+      "minimum": 1,
+      "title": "Revision",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "client_request_key",
+    "revision",
+    "action"
+  ],
+  "title": "OnboardingCommand",
+  "type": "object"
+}

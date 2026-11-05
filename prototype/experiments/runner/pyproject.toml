@@ -1,0 +1,33 @@
+[project]
+name = "otm-runner-qualification"
+version = "0.1.0"
+description = "Isolated SQLAlchemy/psycopg/Procrastinate transaction qualification"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "procrastinate==3.10.0",
+  "sqlalchemy==2.0.54",
+  "psycopg[binary,pool]==3.3.6",
+]
+
+[dependency-groups]
+dev = [
+  "pytest==9.1.1",
+  "defusedxml==0.7.1",
+  "ruff==0.17.0",
+  "pip-audit==2.10.1",
+  "bandit==1.9.4",
+  "hatchling==1.33.0",
+]
+
+[build-system]
+requires = ["hatchling==1.33.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/otm_runner_qualification"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.uv]
+constraint-dependencies = ["certifi>=2026.10.19"]

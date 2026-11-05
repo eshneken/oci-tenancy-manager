@@ -1,0 +1,302 @@
+{
+  "$defs": {
+    "AssociationChoice": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "delete",
+            "transfer",
+            "remove",
+            "keep"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "association_id": {
+          "format": "uuid",
+          "title": "Association Id",
+          "type": "string"
+        },
+        "recipient_person_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Recipient Person Id"
+        }
+      },
+      "required": [
+        "association_id",
+        "action"
+      ],
+      "title": "AssociationChoice",
+      "type": "object"
+    },
+    "OrganizationContext": {
+      "additionalProperties": false,
+      "properties": {
+        "applied_version_id": {
+          "format": "uuid",
+          "title": "Applied Version Id",
+          "type": "string"
+        },
+        "configuration_id": {
+          "format": "uuid",
+          "title": "Configuration Id",
+          "type": "string"
+        },
+        "proposed_version_id": {
+          "format": "uuid",
+          "title": "Proposed Version Id",
+          "type": "string"
+        },
+        "registry_revision": {
+          "minimum": 1,
+          "title": "Registry Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "applied_version_id",
+        "proposed_version_id",
+        "configuration_id",
+        "registry_revision"
+      ],
+      "title": "OrganizationContext",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "enum": [
+        "create_tenancy",
+        "import_tenancy",
+        "join_shared",
+        "offboard_person",
+        "delete_tenancy",
+        "remove_member",
+        "transfer_owner",
+        "no_tenancy_required",
+        "ignore",
+        "resolve",
+        "merge",
+        "reonboard",
+        "mark_returned",
+        "cancel_simulation"
+      ],
+      "title": "Action",
+      "type": "string"
+    },
+    "client_request_key": {
+      "format": "uuid",
+      "title": "Client Request Key",
+      "type": "string"
+    },
+    "compartment_name": {
+      "anyOf": [
+        {
+          "maxLength": 100,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Compartment Name"
+    },
+    "confirm_manager": {
+      "default": false,
+      "title": "Confirm Manager",
+      "type": "boolean"
+    },
+    "confirm_no_associations": {
+      "default": false,
+      "title": "Confirm No Associations",
+      "type": "boolean"
+    },
+    "confirm_shared": {
+      "default": false,
+      "title": "Confirm Shared",
+      "type": "boolean"
+    },
+    "context": {
+      "$ref": "#/$defs/OrganizationContext"
+    },
+    "existing_compartment_ocid": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Existing Compartment Ocid"
+    },
+    "home_region": {
+      "anyOf": [
+        {
+          "pattern": "^[a-z][a-z0-9-]{2,63}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Home Region"
+    },
+    "import_ocid": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "minLength": 15,
+          "pattern": "^ocid1\\.tenancy\\.[A-Za-z0-9.]+$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Import Ocid"
+    },
+    "name": {
+      "anyOf": [
+        {
+          "maxLength": 200,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Name"
+    },
+    "operation_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Operation Id"
+    },
+    "parent_compartment_ocid": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Parent Compartment Ocid"
+    },
+    "partner_person_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Partner Person Id"
+    },
+    "person_id": {
+      "format": "uuid",
+      "title": "Person Id",
+      "type": "string"
+    },
+    "plan": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/AssociationChoice"
+      },
+      "maxItems": 100,
+      "title": "Plan",
+      "type": "array"
+    },
+    "recipient_person_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Recipient Person Id"
+    },
+    "review_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Review Id"
+    },
+    "tenancy_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tenancy Id"
+    },
+    "tenancy_kind": {
+      "default": "individual",
+      "enum": [
+        "individual",
+        "shared"
+      ],
+      "title": "Tenancy Kind",
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_request_key",
+    "context",
+    "action",
+    "person_id"
+  ],
+  "title": "OrganizationAction",
+  "type": "object"
+}

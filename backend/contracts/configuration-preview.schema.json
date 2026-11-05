@@ -1,0 +1,465 @@
+{
+  "$defs": {
+    "BaselineContent": {
+      "additionalProperties": false,
+      "properties": {
+        "budget_currency": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Budget Currency",
+          "type": "string"
+        },
+        "budget_period": {
+          "const": "MONTHLY",
+          "default": "MONTHLY",
+          "title": "Budget Period",
+          "type": "string"
+        },
+        "monthly_budget_amount": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Monthly Budget Amount"
+        },
+        "policy_statements": {
+          "items": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Policy Statements",
+          "type": "array"
+        },
+        "quota_statements": {
+          "items": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Quota Statements",
+          "type": "array"
+        },
+        "tag_defaults": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/TagDefault"
+          },
+          "maxItems": 100,
+          "title": "Tag Defaults",
+          "type": "array"
+        },
+        "tag_namespace": {
+          "const": "OTM",
+          "default": "OTM",
+          "title": "Tag Namespace",
+          "type": "string"
+        }
+      },
+      "required": [
+        "policy_statements",
+        "quota_statements",
+        "monthly_budget_amount",
+        "budget_currency"
+      ],
+      "title": "BaselineContent",
+      "type": "object"
+    },
+    "BaselineVersion": {
+      "additionalProperties": false,
+      "properties": {
+        "based_on_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Based On Id"
+        },
+        "content": {
+          "$ref": "#/$defs/BaselineContent"
+        },
+        "content_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Content Hash",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "created_by": {
+          "title": "Created By",
+          "type": "string"
+        },
+        "edit_revision": {
+          "minimum": 1,
+          "title": "Edit Revision",
+          "type": "integer"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "publication_mode": {
+          "anyOf": [
+            {
+              "const": "simulated",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Publication Mode"
+        },
+        "published_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Published At"
+        },
+        "published_by": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Published By"
+        },
+        "published_by_name": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Published By Name"
+        },
+        "version_number": {
+          "minimum": 1,
+          "title": "Version Number",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "version_number",
+        "edit_revision",
+        "created_by",
+        "created_at",
+        "content_hash",
+        "content"
+      ],
+      "title": "BaselineVersion",
+      "type": "object"
+    },
+    "ConfigurationBlocker": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "enum": [
+            "TENANCY_BUSY",
+            "REGISTERED_CHILD_REQUIRED",
+            "PROVIDER_UNAVAILABLE",
+            "OVERRIDE_REVIEW_REQUIRED",
+            "OVERRIDE_CONTEXT_UNAVAILABLE"
+          ],
+          "title": "Code",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "operation_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Operation Id"
+        },
+        "tenancy_id": {
+          "format": "uuid",
+          "title": "Tenancy Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenancy_id",
+        "name",
+        "code"
+      ],
+      "title": "ConfigurationBlocker",
+      "type": "object"
+    },
+    "OverrideConflict": {
+      "additionalProperties": false,
+      "properties": {
+        "old_baseline": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BaselineVersion"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "overrides": {
+          "$ref": "#/$defs/OverrideValues"
+        },
+        "policy_choice": {
+          "anyOf": [
+            {
+              "enum": [
+                "use_new_baseline",
+                "keep_override"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Policy Choice"
+        },
+        "policy_review": {
+          "title": "Policy Review",
+          "type": "boolean"
+        },
+        "quota_choice": {
+          "anyOf": [
+            {
+              "enum": [
+                "use_new_baseline",
+                "keep_override"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quota Choice"
+        },
+        "quota_review": {
+          "title": "Quota Review",
+          "type": "boolean"
+        },
+        "tenancy_id": {
+          "format": "uuid",
+          "title": "Tenancy Id",
+          "type": "string"
+        },
+        "tenancy_name": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Tenancy Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenancy_id",
+        "tenancy_name",
+        "old_baseline",
+        "overrides",
+        "policy_review",
+        "quota_review"
+      ],
+      "title": "OverrideConflict",
+      "type": "object"
+    },
+    "OverrideValues": {
+      "additionalProperties": false,
+      "properties": {
+        "monthly_budget_override_amount": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Monthly Budget Override Amount"
+        },
+        "policy_override_statements": {
+          "anyOf": [
+            {
+              "items": {
+                "maxLength": 2000,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 50,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Policy Override Statements"
+        },
+        "quota_override_statements": {
+          "anyOf": [
+            {
+              "items": {
+                "maxLength": 2000,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 50,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quota Override Statements"
+        }
+      },
+      "title": "OverrideValues",
+      "type": "object"
+    },
+    "TagDefault": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Key",
+          "type": "string"
+        },
+        "value": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "value"
+      ],
+      "title": "TagDefault",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "baseline": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BaselineVersion"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "blockers": {
+      "items": {
+        "$ref": "#/$defs/ConfigurationBlocker"
+      },
+      "title": "Blockers",
+      "type": "array"
+    },
+    "conflicts": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/OverrideConflict"
+      },
+      "title": "Conflicts",
+      "type": "array"
+    },
+    "pending_count": {
+      "title": "Pending Count",
+      "type": "integer"
+    },
+    "preview_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Preview Hash",
+      "type": "string"
+    },
+    "ready_count": {
+      "title": "Ready Count",
+      "type": "integer"
+    },
+    "tenancy_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Tenancy Id"
+    }
+  },
+  "required": [
+    "baseline",
+    "tenancy_id",
+    "ready_count",
+    "pending_count",
+    "blockers",
+    "preview_hash"
+  ],
+  "title": "ConfigurationPreview",
+  "type": "object"
+}

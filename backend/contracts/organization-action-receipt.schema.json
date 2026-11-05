@@ -1,0 +1,51 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "accepted_at": {
+      "format": "date-time",
+      "title": "Accepted At",
+      "type": "string"
+    },
+    "operation_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Operation Id"
+    },
+    "provider_mode": {
+      "enum": [
+        "simulated",
+        "application"
+      ],
+      "title": "Provider Mode",
+      "type": "string"
+    },
+    "state": {
+      "enum": [
+        "queued",
+        "succeeded",
+        "running",
+        "needs_attention",
+        "failed",
+        "cancelled",
+        "waiting"
+      ],
+      "title": "State",
+      "type": "string"
+    }
+  },
+  "required": [
+    "operation_id",
+    "state",
+    "provider_mode",
+    "accepted_at"
+  ],
+  "title": "ActionReceipt",
+  "type": "object"
+}

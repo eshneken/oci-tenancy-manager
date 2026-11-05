@@ -1,0 +1,923 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OCI Tenancy Manager \u00b7 local organization lab",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/tenancies": {
+      "get": {
+        "summary": "Screen",
+        "description": "Serve the shared employee, tenancy and exception screens with local static assets.",
+        "operationId": "screen_tenancies_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/exceptions": {
+      "get": {
+        "summary": "Screen",
+        "description": "Serve the shared employee, tenancy and exception screens with local static assets.",
+        "operationId": "screen_exceptions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Screen",
+        "description": "Serve the shared employee, tenancy and exception screens with local static assets.",
+        "operationId": "screen__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/api/local/summary": {
+      "get": {
+        "summary": "Summary",
+        "description": "Return counts and the current applied snapshot without exposing credentials.",
+        "operationId": "summary_api_local_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/local/employees": {
+      "get": {
+        "summary": "Employees",
+        "description": "Search all visible columns and deterministically sort/page the current small census.",
+        "operationId": "employees_api_local_employees_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Page Size"
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200,
+              "default": "",
+              "title": "Query"
+            }
+          },
+          {
+            "name": "lob",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Lob"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "full_name",
+                "email",
+                "manager_name",
+                "accountable_leader_name",
+                "top_manager_name",
+                "lob_name",
+                "association_count"
+              ],
+              "type": "string",
+              "default": "full_name",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string",
+              "default": "asc",
+              "title": "Direction"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/local/tenancies": {
+      "get": {
+        "summary": "Tenancies",
+        "description": "Search active tenancies with numeric count sorting and a stable ID tie-break.",
+        "operationId": "tenancies_api_local_tenancies_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Page Size"
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200,
+              "default": "",
+              "title": "Query"
+            }
+          },
+          {
+            "name": "lob",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Lob"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "name",
+                "kind",
+                "owner_name",
+                "owner_email",
+                "lob_name",
+                "member_count"
+              ],
+              "type": "string",
+              "default": "name",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string",
+              "default": "asc",
+              "title": "Direction"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/local/exceptions": {
+      "get": {
+        "summary": "Exceptions",
+        "description": "Page the actionable queue separately from dated warning/change history.",
+        "operationId": "exceptions_api_local_exceptions_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Page Size"
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200,
+              "default": "",
+              "title": "Query"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "tab",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "actionable",
+                "informational"
+              ],
+              "type": "string",
+              "default": "actionable",
+              "title": "Tab"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/local/reviews/operate": {
+      "post": {
+        "summary": "Review Operation",
+        "description": "Apply guarded simulated success or an organization decision without OCI operations.",
+        "operationId": "review_operation_api_local_reviews_operate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/local/tenancy-registry": {
+      "get": {
+        "summary": "Tenancy Registry",
+        "description": "Expose registered ownership/membership and explicit re-onboarding candidates.",
+        "operationId": "tenancy_registry_api_local_tenancy_registry_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/local/tenancy-registry/operate": {
+      "post": {
+        "summary": "Registry Operation",
+        "description": "Atomically simulate an association operation with directory and review consequences.",
+        "operationId": "registry_operation_api_local_tenancy_registry_operate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistryCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/local/reviews/merge-candidates": {
+      "get": {
+        "summary": "Merge Candidates",
+        "description": "Offer unresolved absent/new pairs from this run, never inferred name matches.",
+        "operationId": "merge_candidates_api_local_reviews_merge_candidates_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/local/feeds": {
+      "post": {
+        "summary": "Upload",
+        "description": "Validate CSV, retain canonical JSON and run transactional publication.\n\nEach POST is a new snapshot, even when its bytes match a previous upload.\nThe generated snapshot identity is independent of the raw-content audit hash.\nLocal receipt time is the scenario clock; future connectors must bind real capture\nmetadata and reuse an observation identity only when retrying the same delivery.",
+        "operationId": "upload_api_local_feeds_post",
+        "parameters": [
+          {
+            "name": "complete",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Complete"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/local/workspace/clean": {
+      "post": {
+        "summary": "Clean Workspace",
+        "description": "Start a clean local run only after same-origin, version-bound user confirmation.",
+        "operationId": "clean_workspace_api_local_workspace_clean_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CleanWorkspaceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AssociationPlan": {
+        "properties": {
+          "association_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Association Id"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "delete",
+              "remove",
+              "transfer",
+              "keep"
+            ],
+            "title": "Action"
+          },
+          "recipient_person_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient Person Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "association_id",
+          "action"
+        ],
+        "title": "AssociationPlan",
+        "description": "One explicit disposition for one current association in an offboarding preview."
+      },
+      "CleanWorkspaceRequest": {
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "title": "Workspace Id"
+          },
+          "applied_version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applied Version Id"
+          },
+          "proposed_version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposed Version Id"
+          },
+          "configuration_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Configuration Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "workspace_id",
+          "applied_version_id",
+          "proposed_version_id",
+          "configuration_id"
+        ],
+        "title": "CleanWorkspaceRequest",
+        "description": "Bind a clean confirmation to the exact run, proposal, applied head and configuration."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "RegistryCommand": {
+        "properties": {
+          "context": {
+            "$ref": "#/components/schemas/CleanWorkspaceRequest"
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "create_tenancy",
+              "import_tenancy",
+              "join_shared",
+              "offboard_person",
+              "reonboard",
+              "return_to_org",
+              "no_tenancy_required",
+              "update_tenancy",
+              "transfer_owner",
+              "assign_owner",
+              "remove_member",
+              "delete_tenancy"
+            ],
+            "title": "Operation"
+          },
+          "person_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Person Id"
+          },
+          "tenancy_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tenancy Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "individual",
+                  "shared"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "owner_person_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Person Id"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000,
+                "minLength": 3
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "plan": {
+            "items": {
+              "$ref": "#/components/schemas/AssociationPlan"
+            },
+            "type": "array",
+            "title": "Plan",
+            "default": []
+          },
+          "confirm_no_associations": {
+            "type": "boolean",
+            "title": "Confirm No Associations",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "context",
+          "operation",
+          "person_id"
+        ],
+        "title": "RegistryCommand",
+        "description": "Version-bound local registry command; caller supplies intent, never replacement state."
+      },
+      "ReviewCommand": {
+        "properties": {
+          "context": {
+            "$ref": "#/components/schemas/CleanWorkspaceRequest"
+          },
+          "case_id": {
+            "type": "string",
+            "title": "Case Id"
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "create_tenancy",
+              "import_tenancy",
+              "shared_membership",
+              "delete_tenancy",
+              "keep_tenancy",
+              "resolve",
+              "no_tenancy_required",
+              "ignore",
+              "remove_user",
+              "keep_returned",
+              "merge"
+            ],
+            "title": "Operation"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000,
+                "minLength": 3
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "partner_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partner Email"
+          },
+          "tenancy_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tenancy Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "individual",
+                  "shared"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "context",
+          "case_id",
+          "operation"
+        ],
+        "title": "ReviewCommand",
+        "description": "Strict, context-bound administrator command; no caller-supplied organization state."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

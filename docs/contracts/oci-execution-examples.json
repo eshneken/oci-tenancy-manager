@@ -1,0 +1,1236 @@
+{
+  "status": "design-examples-not-runtime-tests",
+  "contract_version": "execution-1-draft",
+  "positive_examples": [
+    {
+      "id": "valid-command-create_child",
+      "definition": "Command",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "context": {
+          "workspace_id": "design-lab",
+          "operation_id": "10000000-0000-4000-8000-000000000001",
+          "step_key": "request-child",
+          "attempt_id": "10000000-0000-4000-8000-000000000002",
+          "intent_revision": 1,
+          "execution_generation": 1,
+          "access_binding_id": "10000000-0000-4000-8000-000000000003",
+          "credential_generation": 1
+        },
+        "kind": "create_child",
+        "payload": {
+          "organization_id": "exampleorganization",
+          "parent_tenancy_ocid": "ocid1.tenancy.oc1..exampleparent",
+          "requested_name": "examplechild",
+          "home_region": "us-ashburn-1",
+          "activation_email": "admin@example.invalid",
+          "provider_retry_token": "example-create-request-1",
+          "configuration_ref": "baseline-1:overlay-0:resolved-1"
+        }
+      }
+    },
+    {
+      "id": "valid-command-inspect_tenancy",
+      "definition": "Command",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "context": {
+          "workspace_id": "design-lab",
+          "operation_id": "10000000-0000-4000-8000-000000000001",
+          "step_key": "request-child",
+          "attempt_id": "10000000-0000-4000-8000-000000000002",
+          "intent_revision": 1,
+          "execution_generation": 1,
+          "access_binding_id": "10000000-0000-4000-8000-000000000003",
+          "credential_generation": 1
+        },
+        "kind": "inspect_tenancy",
+        "payload": {
+          "organization_id": "exampleorganization",
+          "parent_tenancy_ocid": "ocid1.tenancy.oc1..exampleparent",
+          "tenancy_ocid": "ocid1.tenancy.oc1..examplechild"
+        }
+      }
+    },
+    {
+      "id": "valid-command-inspect_bootstrap_identity",
+      "definition": "Command",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "context": {
+          "workspace_id": "design-lab",
+          "operation_id": "10000000-0000-4000-8000-000000000001",
+          "step_key": "request-child",
+          "attempt_id": "10000000-0000-4000-8000-000000000002",
+          "intent_revision": 1,
+          "execution_generation": 1,
+          "access_binding_id": "10000000-0000-4000-8000-000000000003",
+          "credential_generation": 1
+        },
+        "kind": "inspect_bootstrap_identity",
+        "payload": {
+          "tenancy_ocid": "ocid1.tenancy.oc1..examplechild",
+          "bootstrap_user_ocid": "ocid1.user.oc1..examplebootstrap",
+          "domain_binding_ref": null
+        }
+      }
+    },
+    {
+      "id": "valid-command-verify_signer_access",
+      "definition": "Command",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "context": {
+          "workspace_id": "design-lab",
+          "operation_id": "10000000-0000-4000-8000-000000000001",
+          "step_key": "request-child",
+          "attempt_id": "10000000-0000-4000-8000-000000000002",
+          "intent_revision": 1,
+          "execution_generation": 1,
+          "access_binding_id": "10000000-0000-4000-8000-000000000003",
+          "credential_generation": 1
+        },
+        "kind": "verify_signer_access",
+        "payload": {
+          "identity": {
+            "tenancy_ocid": "ocid1.tenancy.oc1..examplechild",
+            "domain_ocid": "ocid1.domain.oc1..exampledomain",
+            "scim_user_id": "scim-example-user",
+            "user_ocid": "ocid1.user.oc1..exampleautomation",
+            "observed_at": "2026-10-20T16:00:00Z"
+          },
+          "permission_profile_ref": "child-automation-profile-v1"
+        }
+      }
+    },
+    {
+      "id": "valid-command-observe_provider_request",
+      "definition": "Command",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "context": {
+          "workspace_id": "design-lab",
+          "operation_id": "10000000-0000-4000-8000-000000000001",
+          "step_key": "request-child",
+          "attempt_id": "10000000-0000-4000-8000-000000000002",
+          "intent_revision": 1,
+          "execution_generation": 1,
+          "access_binding_id": "10000000-0000-4000-8000-000000000003",
+          "credential_generation": 1
+        },
+        "kind": "observe_provider_request",
+        "payload": {
+          "organization_id": "exampleorganization",
+          "provider_operation_id": "example-create-workrequest",
+          "original_attempt_id": "10000000-0000-4000-8000-000000000002"
+        }
+      }
+    },
+    {
+      "id": "valid-command-request_termination",
+      "definition": "Command",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "context": {
+          "workspace_id": "design-lab",
+          "operation_id": "10000000-0000-4000-8000-000000000001",
+          "step_key": "request-child",
+          "attempt_id": "10000000-0000-4000-8000-000000000002",
+          "intent_revision": 1,
+          "execution_generation": 1,
+          "access_binding_id": "10000000-0000-4000-8000-000000000003",
+          "credential_generation": 1
+        },
+        "kind": "request_termination",
+        "payload": {
+          "organization_id": "exampleorganization",
+          "tenancy_ocid": "ocid1.tenancy.oc1..examplechild",
+          "parent_tenancy_ocid": "ocid1.tenancy.oc1..exampleparent",
+          "guard_receipt_ref": "guard-example-v1",
+          "provider_retry_token": "example-delete-request-1",
+          "provider_etag": null
+        }
+      }
+    },
+    {
+      "id": "valid-confirmed-tenancy_inspected",
+      "definition": "Result",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "attempt_id": "10000000-0000-4000-8000-000000000002",
+        "observed_at": "2026-10-20T16:00:00Z",
+        "provider_request_id": "example-provider-request",
+        "provider_operation_id": null,
+        "safe_code": "EXAMPLE",
+        "evidence": [
+          {
+            "code": "READ_BACK",
+            "evidence_ref": "evidence-example-1",
+            "observed_at": "2026-10-20T16:00:00Z"
+          }
+        ],
+        "kind": "confirmed",
+        "milestone": "tenancy_inspected",
+        "tenancy": {
+          "tenancy_ocid": "ocid1.tenancy.oc1..examplechild",
+          "parent_tenancy_ocid": "ocid1.tenancy.oc1..exampleparent",
+          "organization_id": "exampleorganization",
+          "actual_name": "examplechild",
+          "home_region": "us-ashburn-1",
+          "role": "CHILD",
+          "observed_at": "2026-10-20T16:00:00Z"
+        },
+        "identity": null
+      }
+    },
+    {
+      "id": "valid-confirmed-bootstrap_identity_verified",
+      "definition": "Result",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "attempt_id": "10000000-0000-4000-8000-000000000002",
+        "observed_at": "2026-10-20T16:00:00Z",
+        "provider_request_id": "example-provider-request",
+        "provider_operation_id": null,
+        "safe_code": "EXAMPLE",
+        "evidence": [
+          {
+            "code": "READ_BACK",
+            "evidence_ref": "evidence-example-1",
+            "observed_at": "2026-10-20T16:00:00Z"
+          }
+        ],
+        "kind": "confirmed",
+        "milestone": "bootstrap_identity_verified",
+        "tenancy": null,
+        "identity": {
+          "tenancy_ocid": "ocid1.tenancy.oc1..examplechild",
+          "domain_ocid": "ocid1.domain.oc1..exampledomain",
+          "scim_user_id": "scim-example-user",
+          "user_ocid": "ocid1.user.oc1..exampleautomation",
+          "observed_at": "2026-10-20T16:00:00Z"
+        }
+      }
+    },
+    {
+      "id": "valid-confirmed-signer_profile_verified",
+      "definition": "Result",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "attempt_id": "10000000-0000-4000-8000-000000000002",
+        "observed_at": "2026-10-20T16:00:00Z",
+        "provider_request_id": "example-provider-request",
+        "provider_operation_id": null,
+        "safe_code": "EXAMPLE",
+        "evidence": [
+          {
+            "code": "READ_BACK",
+            "evidence_ref": "evidence-example-1",
+            "observed_at": "2026-10-20T16:00:00Z"
+          }
+        ],
+        "kind": "confirmed",
+        "milestone": "signer_profile_verified",
+        "tenancy": null,
+        "identity": {
+          "tenancy_ocid": "ocid1.tenancy.oc1..examplechild",
+          "domain_ocid": "ocid1.domain.oc1..exampledomain",
+          "scim_user_id": "scim-example-user",
+          "user_ocid": "ocid1.user.oc1..exampleautomation",
+          "observed_at": "2026-10-20T16:00:00Z"
+        }
+      }
+    },
+    {
+      "id": "valid-confirmed-termination_initiated",
+      "definition": "Result",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "attempt_id": "10000000-0000-4000-8000-000000000002",
+        "observed_at": "2026-10-20T16:00:00Z",
+        "provider_request_id": "example-provider-request",
+        "provider_operation_id": null,
+        "safe_code": "EXAMPLE",
+        "evidence": [
+          {
+            "code": "READ_BACK",
+            "evidence_ref": "evidence-example-1",
+            "observed_at": "2026-10-20T16:00:00Z"
+          }
+        ],
+        "kind": "confirmed",
+        "milestone": "termination_initiated",
+        "tenancy": null,
+        "identity": null
+      }
+    },
+    {
+      "id": "valid-result-accepted",
+      "definition": "Result",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "attempt_id": "10000000-0000-4000-8000-000000000002",
+        "observed_at": "2026-10-20T16:00:00Z",
+        "provider_request_id": "example-provider-request",
+        "provider_operation_id": null,
+        "safe_code": "EXAMPLE",
+        "evidence": [
+          {
+            "code": "PROVIDER_ACCEPTANCE",
+            "evidence_ref": "receipt-example-1",
+            "observed_at": "2026-10-20T16:00:00Z"
+          }
+        ],
+        "kind": "accepted",
+        "milestone": "child_request_accepted",
+        "continuation": "observe"
+      }
+    },
+    {
+      "id": "valid-result-pending",
+      "definition": "Result",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "attempt_id": "10000000-0000-4000-8000-000000000002",
+        "observed_at": "2026-10-20T16:00:00Z",
+        "provider_request_id": "example-provider-request",
+        "provider_operation_id": null,
+        "safe_code": "EXAMPLE",
+        "evidence": [],
+        "kind": "pending",
+        "continuation": "observe",
+        "next_check_at": "2026-10-20T16:01:00Z"
+      }
+    },
+    {
+      "id": "valid-result-rejected",
+      "definition": "Result",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "attempt_id": "10000000-0000-4000-8000-000000000002",
+        "observed_at": "2026-10-20T16:00:00Z",
+        "provider_request_id": "example-provider-request",
+        "provider_operation_id": null,
+        "safe_code": "EXAMPLE",
+        "evidence": [],
+        "kind": "rejected",
+        "effect_applied": false,
+        "continuation": "manual"
+      }
+    },
+    {
+      "id": "valid-result-unknown",
+      "definition": "Result",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "attempt_id": "10000000-0000-4000-8000-000000000002",
+        "observed_at": "2026-10-20T16:00:00Z",
+        "provider_request_id": "example-provider-request",
+        "provider_operation_id": null,
+        "safe_code": "EXAMPLE",
+        "evidence": [],
+        "kind": "unknown",
+        "continuation": "reconcile",
+        "original_attempt_id": "10000000-0000-4000-8000-000000000002"
+      }
+    },
+    {
+      "id": "valid-result-unobservable",
+      "definition": "Result",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "attempt_id": "10000000-0000-4000-8000-000000000002",
+        "observed_at": "2026-10-20T16:00:00Z",
+        "provider_request_id": "example-provider-request",
+        "provider_operation_id": null,
+        "safe_code": "EXAMPLE",
+        "evidence": [],
+        "kind": "unobservable",
+        "continuation": "observe"
+      }
+    },
+    {
+      "id": "valid-result-unsupported",
+      "definition": "Result",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "attempt_id": "10000000-0000-4000-8000-000000000002",
+        "observed_at": "2026-10-20T16:00:00Z",
+        "provider_request_id": "example-provider-request",
+        "provider_operation_id": null,
+        "safe_code": "EXAMPLE",
+        "evidence": [],
+        "kind": "unsupported",
+        "continuation": "manual"
+      }
+    },
+    {
+      "id": "valid-snapshot-queued",
+      "definition": "OperationSnapshot",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "operation_id": "10000000-0000-4000-8000-000000000001",
+        "workspace_id": "design-lab",
+        "kind": "create",
+        "revision": 1,
+        "state": "queued",
+        "stage": "request-child",
+        "wait_reason": null,
+        "next_check_at": null,
+        "unfinished_mandatory_steps": 4,
+        "effect_knowledge": "none",
+        "stop_requested": false,
+        "cleanup_status": "pending",
+        "owner_sign_in": "not_confirmed",
+        "available_actions": [
+          "view",
+          "request_stop"
+        ]
+      }
+    },
+    {
+      "id": "valid-snapshot-running",
+      "definition": "OperationSnapshot",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "operation_id": "10000000-0000-4000-8000-000000000001",
+        "workspace_id": "design-lab",
+        "kind": "create",
+        "revision": 1,
+        "state": "running",
+        "stage": "request-child",
+        "wait_reason": null,
+        "next_check_at": null,
+        "unfinished_mandatory_steps": 4,
+        "effect_knowledge": "none",
+        "stop_requested": false,
+        "cleanup_status": "pending",
+        "owner_sign_in": "not_confirmed",
+        "available_actions": [
+          "view",
+          "request_stop"
+        ]
+      }
+    },
+    {
+      "id": "valid-snapshot-waiting",
+      "definition": "OperationSnapshot",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "operation_id": "10000000-0000-4000-8000-000000000001",
+        "workspace_id": "design-lab",
+        "kind": "create",
+        "revision": 1,
+        "state": "waiting",
+        "stage": "activation",
+        "wait_reason": "administrator",
+        "next_check_at": null,
+        "unfinished_mandatory_steps": 4,
+        "effect_knowledge": "none",
+        "stop_requested": false,
+        "cleanup_status": "pending",
+        "owner_sign_in": "not_confirmed",
+        "available_actions": [
+          "view",
+          "request_stop"
+        ]
+      }
+    },
+    {
+      "id": "valid-snapshot-needs_attention",
+      "definition": "OperationSnapshot",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "operation_id": "10000000-0000-4000-8000-000000000001",
+        "workspace_id": "design-lab",
+        "kind": "create",
+        "revision": 1,
+        "state": "needs_attention",
+        "stage": "request-child",
+        "wait_reason": null,
+        "next_check_at": null,
+        "unfinished_mandatory_steps": 4,
+        "effect_knowledge": "none",
+        "stop_requested": false,
+        "cleanup_status": "pending",
+        "owner_sign_in": "not_confirmed",
+        "available_actions": [
+          "view",
+          "request_stop"
+        ]
+      }
+    },
+    {
+      "id": "valid-snapshot-succeeded",
+      "definition": "OperationSnapshot",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "operation_id": "10000000-0000-4000-8000-000000000001",
+        "workspace_id": "design-lab",
+        "kind": "create",
+        "revision": 1,
+        "state": "succeeded",
+        "stage": "request-child",
+        "wait_reason": null,
+        "next_check_at": null,
+        "unfinished_mandatory_steps": 0,
+        "effect_knowledge": "known",
+        "stop_requested": false,
+        "cleanup_status": "verified",
+        "owner_sign_in": "not_confirmed",
+        "available_actions": [
+          "view"
+        ]
+      }
+    },
+    {
+      "id": "valid-snapshot-cancelled",
+      "definition": "OperationSnapshot",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "operation_id": "10000000-0000-4000-8000-000000000001",
+        "workspace_id": "design-lab",
+        "kind": "create",
+        "revision": 1,
+        "state": "cancelled",
+        "stage": "request-child",
+        "wait_reason": null,
+        "next_check_at": null,
+        "unfinished_mandatory_steps": 4,
+        "effect_knowledge": "none",
+        "stop_requested": false,
+        "cleanup_status": "verified",
+        "owner_sign_in": "not_confirmed",
+        "available_actions": [
+          "view"
+        ]
+      }
+    },
+    {
+      "id": "valid-snapshot-failed",
+      "definition": "OperationSnapshot",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "operation_id": "10000000-0000-4000-8000-000000000001",
+        "workspace_id": "design-lab",
+        "kind": "create",
+        "revision": 1,
+        "state": "failed",
+        "stage": "request-child",
+        "wait_reason": null,
+        "next_check_at": null,
+        "unfinished_mandatory_steps": 4,
+        "effect_knowledge": "known",
+        "stop_requested": false,
+        "cleanup_status": "verified",
+        "owner_sign_in": "not_confirmed",
+        "available_actions": [
+          "view"
+        ]
+      }
+    },
+    {
+      "id": "valid-wait-provider",
+      "definition": "OperationSnapshot",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "operation_id": "10000000-0000-4000-8000-000000000001",
+        "workspace_id": "design-lab",
+        "kind": "create",
+        "revision": 1,
+        "state": "waiting",
+        "stage": "request-child",
+        "wait_reason": "provider",
+        "next_check_at": "2026-10-20T16:01:00Z",
+        "unfinished_mandatory_steps": 4,
+        "effect_knowledge": "none",
+        "stop_requested": false,
+        "cleanup_status": "pending",
+        "owner_sign_in": "not_confirmed",
+        "available_actions": [
+          "view",
+          "request_stop"
+        ]
+      }
+    },
+    {
+      "id": "valid-wait-retry",
+      "definition": "OperationSnapshot",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "operation_id": "10000000-0000-4000-8000-000000000001",
+        "workspace_id": "design-lab",
+        "kind": "create",
+        "revision": 1,
+        "state": "waiting",
+        "stage": "request-child",
+        "wait_reason": "retry",
+        "next_check_at": "2026-10-20T16:01:00Z",
+        "unfinished_mandatory_steps": 4,
+        "effect_knowledge": "none",
+        "stop_requested": false,
+        "cleanup_status": "pending",
+        "owner_sign_in": "not_confirmed",
+        "available_actions": [
+          "view",
+          "request_stop"
+        ]
+      }
+    },
+    {
+      "id": "valid-wait-reconcile",
+      "definition": "OperationSnapshot",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "operation_id": "10000000-0000-4000-8000-000000000001",
+        "workspace_id": "design-lab",
+        "kind": "create",
+        "revision": 1,
+        "state": "waiting",
+        "stage": "request-child",
+        "wait_reason": "reconcile",
+        "next_check_at": "2026-10-20T16:01:00Z",
+        "unfinished_mandatory_steps": 4,
+        "effect_knowledge": "unknown",
+        "stop_requested": false,
+        "cleanup_status": "pending",
+        "owner_sign_in": "not_confirmed",
+        "available_actions": [
+          "view",
+          "reconcile",
+          "request_stop"
+        ]
+      }
+    },
+    {
+      "id": "valid-wait-restore_fence",
+      "definition": "OperationSnapshot",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "operation_id": "10000000-0000-4000-8000-000000000001",
+        "workspace_id": "design-lab",
+        "kind": "create",
+        "revision": 1,
+        "state": "waiting",
+        "stage": "request-child",
+        "wait_reason": "restore_fence",
+        "next_check_at": null,
+        "unfinished_mandatory_steps": 4,
+        "effect_knowledge": "none",
+        "stop_requested": false,
+        "cleanup_status": "pending",
+        "owner_sign_in": "not_confirmed",
+        "available_actions": [
+          "view",
+          "request_stop"
+        ]
+      }
+    }
+  ],
+  "negative_examples": [
+    {
+      "id": "no-private-key-field",
+      "definition": "Command",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "context": {
+          "workspace_id": "design-lab",
+          "operation_id": "10000000-0000-4000-8000-000000000001",
+          "step_key": "request-child",
+          "attempt_id": "10000000-0000-4000-8000-000000000002",
+          "intent_revision": 1,
+          "execution_generation": 1,
+          "access_binding_id": "10000000-0000-4000-8000-000000000003",
+          "credential_generation": 1
+        },
+        "kind": "create_child",
+        "payload": {
+          "organization_id": "exampleorganization",
+          "parent_tenancy_ocid": "ocid1.tenancy.oc1..exampleparent",
+          "requested_name": "examplechild",
+          "home_region": "us-ashburn-1",
+          "activation_email": "admin@example.invalid",
+          "provider_retry_token": "example-create-request-1",
+          "configuration_ref": "baseline-1:overlay-0:resolved-1",
+          "private_key": "not-a-secret-placeholder"
+        }
+      }
+    },
+    {
+      "id": "no-browser-service-url",
+      "definition": "Command",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "context": {
+          "workspace_id": "design-lab",
+          "operation_id": "10000000-0000-4000-8000-000000000001",
+          "step_key": "request-child",
+          "attempt_id": "10000000-0000-4000-8000-000000000002",
+          "intent_revision": 1,
+          "execution_generation": 1,
+          "access_binding_id": "10000000-0000-4000-8000-000000000003",
+          "credential_generation": 1
+        },
+        "kind": "inspect_bootstrap_identity",
+        "payload": {
+          "tenancy_ocid": "ocid1.tenancy.oc1..examplechild",
+          "bootstrap_user_ocid": "ocid1.user.oc1..examplebootstrap",
+          "domain_binding_ref": null,
+          "service_endpoint": "https://example.invalid"
+        }
+      }
+    },
+    {
+      "id": "create-missing-name",
+      "definition": "Command",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "context": {
+          "workspace_id": "design-lab",
+          "operation_id": "10000000-0000-4000-8000-000000000001",
+          "step_key": "request-child",
+          "attempt_id": "10000000-0000-4000-8000-000000000002",
+          "intent_revision": 1,
+          "execution_generation": 1,
+          "access_binding_id": "10000000-0000-4000-8000-000000000003",
+          "credential_generation": 1
+        },
+        "kind": "create_child",
+        "payload": {
+          "organization_id": "exampleorganization",
+          "parent_tenancy_ocid": "ocid1.tenancy.oc1..exampleparent",
+          "home_region": "us-ashburn-1",
+          "activation_email": "admin@example.invalid",
+          "provider_retry_token": "example-create-request-1",
+          "configuration_ref": "baseline-1:overlay-0:resolved-1"
+        }
+      }
+    },
+    {
+      "id": "create-missing-parent",
+      "definition": "Command",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "context": {
+          "workspace_id": "design-lab",
+          "operation_id": "10000000-0000-4000-8000-000000000001",
+          "step_key": "request-child",
+          "attempt_id": "10000000-0000-4000-8000-000000000002",
+          "intent_revision": 1,
+          "execution_generation": 1,
+          "access_binding_id": "10000000-0000-4000-8000-000000000003",
+          "credential_generation": 1
+        },
+        "kind": "create_child",
+        "payload": {
+          "organization_id": "exampleorganization",
+          "requested_name": "examplechild",
+          "home_region": "us-ashburn-1",
+          "activation_email": "admin@example.invalid",
+          "provider_retry_token": "example-create-request-1",
+          "configuration_ref": "baseline-1:overlay-0:resolved-1"
+        }
+      }
+    },
+    {
+      "id": "legacy-command-rejected",
+      "definition": "Command",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "context": {
+          "workspace_id": "design-lab",
+          "operation_id": "10000000-0000-4000-8000-000000000001",
+          "step_key": "request-child",
+          "attempt_id": "10000000-0000-4000-8000-000000000002",
+          "intent_revision": 1,
+          "execution_generation": 1,
+          "access_binding_id": "10000000-0000-4000-8000-000000000003",
+          "credential_generation": 1
+        },
+        "kind": "legacy_create_user",
+        "payload": {
+          "organization_id": "exampleorganization",
+          "parent_tenancy_ocid": "ocid1.tenancy.oc1..exampleparent",
+          "requested_name": "examplechild",
+          "home_region": "us-ashburn-1",
+          "activation_email": "admin@example.invalid",
+          "provider_retry_token": "example-create-request-1",
+          "configuration_ref": "baseline-1:overlay-0:resolved-1"
+        }
+      }
+    },
+    {
+      "id": "zero-intent-revision",
+      "definition": "Command",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "context": {
+          "workspace_id": "design-lab",
+          "operation_id": "10000000-0000-4000-8000-000000000001",
+          "step_key": "request-child",
+          "attempt_id": "10000000-0000-4000-8000-000000000002",
+          "intent_revision": 0,
+          "execution_generation": 1,
+          "access_binding_id": "10000000-0000-4000-8000-000000000003",
+          "credential_generation": 1
+        },
+        "kind": "create_child",
+        "payload": {
+          "organization_id": "exampleorganization",
+          "parent_tenancy_ocid": "ocid1.tenancy.oc1..exampleparent",
+          "requested_name": "examplechild",
+          "home_region": "us-ashburn-1",
+          "activation_email": "admin@example.invalid",
+          "provider_retry_token": "example-create-request-1",
+          "configuration_ref": "baseline-1:overlay-0:resolved-1"
+        }
+      }
+    },
+    {
+      "id": "unsupported-sdk-retry-switch",
+      "definition": "Command",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "context": {
+          "workspace_id": "design-lab",
+          "operation_id": "10000000-0000-4000-8000-000000000001",
+          "step_key": "request-child",
+          "attempt_id": "10000000-0000-4000-8000-000000000002",
+          "intent_revision": 1,
+          "execution_generation": 1,
+          "access_binding_id": "10000000-0000-4000-8000-000000000003",
+          "credential_generation": 1
+        },
+        "kind": "create_child",
+        "payload": {
+          "organization_id": "exampleorganization",
+          "parent_tenancy_ocid": "ocid1.tenancy.oc1..exampleparent",
+          "requested_name": "examplechild",
+          "home_region": "us-ashburn-1",
+          "activation_email": "admin@example.invalid",
+          "provider_retry_token": "example-create-request-1",
+          "configuration_ref": "baseline-1:overlay-0:resolved-1",
+          "retry_all_errors": true
+        }
+      }
+    },
+    {
+      "id": "unknown-cannot-blind-retry",
+      "definition": "Result",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "attempt_id": "10000000-0000-4000-8000-000000000002",
+        "observed_at": "2026-10-20T16:00:00Z",
+        "provider_request_id": "example-provider-request",
+        "provider_operation_id": null,
+        "safe_code": "EXAMPLE",
+        "evidence": [],
+        "kind": "unknown",
+        "continuation": "retry_same_request",
+        "original_attempt_id": "10000000-0000-4000-8000-000000000002"
+      }
+    },
+    {
+      "id": "unknown-cannot-claim-completion",
+      "definition": "Result",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "attempt_id": "10000000-0000-4000-8000-000000000002",
+        "observed_at": "2026-10-20T16:00:00Z",
+        "provider_request_id": "example-provider-request",
+        "provider_operation_id": null,
+        "safe_code": "EXAMPLE",
+        "evidence": [],
+        "kind": "unknown",
+        "continuation": "reconcile",
+        "original_attempt_id": "10000000-0000-4000-8000-000000000002",
+        "milestone": "termination_initiated"
+      }
+    },
+    {
+      "id": "accepted-cannot-invent-child",
+      "definition": "Result",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "attempt_id": "10000000-0000-4000-8000-000000000002",
+        "observed_at": "2026-10-20T16:00:00Z",
+        "provider_request_id": "example-provider-request",
+        "provider_operation_id": null,
+        "safe_code": "EXAMPLE",
+        "evidence": [
+          {
+            "code": "PROVIDER_ACCEPTANCE",
+            "evidence_ref": "receipt-example-1",
+            "observed_at": "2026-10-20T16:00:00Z"
+          }
+        ],
+        "kind": "accepted",
+        "milestone": "child_request_accepted",
+        "continuation": "observe",
+        "tenancy": {
+          "tenancy_ocid": "ocid1.tenancy.oc1..examplechild",
+          "parent_tenancy_ocid": "ocid1.tenancy.oc1..exampleparent",
+          "organization_id": "exampleorganization",
+          "actual_name": "examplechild",
+          "home_region": "us-ashburn-1",
+          "role": "CHILD",
+          "observed_at": "2026-10-20T16:00:00Z"
+        }
+      }
+    },
+    {
+      "id": "confirmed-needs-evidence",
+      "definition": "Result",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "attempt_id": "10000000-0000-4000-8000-000000000002",
+        "observed_at": "2026-10-20T16:00:00Z",
+        "provider_request_id": "example-provider-request",
+        "provider_operation_id": null,
+        "safe_code": "EXAMPLE",
+        "evidence": [],
+        "kind": "confirmed",
+        "milestone": "termination_initiated",
+        "tenancy": null,
+        "identity": null
+      }
+    },
+    {
+      "id": "inspection-needs-facts",
+      "definition": "Result",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "attempt_id": "10000000-0000-4000-8000-000000000002",
+        "observed_at": "2026-10-20T16:00:00Z",
+        "provider_request_id": "example-provider-request",
+        "provider_operation_id": null,
+        "safe_code": "EXAMPLE",
+        "evidence": [
+          {
+            "code": "READ_BACK",
+            "evidence_ref": "evidence-example-1",
+            "observed_at": "2026-10-20T16:00:00Z"
+          }
+        ],
+        "kind": "confirmed",
+        "milestone": "tenancy_inspected",
+        "tenancy": null,
+        "identity": null
+      }
+    },
+    {
+      "id": "identity-inspection-needs-binding",
+      "definition": "Result",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "attempt_id": "10000000-0000-4000-8000-000000000002",
+        "observed_at": "2026-10-20T16:00:00Z",
+        "provider_request_id": "example-provider-request",
+        "provider_operation_id": null,
+        "safe_code": "EXAMPLE",
+        "evidence": [
+          {
+            "code": "READ_BACK",
+            "evidence_ref": "evidence-example-1",
+            "observed_at": "2026-10-20T16:00:00Z"
+          }
+        ],
+        "kind": "confirmed",
+        "milestone": "bootstrap_identity_verified",
+        "tenancy": null,
+        "identity": null
+      }
+    },
+    {
+      "id": "rejected-cannot-claim-effect",
+      "definition": "Result",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "attempt_id": "10000000-0000-4000-8000-000000000002",
+        "observed_at": "2026-10-20T16:00:00Z",
+        "provider_request_id": "example-provider-request",
+        "provider_operation_id": null,
+        "safe_code": "EXAMPLE",
+        "evidence": [],
+        "kind": "rejected",
+        "effect_applied": true,
+        "continuation": "manual"
+      }
+    },
+    {
+      "id": "result-no-password",
+      "definition": "Result",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "attempt_id": "10000000-0000-4000-8000-000000000002",
+        "observed_at": "2026-10-20T16:00:00Z",
+        "provider_request_id": "example-provider-request",
+        "provider_operation_id": null,
+        "safe_code": "EXAMPLE",
+        "evidence": [
+          {
+            "code": "PROVIDER_ACCEPTANCE",
+            "evidence_ref": "receipt-example-1",
+            "observed_at": "2026-10-20T16:00:00Z"
+          }
+        ],
+        "kind": "accepted",
+        "milestone": "child_request_accepted",
+        "continuation": "observe",
+        "password": "not-a-secret-placeholder"
+      }
+    },
+    {
+      "id": "unsupported-provider-code-shape",
+      "definition": "Result",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "attempt_id": "10000000-0000-4000-8000-000000000002",
+        "observed_at": "2026-10-20T16:00:00Z",
+        "provider_request_id": "example-provider-request",
+        "provider_operation_id": null,
+        "safe_code": "raw vendor error text",
+        "evidence": [],
+        "kind": "unobservable",
+        "continuation": "observe"
+      }
+    },
+    {
+      "id": "waiting-needs-reason",
+      "definition": "OperationSnapshot",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "operation_id": "10000000-0000-4000-8000-000000000001",
+        "workspace_id": "design-lab",
+        "kind": "create",
+        "revision": 1,
+        "state": "waiting",
+        "stage": "activation",
+        "wait_reason": null,
+        "next_check_at": null,
+        "unfinished_mandatory_steps": 4,
+        "effect_knowledge": "none",
+        "stop_requested": false,
+        "cleanup_status": "pending",
+        "owner_sign_in": "not_confirmed",
+        "available_actions": [
+          "view",
+          "request_stop"
+        ]
+      }
+    },
+    {
+      "id": "running-not-a-wait",
+      "definition": "OperationSnapshot",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "operation_id": "10000000-0000-4000-8000-000000000001",
+        "workspace_id": "design-lab",
+        "kind": "create",
+        "revision": 1,
+        "state": "running",
+        "stage": "request-child",
+        "wait_reason": "provider",
+        "next_check_at": null,
+        "unfinished_mandatory_steps": 4,
+        "effect_knowledge": "none",
+        "stop_requested": false,
+        "cleanup_status": "pending",
+        "owner_sign_in": "not_confirmed",
+        "available_actions": [
+          "view",
+          "request_stop"
+        ]
+      }
+    },
+    {
+      "id": "success-needs-all-required-steps",
+      "definition": "OperationSnapshot",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "operation_id": "10000000-0000-4000-8000-000000000001",
+        "workspace_id": "design-lab",
+        "kind": "create",
+        "revision": 1,
+        "state": "succeeded",
+        "stage": "request-child",
+        "wait_reason": null,
+        "next_check_at": null,
+        "unfinished_mandatory_steps": 1,
+        "effect_knowledge": "known",
+        "stop_requested": false,
+        "cleanup_status": "verified",
+        "owner_sign_in": "not_confirmed",
+        "available_actions": [
+          "view"
+        ]
+      }
+    },
+    {
+      "id": "success-cannot-have-unknown-effect",
+      "definition": "OperationSnapshot",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "operation_id": "10000000-0000-4000-8000-000000000001",
+        "workspace_id": "design-lab",
+        "kind": "create",
+        "revision": 1,
+        "state": "succeeded",
+        "stage": "request-child",
+        "wait_reason": null,
+        "next_check_at": null,
+        "unfinished_mandatory_steps": 0,
+        "effect_knowledge": "unknown",
+        "stop_requested": false,
+        "cleanup_status": "verified",
+        "owner_sign_in": "not_confirmed",
+        "available_actions": [
+          "view"
+        ]
+      }
+    },
+    {
+      "id": "success-cannot-abandon-cleanup",
+      "definition": "OperationSnapshot",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "operation_id": "10000000-0000-4000-8000-000000000001",
+        "workspace_id": "design-lab",
+        "kind": "create",
+        "revision": 1,
+        "state": "succeeded",
+        "stage": "request-child",
+        "wait_reason": null,
+        "next_check_at": null,
+        "unfinished_mandatory_steps": 0,
+        "effect_knowledge": "known",
+        "stop_requested": false,
+        "cleanup_status": "blocked",
+        "owner_sign_in": "not_confirmed",
+        "available_actions": [
+          "view"
+        ]
+      }
+    },
+    {
+      "id": "terminal-no-resume",
+      "definition": "OperationSnapshot",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "operation_id": "10000000-0000-4000-8000-000000000001",
+        "workspace_id": "design-lab",
+        "kind": "create",
+        "revision": 1,
+        "state": "succeeded",
+        "stage": "request-child",
+        "wait_reason": null,
+        "next_check_at": null,
+        "unfinished_mandatory_steps": 0,
+        "effect_knowledge": "known",
+        "stop_requested": false,
+        "cleanup_status": "verified",
+        "owner_sign_in": "not_confirmed",
+        "available_actions": [
+          "resume"
+        ]
+      }
+    },
+    {
+      "id": "retry-wait-needs-wake",
+      "definition": "OperationSnapshot",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "operation_id": "10000000-0000-4000-8000-000000000001",
+        "workspace_id": "design-lab",
+        "kind": "create",
+        "revision": 1,
+        "state": "waiting",
+        "stage": "activation",
+        "wait_reason": "retry",
+        "next_check_at": null,
+        "unfinished_mandatory_steps": 4,
+        "effect_knowledge": "none",
+        "stop_requested": false,
+        "cleanup_status": "pending",
+        "owner_sign_in": "not_confirmed",
+        "available_actions": [
+          "view",
+          "request_stop"
+        ]
+      }
+    },
+    {
+      "id": "unknown-snapshot-cannot-resume",
+      "definition": "OperationSnapshot",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "operation_id": "10000000-0000-4000-8000-000000000001",
+        "workspace_id": "design-lab",
+        "kind": "create",
+        "revision": 1,
+        "state": "waiting",
+        "stage": "request-child",
+        "wait_reason": "reconcile",
+        "next_check_at": "2026-10-20T16:01:00Z",
+        "unfinished_mandatory_steps": 4,
+        "effect_knowledge": "unknown",
+        "stop_requested": false,
+        "cleanup_status": "pending",
+        "owner_sign_in": "not_confirmed",
+        "available_actions": [
+          "resume"
+        ]
+      }
+    },
+    {
+      "id": "unknown-snapshot-cannot-amend",
+      "definition": "OperationSnapshot",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "operation_id": "10000000-0000-4000-8000-000000000001",
+        "workspace_id": "design-lab",
+        "kind": "create",
+        "revision": 1,
+        "state": "waiting",
+        "stage": "request-child",
+        "wait_reason": "reconcile",
+        "next_check_at": "2026-10-20T16:01:00Z",
+        "unfinished_mandatory_steps": 4,
+        "effect_knowledge": "unknown",
+        "stop_requested": false,
+        "cleanup_status": "pending",
+        "owner_sign_in": "not_confirmed",
+        "available_actions": [
+          "amend"
+        ]
+      }
+    },
+    {
+      "id": "cancelled-cannot-retain-known-target-effect",
+      "definition": "OperationSnapshot",
+      "value": {
+        "contract_version": "execution-1-draft",
+        "operation_id": "10000000-0000-4000-8000-000000000001",
+        "workspace_id": "design-lab",
+        "kind": "create",
+        "revision": 1,
+        "state": "cancelled",
+        "stage": "request-child",
+        "wait_reason": null,
+        "next_check_at": null,
+        "unfinished_mandatory_steps": 4,
+        "effect_knowledge": "known",
+        "stop_requested": false,
+        "cleanup_status": "verified",
+        "owner_sign_in": "not_confirmed",
+        "available_actions": [
+          "view"
+        ]
+      }
+    }
+  ],
+  "notes": [
+    "Schema checks validate message shapes only, not real authorization, SDK behavior, transactions or workflow execution.",
+    "A schema accepting a result is not evidence that OCI performed its claimed milestone."
+  ]
+}

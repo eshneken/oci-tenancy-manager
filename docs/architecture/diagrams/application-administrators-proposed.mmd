@@ -1,0 +1,48 @@
+erDiagram
+  otm_administrator {
+    uuid id PK
+    string workspace_id
+    string identity_kind
+    string issuer
+    string subject
+    string display_name
+    string email
+    string status
+    uuid authorization_revision
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz revoked_at
+  }
+  otm_local_credential {
+    string workspace_id PK,FK
+    uuid administrator_id PK,FK
+    string password_hash
+    string totp_secret_reference
+    bigint last_totp_step
+    timestamptz mfa_enrolled_at
+    timestamptz password_changed_at
+    int failed_attempts
+    timestamptz failure_window_started_at
+    timestamptz retry_after
+  }
+  otm_admin_session {
+    uuid id PK
+    string workspace_id FK
+    string issuer FK
+    string subject FK
+    string entitlement_reference
+    uuid entitlement_revision
+    timestamptz expires_at
+    int idle_timeout_seconds
+  }
+  audit_event {
+    uuid id PK
+    string workspace_id
+    uuid operation_id FK "nullable for application-auth events"
+    uuid administrator_id FK "nullable for unauthenticated failures"
+    string kind
+    timestamptz at
+  }
+  otm_administrator ||--o| otm_local_credential : has_local_credential
+  otm_administrator ||--o{ otm_admin_session : authorizes_exact_identity
+  otm_administrator |o--o{ audit_event : records_target

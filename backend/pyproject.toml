@@ -1,0 +1,119 @@
+[project]
+name = "otm-backend"
+version = "0.1.0"
+description = "OCI Tenancy Manager production backend foundation"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "alembic==1.20.1",
+  "argon2-cffi==25.1.0",
+  "fastapi==0.143.0",
+  "procrastinate==3.10.0",
+  "psycopg[binary,pool]==3.3.6",
+  "pydantic==2.14.1",
+  "pyotp==2.9.0",
+  "sqlalchemy==2.0.54",
+  "uvicorn==0.54.0",
+]
+
+[project.scripts]
+otm-validate-release = "otm.release_validation:main"
+otm-simulation-worker = "otm.local_worker:main"
+otm-local = "otm.local_development:main"
+otm-admin = "otm.admin_cli:main"
+otm-maintenance = "otm.maintenance:main"
+
+[dependency-groups]
+dev = [
+  "pytest==9.1.1",
+  "pytest-cov==7.1.0",
+  "coverage==7.17.0",
+  "httpx==0.28.1",
+  "ruff==0.17.0",
+  "defusedxml==0.7.1",
+  "hatchling==1.33.0",
+  "bandit==1.9.4",
+  "pip-audit==2.10.1",
+]
+
+[build-system]
+requires = ["hatchling==1.33.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/otm"]
+
+# Deploy the frozen migration assets alongside the package; never bundle local environments.
+[tool.hatch.build.targets.wheel.force-include]
+"migrations/versions/0020_email_delivery.py" = "otm_migrations/migrations/versions/0020_email_delivery.py"
+"migrations/sql/0020-email-delivery.sql" = "otm_migrations/migrations/sql/0020-email-delivery.sql"
+"migrations/versions/0019_operation_responsibility.py" = "otm_migrations/migrations/versions/0019_operation_responsibility.py"
+"migrations/sql/0019-operation-responsibility.sql" = "otm_migrations/migrations/sql/0019-operation-responsibility.sql"
+"migrations/versions/0018_configuration_drift.py" = "otm_migrations/migrations/versions/0018_configuration_drift.py"
+"migrations/sql/0018-configuration-drift.sql" = "otm_migrations/migrations/sql/0018-configuration-drift.sql"
+"migrations/versions/0017_membership_onboarding.py" = "otm_migrations/migrations/versions/0017_membership_onboarding.py"
+"migrations/sql/0017-membership-onboarding.sql" = "otm_migrations/migrations/sql/0017-membership-onboarding.sql"
+"migrations/versions/0016_tenancy_overrides.py" = "otm_migrations/migrations/versions/0016_tenancy_overrides.py"
+"migrations/sql/0016-tenancy-overrides.sql" = "otm_migrations/migrations/sql/0016-tenancy-overrides.sql"
+"migrations/versions/0011_baseline_drafts.py" = "otm_migrations/migrations/versions/0011_baseline_drafts.py"
+"migrations/versions/0012_baseline_publication.py" = "otm_migrations/migrations/versions/0012_baseline_publication.py"
+"migrations/versions/0013_baseline_pinning.py" = "otm_migrations/migrations/versions/0013_baseline_pinning.py"
+"migrations/versions/0014_latest_baseline.py" = "otm_migrations/migrations/versions/0014_latest_baseline.py"
+"migrations/versions/0015_configuration_updates.py" = "otm_migrations/migrations/versions/0015_configuration_updates.py"
+"migrations/sql/0011-baseline-drafts.sql" = "otm_migrations/migrations/sql/0011-baseline-drafts.sql"
+"migrations/sql/0012-baseline-publication.sql" = "otm_migrations/migrations/sql/0012-baseline-publication.sql"
+"migrations/sql/0013-baseline-pinning.sql" = "otm_migrations/migrations/sql/0013-baseline-pinning.sql"
+"migrations/sql/0014-latest-baseline.sql" = "otm_migrations/migrations/sql/0014-latest-baseline.sql"
+"migrations/sql/0015-configuration-updates.sql" = "otm_migrations/migrations/sql/0015-configuration-updates.sql"
+"migrations/versions/0010_guided_onboarding.py" = "otm_migrations/migrations/versions/0010_guided_onboarding.py"
+"migrations/sql/0010-guided-onboarding.sql" = "otm_migrations/migrations/sql/0010-guided-onboarding.sql"
+"migrations/versions/0009_organization_workflows.py" = "otm_migrations/migrations/versions/0009_organization_workflows.py"
+"migrations/sql/0009-organization-workflows.sql" = "otm_migrations/migrations/sql/0009-organization-workflows.sql"
+"migrations/versions/0008_organization_snapshots.py" = "otm_migrations/migrations/versions/0008_organization_snapshots.py"
+"migrations/sql/0008-organization-snapshots.sql" = "otm_migrations/migrations/sql/0008-organization-snapshots.sql"
+"migrations/versions/0007_audit_export.py" = "otm_migrations/migrations/versions/0007_audit_export.py"
+"migrations/sql/0007-audit-export.sql" = "otm_migrations/migrations/sql/0007-audit-export.sql"
+"alembic.ini" = "otm_migrations/alembic.ini"
+"migrations/env.py" = "otm_migrations/migrations/env.py"
+"config/application.toml" = "otm_settings/application.toml"
+"migrations/versions/0006_local_authentication.py" = "otm_migrations/migrations/versions/0006_local_authentication.py"
+"migrations/sql/0006-local-authentication.sql" = "otm_migrations/migrations/sql/0006-local-authentication.sql"
+"migrations/versions/0005_administrator_grants.py" = "otm_migrations/migrations/versions/0005_administrator_grants.py"
+"migrations/sql/0005-administrator-grants.sql" = "otm_migrations/migrations/sql/0005-administrator-grants.sql"
+"migrations/versions/0004_session_idle_policy.py" = "otm_migrations/migrations/versions/0004_session_idle_policy.py"
+"migrations/sql/0004-session-idle-policy.sql" = "otm_migrations/migrations/sql/0004-session-idle-policy.sql"
+"migrations/versions/0003_admin_session.py" = "otm_migrations/migrations/versions/0003_admin_session.py"
+"migrations/sql/0003-admin-session.sql" = "otm_migrations/migrations/sql/0003-admin-session.sql"
+"migrations/versions/0002_inspection_worker.py" = "otm_migrations/migrations/versions/0002_inspection_worker.py"
+"migrations/sql/0002-inspection-worker.sql" = "otm_migrations/migrations/sql/0002-inspection-worker.sql"
+"migrations/versions/0001_operation_admission.py" = "otm_migrations/migrations/versions/0001_operation_admission.py"
+"migrations/sql/0001-application.sql" = "otm_migrations/migrations/sql/0001-application.sql"
+"migrations/sql/procrastinate-3.10.0.sql" = "otm_migrations/migrations/sql/procrastinate-3.10.0.sql"
+"migrations/sql/procrastinate-LICENSE.md" = "otm_migrations/migrations/sql/procrastinate-LICENSE.md"
+"migrations/sql/manifest.json" = "otm_migrations/migrations/sql/manifest.json"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["postgres: requires a disposable local PostgreSQL database"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["otm"]
+
+[tool.coverage.run]
+source = ["src/otm"]
+branch = true
+relative_files = true
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+exclude_lines = []
+
+[tool.uv]
+constraint-dependencies = ["certifi>=2026.10.19"]

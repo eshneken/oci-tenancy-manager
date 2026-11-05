@@ -1,0 +1,273 @@
+{
+  "$defs": {
+    "ConfigurationIssue": {
+      "additionalProperties": false,
+      "properties": {
+        "binding_ocid": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Binding Ocid"
+        },
+        "category": {
+          "enum": [
+            "policy",
+            "quota",
+            "budget",
+            "tags"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "evidence_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Evidence At"
+        },
+        "expected": {
+          "anyOf": [
+            {
+              "maxLength": 700000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Expected"
+        },
+        "observed": {
+          "anyOf": [
+            {
+              "maxLength": 700000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Observed"
+        },
+        "retained": {
+          "default": false,
+          "title": "Retained",
+          "type": "boolean"
+        },
+        "safe_code": {
+          "anyOf": [
+            {
+              "enum": [
+                "MATCHING",
+                "MISSING",
+                "DIFFERENT",
+                "READ_UNAVAILABLE",
+                "BINDING_CONFLICT",
+                "UNBOUND_CONFIGURATION",
+                "ASSIGNMENT_CHANGED",
+                "AUTHORIZATION_CHANGED",
+                "TENANCY_BUSY",
+                "PROVIDER_UNAVAILABLE",
+                "CHECK_STALE"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Safe Code"
+        },
+        "state": {
+          "anyOf": [
+            {
+              "enum": [
+                "matching",
+                "missing",
+                "different",
+                "unavailable",
+                "conflict"
+              ],
+              "type": "string"
+            },
+            {
+              "const": "not_checked",
+              "type": "string"
+            }
+          ],
+          "title": "State"
+        }
+      },
+      "required": [
+        "category",
+        "state",
+        "safe_code",
+        "binding_ocid",
+        "expected",
+        "observed",
+        "evidence_at"
+      ],
+      "title": "ConfigurationIssue",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "baseline_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Baseline Id"
+    },
+    "baseline_version_number": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Baseline Version Number"
+    },
+    "can_check": {
+      "default": true,
+      "title": "Can Check",
+      "type": "boolean"
+    },
+    "categories": {
+      "items": {
+        "$ref": "#/$defs/ConfigurationIssue"
+      },
+      "title": "Categories",
+      "type": "array"
+    },
+    "checked_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Checked At"
+    },
+    "confirmed_issue_count": {
+      "title": "Confirmed Issue Count",
+      "type": "integer"
+    },
+    "issue_count": {
+      "title": "Issue Count",
+      "type": "integer"
+    },
+    "last_operation_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Last Operation Id"
+    },
+    "override_categories": {
+      "items": {
+        "enum": [
+          "policy",
+          "quota",
+          "budget",
+          "tags"
+        ],
+        "type": "string"
+      },
+      "title": "Override Categories",
+      "type": "array"
+    },
+    "pending_operation_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Pending Operation Id"
+    },
+    "stale": {
+      "default": false,
+      "title": "Stale",
+      "type": "boolean"
+    },
+    "state": {
+      "anyOf": [
+        {
+          "enum": [
+            "matching",
+            "drifted",
+            "unavailable",
+            "superseded"
+          ],
+          "type": "string"
+        },
+        {
+          "enum": [
+            "not_checked",
+            "checking"
+          ],
+          "type": "string"
+        }
+      ],
+      "title": "State"
+    },
+    "tenancy_id": {
+      "format": "uuid",
+      "title": "Tenancy Id",
+      "type": "string"
+    },
+    "tenancy_name": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Tenancy Name",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenancy_id",
+    "tenancy_name",
+    "baseline_id",
+    "baseline_version_number",
+    "override_categories",
+    "state",
+    "checked_at",
+    "issue_count",
+    "confirmed_issue_count",
+    "pending_operation_id",
+    "last_operation_id",
+    "categories"
+  ],
+  "title": "ConfigurationCheckSummary",
+  "type": "object"
+}

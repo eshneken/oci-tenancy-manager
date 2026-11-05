@@ -1,0 +1,37 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "baseline_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Baseline Id"
+    },
+    "page": {
+      "default": 1,
+      "maximum": 100000,
+      "minimum": 1,
+      "title": "Page",
+      "type": "integer"
+    },
+    "page_size": {
+      "default": 10,
+      "enum": [
+        10,
+        25,
+        50
+      ],
+      "title": "Page Size",
+      "type": "integer"
+    }
+  },
+  "title": "BaselineQuery",
+  "type": "object"
+}

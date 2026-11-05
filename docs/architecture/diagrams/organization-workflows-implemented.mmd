@@ -1,0 +1,204 @@
+erDiagram
+  org_workspace ||--o{ org_person : scopes
+  org_workspace ||--o{ org_feed : receives
+  org_workspace ||--o{ org_version : scopes
+  org_workspace ||--o| org_version : applied_head
+  org_workspace ||--o| org_version : proposed_head
+  org_feed ||--o{ org_version : source
+  org_version ||--o{ org_member : freezes
+  org_person ||--o{ org_member : stable_identity
+  org_member o|--o{ org_member : same_revision_manager
+  org_workspace ||--o{ org_recommendation : retains
+  org_person o|--o{ org_recommendation : subject
+  org_version ||--o{ org_recommendation : evidence
+  org_workspace ||--o{ otm_tenancy : registers
+  otm_tenancy ||--o{ otm_tenancy_membership : obligations
+  org_person ||--o{ otm_tenancy_membership : accountable_role
+  otm_operation o|--o{ org_recommendation : handoff
+  otm_operation o|--o{ otm_tenancy : pending_or_last
+  otm_operation o|--o{ otm_tenancy_membership : transition
+  org_workspace {
+    int registry_revision
+    string id PK
+    uuid configuration_id
+    jsonb configuration
+    uuid applied_version_id
+    uuid proposed_version_id
+    string applied_kind
+    string proposed_kind
+  }
+  org_person {
+    uuid id PK
+    string workspace_id
+    string email
+    string directory_status
+    boolean setup_required
+    uuid setup_episode_id
+    timestamptz removed_capture_at
+    uuid pending_operation_id
+  }
+  org_feed {
+    uuid id PK
+    string workspace_id
+    string source_id
+    string population_id
+    string external_id
+    timestamptz received_at
+    timestamptz captured_at
+    string digest
+    string raw_digest
+    jsonb data
+    string state
+    jsonb diagnostics
+    uuid proposed_version_id
+    uuid applied_version_id
+  }
+  org_version {
+    uuid id PK
+    string workspace_id
+    string kind
+    uuid base_version_id
+    uuid feed_id
+    uuid configuration_id
+    jsonb configuration
+    int member_count
+    boolean sealed
+    jsonb data
+  }
+  org_member {
+    string workspace_id PK
+    uuid version_id PK
+    uuid person_id PK
+    string email
+    string full_name
+    uuid manager_person_id
+    string manager_email
+    string profile
+    string evidence
+    string lob_id
+    string accountable_leader_email
+    jsonb designee_emails
+    string ancestry
+    boolean absence_review
+    jsonb data
+  }
+  org_recommendation {
+    uuid id PK
+    string workspace_id
+    uuid person_id
+    string kind
+    string category
+    string target
+    string basis
+    string status
+    timestamptz first_seen_at
+    timestamptz last_seen_at
+    timestamptz resolved_at
+    uuid version_id
+    string resolution
+    uuid operation_id
+    jsonb data
+  }
+  otm_tenancy {
+    uuid id PK
+    string workspace_id
+    string name
+    string tenancy_ocid
+    string parent_tenancy_ocid
+    string organization_id
+    string home_region
+    string kind
+    string status
+    string provider_mode
+    string origin
+    int revision
+    uuid operation_id
+    uuid last_operation_id
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz verified_at
+  }
+  otm_tenancy_membership {
+    uuid id PK
+    string workspace_id
+    uuid tenancy_id
+    uuid person_id
+    string role
+    string status
+    string user_ocid
+    string compartment_ocid
+    string compartment_name
+    string parent_compartment_ocid
+    boolean cleanup_required
+    uuid operation_id
+    int revision
+    timestamptz created_at
+    timestamptz updated_at
+  }
+
+  otm_operation ||--o{ otm_operation_step : current_intent_progress
+  otm_operation ||--o{ audit_event : immutable_attempts
+  audit_event ||--o{ otm_operation_step : exact_intent_and_evidence
+  otm_operation {
+    uuid id PK
+    string workspace_id
+    string state
+    string stage
+    string wait_reason
+    int revision
+    uuid current_intent_event_id
+    int current_intent_revision
+  }
+  otm_operation_step {
+    uuid operation_id PK
+    string workspace_id PK
+    int intent_revision PK
+    string step_key PK
+    string command_kind
+    jsonb inputs "typed nonsecret handoff or discovered facts"
+    string state
+    int attempt_number
+    jsonb last_outcome
+    timestamptz verified_at
+    uuid evidence_event_id
+  }
+  audit_event {
+    uuid id PK
+    uuid operation_id
+    string workspace_id
+    string kind "intent or typed onboarding action/outcome"
+    jsonb data "immutable nonsecret handoff/discovery evidence"
+    string data_hash
+    timestamptz at
+  }
+
+%% Whole-child termination uses operation intent.whole_tenancy_deletion and frozen association
+%% person_id/person_was_manager JSON fields; no physical table/column is added.
+
+%% Create requested name/home_region remain in immutable operation intent; observed values update
+%% otm_tenancy after verification. OperationSummary.result_tenancy_id is a scoped derived view.
+
+%% Organization Mapping edits workspace.configuration.policy.root_email and lobs[id,label,leader_email,designee_emails].
+%% Each recalculated org_version pins configuration; source feed/capture and person observation clocks remain unchanged.
+%% Existing recommendations independently track each segment:email leader/designee defect; audit JSON retains mapping before/after.
+
+
+%% 0017 refinement locally qualified and installed in both saved instances: no table or column added; the current application has 18 tables.
+%% OrganizationAction/Intent.existing_compartment_ocid is optional JSON, omitted when null;
+%% membership compartment bindings record either the selected existing scope or a new child.
+%% organization_action outcome.removals holds exact MemberRemoval receipts; operation_step
+%% remove_member_groups:{association_uuid}/delete_member_user:{association_uuid} and retirement
+%% commit atomically. No resource inventory or compartment deletion is claimed.
+%% onboarding_version=2 inserts configure_baseline and verify_configured_access before retire_temporary.
+%% Existing tenancy configuration_observation/verified_baseline_version_id/configuration_verified_at
+%% retain partial/readback state; active ownership still requires final access and temporary cleanup.
+%% Accepted version 1/absent-version graphs and immutable legacy evidence are preserved.
+
+
+%% 0019 guided responsibility qualified and installed in both saved instances, 4 November 2026: no table or column added; still 19 application tables.
+%% Existing otm_operation.responsible_actor_subject/revision/updated_at are the mutable responsibility head.
+%% operation_responsibility_changed audit data holds 12 typed fields, including before/after actor,
+%% exact replacement grant/revision, original intent-event/typed-envelope hash and replay identity.
+%% Claim changes no provider intent revision/creator/mailbox/owner/baseline/steps and queues no job.
+%% Four computed OperationSummary detail fields expose current administrator id/name, revision and eligibility.
+%% Dispatch verifies original immutable intent plus current captured replacement authority; no real OCI/credential handoff.

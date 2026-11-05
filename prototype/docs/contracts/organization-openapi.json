@@ -1,0 +1,1000 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Tenancy Manager organization contract prototype",
+    "description": "Local read-only harness. No SSO; not a production entry point.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/organization/head": {
+      "get": {
+        "summary": "Head",
+        "description": "Return the current revision pointer without changing an existing pinned view.",
+        "operationId": "head_api_v1_organization_head_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Head"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/organization/people": {
+      "get": {
+        "summary": "People",
+        "description": "Filter, deterministically sort and page people within one selected revision.\n\nmanager_id selects all descendants, excluding the manager itself. The prototype\nfilters its small immutable snapshot in memory; this is not a production query plan.",
+        "operationId": "people_api_v1_organization_people_get",
+        "parameters": [
+          {
+            "name": "revision_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Revision Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Page Size"
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200,
+              "default": "",
+              "title": "Query"
+            }
+          },
+          {
+            "name": "manager_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Manager Id"
+            }
+          },
+          {
+            "name": "lob_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lob Id"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "name",
+                "email"
+              ],
+              "type": "string",
+              "default": "name",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string",
+              "default": "asc",
+              "title": "Direction"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeoplePage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/organization/people/{person_id}": {
+      "get": {
+        "summary": "Person",
+        "description": "Return a stable person identity only when it exists in the selected revision.",
+        "operationId": "person_api_v1_organization_people__person_id__get",
+        "parameters": [
+          {
+            "name": "person_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Person Id"
+            }
+          },
+          {
+            "name": "revision_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Revision Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/organization/workspace": {
+      "get": {
+        "summary": "Workspace",
+        "description": "Discover applied/proposed IDs; immutable list/detail routes still require\nexplicit IDs.",
+        "operationId": "workspace_api_v1_organization_workspace_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/organization/reconciliation": {
+      "get": {
+        "summary": "Reconciliation",
+        "description": "Read bounded live recommendation history or pending exceptions; this sends no\nmessages.",
+        "operationId": "reconciliation_api_v1_organization_reconciliation_get",
+        "parameters": [
+          {
+            "name": "pending_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Pending Only"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReconciliationRow"
+                  },
+                  "title": "Response Reconciliation Api V1 Organization Reconciliation Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Completeness": {
+        "type": "string",
+        "enum": [
+          "complete",
+          "partial",
+          "unconfirmed"
+        ],
+        "title": "Completeness",
+        "description": "Distinguish a declared census from partial or unconfirmed source coverage."
+      },
+      "Context": {
+        "properties": {
+          "organization_revision_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Organization Revision Id"
+          },
+          "configuration_revision_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Configuration Revision Id"
+          },
+          "source_snapshot_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Source Snapshot Id"
+          },
+          "published_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Published At"
+          },
+          "source_captured_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Captured At"
+          },
+          "declared_completeness": {
+            "$ref": "#/components/schemas/Completeness"
+          },
+          "assessed_coverage": {
+            "$ref": "#/components/schemas/Completeness"
+          },
+          "absence_eligible": {
+            "type": "boolean",
+            "title": "Absence Eligible"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "organization_revision_id",
+          "configuration_revision_id",
+          "source_snapshot_id",
+          "published_at",
+          "source_captured_at",
+          "declared_completeness",
+          "assessed_coverage",
+          "absence_eligible"
+        ],
+        "title": "Context",
+        "description": "Revision and coverage metadata attached to each pinned organization response."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Head": {
+        "properties": {
+          "organization_revision_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Revision Id"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "organization_revision_id",
+          "published_at"
+        ],
+        "title": "Head",
+        "description": "Current publication pointer used to offer refresh without replacing a pinned view."
+      },
+      "Pagination": {
+        "properties": {
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "page",
+          "page_size",
+          "total"
+        ],
+        "title": "Pagination",
+        "description": "Requested bounded page and total matching records before pagination."
+      },
+      "PeoplePage": {
+        "properties": {
+          "context": {
+            "$ref": "#/components/schemas/Context"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PersonState"
+            },
+            "type": "array",
+            "title": "Data"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "context",
+          "data",
+          "pagination"
+        ],
+        "title": "PeoplePage",
+        "description": "One page of people from a single explicitly selected organization revision."
+      },
+      "PersonDetail": {
+        "properties": {
+          "context": {
+            "$ref": "#/components/schemas/Context"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PersonState"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "context",
+          "data"
+        ],
+        "title": "PersonDetail",
+        "description": "Person state and provenance from the requested revision, never an implicit latest read."
+      },
+      "PersonState": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name"
+          },
+          "source_record_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Record Id"
+          },
+          "source_values": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Source Values"
+          },
+          "profile": {
+            "type": "string",
+            "enum": [
+              "employee",
+              "reference",
+              "configured"
+            ],
+            "title": "Profile"
+          },
+          "manager_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manager Email"
+          },
+          "manager_provenance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manager Provenance"
+          },
+          "known_manager": {
+            "type": "boolean",
+            "title": "Known Manager",
+            "default": false
+          },
+          "last_row_observed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Row Observed At"
+          },
+          "last_reference_observed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Reference Observed At"
+          },
+          "last_source_capture_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Source Capture At"
+          },
+          "last_qualified_census_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Qualified Census At"
+          },
+          "reported_top_manager_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reported Top Manager Email"
+          },
+          "territory": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Territory"
+          },
+          "ancestry": {
+            "type": "string",
+            "enum": [
+              "root",
+              "resolved",
+              "incomplete"
+            ],
+            "title": "Ancestry",
+            "default": "incomplete"
+          },
+          "manager_path": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Manager Path",
+            "default": []
+          },
+          "lob_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lob Id"
+          },
+          "accountable_leader_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accountable Leader Email"
+          },
+          "designee_emails": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Designee Emails",
+            "default": []
+          },
+          "absence_review": {
+            "type": "boolean",
+            "title": "Absence Review",
+            "default": false
+          },
+          "absence_review_since": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Absence Review Since"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "full_name",
+          "profile"
+        ],
+        "title": "PersonState",
+        "description": "Effective person attributes and evidence within one immutable organization revision."
+      },
+      "ReconciliationRow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "workspace_id": {
+            "type": "string",
+            "title": "Workspace Id"
+          },
+          "feed_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Feed Id"
+          },
+          "proposed_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Proposed Version Id"
+          },
+          "applied_version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applied Version Id"
+          },
+          "person_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Person Id"
+          },
+          "person_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Person Email"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "field": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field"
+          },
+          "before_value": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Before Value"
+          },
+          "after_value": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "After Value"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "actor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "workspace_id",
+          "feed_id",
+          "proposed_version_id",
+          "applied_version_id",
+          "person_id",
+          "person_email",
+          "category",
+          "kind",
+          "target",
+          "field",
+          "before_value",
+          "after_value",
+          "status",
+          "created_at",
+          "updated_at",
+          "resolved_at",
+          "reason",
+          "actor"
+        ],
+        "title": "ReconciliationRow",
+        "description": "Readable metadata delta or exception, with original evidence and live processing\nstatus."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "Workspace": {
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "title": "Workspace Id"
+          },
+          "applied_version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applied Version Id"
+          },
+          "proposed_version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposed Version Id"
+          },
+          "configuration_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Configuration Id"
+          },
+          "proposal_status": {
+            "type": "string",
+            "enum": [
+              "no_proposal",
+              "already_applied",
+              "pending_application",
+              "stale"
+            ],
+            "title": "Proposal Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "workspace_id",
+          "applied_version_id",
+          "proposed_version_id",
+          "configuration_id",
+          "proposal_status",
+          "message"
+        ],
+        "title": "Workspace",
+        "description": "Independent current applied/proposed pointers for inspection and stale-preview checks."
+      }
+    }
+  }
+}

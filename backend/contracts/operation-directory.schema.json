@@ -1,0 +1,242 @@
+{
+  "$defs": {
+    "OperationSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "accepted_at": {
+          "format": "date-time",
+          "title": "Accepted At",
+          "type": "string"
+        },
+        "can_take_responsibility": {
+          "default": false,
+          "title": "Can Take Responsibility",
+          "type": "boolean"
+        },
+        "completed_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Completed At"
+        },
+        "guided_onboarding": {
+          "default": false,
+          "title": "Guided Onboarding",
+          "type": "boolean"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "initiated_by": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Initiated By"
+        },
+        "kind": {
+          "enum": [
+            "inspect_import",
+            "organization_action",
+            "configuration_update",
+            "configuration_check"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "provider_mode": {
+          "const": "simulated",
+          "default": "simulated",
+          "title": "Provider Mode",
+          "type": "string"
+        },
+        "responsibility_revision": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Responsibility Revision"
+        },
+        "responsible_administrator_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Responsible Administrator Id"
+        },
+        "responsible_administrator_name": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Responsible Administrator Name"
+        },
+        "result_tenancy_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Result Tenancy Id"
+        },
+        "stage": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Stage",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "queued",
+            "running",
+            "waiting",
+            "needs_attention",
+            "succeeded",
+            "cancelled",
+            "failed"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "target_label": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target Label"
+        },
+        "target_tenancy_ocid": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 15,
+              "pattern": "^ocid1\\.tenancy\\.[A-Za-z0-9.]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Target Tenancy Ocid"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "state",
+        "stage",
+        "accepted_at",
+        "updated_at",
+        "completed_at",
+        "initiated_by",
+        "target_tenancy_ocid"
+      ],
+      "title": "OperationSummary",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "attention_count": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Attention Count",
+      "type": "integer"
+    },
+    "items": {
+      "items": {
+        "$ref": "#/$defs/OperationSummary"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "page": {
+      "title": "Page",
+      "type": "integer"
+    },
+    "page_size": {
+      "title": "Page Size",
+      "type": "integer"
+    },
+    "pages": {
+      "title": "Pages",
+      "type": "integer"
+    },
+    "total": {
+      "title": "Total",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "items",
+    "total",
+    "page",
+    "page_size",
+    "pages"
+  ],
+  "title": "OperationDirectory",
+  "type": "object"
+}

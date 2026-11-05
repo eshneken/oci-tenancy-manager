@@ -1,0 +1,120 @@
+{
+  "$defs": {
+    "OverrideContext": {
+      "additionalProperties": false,
+      "properties": {
+        "baseline_version_id": {
+          "format": "uuid",
+          "title": "Baseline Version Id",
+          "type": "string"
+        },
+        "configuration_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Configuration Id"
+        },
+        "tenancy_revision": {
+          "minimum": 1,
+          "title": "Tenancy Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "baseline_version_id",
+        "tenancy_revision",
+        "configuration_id"
+      ],
+      "title": "OverrideContext",
+      "type": "object"
+    },
+    "OverrideValues": {
+      "additionalProperties": false,
+      "properties": {
+        "monthly_budget_override_amount": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Monthly Budget Override Amount"
+        },
+        "policy_override_statements": {
+          "anyOf": [
+            {
+              "items": {
+                "maxLength": 2000,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 50,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Policy Override Statements"
+        },
+        "quota_override_statements": {
+          "anyOf": [
+            {
+              "items": {
+                "maxLength": 2000,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 50,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quota Override Statements"
+        }
+      },
+      "title": "OverrideValues",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "context": {
+      "$ref": "#/$defs/OverrideContext"
+    },
+    "tenancy_id": {
+      "format": "uuid",
+      "title": "Tenancy Id",
+      "type": "string"
+    },
+    "values": {
+      "$ref": "#/$defs/OverrideValues"
+    }
+  },
+  "required": [
+    "context",
+    "tenancy_id",
+    "values"
+  ],
+  "title": "OverridePreviewRequest",
+  "type": "object"
+}

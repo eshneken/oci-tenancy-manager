@@ -1,0 +1,127 @@
+{
+  "$defs": {
+    "AdministratorStatistics": {
+      "additionalProperties": false,
+      "properties": {
+        "active": {
+          "title": "Active",
+          "type": "integer"
+        },
+        "protected_recovery": {
+          "title": "Protected Recovery",
+          "type": "integer"
+        },
+        "total": {
+          "title": "Total",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "total",
+        "active",
+        "protected_recovery"
+      ],
+      "title": "AdministratorStatistics",
+      "type": "object"
+    },
+    "AdministratorView": {
+      "additionalProperties": false,
+      "properties": {
+        "authorization_revision": {
+          "format": "uuid",
+          "title": "Authorization Revision",
+          "type": "string"
+        },
+        "display_name": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Display Name",
+          "type": "string"
+        },
+        "email": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Email"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "identity_kind": {
+          "enum": [
+            "local_recovery",
+            "corporate_sso"
+          ],
+          "title": "Identity Kind",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "revoked"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "display_name",
+        "email",
+        "identity_kind",
+        "status",
+        "authorization_revision"
+      ],
+      "title": "AdministratorView",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "items": {
+      "items": {
+        "$ref": "#/$defs/AdministratorView"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "page": {
+      "title": "Page",
+      "type": "integer"
+    },
+    "page_size": {
+      "title": "Page Size",
+      "type": "integer"
+    },
+    "pages": {
+      "title": "Pages",
+      "type": "integer"
+    },
+    "statistics": {
+      "$ref": "#/$defs/AdministratorStatistics"
+    },
+    "total": {
+      "title": "Total",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "items",
+    "total",
+    "page",
+    "page_size",
+    "pages",
+    "statistics"
+  ],
+  "title": "AdministratorDirectory",
+  "type": "object"
+}

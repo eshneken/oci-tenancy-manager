@@ -1,0 +1,122 @@
+{
+  "$defs": {
+    "InspectionPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "access_binding_id": {
+          "format": "uuid",
+          "title": "Access Binding Id",
+          "type": "string"
+        },
+        "organization_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Organization Id",
+          "type": "string"
+        },
+        "parent_tenancy_ocid": {
+          "maxLength": 256,
+          "minLength": 15,
+          "pattern": "^ocid1\\.tenancy\\.[A-Za-z0-9.]+$",
+          "title": "Parent Tenancy Ocid",
+          "type": "string"
+        },
+        "policy_revision": {
+          "format": "uuid",
+          "title": "Policy Revision",
+          "type": "string"
+        },
+        "workspace_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Workspace Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "policy_revision",
+        "organization_id",
+        "parent_tenancy_ocid",
+        "access_binding_id"
+      ],
+      "title": "InspectionPolicy",
+      "type": "object"
+    },
+    "SandboxTarget": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "scenario": {
+          "enum": [
+            "healthy",
+            "access_denied",
+            "timeout",
+            "unsupported",
+            "unobservable"
+          ],
+          "title": "Scenario",
+          "type": "string"
+        },
+        "tenancy_ocid": {
+          "maxLength": 256,
+          "minLength": 15,
+          "pattern": "^ocid1\\.tenancy\\.[A-Za-z0-9.]+$",
+          "title": "Tenancy Ocid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenancy_ocid",
+        "name",
+        "scenario"
+      ],
+      "title": "SandboxTarget",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "execution_paused": {
+      "title": "Execution Paused",
+      "type": "boolean"
+    },
+    "policy": {
+      "$ref": "#/$defs/InspectionPolicy"
+    },
+    "provider_mode": {
+      "const": "simulated",
+      "title": "Provider Mode",
+      "type": "string"
+    },
+    "schema_version": {
+      "maximum": 1,
+      "minimum": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "targets": {
+      "items": {
+        "$ref": "#/$defs/SandboxTarget"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "title": "Targets",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "provider_mode",
+    "policy",
+    "execution_paused",
+    "targets"
+  ],
+  "title": "SandboxConfig",
+  "type": "object"
+}

@@ -1,0 +1,70 @@
+import {expect,type Page} from "@playwright/test";
+import {resolve} from "node:path";
+
+// Exercise existing-compartment assignment and explicit identity retirement through real UI/API/jobs.
+export async function existingCompartmentMembership(page:Page,sharedName:string){
+ await page.getByRole("link",{name:"Organization",exact:true}).click();
+ await page.getByRole("button",{name:"Leader Two",exact:true}).click();
+ const modal=page.getByRole("dialog");
+ await modal.getByRole("combobox",{name:"Action",exact:true}).selectOption("join_shared");
+ const selector=modal.getByRole("combobox",{name:"Shared tenancy",exact:true});
+ const option=await selector.locator("option").allTextContents();
+ const chosen=option.find(label=>label.includes(sharedName))!;await selector.selectOption({label:chosen});
+ const selectedTenancy=await selector.inputValue();
+ await modal.getByRole("combobox",{name:"Compartment assignment",exact:true}).selectOption("existing");
+ const picker=modal.getByRole("combobox",{name:"Existing compartment",exact:true});
+ await expect(picker.locator("selectedcontent")).toHaveText("Choose an existing compartment");
+ await modal.getByRole("combobox",{name:"Compartment assignment",exact:true}).selectOption("create");
+ await expect(modal.getByRole("combobox",{name:"Existing parent compartment",exact:true}).locator("selectedcontent")).toHaveText("Choose an existing parent");
+ await modal.getByRole("combobox",{name:"Compartment assignment",exact:true}).selectOption("existing");
+ await expect(picker.locator("selectedcontent")).toHaveText("Choose an existing compartment");
+ await expect(picker.locator("option")).toHaveCount(3);
+ await picker.selectOption({index:1});
+ await expect(modal.getByLabel("Employee compartment name",{exact:true})).toHaveCount(0);
+ await capture(page,"shared-existing-compartment");
+ const pending=page.waitForResponse(r=>r.url().endsWith("/api/organization/actions")&&r.request().method()==="POST");
+ await modal.getByRole("button",{name:"Add to shared tenancy",exact:true}).click();
+ const accepted=await pending;expect(accepted.status()).toBe(202);
+ const command=accepted.request().postDataJSON();expect(command.existing_compartment_ocid).toBeTruthy();
+ expect(command.parent_compartment_ocid).toBeUndefined();expect(command.compartment_name).toBeUndefined();
+ await modal.getByRole("link",{name:"View operation",exact:true}).click();
+ await expect(page.getByText("Succeeded",{exact:true})).toBeVisible({timeout:20000});
+ await page.getByRole("link",{name:"Organization",exact:true}).click();
+ await page.getByRole("button",{name:"Leader Two",exact:true}).click();
+ await modal.getByRole("combobox",{name:"Action",exact:true}).selectOption("remove_member");
+ await modal.getByRole("combobox",{name:"Tenancy",exact:true}).selectOption(selectedTenancy);
+ await modal.getByRole("checkbox").check();
+ await modal.getByRole("button",{name:"Remove shared member",exact:true}).click();
+ await modal.getByRole("link",{name:"View operation",exact:true}).click();
+ await expect(page.getByText("Succeeded",{exact:true})).toBeVisible({timeout:20000});
+ await expect(page.getByRole("heading",{name:"Remove shared user group memberships",exact:true})).toBeVisible();
+ await expect(page.getByRole("heading",{name:"Delete shared tenancy user",exact:true})).toBeVisible();
+ await capture(page,"shared-user-removal-evidence");
+ await page.getByRole("link",{name:"Tenancies",exact:true}).click();
+ const row=page.getByRole("row").filter({has:page.getByRole("link",{name:sharedName,exact:true})});
+ const status=row.locator(".tenancy-status-label");await status.focus();
+ await expect(row.getByRole("tooltip")).toContainText("Created");
+ await capture(page,"tenancy-created-tooltip");
+ await page.keyboard.press("Escape");await expect(row.getByRole("tooltip")).not.toBeVisible();
+ await page.getByRole("link",{name:sharedName,exact:true}).click();
+ await expect(page.getByRole("region",{name:"Overrides",exact:true})).toBeVisible();
+ await expect(page.getByRole("button",{name:"Manage owner & associations",exact:true})).toHaveCount(0);
+ await capture(page,"tenancy-override-section");
+ await page.getByRole("link",{name:"Tenancies",exact:true}).click();
+}
+
+// Capture synthetic responsive screens while keeping overflow inside tables/native dialogs.
+async function capture(page:Page,name:string){
+ for(const width of [1280,390,320]){
+  await page.setViewportSize({width,height:900});
+  if(name==="tenancy-created-tooltip"){
+   const status=page.locator(".tenancy-status-label:focus");await status.scrollIntoViewIfNeeded();await status.hover();
+   const tooltip=status.locator("..").getByRole("tooltip");await expect(tooltip).toBeVisible();
+   const box=await tooltip.boundingBox();expect(box!.x).toBeGreaterThanOrEqual(0);expect(box!.x+box!.width).toBeLessThanOrEqual(width);
+  }
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  const dialog=page.getByRole("dialog");if(await dialog.count())expect(await dialog.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+  await page.screenshot({path:resolve(".local-dev/browser",`${name}-${width}.png`),fullPage:true});
+ }
+ await page.setViewportSize({width:1280,height:900});
+}

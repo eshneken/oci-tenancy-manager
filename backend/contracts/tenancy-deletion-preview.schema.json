@@ -1,0 +1,471 @@
+{
+  "$defs": {
+    "DeletionPerson": {
+      "additionalProperties": false,
+      "properties": {
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "is_manager": {
+          "title": "Is Manager",
+          "type": "boolean"
+        },
+        "leaves_directory": {
+          "title": "Leaves Directory",
+          "type": "boolean"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "other_tenancy_count": {
+          "title": "Other Tenancy Count",
+          "type": "integer"
+        },
+        "person_id": {
+          "format": "uuid",
+          "title": "Person Id",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "owner",
+            "member"
+          ],
+          "title": "Role",
+          "type": "string"
+        }
+      },
+      "required": [
+        "person_id",
+        "name",
+        "email",
+        "role",
+        "is_manager",
+        "other_tenancy_count",
+        "leaves_directory"
+      ],
+      "title": "DeletionPerson",
+      "type": "object"
+    },
+    "OrganizationContext": {
+      "additionalProperties": false,
+      "properties": {
+        "applied_version_id": {
+          "format": "uuid",
+          "title": "Applied Version Id",
+          "type": "string"
+        },
+        "configuration_id": {
+          "format": "uuid",
+          "title": "Configuration Id",
+          "type": "string"
+        },
+        "proposed_version_id": {
+          "format": "uuid",
+          "title": "Proposed Version Id",
+          "type": "string"
+        },
+        "registry_revision": {
+          "minimum": 1,
+          "title": "Registry Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "applied_version_id",
+        "proposed_version_id",
+        "configuration_id",
+        "registry_revision"
+      ],
+      "title": "OrganizationContext",
+      "type": "object"
+    },
+    "TenancyView": {
+      "additionalProperties": false,
+      "properties": {
+        "baseline_version_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Baseline Version Id"
+        },
+        "baseline_version_number": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Baseline Version Number"
+        },
+        "cleanup_count": {
+          "title": "Cleanup Count",
+          "type": "integer"
+        },
+        "configuration_check_stale": {
+          "default": false,
+          "title": "Configuration Check Stale",
+          "type": "boolean"
+        },
+        "configuration_check_state": {
+          "default": "not_checked",
+          "enum": [
+            "matching",
+            "drifted",
+            "unavailable",
+            "superseded",
+            "not_checked",
+            "checking"
+          ],
+          "title": "Configuration Check State",
+          "type": "string"
+        },
+        "configuration_checked_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Configuration Checked At"
+        },
+        "configuration_confirmed_issue_count": {
+          "default": 0,
+          "title": "Configuration Confirmed Issue Count",
+          "type": "integer"
+        },
+        "configuration_issue_count": {
+          "default": 0,
+          "title": "Configuration Issue Count",
+          "type": "integer"
+        },
+        "configuration_verified_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Configuration Verified At"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "desired_configuration_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Desired Configuration Id"
+        },
+        "has_pending_operation": {
+          "default": false,
+          "title": "Has Pending Operation",
+          "type": "boolean"
+        },
+        "home_region": {
+          "title": "Home Region",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "individual",
+            "shared"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "last_verified_configuration_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Last Verified Configuration Id"
+        },
+        "leader_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Leader Name"
+        },
+        "lob_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Lob Name"
+        },
+        "manager_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Manager Name"
+        },
+        "member_count": {
+          "title": "Member Count",
+          "type": "integer"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "operation_completed_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Operation Completed At"
+        },
+        "operation_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Operation Id"
+        },
+        "operation_state": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Operation State"
+        },
+        "origin": {
+          "enum": [
+            "create",
+            "import"
+          ],
+          "title": "Origin",
+          "type": "string"
+        },
+        "override_categories": {
+          "default": [],
+          "items": {
+            "enum": [
+              "policy",
+              "quota",
+              "budget"
+            ],
+            "type": "string"
+          },
+          "title": "Override Categories",
+          "type": "array"
+        },
+        "owner_email": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Owner Email"
+        },
+        "owner_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Owner Name"
+        },
+        "owner_person_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Owner Person Id"
+        },
+        "parent_tenancy_ocid": {
+          "title": "Parent Tenancy Ocid",
+          "type": "string"
+        },
+        "provider_mode": {
+          "const": "simulated",
+          "title": "Provider Mode",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "tenancy_ocid": {
+          "title": "Tenancy Ocid",
+          "type": "string"
+        },
+        "verified_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Verified At"
+        },
+        "verified_baseline_version_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Verified Baseline Version Id"
+        },
+        "verified_baseline_version_number": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Verified Baseline Version Number"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "tenancy_ocid",
+        "parent_tenancy_ocid",
+        "home_region",
+        "kind",
+        "status",
+        "origin",
+        "provider_mode",
+        "owner_person_id",
+        "owner_name",
+        "owner_email",
+        "manager_name",
+        "leader_name",
+        "lob_name",
+        "member_count",
+        "operation_id",
+        "operation_state",
+        "verified_at",
+        "created_at",
+        "cleanup_count"
+      ],
+      "title": "TenancyView",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "context": {
+      "$ref": "#/$defs/OrganizationContext"
+    },
+    "manager_warning": {
+      "title": "Manager Warning",
+      "type": "boolean"
+    },
+    "people": {
+      "items": {
+        "$ref": "#/$defs/DeletionPerson"
+      },
+      "title": "People",
+      "type": "array"
+    },
+    "shared_warning": {
+      "title": "Shared Warning",
+      "type": "boolean"
+    },
+    "tenancy": {
+      "$ref": "#/$defs/TenancyView"
+    }
+  },
+  "required": [
+    "context",
+    "tenancy",
+    "people",
+    "manager_warning",
+    "shared_warning"
+  ],
+  "title": "TenancyDeletionPreview",
+  "type": "object"
+}

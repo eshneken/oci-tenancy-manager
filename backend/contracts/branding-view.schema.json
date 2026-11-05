@@ -1,0 +1,42 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "display_name": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Display Name",
+      "type": "string"
+    },
+    "icon_url": {
+      "anyOf": [
+        {
+          "pattern": "^/branding-assets/[A-Za-z0-9][A-Za-z0-9_-]{0,79}\\.(png|webp|ico|jpg|jpeg)$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Icon Url"
+    },
+    "logo_url": {
+      "anyOf": [
+        {
+          "pattern": "^/branding-assets/[A-Za-z0-9][A-Za-z0-9_-]{0,79}\\.(png|webp|ico|jpg|jpeg)$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Logo Url"
+    }
+  },
+  "required": [
+    "display_name",
+    "logo_url",
+    "icon_url"
+  ],
+  "title": "BrandingView",
+  "type": "object"
+}

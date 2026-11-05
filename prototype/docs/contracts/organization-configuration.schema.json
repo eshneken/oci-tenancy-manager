@@ -1,0 +1,404 @@
+{
+  "$defs": {
+    "IdentityMerge": {
+      "additionalProperties": false,
+      "description": "Explicit old-to-new email alias retaining the absent person's stable UUID.",
+      "properties": {
+        "old_email": {
+          "title": "Old Email",
+          "type": "string"
+        },
+        "new_email": {
+          "title": "New Email",
+          "type": "string"
+        },
+        "person_id": {
+          "format": "uuid",
+          "title": "Person Id",
+          "type": "string"
+        },
+        "retired_person_id": {
+          "format": "uuid",
+          "title": "Retired Person Id",
+          "type": "string"
+        },
+        "actor": {
+          "title": "Actor",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "old_email",
+        "new_email",
+        "person_id",
+        "retired_person_id",
+        "actor",
+        "reason"
+      ],
+      "title": "IdentityMerge",
+      "type": "object"
+    },
+    "Lob": {
+      "additionalProperties": false,
+      "description": "Administrator-defined business branch, accountable leader and nominated designees.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "leader_email": {
+          "title": "Leader Email",
+          "type": "string"
+        },
+        "designee_emails": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Designee Emails",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "leader_email"
+      ],
+      "title": "Lob",
+      "type": "object"
+    },
+    "PersonOverride": {
+      "additionalProperties": false,
+      "description": "Explicit admin correction preserved across feeds, with provenance and supported fields.",
+      "properties": {
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "values": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "propertyNames": {
+            "enum": [
+              "full_name",
+              "manager_email"
+            ]
+          },
+          "title": "Values",
+          "type": "object"
+        },
+        "reason": {
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "actor": {
+          "minLength": 1,
+          "title": "Actor",
+          "type": "string"
+        }
+      },
+      "required": [
+        "email",
+        "values",
+        "reason",
+        "actor"
+      ],
+      "title": "PersonOverride",
+      "type": "object"
+    },
+    "ReviewDecision": {
+      "additionalProperties": false,
+      "description": "Audited, frozen closure/ignore rule; its basis scopes conditional episode resolution.",
+      "properties": {
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "target": {
+          "title": "Target",
+          "type": "string"
+        },
+        "disposition": {
+          "enum": [
+            "resolved",
+            "ignored"
+          ],
+          "title": "Disposition",
+          "type": "string"
+        },
+        "operation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Operation"
+        },
+        "simulation": {
+          "anyOf": [
+            {
+              "const": "succeeded",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Simulation"
+        },
+        "person_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Person Id"
+        },
+        "basis": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Basis"
+        },
+        "recorded_at": {
+          "format": "date-time",
+          "title": "Recorded At",
+          "type": "string"
+        },
+        "actor": {
+          "title": "Actor",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "target",
+        "disposition",
+        "recorded_at",
+        "actor",
+        "reason"
+      ],
+      "title": "ReviewDecision",
+      "type": "object"
+    },
+    "SourcePolicy": {
+      "additionalProperties": false,
+      "description": "Trusted population policy that controls metadata and absence eligibility.",
+      "properties": {
+        "source_id": {
+          "title": "Source Id",
+          "type": "string"
+        },
+        "population_id": {
+          "title": "Population Id",
+          "type": "string"
+        },
+        "root_email": {
+          "title": "Root Email",
+          "type": "string"
+        },
+        "allow_metadata": {
+          "title": "Allow Metadata",
+          "type": "boolean"
+        },
+        "authoritative": {
+          "title": "Authoritative",
+          "type": "boolean"
+        },
+        "census_contract_confirmed": {
+          "title": "Census Contract Confirmed",
+          "type": "boolean"
+        },
+        "max_age_seconds": {
+          "exclusiveMinimum": 0,
+          "title": "Max Age Seconds",
+          "type": "integer"
+        },
+        "allow_undated_development_metadata": {
+          "default": false,
+          "title": "Allow Undated Development Metadata",
+          "type": "boolean"
+        },
+        "required_root_profile": {
+          "default": true,
+          "title": "Required Root Profile",
+          "type": "boolean"
+        },
+        "administrator_recipients": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Administrator Recipients",
+          "type": "array"
+        }
+      },
+      "required": [
+        "source_id",
+        "population_id",
+        "root_email",
+        "allow_metadata",
+        "authoritative",
+        "census_contract_confirmed",
+        "max_age_seconds",
+        "administrator_recipients"
+      ],
+      "title": "SourcePolicy",
+      "type": "object"
+    },
+    "SupplementalEdge": {
+      "additionalProperties": false,
+      "description": "Explicitly configured reporting relationship with auditable provenance.",
+      "properties": {
+        "employee_email": {
+          "title": "Employee Email",
+          "type": "string"
+        },
+        "manager_email": {
+          "title": "Manager Email",
+          "type": "string"
+        },
+        "provenance": {
+          "minLength": 1,
+          "title": "Provenance",
+          "type": "string"
+        }
+      },
+      "required": [
+        "employee_email",
+        "manager_email",
+        "provenance"
+      ],
+      "title": "SupplementalEdge",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Immutable trusted source policy and accountability configuration revision.",
+  "properties": {
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "policy": {
+      "$ref": "#/$defs/SourcePolicy"
+    },
+    "lobs": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Lob"
+      },
+      "title": "Lobs",
+      "type": "array"
+    },
+    "supplemental_edges": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/SupplementalEdge"
+      },
+      "title": "Supplemental Edges",
+      "type": "array"
+    },
+    "overrides": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/PersonOverride"
+      },
+      "title": "Overrides",
+      "type": "array"
+    },
+    "review_decisions": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ReviewDecision"
+      },
+      "title": "Review Decisions",
+      "type": "array"
+    },
+    "excluded_emails": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Excluded Emails",
+      "type": "array"
+    },
+    "identity_merges": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/IdentityMerge"
+      },
+      "title": "Identity Merges",
+      "type": "array"
+    },
+    "managed_exclusions": {
+      "default": [],
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "title": "Managed Exclusions",
+      "type": "array"
+    },
+    "pending_onboarding_person_ids": {
+      "default": [],
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "title": "Pending Onboarding Person Ids",
+      "type": "array"
+    },
+    "registry_initialized": {
+      "default": false,
+      "title": "Registry Initialized",
+      "type": "boolean"
+    },
+    "outside_person_ids": {
+      "default": [],
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "title": "Outside Person Ids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "id",
+    "policy"
+  ],
+  "title": "Configuration",
+  "type": "object"
+}

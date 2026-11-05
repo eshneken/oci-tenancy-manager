@@ -1,0 +1,1422 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:otm:design:execution:1-draft",
+  "title": "OCI Tenancy Manager execution contract review draft",
+  "$comment": "Design-only schemas, not runtime code, a production API, authorization proof or a complete C3/C4 item schema. All examples use synthetic identifiers.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/Command"
+    },
+    {
+      "$ref": "#/$defs/Result"
+    },
+    {
+      "$ref": "#/$defs/OperationSnapshot"
+    }
+  ],
+  "$defs": {
+    "Context": {
+      "type": "object",
+      "properties": {
+        "workspace_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "step_key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "attempt_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "intent_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "execution_generation": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "access_binding_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "credential_generation": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "workspace_id",
+        "operation_id",
+        "step_key",
+        "attempt_id",
+        "intent_revision",
+        "execution_generation",
+        "access_binding_id",
+        "credential_generation"
+      ],
+      "additionalProperties": false
+    },
+    "IdentityBinding": {
+      "type": "object",
+      "properties": {
+        "tenancy_ocid": {
+          "type": "string",
+          "pattern": "^ocid1\\.tenancy\\."
+        },
+        "domain_ocid": {
+          "type": "string",
+          "pattern": "^ocid1\\.domain\\."
+        },
+        "scim_user_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "user_ocid": {
+          "type": "string",
+          "pattern": "^ocid1\\.user\\."
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        }
+      },
+      "required": [
+        "tenancy_ocid",
+        "domain_ocid",
+        "scim_user_id",
+        "user_ocid",
+        "observed_at"
+      ],
+      "additionalProperties": false
+    },
+    "TenancyFacts": {
+      "type": "object",
+      "properties": {
+        "tenancy_ocid": {
+          "type": "string",
+          "pattern": "^ocid1\\.tenancy\\."
+        },
+        "parent_tenancy_ocid": {
+          "type": "string",
+          "pattern": "^ocid1\\.tenancy\\."
+        },
+        "organization_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "actual_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "home_region": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "role": {
+          "const": "CHILD"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        }
+      },
+      "required": [
+        "tenancy_ocid",
+        "parent_tenancy_ocid",
+        "organization_id",
+        "actual_name",
+        "home_region",
+        "role",
+        "observed_at"
+      ],
+      "additionalProperties": false
+    },
+    "Evidence": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "enum": [
+            "PROVIDER_ACCEPTANCE",
+            "READ_BACK",
+            "IDENTITY_BINDING",
+            "INDEPENDENT_SIGNER",
+            "QUALIFIED_PROFILE"
+          ]
+        },
+        "evidence_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        }
+      },
+      "required": [
+        "code",
+        "evidence_ref",
+        "observed_at"
+      ],
+      "additionalProperties": false
+    },
+    "Command_create_child": {
+      "type": "object",
+      "properties": {
+        "contract_version": {
+          "const": "execution-1-draft"
+        },
+        "context": {
+          "$ref": "#/$defs/Context"
+        },
+        "kind": {
+          "const": "create_child"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "organization_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "parent_tenancy_ocid": {
+              "type": "string",
+              "pattern": "^ocid1\\.tenancy\\."
+            },
+            "requested_name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "home_region": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "activation_email": {
+              "type": "string",
+              "format": "email"
+            },
+            "provider_retry_token": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "configuration_ref": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          },
+          "required": [
+            "organization_id",
+            "parent_tenancy_ocid",
+            "requested_name",
+            "home_region",
+            "activation_email",
+            "provider_retry_token",
+            "configuration_ref"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "contract_version",
+        "context",
+        "kind",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Command_inspect_tenancy": {
+      "type": "object",
+      "properties": {
+        "contract_version": {
+          "const": "execution-1-draft"
+        },
+        "context": {
+          "$ref": "#/$defs/Context"
+        },
+        "kind": {
+          "const": "inspect_tenancy"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "organization_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "parent_tenancy_ocid": {
+              "type": "string",
+              "pattern": "^ocid1\\.tenancy\\."
+            },
+            "tenancy_ocid": {
+              "type": "string",
+              "pattern": "^ocid1\\.tenancy\\."
+            }
+          },
+          "required": [
+            "organization_id",
+            "parent_tenancy_ocid",
+            "tenancy_ocid"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "contract_version",
+        "context",
+        "kind",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Command_inspect_bootstrap_identity": {
+      "type": "object",
+      "properties": {
+        "contract_version": {
+          "const": "execution-1-draft"
+        },
+        "context": {
+          "$ref": "#/$defs/Context"
+        },
+        "kind": {
+          "const": "inspect_bootstrap_identity"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "tenancy_ocid": {
+              "type": "string",
+              "pattern": "^ocid1\\.tenancy\\."
+            },
+            "bootstrap_user_ocid": {
+              "type": "string",
+              "pattern": "^ocid1\\.user\\."
+            },
+            "domain_binding_ref": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "tenancy_ocid",
+            "bootstrap_user_ocid",
+            "domain_binding_ref"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "contract_version",
+        "context",
+        "kind",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Command_verify_signer_access": {
+      "type": "object",
+      "properties": {
+        "contract_version": {
+          "const": "execution-1-draft"
+        },
+        "context": {
+          "$ref": "#/$defs/Context"
+        },
+        "kind": {
+          "const": "verify_signer_access"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "identity": {
+              "$ref": "#/$defs/IdentityBinding"
+            },
+            "permission_profile_ref": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          },
+          "required": [
+            "identity",
+            "permission_profile_ref"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "contract_version",
+        "context",
+        "kind",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Command_observe_provider_request": {
+      "type": "object",
+      "properties": {
+        "contract_version": {
+          "const": "execution-1-draft"
+        },
+        "context": {
+          "$ref": "#/$defs/Context"
+        },
+        "kind": {
+          "const": "observe_provider_request"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "organization_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "provider_operation_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "original_attempt_id": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "required": [
+            "organization_id",
+            "provider_operation_id",
+            "original_attempt_id"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "contract_version",
+        "context",
+        "kind",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Command_request_termination": {
+      "type": "object",
+      "properties": {
+        "contract_version": {
+          "const": "execution-1-draft"
+        },
+        "context": {
+          "$ref": "#/$defs/Context"
+        },
+        "kind": {
+          "const": "request_termination"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "organization_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "tenancy_ocid": {
+              "type": "string",
+              "pattern": "^ocid1\\.tenancy\\."
+            },
+            "parent_tenancy_ocid": {
+              "type": "string",
+              "pattern": "^ocid1\\.tenancy\\."
+            },
+            "guard_receipt_ref": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "provider_retry_token": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "provider_etag": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "organization_id",
+            "tenancy_ocid",
+            "parent_tenancy_ocid",
+            "guard_receipt_ref",
+            "provider_retry_token",
+            "provider_etag"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "contract_version",
+        "context",
+        "kind",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Command": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Command_create_child"
+        },
+        {
+          "$ref": "#/$defs/Command_inspect_tenancy"
+        },
+        {
+          "$ref": "#/$defs/Command_inspect_bootstrap_identity"
+        },
+        {
+          "$ref": "#/$defs/Command_verify_signer_access"
+        },
+        {
+          "$ref": "#/$defs/Command_observe_provider_request"
+        },
+        {
+          "$ref": "#/$defs/Command_request_termination"
+        }
+      ]
+    },
+    "Result_confirmed": {
+      "type": "object",
+      "properties": {
+        "contract_version": {
+          "const": "execution-1-draft"
+        },
+        "attempt_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "provider_request_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provider_operation_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "safe_code": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "maxLength": 96
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "minItems": 1,
+          "maxItems": 32
+        },
+        "kind": {
+          "const": "confirmed"
+        },
+        "milestone": {
+          "enum": [
+            "tenancy_inspected",
+            "bootstrap_identity_verified",
+            "signer_profile_verified",
+            "termination_initiated"
+          ]
+        },
+        "tenancy": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TenancyFacts"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "identity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/IdentityBinding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "contract_version",
+        "attempt_id",
+        "observed_at",
+        "provider_request_id",
+        "provider_operation_id",
+        "safe_code",
+        "evidence",
+        "kind",
+        "milestone",
+        "tenancy",
+        "identity"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "milestone": {
+                "const": "tenancy_inspected"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "tenancy": {
+                "$ref": "#/$defs/TenancyFacts"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "milestone": {
+                "enum": [
+                  "bootstrap_identity_verified",
+                  "signer_profile_verified"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "identity": {
+                "$ref": "#/$defs/IdentityBinding"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Result_accepted": {
+      "type": "object",
+      "properties": {
+        "contract_version": {
+          "const": "execution-1-draft"
+        },
+        "attempt_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "provider_request_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provider_operation_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "safe_code": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "maxLength": 96
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "minItems": 1,
+          "maxItems": 32
+        },
+        "kind": {
+          "const": "accepted"
+        },
+        "milestone": {
+          "const": "child_request_accepted"
+        },
+        "continuation": {
+          "const": "observe"
+        }
+      },
+      "required": [
+        "contract_version",
+        "attempt_id",
+        "observed_at",
+        "provider_request_id",
+        "provider_operation_id",
+        "safe_code",
+        "evidence",
+        "kind",
+        "milestone",
+        "continuation"
+      ],
+      "additionalProperties": false
+    },
+    "Result_pending": {
+      "type": "object",
+      "properties": {
+        "contract_version": {
+          "const": "execution-1-draft"
+        },
+        "attempt_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "provider_request_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provider_operation_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "safe_code": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "maxLength": 96
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "maxItems": 32
+        },
+        "kind": {
+          "const": "pending"
+        },
+        "continuation": {
+          "const": "observe"
+        },
+        "next_check_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        }
+      },
+      "required": [
+        "contract_version",
+        "attempt_id",
+        "observed_at",
+        "provider_request_id",
+        "provider_operation_id",
+        "safe_code",
+        "evidence",
+        "kind",
+        "continuation",
+        "next_check_at"
+      ],
+      "additionalProperties": false
+    },
+    "Result_rejected": {
+      "type": "object",
+      "properties": {
+        "contract_version": {
+          "const": "execution-1-draft"
+        },
+        "attempt_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "provider_request_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provider_operation_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "safe_code": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "maxLength": 96
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "maxItems": 32
+        },
+        "kind": {
+          "const": "rejected"
+        },
+        "effect_applied": {
+          "const": false
+        },
+        "continuation": {
+          "enum": [
+            "manual",
+            "retry_same_request"
+          ]
+        }
+      },
+      "required": [
+        "contract_version",
+        "attempt_id",
+        "observed_at",
+        "provider_request_id",
+        "provider_operation_id",
+        "safe_code",
+        "evidence",
+        "kind",
+        "effect_applied",
+        "continuation"
+      ],
+      "additionalProperties": false
+    },
+    "Result_unknown": {
+      "type": "object",
+      "properties": {
+        "contract_version": {
+          "const": "execution-1-draft"
+        },
+        "attempt_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "provider_request_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provider_operation_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "safe_code": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "maxLength": 96
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "maxItems": 32
+        },
+        "kind": {
+          "const": "unknown"
+        },
+        "continuation": {
+          "enum": [
+            "reconcile",
+            "manual"
+          ]
+        },
+        "original_attempt_id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "contract_version",
+        "attempt_id",
+        "observed_at",
+        "provider_request_id",
+        "provider_operation_id",
+        "safe_code",
+        "evidence",
+        "kind",
+        "continuation",
+        "original_attempt_id"
+      ],
+      "additionalProperties": false
+    },
+    "Result_unobservable": {
+      "type": "object",
+      "properties": {
+        "contract_version": {
+          "const": "execution-1-draft"
+        },
+        "attempt_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "provider_request_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provider_operation_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "safe_code": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "maxLength": 96
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "maxItems": 32
+        },
+        "kind": {
+          "const": "unobservable"
+        },
+        "continuation": {
+          "enum": [
+            "manual",
+            "observe"
+          ]
+        }
+      },
+      "required": [
+        "contract_version",
+        "attempt_id",
+        "observed_at",
+        "provider_request_id",
+        "provider_operation_id",
+        "safe_code",
+        "evidence",
+        "kind",
+        "continuation"
+      ],
+      "additionalProperties": false
+    },
+    "Result_unsupported": {
+      "type": "object",
+      "properties": {
+        "contract_version": {
+          "const": "execution-1-draft"
+        },
+        "attempt_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "provider_request_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provider_operation_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "safe_code": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "maxLength": 96
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "maxItems": 32
+        },
+        "kind": {
+          "const": "unsupported"
+        },
+        "continuation": {
+          "enum": [
+            "manual",
+            "observe"
+          ]
+        }
+      },
+      "required": [
+        "contract_version",
+        "attempt_id",
+        "observed_at",
+        "provider_request_id",
+        "provider_operation_id",
+        "safe_code",
+        "evidence",
+        "kind",
+        "continuation"
+      ],
+      "additionalProperties": false
+    },
+    "Result": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Result_confirmed"
+        },
+        {
+          "$ref": "#/$defs/Result_accepted"
+        },
+        {
+          "$ref": "#/$defs/Result_pending"
+        },
+        {
+          "$ref": "#/$defs/Result_rejected"
+        },
+        {
+          "$ref": "#/$defs/Result_unknown"
+        },
+        {
+          "$ref": "#/$defs/Result_unobservable"
+        },
+        {
+          "$ref": "#/$defs/Result_unsupported"
+        }
+      ]
+    },
+    "OperationSnapshot": {
+      "type": "object",
+      "properties": {
+        "contract_version": {
+          "const": "execution-1-draft"
+        },
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "workspace_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "kind": {
+          "enum": [
+            "create",
+            "import",
+            "inspect_import",
+            "termination"
+          ]
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "state": {
+          "enum": [
+            "queued",
+            "running",
+            "waiting",
+            "needs_attention",
+            "succeeded",
+            "cancelled",
+            "failed"
+          ]
+        },
+        "stage": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "wait_reason": {
+          "anyOf": [
+            {
+              "enum": [
+                "provider",
+                "administrator",
+                "retry",
+                "reconcile",
+                "restore_fence"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "next_check_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unfinished_mandatory_steps": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "effect_knowledge": {
+          "enum": [
+            "none",
+            "known",
+            "unknown"
+          ]
+        },
+        "stop_requested": {
+          "type": "boolean"
+        },
+        "cleanup_status": {
+          "enum": [
+            "not_needed",
+            "pending",
+            "verified",
+            "blocked"
+          ]
+        },
+        "owner_sign_in": {
+          "enum": [
+            "not_confirmed",
+            "confirmed",
+            "check_unavailable"
+          ]
+        },
+        "available_actions": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "view",
+              "resume",
+              "reconcile",
+              "amend",
+              "request_stop",
+              "refresh_preview"
+            ]
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "contract_version",
+        "operation_id",
+        "workspace_id",
+        "kind",
+        "revision",
+        "state",
+        "stage",
+        "wait_reason",
+        "next_check_at",
+        "unfinished_mandatory_steps",
+        "effect_knowledge",
+        "stop_requested",
+        "cleanup_status",
+        "owner_sign_in",
+        "available_actions"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "waiting"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "wait_reason": {
+                "enum": [
+                  "provider",
+                  "administrator",
+                  "retry",
+                  "reconcile",
+                  "restore_fence"
+                ]
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "wait_reason": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "succeeded",
+                  "cancelled",
+                  "failed"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "effect_knowledge": {
+                "enum": [
+                  "none",
+                  "known"
+                ]
+              },
+              "cleanup_status": {
+                "enum": [
+                  "not_needed",
+                  "verified"
+                ]
+              },
+              "available_actions": {
+                "const": [
+                  "view"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "waiting"
+              },
+              "wait_reason": {
+                "enum": [
+                  "provider",
+                  "retry",
+                  "reconcile"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "next_check_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "Z$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "succeeded"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "unfinished_mandatory_steps": {
+                "const": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "cancelled"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "effect_knowledge": {
+                "const": "none"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "effect_knowledge": {
+                "const": "unknown"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "available_actions": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "view",
+                    "reconcile",
+                    "request_stop"
+                  ]
+                },
+                "uniqueItems": true
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

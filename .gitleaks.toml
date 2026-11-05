@@ -1,0 +1,43 @@
+# Keep every upstream detector; this exception covers one reviewed integrity checksum only.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Reviewed frozen SQL integrity digest"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''(^|/)backend/migrations/sql/manifest\.json$''']
+regexTarget = "line"
+regexes = ['''^\s*"0006-local-authentication\.sql":\s*"0c6e885be08820ac2443c44b83817ed5dce7b7bf9169ec1cb0921444f02635bd"\s*,?\s*$''']
+
+[[allowlists]]
+description = "Reviewed generated diagram asset integrity digest"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''(^|/)scripts/publication-assets\.json$''']
+regexTarget = "line"
+regexes = ['''^\s*"docs/architecture/diagrams/configuration\-data\-model\-proposed\.svg":\s*"befb61e04fa24773ed889544b5c1e4f727e04b29caba1ed519a48bf51a5d4254"\s*,?\s*$''']
+
+[[allowlists]]
+description = "Reviewed generated diagram asset integrity digest"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''(^|/)scripts/publication-assets\.json$''']
+regexTarget = "line"
+regexes = ['''^\s*"docs/architecture/diagrams/production\-core\-access\-proposed\.excalidraw":\s*"962ffabab7cc8c4cde15efd5ce198df5e7cbe3584a0c480b4a38138779666679"\s*,?\s*$''']
+
+[[allowlists]]
+description = "Reviewed generated diagram asset integrity digest"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''(^|/)scripts/publication-assets\.json$''']
+regexTarget = "line"
+regexes = ['''^\s*"docs/architecture/diagrams/production\-core\-access\-proposed\.png":\s*"c8ac8f1370bf27dbac896ed06423ee7c8636eb87f07dc5e90e08234d277ccded"\s*,?\s*$''']
+
+[[allowlists]]
+description = "Reviewed generated diagram asset integrity digest"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''(^|/)scripts/publication-assets\.json$''']
+regexTarget = "line"
+regexes = ['''^\s*"docs/architecture/diagrams/production\-core\-access\-proposed\.svg":\s*"9ef7fe8a09d463cb94909092c49e1bc7cf64955bc9f6f0c930e2b7c09fa4dfe0"\s*,?\s*$''']

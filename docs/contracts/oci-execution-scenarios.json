@@ -1,0 +1,344 @@
+{
+  "status": "planned-runtime-scenarios-plus-design-graph-examples",
+  "contract_version": "execution-1-draft",
+  "allowed_state_edges": {
+    "queued": [
+      "running",
+      "cancelled",
+      "needs_attention"
+    ],
+    "running": [
+      "waiting",
+      "needs_attention",
+      "succeeded",
+      "failed",
+      "cancelled"
+    ],
+    "waiting": [
+      "queued",
+      "needs_attention",
+      "cancelled"
+    ],
+    "needs_attention": [
+      "queued",
+      "failed",
+      "cancelled"
+    ],
+    "succeeded": [],
+    "failed": [],
+    "cancelled": []
+  },
+  "state_traces": [
+    {
+      "id": "happy-create",
+      "valid": true,
+      "states": [
+        "queued",
+        "running",
+        "waiting",
+        "queued",
+        "running",
+        "succeeded"
+      ]
+    },
+    {
+      "id": "unknown-then-human-wait",
+      "valid": true,
+      "states": [
+        "queued",
+        "running",
+        "waiting",
+        "queued",
+        "running",
+        "waiting",
+        "queued",
+        "running",
+        "succeeded"
+      ]
+    },
+    {
+      "id": "cleanup-retry",
+      "valid": true,
+      "states": [
+        "queued",
+        "running",
+        "needs_attention",
+        "queued",
+        "running",
+        "succeeded"
+      ]
+    },
+    {
+      "id": "inspection-alone",
+      "valid": true,
+      "states": [
+        "queued",
+        "running",
+        "succeeded"
+      ]
+    },
+    {
+      "id": "cancel-before-dispatch",
+      "valid": true,
+      "states": [
+        "queued",
+        "cancelled"
+      ]
+    },
+    {
+      "id": "definite-final-failure",
+      "valid": true,
+      "states": [
+        "queued",
+        "running",
+        "failed"
+      ]
+    },
+    {
+      "id": "no-reopen-completed",
+      "valid": false,
+      "states": [
+        "queued",
+        "running",
+        "succeeded",
+        "queued"
+      ]
+    },
+    {
+      "id": "no-queued-direct-success",
+      "valid": false,
+      "states": [
+        "queued",
+        "succeeded"
+      ]
+    },
+    {
+      "id": "no-wait-direct-success",
+      "valid": false,
+      "states": [
+        "queued",
+        "running",
+        "waiting",
+        "succeeded"
+      ]
+    },
+    {
+      "id": "no-reopen-cancelled",
+      "valid": false,
+      "states": [
+        "queued",
+        "cancelled",
+        "running"
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "CX01",
+      "flow": "create",
+      "trigger": "Lost API response after DB commit",
+      "expected": "Same action request key recovers one operation; no second provider create.",
+      "future_test_boundary": "Database rollback/concurrency and transport tests"
+    },
+    {
+      "id": "CX02",
+      "flow": "create",
+      "trigger": "Provider create applied, response lost",
+      "expected": "Unknown effect preserves original token/attempt and excludes conflicting writes until qualified reconciliation.",
+      "future_test_boundary": "Stateful provider fake + worker crash"
+    },
+    {
+      "id": "CX03",
+      "flow": "create",
+      "trigger": "Provider definitively rejects name",
+      "expected": "Corrected input needs refreshed preview and appended intent revision; use a new provider token for the changed payload only after no-effect evidence.",
+      "future_test_boundary": "Amendment and stale-worker tests"
+    },
+    {
+      "id": "CX04",
+      "flow": "create",
+      "trigger": "Provider create status accepted with no body",
+      "expected": "Persist receipt and optional work-request ID; no fabricated child OCID or managed tenancy.",
+      "future_test_boundary": "Facade shape + actual response qualification"
+    },
+    {
+      "id": "CX05",
+      "flow": "create",
+      "trigger": "Wrong parent or different handoff OCID",
+      "expected": "No configuration writes; stable target is not silently replaced by a pasted OCID.",
+      "future_test_boundary": "Stateful fake and wrong-scope real negative test"
+    },
+    {
+      "id": "CX06",
+      "flow": "create",
+      "trigger": "OCI OCID confused with SCIM ID",
+      "expected": "Domain lookup verifies returned IDs/tenancy/domain; unsafe substitution is rejected.",
+      "future_test_boundary": "Facade binding tests"
+    },
+    {
+      "id": "CX07",
+      "flow": "create",
+      "trigger": "Bootstrap reads succeed but required domain role absent",
+      "expected": "Needs attention; do not delete activation/bootstrap users or claim readiness.",
+      "future_test_boundary": "Permission-profile fake + real role qualification"
+    },
+    {
+      "id": "CX08",
+      "flow": "create",
+      "trigger": "Permanent key uploaded but new signer fails",
+      "expected": "Retain temporary access and safe known bindings; reconcile scoped work rather than recreate the tenancy.",
+      "future_test_boundary": "Fake grants/propagation/key state"
+    },
+    {
+      "id": "CX09",
+      "flow": "create",
+      "trigger": "Mandatory owner/recovery/baseline incomplete",
+      "expected": "No managed-ready publication; no destructive compensation.",
+      "future_test_boundary": "Partial setup and dependency tests"
+    },
+    {
+      "id": "CX10",
+      "flow": "create",
+      "trigger": "Owner has never signed in",
+      "expected": "Setup may succeed after all mandatory checks; first sign-in stays unconfirmed (D20).",
+      "future_test_boundary": "Success predicate test"
+    },
+    {
+      "id": "CX11",
+      "flow": "create",
+      "trigger": "Temporary user removal fails",
+      "expected": "Needs attention on cleanup; keep verified permanent steps; retry only unfinished cleanup.",
+      "future_test_boundary": "Partial-step test"
+    },
+    {
+      "id": "CX12",
+      "flow": "import",
+      "trigger": "Inspection completes before Start import",
+      "expected": "Successful inspect operation does not close organization review, publish active association or enqueue configuration.",
+      "future_test_boundary": "DB atomicity and read-only provider assertion"
+    },
+    {
+      "id": "CX13",
+      "flow": "import",
+      "trigger": "Existing unrelated user/group/policy collision",
+      "expected": "Preserve object; block automatic adoption/change; explicit revised intent required.",
+      "future_test_boundary": "Binding/collision tests"
+    },
+    {
+      "id": "CX14",
+      "flow": "import",
+      "trigger": "Existing tenancy attached to wrong organization",
+      "expected": "No attach/detach/create or configuration dispatch; report prerequisite failure.",
+      "future_test_boundary": "Negative-call assertions"
+    },
+    {
+      "id": "CX15",
+      "flow": "all",
+      "trigger": "Duplicate queue delivery or wake",
+      "expected": "Stable step/effect identity and current generation prevent duplicate writes; already-complete step is not repeated.",
+      "future_test_boundary": "PostgreSQL concurrency + fake"
+    },
+    {
+      "id": "CX16",
+      "flow": "all",
+      "trigger": "Old worker returns after lease expires",
+      "expected": "Cannot publish under stale generation; retain possible remote effect for reconciliation.",
+      "future_test_boundary": "Crash/late-result tests"
+    },
+    {
+      "id": "CX17",
+      "flow": "all",
+      "trigger": "Browser or worker closes during human wait",
+      "expected": "Persisted operation/wait remains; no occupied worker/DB transaction and no new create.",
+      "future_test_boundary": "Restart persistence test"
+    },
+    {
+      "id": "CX18",
+      "flow": "all",
+      "trigger": "Source metadata changes during pending setup",
+      "expected": "Keep stable person/target and frozen provider intent; no automatic tenancy transfer/delete or mutable-template substitution.",
+      "future_test_boundary": "Feed/workflow interleaving"
+    },
+    {
+      "id": "CX19",
+      "flow": "all",
+      "trigger": "Stop requested before dispatch",
+      "expected": "Atomic dispatch exclusion allows cancelled; no provider call or vanished pending audit.",
+      "future_test_boundary": "Stop-versus-dispatch race"
+    },
+    {
+      "id": "CX20",
+      "flow": "all",
+      "trigger": "Stop requested after known/unknown effects",
+      "expected": "No rollback/delete/self-deletion; unknown first reconciles, partial effects/cleanup remain visible in Needs attention.",
+      "future_test_boundary": "Stop/reconcile and cleanup guard tests"
+    },
+    {
+      "id": "CX21",
+      "flow": "all",
+      "trigger": "DB restored behind OCI state",
+      "expected": "D12 recovery fence blocks ordinary dispatch; reconciliation before explicit release; urgent credential work remains visible.",
+      "future_test_boundary": "Restore rehearsal and fake state ahead of DB"
+    },
+    {
+      "id": "CX22",
+      "flow": "termination",
+      "trigger": "OCI confirms termination initiation",
+      "expected": "Complete scoped deletion once and retire association; no finality waiter or 30-day job (D26).",
+      "future_test_boundary": "Provider receipt and local publication tests"
+    },
+    {
+      "id": "CX23",
+      "flow": "termination",
+      "trigger": "Response uncertain or permission lost",
+      "expected": "No retired association or repeated delete without qualified evidence; 404/time alone is insufficient.",
+      "future_test_boundary": "Unknown-effect tests"
+    },
+    {
+      "id": "CX24",
+      "flow": "offboarding",
+      "trigger": "One plan with mixed association outcomes",
+      "expected": "Independent scoped outcomes; complete only required verified boundaries and zero kept links; do not repeat completed termination (D25/D26).",
+      "future_test_boundary": "Parent-operation aggregation tests"
+    },
+    {
+      "id": "CX25",
+      "flow": "all",
+      "trigger": "Runnable continuation enqueue fails",
+      "expected": "Progress/outcome/audit/continuation transaction rolls back together; reconciled earlier remote effect is not blindly replayed.",
+      "future_test_boundary": "Runner external-transaction qualification"
+    },
+    {
+      "id": "CX26",
+      "flow": "all",
+      "trigger": "Host can access Vault but not parent/child",
+      "expected": "Independent contexts fail safely; no implicit authority or credential substitution.",
+      "future_test_boundary": "Authorization negative tests"
+    },
+    {
+      "id": "CX27",
+      "flow": "all",
+      "trigger": "Current credential rotates between attempts",
+      "expected": "Next attempt resolves authorized current generation and records it; immutable intent does not pin an obsolete key forever.",
+      "future_test_boundary": "Credential-generation and retry tests"
+    },
+    {
+      "id": "CX28",
+      "flow": "all",
+      "trigger": "Required observation is partial, denied or stale",
+      "expected": "Unobservable/unknown coverage is not Missing or Verified; no silent full-domain/legacy fallback.",
+      "future_test_boundary": "Pagination/projection/permission tests"
+    },
+    {
+      "id": "CX29",
+      "flow": "create",
+      "trigger": "Activation administrator handoff missing, wrong-domain, ambiguous, protected or changed",
+      "expected": "No human cleanup until exact supplied activation OCID is bound to same-child domain/SCIM identity, explicitly confirmed and replacement/last-admin checks pass; import preserves unrelated humans.",
+      "future_test_boundary": "Handoff validation, identity binding, immutable intent and destructive targeting tests"
+    }
+  ],
+  "notes": [
+    "Graph examples verify draft consistency only; every edge still needs context/authorization/evidence guards.",
+    "The 29 runtime scenarios are plans, not executed tests or live-provider receipts."
+  ]
+}

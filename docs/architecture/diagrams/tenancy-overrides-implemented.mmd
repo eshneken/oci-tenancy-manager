@@ -1,0 +1,97 @@
+%% Qualified local simulation: 0016 adds three tables, 35 columns and 2 registry heads.
+%% Both saved installations upgraded; old data preserved, new tables empty and legacy heads NULL.
+%% Application total 18 tables; existing baseline remains 20 columns. This is not the full 30-table design.
+%% All relations include workspace and, for configurations/heads, the exact tenancy key.
+erDiagram
+  otm_tenancy ||--o{ otm_tenancy_configuration : scoped_tenancy_FK
+  otm_baseline_version ||--o{ otm_tenancy_configuration : published_baseline_FK
+  otm_tenancy_configuration o|--o{ otm_tenancy_configuration : same_tenancy_predecessor_FK
+  otm_operation ||--o{ otm_tenancy_configuration : scoped_deferred_operation_FK
+  otm_tenancy_configuration o|--o| otm_tenancy : desired_configuration_head_FK
+  otm_tenancy_configuration o|--o| otm_tenancy : last_verified_configuration_head_FK
+  org_workspace ||--o{ otm_configuration_plan : workspace_FK
+  otm_tenancy o|--o{ otm_configuration_plan : optional_single_scope_FK
+  otm_baseline_version o|--o{ otm_configuration_plan : optional_target_baseline_FK
+  otm_operation o|--o{ otm_configuration_plan : optional_accepted_operation_FK
+  otm_configuration_plan ||--o{ otm_configuration_plan_target : scoped_plan_FK
+  otm_tenancy ||--o{ otm_configuration_plan_target : scoped_target_FK
+  otm_tenancy_configuration o|--o{ otm_configuration_plan_target : optional_accepted_configuration_FK
+  org_workspace {
+    string id PK
+    int registry_revision "existing source/preview fence"
+  }
+  otm_tenancy {
+    uuid id PK
+    string workspace_id
+    uuid baseline_version_id "existing selected baseline"
+    uuid verified_baseline_version_id "existing last verified baseline"
+    uuid desired_configuration_id FK "NEW nullable accepted revision head"
+    uuid last_verified_configuration_id FK "NEW nullable full-verification head"
+  }
+  otm_baseline_version {
+    uuid id PK
+    string workspace_id
+    int version_number
+    string content_hash
+    timestamptz published_at
+  }
+  otm_operation {
+    uuid id PK
+    string workspace_id
+    string kind "existing configuration_update"
+  }
+  otm_tenancy_configuration {
+    uuid id PK
+    string workspace_id FK
+    uuid tenancy_id FK
+    int revision_number
+    uuid previous_id FK "nullable immediate predecessor"
+    uuid baseline_version_id FK
+    jsonb policy_override_statements "nullable SQL NULL inherits; complete list otherwise"
+    jsonb quota_override_statements "nullable SQL NULL inherits; complete list otherwise"
+    decimal monthly_budget_override_amount "nullable positive whole NUMERIC(20,4)"
+    string resolution_contract_version "simulated-config-1"
+    string effective_hash "canonical authored resolution hash"
+    uuid operation_id FK "DEFERRABLE INITIALLY DEFERRED"
+    string created_by
+    timestamptz created_at
+  }
+  otm_configuration_plan {
+    uuid id PK
+    string workspace_id FK
+    uuid scope_tenancy_id FK "nullable means full workspace candidate set"
+    uuid target_baseline_version_id FK "nullable if no publication; cannot accept"
+    string candidate_set_hash
+    uuid client_request_key
+    int revision
+    string created_by "plan owner"
+    timestamptz created_at
+    timestamptz updated_at
+    uuid operation_id FK "nullable until accepted"
+  }
+  otm_configuration_plan_target {
+    string workspace_id PK
+    uuid plan_id PK
+    uuid tenancy_id PK
+    jsonb proposal "closed original ConfigurationTarget"
+    string proposal_hash
+    string policy_choice "nullable use_new_baseline or keep_override"
+    string quota_choice "nullable independent choice"
+    string reviewed_by "nullable paired with reviewed_at"
+    timestamptz reviewed_at
+    uuid accepted_configuration_id FK "nullable until whole-plan acceptance"
+  }
+%% Configuration has 14 columns, plan 11, target 10; other nodes are abbreviated existing tables.
+%% UNIQUE(workspace,tenancy,id) and UNIQUE(workspace,tenancy,revision_number) enforce revision scope.
+%% Predecessor insert guard requires previous revision+1; baseline must already be published.
+%% Accepted revision UPDATE/DELETE/TRUNCATE are blocked; SQL NULL override arrays inherit, JSONnull does not.
+%% Plan creation replay UNIQUE(workspace,created_by,client_request_key); expected revision fences staged saves.
+%% Plan/target proposals and all choices are local staging; no desired heads/jobs change before Start.
+%% All blockers/conflicts must clear; final Start recomputes source membership/content under workspace lock.
+%% New configurations, desired heads, sealed plan/target links, full operation intent and native job commit together.
+%% New plans must be drafts; accepted plan UPDATE/DELETE and accepted target INSERT/UPDATE/DELETE are blocked.
+%% Outcomes and review actor/time evidence reuse immutable audit_event; no new audit or queue table.
+%% Full-list choices never merge policy/quota content; budget independent; tags always inherit.
+%% Desired revision may differ from last verified despite equal baseline IDs; failures retain prior verification.
+%% Legacy rows keep NULL heads; original intents/request digests remain valid; no invented backfill.
+%% Effective hash covers simulated authored content only; real required-policy rendering/OCI bindings remain future.

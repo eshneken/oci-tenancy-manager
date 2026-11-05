@@ -1,0 +1,364 @@
+{
+  "$defs": {
+    "BrandingSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "display_name": {
+          "default": "OCI Tenancy Manager",
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Display Name",
+          "type": "string"
+        },
+        "icon_url": {
+          "anyOf": [
+            {
+              "pattern": "^/branding-assets/[A-Za-z0-9][A-Za-z0-9_-]{0,79}\\.(png|webp|ico|jpg|jpeg)$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Icon Url"
+        },
+        "logo_url": {
+          "anyOf": [
+            {
+              "pattern": "^/branding-assets/[A-Za-z0-9][A-Za-z0-9_-]{0,79}\\.(png|webp|ico|jpg|jpeg)$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Logo Url"
+        }
+      },
+      "title": "BrandingSettings",
+      "type": "object"
+    },
+    "LocalAuthSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "cooldown_seconds": {
+          "maximum": 300,
+          "minimum": 1,
+          "title": "Cooldown Seconds",
+          "type": "integer"
+        },
+        "failure_window_seconds": {
+          "maximum": 3600,
+          "minimum": 30,
+          "title": "Failure Window Seconds",
+          "type": "integer"
+        },
+        "issuer": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Issuer",
+          "type": "string"
+        },
+        "max_failures": {
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Max Failures",
+          "type": "integer"
+        },
+        "max_password_workers": {
+          "maximum": 4,
+          "minimum": 1,
+          "title": "Max Password Workers",
+          "type": "integer"
+        },
+        "workspace_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Workspace Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "issuer",
+        "max_failures",
+        "failure_window_seconds",
+        "cooldown_seconds",
+        "max_password_workers"
+      ],
+      "title": "LocalAuthSettings",
+      "type": "object"
+    },
+    "LocalServerSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "organization_reset_enabled": {
+          "default": false,
+          "title": "Organization Reset Enabled",
+          "type": "boolean"
+        },
+        "public_origin": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Public Origin",
+          "type": "string"
+        }
+      },
+      "required": [
+        "public_origin"
+      ],
+      "title": "LocalServerSettings",
+      "type": "object"
+    },
+    "NotificationSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "application_origin": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Application Origin"
+        },
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "password_secret_reference": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Password Secret Reference"
+        },
+        "sender_email": {
+          "default": "no-reply@otm.test",
+          "title": "Sender Email",
+          "type": "string"
+        },
+        "smtp_host": {
+          "default": "127.0.0.1",
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Smtp Host",
+          "type": "string"
+        },
+        "smtp_port": {
+          "default": 1025,
+          "maximum": 65535,
+          "minimum": 1,
+          "title": "Smtp Port",
+          "type": "integer"
+        },
+        "tls_mode": {
+          "default": "local",
+          "enum": [
+            "local",
+            "starttls",
+            "implicit"
+          ],
+          "title": "Tls Mode",
+          "type": "string"
+        },
+        "username": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Username"
+        }
+      },
+      "title": "NotificationSettings",
+      "type": "object"
+    },
+    "SessionCleanupSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "batch_size": {
+          "maximum": 10000,
+          "minimum": 1,
+          "title": "Batch Size",
+          "type": "integer"
+        },
+        "hour_utc": {
+          "maximum": 23,
+          "minimum": 0,
+          "title": "Hour Utc",
+          "type": "integer"
+        },
+        "max_batches": {
+          "maximum": 1000,
+          "minimum": 1,
+          "title": "Max Batches",
+          "type": "integer"
+        },
+        "minute_utc": {
+          "maximum": 59,
+          "minimum": 0,
+          "title": "Minute Utc",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "hour_utc",
+        "minute_utc",
+        "batch_size",
+        "max_batches"
+      ],
+      "title": "SessionCleanupSettings",
+      "type": "object"
+    },
+    "SessionSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "absolute_timeout_seconds": {
+          "maximum": 2147483647,
+          "minimum": 1,
+          "title": "Absolute Timeout Seconds",
+          "type": "integer"
+        },
+        "cleanup": {
+          "$ref": "#/$defs/SessionCleanupSettings"
+        },
+        "idle_timeout_seconds": {
+          "maximum": 2147483647,
+          "minimum": 1,
+          "title": "Idle Timeout Seconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "idle_timeout_seconds",
+        "absolute_timeout_seconds",
+        "cleanup"
+      ],
+      "title": "SessionSettings",
+      "type": "object"
+    },
+    "TestingSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "email_override": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Email Override"
+        }
+      },
+      "title": "TestingSettings",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "branding": {
+      "$ref": "#/$defs/BrandingSettings",
+      "default": {
+        "display_name": "OCI Tenancy Manager",
+        "icon_url": null,
+        "logo_url": null
+      }
+    },
+    "environment": {
+      "default": "local",
+      "enum": [
+        "local",
+        "staging",
+        "production"
+      ],
+      "title": "Environment",
+      "type": "string"
+    },
+    "local_auth": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LocalAuthSettings"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "local_server": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LocalServerSettings"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "notifications": {
+      "$ref": "#/$defs/NotificationSettings",
+      "default": {
+        "application_origin": null,
+        "enabled": false,
+        "password_secret_reference": null,
+        "sender_email": "no-reply@otm.test",
+        "smtp_host": "127.0.0.1",
+        "smtp_port": 1025,
+        "tls_mode": "local",
+        "username": null
+      }
+    },
+    "schema_version": {
+      "maximum": 1,
+      "minimum": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "sessions": {
+      "$ref": "#/$defs/SessionSettings"
+    },
+    "testing": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TestingSettings"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "schema_version",
+    "sessions"
+  ],
+  "title": "ApplicationSettings",
+  "type": "object"
+}

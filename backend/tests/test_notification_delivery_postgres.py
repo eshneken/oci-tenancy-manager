@@ -1,0 +1,353 @@
+"""Disposable PostgreSQL notification staging, no-duplicate delivery and append-only boundaries."""
+
+from datetime import timedelta
+from unittest.mock import Mock
+from uuid import uuid4
+
+import pytest
+from sqlalchemy import event, func, select, text, update
+from sqlalchemy.exc import DBAPIError
+from test_operation_responsibility_postgres import colleague, pending
+from test_organization_storage_postgres import factors, login_case, organization_case
+from test_organization_workflows_postgres import workflow_case
+
+from otm.email_policy import MailPolicy
+from otm.notifications.contracts import DeliveryResult
+from otm.notifications.service import LifecycleNotifier, list_for_operation
+from otm.notifications.worker import NotificationDeliveryWorker, NotificationEnqueuer
+from otm.operations.responsibility import ResponsibilityCommand, take_responsibility
+from otm.storage.enqueue import workspace_queue
+from otm.storage.tables import audit_event, notification_outbox, operation
+
+pytestmark = pytest.mark.postgres
+__all__ = ["factors", "login_case", "organization_case", "workflow_case"]
+
+
+# Real native queue insertion occurs on the same PostgreSQL transaction as frozen message admission.
+def email_case(c):
+    policy = MailPolicy(environment="staging", email_override="capture@example.test")
+    enqueue = NotificationEnqueuer(workspace_queue(c.policy.workspace_id))
+    notifier = LifecycleNotifier(policy, enqueue)
+    transport = Mock(profile_hash=None)
+    worker = NotificationDeliveryWorker(
+        c.engine, c.policy.workspace_id, c.clock, lambda: policy, transport, enqueue
+    )
+    actor = colleague(c, "Synthetic Mail Admin")
+    identifier, _ = pending(c, actor)
+    with c.engine.begin() as connection:
+        row = (
+            connection.execute(
+                select(operation).where(operation.c.id == identifier).with_for_update()
+            )
+            .mappings()
+            .one()
+        )
+        notification = notifier.stage(connection, row, c.clock())
+        assert notifier.stage(connection, row, c.clock()) == notification
+    return policy, notifier, transport, worker, actor, identifier, notification
+
+
+# Read authoritative heads independently; all assertions remain scoped to the synthetic
+# installation.
+def email_row(c, identifier):
+    with c.engine.connect() as connection:
+        return dict(
+            connection.execute(
+                select(notification_outbox).where(
+                    notification_outbox.c.workspace_id == c.policy.workspace_id,
+                    notification_outbox.c.id == identifier,
+                )
+            )
+            .mappings()
+            .one()
+        )
+
+
+# SMTP accepted means one submission, immutable intent, scoped display and no repeat on native
+# replay.
+def test_delivery_acceptance_and_storage_guards(workflow_case):
+    c = workflow_case
+    _, _, transport, worker, _, operation_id, identifier = email_case(c)
+    original = email_row(c, identifier)
+    transport.send.return_value = DeliveryResult(state="accepted", safe_code="SMTP_ACCEPTED")
+    worker.run(identifier)
+    worker.run(identifier)
+    assert transport.send.call_count == 1
+    saved = email_row(c, identifier)
+    assert saved["state"] == "sent" and saved["attempts"] == 1 and saved["sent_at"]
+    assert saved["intent"] == original["intent"]
+    with c.engine.connect() as connection:
+        assert len(list_for_operation(connection, c.policy.workspace_id, operation_id)) == 1
+        assert list_for_operation(connection, "foreign-workspace", operation_id) == ()
+        payloads = (
+            connection.execute(
+                text(
+                    "SELECT args FROM public.procrastinate_jobs "
+                    "WHERE task_name='otm.lifecycle_email'"
+                )
+            )
+            .scalars()
+            .all()
+        )
+        assert payloads and all(set(payload) == {"notification_id"} for payload in payloads)
+    for statement in (
+        update(notification_outbox).where(notification_outbox.c.id == identifier).values(intent={}),
+        update(notification_outbox)
+        .where(notification_outbox.c.id == identifier)
+        .values(state="pending", sent_at=None),
+        notification_outbox.delete().where(notification_outbox.c.id == identifier),
+        text("TRUNCATE public.otm_notification_outbox"),
+    ):
+        with pytest.raises(DBAPIError), c.engine.begin() as connection:
+            connection.execute(statement)
+    assert email_row(c, identifier) == saved
+
+
+# Rejections use bounded deferred attempts, whereas a possibly accepted send is never retried.
+@pytest.mark.parametrize(
+    "outcome,expected,attempts", [("rejected", "failed", 3), ("uncertain", "unknown", 1)]
+)
+def test_retry_bound_and_unknown_never_resends(workflow_case, outcome, expected, attempts):
+    c = workflow_case
+    _, _, transport, worker, _, _, identifier = email_case(c)
+    transport.send.return_value = DeliveryResult(
+        state=outcome,
+        safe_code="SMTP_REJECTED" if outcome == "rejected" else "SMTP_OUTCOME_UNKNOWN",
+    )
+    for _ in range(5):
+        worker.run(identifier)
+        c.clock.return_value += timedelta(seconds=31)
+    row = email_row(c, identifier)
+    assert row["state"] == expected and row["attempts"] == attempts
+    assert transport.send.call_count == attempts
+
+
+# A crash after sending was committed cannot be distinguished from acceptance, so replay stops.
+def test_crash_and_uncertain_takeover_barrier(workflow_case):
+    c = workflow_case
+    policy, notifier, transport, worker, actor, operation_id, identifier = email_case(c)
+    prepared = worker._prepare(identifier)
+    assert prepared
+    worker.run(identifier)
+    assert email_row(c, identifier)["state"] == "unknown"
+    replacement = colleague(c, "Synthetic Replacement")
+    view = replacement.workflow.onboarding(replacement.principal, operation_id)
+    take_responsibility(
+        replacement.workflow,
+        replacement.principal,
+        operation_id,
+        ResponsibilityCommand(client_request_key=uuid4(), expected_revision=view.revision),
+    )
+    with c.engine.begin() as connection:
+        row = (
+            connection.execute(
+                select(operation).where(operation.c.id == operation_id).with_for_update()
+            )
+            .mappings()
+            .one()
+        )
+        assert notifier.stage(connection, row, c.clock()) == identifier
+        assert (
+            connection.scalar(
+                select(func.count())
+                .select_from(notification_outbox)
+                .where(notification_outbox.c.operation_id == operation_id)
+            )
+            == 1
+        )
+    transport.send.assert_not_called()
+
+
+# A known-unsent takeover supersedes the old frozen recipient and admits a separate new notice.
+def test_known_unsent_takeover_and_changed_profile(workflow_case):
+    c = workflow_case
+    _, notifier, transport, worker, _, operation_id, identifier = email_case(c)
+    replacement = colleague(c, "Synthetic Replacement")
+    view = replacement.workflow.onboarding(replacement.principal, operation_id)
+    take_responsibility(
+        replacement.workflow,
+        replacement.principal,
+        operation_id,
+        ResponsibilityCommand(client_request_key=uuid4(), expected_revision=view.revision),
+    )
+    with c.engine.begin() as connection:
+        row = (
+            connection.execute(
+                select(operation).where(operation.c.id == operation_id).with_for_update()
+            )
+            .mappings()
+            .one()
+        )
+        new_id = notifier.stage(connection, row, c.clock())
+    assert new_id != identifier and email_row(c, identifier)["state"] == "superseded"
+    transport.profile_hash = "0" * 64
+    worker.run(new_id)
+    assert email_row(c, new_id)["safe_code"] == "EMAIL_TRANSPORT_CHANGED"
+    assert email_row(c, new_id)["state"] == "blocked"
+    transport.send.assert_not_called()
+
+
+# An audit write failure cannot leave a frozen notice or native job accepted without its evidence.
+def test_email_staging_rolls_back_with_audit_failure(workflow_case):
+    c = workflow_case
+    policy = MailPolicy(environment="staging", email_override="capture@example.test")
+    notifier = LifecycleNotifier(
+        policy, NotificationEnqueuer(workspace_queue(c.policy.workspace_id))
+    )
+    actor = colleague(c, "Synthetic Mail Admin")
+    operation_id, _ = pending(c, actor)
+    with c.engine.connect() as connection:
+        before = connection.scalar(select(func.count()).select_from(notification_outbox))
+        audits = connection.scalar(select(func.count()).select_from(audit_event))
+
+    # Inject only the email evidence statement, leaving all unrelated lifecycle/setup events intact.
+    def fail_email_audit(connection, cursor, statement, parameters, context, executemany):
+        if statement.startswith("INSERT INTO public.audit_event"):
+            raise RuntimeError("synthetic audit failure")
+
+    event.listen(c.engine, "before_cursor_execute", fail_email_audit)
+    try:
+        with pytest.raises(RuntimeError), c.engine.begin() as connection:
+            row = (
+                connection.execute(
+                    select(operation).where(operation.c.id == operation_id).with_for_update()
+                )
+                .mappings()
+                .one()
+            )
+            notifier.stage(connection, row, c.clock())
+    finally:
+        event.remove(c.engine, "before_cursor_execute", fail_email_audit)
+    with c.engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(notification_outbox)) == before
+        assert connection.scalar(select(func.count()).select_from(audit_event)) == audits
+
+
+# Returning to an earlier administrator is a fresh explicit responsibility event, not a hook replay.
+def test_known_unsent_responsibility_cycle_gets_fresh_notice(workflow_case):
+    c = workflow_case
+    _, notifier, _, _, actor, operation_id, first_id = email_case(c)
+    replacement = colleague(c, "Synthetic Replacement")
+    ids = [first_id]
+    for next_actor in (replacement, actor):
+        view = next_actor.workflow.onboarding(next_actor.principal, operation_id)
+        take_responsibility(
+            next_actor.workflow,
+            next_actor.principal,
+            operation_id,
+            ResponsibilityCommand(client_request_key=uuid4(), expected_revision=view.revision),
+        )
+        with c.engine.begin() as connection:
+            row = (
+                connection.execute(
+                    select(operation).where(operation.c.id == operation_id).with_for_update()
+                )
+                .mappings()
+                .one()
+            )
+            ids.append(notifier.stage(connection, row, c.clock()))
+    assert len(set(ids)) == 3
+    assert [email_row(c, identifier)["state"] for identifier in ids] == [
+        "superseded",
+        "superseded",
+        "pending",
+    ]
+
+
+# Even the table owner cannot rewrite a pending recipient, while runtime roles have only head
+# grants.
+def test_pending_intent_and_runtime_column_boundaries(workflow_case):
+    from psycopg import sql
+
+    c = workflow_case
+    _, _, _, _, _, _, identifier = email_case(c)
+    for statement in (
+        update(notification_outbox)
+        .where(notification_outbox.c.id == identifier)
+        .values(intent_hash="0" * 64),
+        update(notification_outbox)
+        .where(notification_outbox.c.id == identifier)
+        .values(operation_id=uuid4()),
+        update(notification_outbox)
+        .where(notification_outbox.c.id == identifier)
+        .values(state="sent", sent_at=c.clock()),
+    ):
+        with pytest.raises(DBAPIError), c.engine.begin() as connection:
+            connection.execute(statement)
+    role = "otm_notice_writer_" + uuid4().hex[:12]
+    with c.engine.connect() as connection:
+        tx = connection.begin()
+        try:
+            driver = connection.connection.driver_connection
+            driver.execute(sql.SQL("CREATE ROLE {} NOLOGIN").format(sql.Identifier(role)))
+            driver.execute(
+                sql.SQL("GRANT USAGE ON SCHEMA public TO {}").format(sql.Identifier(role))
+            )
+            driver.execute(
+                sql.SQL(
+                    "GRANT SELECT,UPDATE(state,safe_code,updated_at) "
+                    "ON public.otm_notification_outbox TO {}"
+                ).format(sql.Identifier(role))
+            )
+            driver.execute(sql.SQL("SET LOCAL ROLE {}").format(sql.Identifier(role)))
+            for column in ("intent", "intent_hash", "operation_id", "transition_key", "created_at"):
+                assert not connection.scalar(
+                    text(
+                        "SELECT has_column_privilege(current_user,"
+                        "'public.otm_notification_outbox',:c,'UPDATE')"
+                    ),
+                    {"c": column},
+                )
+            with pytest.raises(DBAPIError), connection.begin_nested():
+                connection.execute(
+                    notification_outbox.delete().where(notification_outbox.c.id == identifier)
+                )
+            with pytest.raises(DBAPIError), connection.begin_nested():
+                connection.execute(text("TRUNCATE public.otm_notification_outbox"))
+        finally:
+            tx.rollback()
+
+
+# Existing mail facts have a distinct read/export category without rewriting immutable history.
+def test_email_audit_category_and_csv_are_separate_from_operations(workflow_case):
+    import csv
+    from io import StringIO
+
+    from otm.audit.contracts import AuditExportQuery, AuditQuery
+    from otm.storage.audit_directory import SqlAuditDirectory
+    from otm.storage.audit_export import SqlAuditExport
+
+    c = workflow_case
+    email_case(c)
+    reader = SqlAuditDirectory(c.engine)
+    mail = reader.directory(c.policy.workspace_id, AuditQuery(category="email_delivery"))
+    operations = reader.directory(
+        c.policy.workspace_id, AuditQuery(category="operations", page_size=100)
+    )
+    assert mail.total == 1 and mail.items[0].kind == "email_delivery"
+    assert mail.items[0].category == "email_delivery"
+    assert operations.total > 0 and all(row.kind != "email_delivery" for row in operations.items)
+    assert reader.directory("another-workspace", AuditQuery(category="email_delivery")).total == 0
+    with c.engine.connect() as connection:
+        original = (
+            connection.execute(select(audit_event).where(audit_event.c.id == mail.items[0].id))
+            .mappings()
+            .one()
+        )
+    export = SqlAuditExport(c.engine, c.clock)
+    for category in ("email_delivery", "operations"):
+        content = export.export(c.principal, AuditExportQuery(category=category))
+        rows = list(csv.DictReader(StringIO(content.decode("utf-8-sig"))))
+        assert rows and all(row["category"] == category for row in rows)
+        assert all(
+            (row["kind"] == "email_delivery") == (category == "email_delivery") for row in rows
+        )
+    all_rows = reader.directory(c.policy.workspace_id, AuditQuery(page_size=100))
+    assert any(row.id == mail.items[0].id for row in all_rows.items)
+    with c.engine.connect() as connection:
+        after = (
+            connection.execute(select(audit_event).where(audit_event.c.id == mail.items[0].id))
+            .mappings()
+            .one()
+        )
+    assert dict(after) == dict(original)

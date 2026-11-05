@@ -1,0 +1,8 @@
+EMPLOYEE_FULL_NAME,EMAIL,MGR,TOP_MGR
+Organization Leader,root@example.test,,
+Alpha Leader,alpha@example.test,root@example.test,root@example.test
+Beta Leader,beta@example.test,root@example.test,root@example.test
+Team Manager,manager@example.test,alpha@example.test,alpha@example.test
+Alpha Designee,delegate@example.test,alpha@example.test,alpha@example.test
+Shared Member,member@example.test,manager@example.test,alpha@example.test
+New Engineer,new@example.test,manager@example.test,alpha@example.test

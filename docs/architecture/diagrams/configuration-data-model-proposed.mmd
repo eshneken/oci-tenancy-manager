@@ -1,0 +1,122 @@
+erDiagram
+  direction TB
+  org_workspace {
+    string id PK
+    uuid current_baseline_id FK "proposed extension"
+  }
+  org_tenancy {
+    uuid id PK
+    string workspace_id FK
+    string name "actual observed name"
+    string tenancy_ocid UK "nullable until discovered"
+    string home_region_key "raw provider region"
+    string home_region_identifier "qualified SDK region"
+    uuid desired_configuration_id FK "proposed extension"
+    uuid last_verified_configuration_id FK "proposed extension"
+    uuid current_configuration_check_id FK "proposed extension"
+  }
+  otm_operation {
+    uuid id PK "existing C2 proposal"
+    string workspace_id FK
+    uuid tenancy_id FK "nullable for batch root"
+  }
+  otm_baseline_version {
+    uuid id PK
+    string workspace_id FK
+    int version_number UK
+    jsonb policy_statements "authored only"
+    jsonb quota_statements
+    decimal monthly_budget_amount
+    string budget_currency
+    string budget_period
+    string tag_namespace
+    jsonb tag_defaults
+    timestamptz published_at "nullable while draft"
+  }
+  otm_tenancy_configuration {
+    uuid id PK
+    uuid tenancy_id FK
+    int revision_number UK
+    uuid baseline_version_id FK
+    jsonb policy_override_statements "null inherits"
+    jsonb quota_override_statements "null inherits"
+    decimal monthly_budget_override_amount "null inherits"
+    jsonb required_policy_manifest
+    string required_policy_manifest_hash
+    string policy_render_contract_version
+    uuid operation_id FK
+  }
+  otm_configuration_plan {
+    uuid id PK
+    string kind
+    string state
+    uuid target_baseline_version_id FK
+    string candidate_set_hash
+    uuid operation_id FK "nullable before acceptance"
+  }
+  otm_configuration_plan_target {
+    uuid plan_id PK,FK
+    uuid tenancy_id PK,FK
+    uuid source_configuration_id FK
+    jsonb proposed_policy_override_statements
+    jsonb proposed_quota_override_statements
+    decimal proposed_monthly_budget_override_amount
+    jsonb review_decisions
+    jsonb repair_selection "nullable"
+    uuid accepted_configuration_id FK "nullable"
+  }
+  otm_managed_object_binding {
+    uuid id PK
+    uuid tenancy_id FK
+    string logical_key
+    string kind
+    int generation
+    string provider_ocid "required for configuration objects"
+    uuid parent_binding_id FK "nullable"
+  }
+  otm_tenancy_check {
+    uuid id PK
+    uuid tenancy_id FK
+    string check_kind
+    string coverage_subject_kind
+    string coverage_subject_key
+    uuid configuration_id FK "configuration checks"
+    uuid access_assignment_id FK "access checks"
+    bigint sequence_number
+    string state
+    jsonb coverage
+  }
+  otm_object_observation {
+    uuid check_id PK,FK
+    string logical_key PK
+    uuid binding_id FK "nullable"
+    string result
+    jsonb expected
+    jsonb observed
+  }
+  otm_tenancy_issue {
+    uuid id PK
+    uuid tenancy_id FK
+    string logical_key
+    string issue_class
+    string coverage_subject_kind
+    string coverage_subject_key
+    uuid first_check_id FK
+    uuid last_confirmed_check_id FK "nullable"
+    timestamptz resolved_at "nullable while open"
+  }
+  org_workspace ||--o{ otm_baseline_version : publishes
+  org_tenancy ||--o{ otm_tenancy_configuration : records
+  otm_baseline_version ||--o{ otm_tenancy_configuration : selected_recipe
+  otm_operation ||--o{ otm_tenancy_configuration : accepts
+  otm_baseline_version ||--o{ otm_configuration_plan : target_recipe
+  otm_configuration_plan ||--o{ otm_configuration_plan_target : complete_candidates
+  org_tenancy ||--o{ otm_configuration_plan_target : candidate
+  otm_tenancy_configuration ||--o{ otm_configuration_plan_target : source_revision
+  org_tenancy ||--o{ otm_managed_object_binding : owns_bindings
+  otm_managed_object_binding |o--o{ otm_managed_object_binding : namespace_key_default
+  otm_tenancy_configuration ||--o{ otm_tenancy_check : exact_intent
+  otm_tenancy_check ||--o{ otm_object_observation : object_facts
+  otm_managed_object_binding |o--o{ otm_object_observation : observed_binding
+  org_tenancy ||--o{ otm_tenancy_issue : attention_episodes
+  otm_tenancy_check ||--o{ otm_tenancy_issue : first_evidence

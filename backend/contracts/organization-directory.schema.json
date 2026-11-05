@@ -1,0 +1,400 @@
+{
+  "$defs": {
+    "Diagnostic": {
+      "additionalProperties": false,
+      "properties": {
+        "affected_email": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Affected Email"
+        },
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "fatal": {
+          "default": false,
+          "title": "Fatal",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "code"
+      ],
+      "title": "Diagnostic",
+      "type": "object"
+    },
+    "EmployeeView": {
+      "additionalProperties": false,
+      "properties": {
+        "absence_review": {
+          "title": "Absence Review",
+          "type": "boolean"
+        },
+        "directory_status": {
+          "default": "included",
+          "enum": [
+            "included",
+            "exempt",
+            "offboarded",
+            "outside",
+            "merged"
+          ],
+          "title": "Directory Status",
+          "type": "string"
+        },
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "full_name": {
+          "title": "Full Name",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "leader_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Leader Name"
+        },
+        "lob_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Lob Name"
+        },
+        "manager_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Manager Name"
+        },
+        "pending_operation_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pending Operation Id"
+        },
+        "pending_tenancy_count": {
+          "default": 0,
+          "title": "Pending Tenancy Count",
+          "type": "integer"
+        },
+        "tenancy_count": {
+          "default": 0,
+          "title": "Tenancy Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "full_name",
+        "email",
+        "manager_name",
+        "leader_name",
+        "lob_name",
+        "absence_review"
+      ],
+      "title": "EmployeeView",
+      "type": "object"
+    },
+    "OrganizationFinding": {
+      "additionalProperties": false,
+      "properties": {
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "category": {
+          "enum": [
+            "actionable",
+            "informational",
+            "change"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "detail": {
+          "title": "Detail",
+          "type": "string"
+        },
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "employee_name": {
+          "title": "Employee Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "category",
+        "code",
+        "employee_name",
+        "email",
+        "detail",
+        "at"
+      ],
+      "title": "OrganizationFinding",
+      "type": "object"
+    },
+    "OrganizationOutcome": {
+      "additionalProperties": false,
+      "properties": {
+        "diagnostics": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Diagnostic"
+          },
+          "title": "Diagnostics",
+          "type": "array"
+        },
+        "original_state": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Original State"
+        },
+        "proposed_version_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Proposed Version Id"
+        },
+        "revision_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Revision Id"
+        },
+        "snapshot_id": {
+          "format": "uuid",
+          "title": "Snapshot Id",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "received",
+            "staged",
+            "published",
+            "rejected",
+            "superseded",
+            "duplicate"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "snapshot_id",
+        "state"
+      ],
+      "title": "OrganizationOutcome",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "absence_count": {
+      "title": "Absence Count",
+      "type": "integer"
+    },
+    "absence_eligible": {
+      "title": "Absence Eligible",
+      "type": "boolean"
+    },
+    "actionable_count": {
+      "default": 0,
+      "title": "Actionable Count",
+      "type": "integer"
+    },
+    "applied_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Applied At"
+    },
+    "configured": {
+      "title": "Configured",
+      "type": "boolean"
+    },
+    "employee_count": {
+      "title": "Employee Count",
+      "type": "integer"
+    },
+    "findings": {
+      "items": {
+        "$ref": "#/$defs/OrganizationFinding"
+      },
+      "title": "Findings",
+      "type": "array"
+    },
+    "history_count": {
+      "default": 0,
+      "title": "History Count",
+      "type": "integer"
+    },
+    "items": {
+      "items": {
+        "$ref": "#/$defs/EmployeeView"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "latest": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OrganizationOutcome"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "page": {
+      "title": "Page",
+      "type": "integer"
+    },
+    "page_size": {
+      "title": "Page Size",
+      "type": "integer"
+    },
+    "pages": {
+      "title": "Pages",
+      "type": "integer"
+    },
+    "pending_workflows": {
+      "default": 0,
+      "title": "Pending Workflows",
+      "type": "integer"
+    },
+    "provider_mode": {
+      "default": "unavailable",
+      "enum": [
+        "simulated",
+        "unavailable"
+      ],
+      "title": "Provider Mode",
+      "type": "string"
+    },
+    "server_time": {
+      "format": "date-time",
+      "title": "Server Time",
+      "type": "string"
+    },
+    "source_as_of": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Source As Of"
+    },
+    "test_reset_enabled": {
+      "default": false,
+      "title": "Test Reset Enabled",
+      "type": "boolean"
+    },
+    "total": {
+      "title": "Total",
+      "type": "integer"
+    },
+    "upload_enabled": {
+      "title": "Upload Enabled",
+      "type": "boolean"
+    },
+    "workflows_enabled": {
+      "default": false,
+      "title": "Workflows Enabled",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "configured",
+    "upload_enabled",
+    "server_time",
+    "items",
+    "total",
+    "employee_count",
+    "absence_count",
+    "page",
+    "pages",
+    "page_size",
+    "applied_at",
+    "source_as_of",
+    "absence_eligible",
+    "latest",
+    "findings"
+  ],
+  "title": "OrganizationDirectory",
+  "type": "object"
+}

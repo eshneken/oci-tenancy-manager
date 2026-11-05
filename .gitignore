@@ -1,0 +1,58 @@
+.DS_Store
+.venv/
+.local-dev/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+# Source artifacts are local inputs; review before any future publishing.
+.data-analysis/
+.presentation-build/
+.gstack-review-state/
+
+.coverage
+coverage.xml
+htmlcov/
+prototype/.local-dev
+
+.playwright-cli/
+output/playwright/
+
+# D56: local HR source data and unsanitized evidence must never enter GitHub.
+.gstack/
+prototype/data/*.csv
+prototype/data/*.xlsx
+prototype/data/*.xls
+prototype/evidence/
+docs/design-evidence/
+/reference/
+
+# Generated application distributions and frontend bundles.
+dist/
+
+# Frontend dependencies and local browser quality output.
+node_modules/
+coverage/
+playwright-report/
+test-results/
+
+# Personal editor preferences and future private connection/credential exports.
+.vscode/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.dump
+*.backup
+*.pgpass
+.pgpass
+terraform.tfstate
+terraform.tfstate.*
+*.tfvars
+!*.tfvars.example

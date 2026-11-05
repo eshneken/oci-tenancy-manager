@@ -1,0 +1,663 @@
+{
+  "$defs": {
+    "BaselineContent": {
+      "additionalProperties": false,
+      "properties": {
+        "budget_currency": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Budget Currency",
+          "type": "string"
+        },
+        "budget_period": {
+          "const": "MONTHLY",
+          "default": "MONTHLY",
+          "title": "Budget Period",
+          "type": "string"
+        },
+        "monthly_budget_amount": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Monthly Budget Amount"
+        },
+        "policy_statements": {
+          "items": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Policy Statements",
+          "type": "array"
+        },
+        "quota_statements": {
+          "items": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Quota Statements",
+          "type": "array"
+        },
+        "tag_defaults": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/TagDefault"
+          },
+          "maxItems": 100,
+          "title": "Tag Defaults",
+          "type": "array"
+        },
+        "tag_namespace": {
+          "const": "OTM",
+          "default": "OTM",
+          "title": "Tag Namespace",
+          "type": "string"
+        }
+      },
+      "required": [
+        "policy_statements",
+        "quota_statements",
+        "monthly_budget_amount",
+        "budget_currency"
+      ],
+      "title": "BaselineContent",
+      "type": "object"
+    },
+    "BaselineVersion": {
+      "additionalProperties": false,
+      "properties": {
+        "based_on_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Based On Id"
+        },
+        "content": {
+          "$ref": "#/$defs/BaselineContent"
+        },
+        "content_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Content Hash",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "created_by": {
+          "title": "Created By",
+          "type": "string"
+        },
+        "edit_revision": {
+          "minimum": 1,
+          "title": "Edit Revision",
+          "type": "integer"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "publication_mode": {
+          "anyOf": [
+            {
+              "const": "simulated",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Publication Mode"
+        },
+        "published_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Published At"
+        },
+        "published_by": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Published By"
+        },
+        "published_by_name": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Published By Name"
+        },
+        "version_number": {
+          "minimum": 1,
+          "title": "Version Number",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "version_number",
+        "edit_revision",
+        "created_by",
+        "created_at",
+        "content_hash",
+        "content"
+      ],
+      "title": "BaselineVersion",
+      "type": "object"
+    },
+    "EmailContacts": {
+      "additionalProperties": false,
+      "properties": {
+        "activation": {
+          "$ref": "#/$defs/EmailRoute"
+        },
+        "owner": {
+          "$ref": "#/$defs/EmailRoute"
+        },
+        "people": {
+          "additionalProperties": {
+            "$ref": "#/$defs/EmailRoute"
+          },
+          "propertyNames": {
+            "format": "uuid"
+          },
+          "title": "People",
+          "type": "object"
+        }
+      },
+      "required": [
+        "activation",
+        "owner"
+      ],
+      "title": "EmailContacts",
+      "type": "object"
+    },
+    "EmailRoute": {
+      "additionalProperties": false,
+      "properties": {
+        "effective_email": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Effective Email"
+        },
+        "environment": {
+          "enum": [
+            "local",
+            "staging",
+            "production"
+          ],
+          "title": "Environment",
+          "type": "string"
+        },
+        "original_email": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Original Email"
+        },
+        "policy_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Policy Hash",
+          "type": "string"
+        },
+        "redirected": {
+          "title": "Redirected",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "original_email",
+        "effective_email",
+        "environment",
+        "policy_hash",
+        "redirected"
+      ],
+      "title": "EmailRoute",
+      "type": "object"
+    },
+    "OnboardingCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "pending",
+            "verified",
+            "needs_attention"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "verified_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Verified At"
+        }
+      },
+      "required": [
+        "key",
+        "label",
+        "state"
+      ],
+      "title": "OnboardingCheck",
+      "type": "object"
+    },
+    "OnboardingDiscovery": {
+      "additionalProperties": false,
+      "properties": {
+        "activation_scim_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Activation Scim Id"
+        },
+        "activation_user_ocid": {
+          "anyOf": [
+            {
+              "pattern": "^ocid1\\.user\\.oc1\\.\\.otmsim[a-z0-9]{1,100}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Activation User Ocid"
+        },
+        "bootstrap_scim_id": {
+          "title": "Bootstrap Scim Id",
+          "type": "string"
+        },
+        "bootstrap_user_ocid": {
+          "pattern": "^ocid1\\.user\\.oc1\\.\\.otmsim[a-z0-9]{1,100}$",
+          "title": "Bootstrap User Ocid",
+          "type": "string"
+        },
+        "domain_ocid": {
+          "title": "Domain Ocid",
+          "type": "string"
+        },
+        "home_region": {
+          "title": "Home Region",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "organization_id": {
+          "title": "Organization Id",
+          "type": "string"
+        },
+        "parent_tenancy_ocid": {
+          "maxLength": 256,
+          "minLength": 15,
+          "pattern": "^ocid1\\.tenancy\\.[A-Za-z0-9.]+$",
+          "title": "Parent Tenancy Ocid",
+          "type": "string"
+        },
+        "tenancy_ocid": {
+          "maxLength": 256,
+          "minLength": 15,
+          "pattern": "^ocid1\\.tenancy\\.[A-Za-z0-9.]+$",
+          "title": "Tenancy Ocid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenancy_ocid",
+        "name",
+        "home_region",
+        "parent_tenancy_ocid",
+        "organization_id",
+        "domain_ocid",
+        "bootstrap_user_ocid",
+        "bootstrap_scim_id",
+        "activation_user_ocid",
+        "activation_scim_id"
+      ],
+      "title": "OnboardingDiscovery",
+      "type": "object"
+    },
+    "OnboardingHandoff": {
+      "additionalProperties": false,
+      "properties": {
+        "activation_user_ocid": {
+          "anyOf": [
+            {
+              "pattern": "^ocid1\\.user\\.oc1\\.\\.otmsim[a-z0-9]{1,100}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Activation User Ocid"
+        },
+        "bootstrap_user_ocid": {
+          "pattern": "^ocid1\\.user\\.oc1\\.\\.otmsim[a-z0-9]{1,100}$",
+          "title": "Bootstrap User Ocid",
+          "type": "string"
+        },
+        "tenancy_ocid": {
+          "maxLength": 256,
+          "minLength": 15,
+          "pattern": "^ocid1\\.tenancy\\.[A-Za-z0-9.]+$",
+          "title": "Tenancy Ocid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenancy_ocid",
+        "bootstrap_user_ocid"
+      ],
+      "title": "OnboardingHandoff",
+      "type": "object"
+    },
+    "TagDefault": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Key",
+          "type": "string"
+        },
+        "value": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "value"
+      ],
+      "title": "TagDefault",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "administrator_email": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Administrator Email"
+    },
+    "administrator_name": {
+      "title": "Administrator Name",
+      "type": "string"
+    },
+    "available_actions": {
+      "items": {
+        "enum": [
+          "verify_handoff",
+          "start_setup"
+        ],
+        "type": "string"
+      },
+      "title": "Available Actions",
+      "type": "array"
+    },
+    "baseline": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BaselineVersion"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "bootstrap_username": {
+      "title": "Bootstrap Username",
+      "type": "string"
+    },
+    "can_act": {
+      "default": true,
+      "title": "Can Act",
+      "type": "boolean"
+    },
+    "checks": {
+      "items": {
+        "$ref": "#/$defs/OnboardingCheck"
+      },
+      "title": "Checks",
+      "type": "array"
+    },
+    "discovery": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OnboardingDiscovery"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "email_contacts": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EmailContacts"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "expected_parent_tenancy_ocid": {
+      "maxLength": 256,
+      "minLength": 15,
+      "pattern": "^ocid1\\.tenancy\\.[A-Za-z0-9.]+$",
+      "title": "Expected Parent Tenancy Ocid",
+      "type": "string"
+    },
+    "issue_code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Issue Code"
+    },
+    "operation_id": {
+      "format": "uuid",
+      "title": "Operation Id",
+      "type": "string"
+    },
+    "origin": {
+      "enum": [
+        "create",
+        "import"
+      ],
+      "title": "Origin",
+      "type": "string"
+    },
+    "owner_name": {
+      "title": "Owner Name",
+      "type": "string"
+    },
+    "phase": {
+      "enum": [
+        "preparing",
+        "handoff",
+        "review",
+        "configuring",
+        "complete",
+        "blocked",
+        "cancelled"
+      ],
+      "title": "Phase",
+      "type": "string"
+    },
+    "public_key": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Public Key"
+    },
+    "requested_home_region": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Requested Home Region"
+    },
+    "requested_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Requested Name"
+    },
+    "revision": {
+      "title": "Revision",
+      "type": "integer"
+    },
+    "state": {
+      "title": "State",
+      "type": "string"
+    },
+    "submitted_handoff": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OnboardingHandoff"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "suggested_handoff": {
+      "$ref": "#/$defs/OnboardingHandoff"
+    },
+    "tenancy_id": {
+      "format": "uuid",
+      "title": "Tenancy Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "operation_id",
+    "tenancy_id",
+    "revision",
+    "state",
+    "phase",
+    "origin",
+    "expected_parent_tenancy_ocid",
+    "owner_name",
+    "administrator_name",
+    "administrator_email",
+    "suggested_handoff",
+    "submitted_handoff",
+    "discovery",
+    "bootstrap_username",
+    "checks",
+    "available_actions"
+  ],
+  "title": "OnboardingView",
+  "type": "object"
+}

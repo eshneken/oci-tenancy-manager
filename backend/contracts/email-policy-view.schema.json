@@ -1,0 +1,36 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "effective_test_email": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Effective Test Email"
+    },
+    "environment": {
+      "enum": [
+        "local",
+        "staging",
+        "production"
+      ],
+      "title": "Environment",
+      "type": "string"
+    },
+    "redirected": {
+      "title": "Redirected",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "environment",
+    "redirected",
+    "effective_test_email"
+  ],
+  "title": "EmailPolicyView",
+  "type": "object"
+}

@@ -1,0 +1,117 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "attempts": {
+      "maximum": 3,
+      "minimum": 0,
+      "title": "Attempts",
+      "type": "integer"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "event": {
+      "enum": [
+        "action_required",
+        "terminal_failure"
+      ],
+      "title": "Event",
+      "type": "string"
+    },
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "last_attempt_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Last Attempt At"
+    },
+    "original_recipient": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Original Recipient"
+    },
+    "recipient": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Recipient"
+    },
+    "redirected": {
+      "title": "Redirected",
+      "type": "boolean"
+    },
+    "safe_code": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Safe Code"
+    },
+    "state": {
+      "enum": [
+        "pending",
+        "blocked",
+        "sending",
+        "sent",
+        "failed",
+        "unknown",
+        "superseded"
+      ],
+      "title": "State",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "state",
+    "event",
+    "recipient",
+    "original_recipient",
+    "created_at",
+    "updated_at",
+    "redirected",
+    "attempts"
+  ],
+  "title": "NotificationSummary",
+  "type": "object"
+}

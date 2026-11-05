@@ -1,0 +1,6 @@
+EMPLOYEE_FULL_NAME,EMAIL,MGR,TOP_MGR
+Root,root@example.test,,
+Leader One,one@example.test,root@example.test,root@example.test
+Leader Two,two@example.test,root@example.test,root@example.test
+Delegate,delegate@example.test,one@example.test,one@example.test
+Engineer,engineer@example.test,one@example.test,one@example.test

@@ -1,0 +1,28 @@
+/* Shared design-only menu: plain organization context, genuine implemented destinations, consistent hierarchy. */
+.design-navigation{display:block!important;overflow:visible!important;width:100%;padding:0!important}
+.design-navigation ul{list-style:none;margin:0;padding:0;display:block}
+.design-navigation .design-nav-list{display:flex;flex-direction:column;gap:10px}
+.design-navigation .design-nav-group{margin:0;padding:0;min-width:0}
+.design-navigation .design-nav-item{display:flex;align-items:center;justify-content:flex-start;min-height:44px;box-sizing:border-box;padding:10px 12px;margin:0;border:0;border-radius:6px;line-height:1.4;letter-spacing:normal;font:500 15px/1.4 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#e8f0eb;text-decoration:none;background:transparent;white-space:normal;overflow-wrap:normal;text-align:left;width:100%}
+.design-navigation .design-nav-context{cursor:default}
+.design-navigation a.design-nav-item:hover{background:#274440;color:white}
+.design-navigation a.design-nav-item:focus-visible{outline:3px solid #efb459;outline-offset:2px}
+.design-navigation .design-nav-item.is-current{background:#294b46;color:white;font-weight:650}
+.design-navigation .design-nav-item.is-parent-current{font-weight:650;color:white}
+.design-navigation .design-nav-children{border-left:1px solid #41615a;margin:4px 0 0 12px;padding-left:10px}
+.design-navigation .design-nav-children .design-nav-item{font-size:14px}
+@media(min-width:801px){.shell{grid-template-columns:225px minmax(0,1fr)}}
+@media(max-width:800px){
+ .shell{display:block}
+ aside{padding:20px 24px}
+ aside .brand{margin-bottom:16px}
+ .design-navigation .design-nav-list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+ .design-navigation .design-nav-item{padding:9px 8px}
+ .design-navigation .design-nav-children{margin-left:7px;padding-left:5px}
+}
+@media(max-width:560px){.design-navigation .design-nav-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px}.design-navigation .design-nav-item{font-size:14px}.design-navigation .design-nav-children .design-nav-item{font-size:13px}}
+
+/* History/settings headings separate destinations without adding false click targets or counts. */
+.design-navigation .design-nav-section{grid-column:1/-1;margin:12px 0 0;padding:0 12px;color:#c1d2cc}
+.design-navigation .design-nav-section p{margin:0;color:inherit;font:650 11px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.08em;text-transform:uppercase}
+@media(max-width:800px){.design-navigation .design-nav-section{margin-top:8px;padding-left:8px}}

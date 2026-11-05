@@ -1,0 +1,51 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "direction": {
+      "default": "asc",
+      "enum": [
+        "asc",
+        "desc"
+      ],
+      "title": "Direction",
+      "type": "string"
+    },
+    "page": {
+      "default": 1,
+      "maximum": 100000,
+      "minimum": 1,
+      "title": "Page",
+      "type": "integer"
+    },
+    "page_size": {
+      "default": 10,
+      "enum": [
+        10,
+        25,
+        50,
+        100
+      ],
+      "title": "Page Size",
+      "type": "integer"
+    },
+    "query": {
+      "default": "",
+      "maxLength": 128,
+      "title": "Query",
+      "type": "string"
+    },
+    "sort": {
+      "default": "display_name",
+      "enum": [
+        "display_name",
+        "email",
+        "identity_kind",
+        "status"
+      ],
+      "title": "Sort",
+      "type": "string"
+    }
+  },
+  "title": "AdministratorQuery",
+  "type": "object"
+}

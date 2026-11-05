@@ -1,0 +1,81 @@
+{
+  "$defs": {
+    "OrganizationContext": {
+      "additionalProperties": false,
+      "properties": {
+        "applied_version_id": {
+          "format": "uuid",
+          "title": "Applied Version Id",
+          "type": "string"
+        },
+        "configuration_id": {
+          "format": "uuid",
+          "title": "Configuration Id",
+          "type": "string"
+        },
+        "proposed_version_id": {
+          "format": "uuid",
+          "title": "Proposed Version Id",
+          "type": "string"
+        },
+        "registry_revision": {
+          "minimum": 1,
+          "title": "Registry Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "applied_version_id",
+        "proposed_version_id",
+        "configuration_id",
+        "registry_revision"
+      ],
+      "title": "OrganizationContext",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "client_request_key": {
+      "format": "uuid",
+      "title": "Client Request Key",
+      "type": "string"
+    },
+    "confirm_deletion": {
+      "default": false,
+      "title": "Confirm Deletion",
+      "type": "boolean"
+    },
+    "confirm_manager": {
+      "default": false,
+      "title": "Confirm Manager",
+      "type": "boolean"
+    },
+    "confirm_shared": {
+      "default": false,
+      "title": "Confirm Shared",
+      "type": "boolean"
+    },
+    "context": {
+      "$ref": "#/$defs/OrganizationContext"
+    },
+    "kind": {
+      "const": "delete_registered_tenancy",
+      "default": "delete_registered_tenancy",
+      "title": "Kind",
+      "type": "string"
+    },
+    "tenancy_id": {
+      "format": "uuid",
+      "title": "Tenancy Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_request_key",
+    "tenancy_id",
+    "context"
+  ],
+  "title": "TenancyDeletionCommand",
+  "type": "object"
+}

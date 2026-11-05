@@ -1,0 +1,53 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "authorization_revision": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Authorization Revision"
+    },
+    "contract_version": {
+      "const": "local-auth-1",
+      "title": "Contract Version",
+      "type": "string"
+    },
+    "outcome": {
+      "enum": [
+        "administrator_bootstrapped",
+        "local_credentials_reset",
+        "local_sign_in_succeeded",
+        "local_sign_in_failed",
+        "session_logged_out"
+      ],
+      "title": "Outcome",
+      "type": "string"
+    },
+    "session_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Session Id"
+    }
+  },
+  "required": [
+    "contract_version",
+    "outcome",
+    "session_id",
+    "authorization_revision"
+  ],
+  "title": "SecurityEvidence",
+  "type": "object"
+}

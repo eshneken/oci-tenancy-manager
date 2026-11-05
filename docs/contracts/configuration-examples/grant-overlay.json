@@ -1,0 +1,16 @@
+{
+  "override_id": "grant-full-blocks",
+  "revision": 1,
+  "baseline_id": "organization-baseline",
+  "baseline_version": 1,
+  "policy_statements": [
+    "Allow group OTMOperators to read instance-family in tenancy"
+  ],
+  "quota_statements": [
+    "set compute-core quota standard2-core-count to 16 in tenancy"
+  ],
+  "reviewed_against": {
+    "policy": "23243ec84daf4e91797ca49ead167de98ea1b4898c52bd006016da5dca13d02b",
+    "quota": "cb56085647dffe366cff8a410edb7a7165d5026f331e357ad7fb12e8c497866d"
+  }
+}

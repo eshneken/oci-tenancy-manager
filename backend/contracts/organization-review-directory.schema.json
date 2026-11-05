@@ -1,0 +1,173 @@
+{
+  "$defs": {
+    "ReviewView": {
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "enum": [
+            "actionable",
+            "informational",
+            "change"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "data": {
+          "additionalProperties": true,
+          "title": "Data",
+          "type": "object"
+        },
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "first_seen_at": {
+          "format": "date-time",
+          "title": "First Seen At",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "last_seen_at": {
+          "format": "date-time",
+          "title": "Last Seen At",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "operation_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Operation Id"
+        },
+        "person_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Person Id"
+        },
+        "resolution": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Resolution"
+        },
+        "resolved_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Resolved At"
+        },
+        "status": {
+          "enum": [
+            "open",
+            "resolved",
+            "ignored"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "category",
+        "status",
+        "person_id",
+        "name",
+        "email",
+        "first_seen_at",
+        "last_seen_at",
+        "resolved_at",
+        "resolution",
+        "operation_id",
+        "data"
+      ],
+      "title": "ReviewView",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actionable_count": {
+      "title": "Actionable Count",
+      "type": "integer"
+    },
+    "history_count": {
+      "title": "History Count",
+      "type": "integer"
+    },
+    "informational_count": {
+      "default": 0,
+      "title": "Informational Count",
+      "type": "integer"
+    },
+    "items": {
+      "items": {
+        "$ref": "#/$defs/ReviewView"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "page": {
+      "title": "Page",
+      "type": "integer"
+    },
+    "page_size": {
+      "title": "Page Size",
+      "type": "integer"
+    },
+    "pages": {
+      "title": "Pages",
+      "type": "integer"
+    },
+    "total": {
+      "title": "Total",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "items",
+    "total",
+    "page",
+    "pages",
+    "page_size",
+    "actionable_count",
+    "history_count"
+  ],
+  "title": "ReviewDirectory",
+  "type": "object"
+}

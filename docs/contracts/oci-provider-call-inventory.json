@@ -1,0 +1,5446 @@
+{
+  "status": "design-source-check-only",
+  "checked_on": "2026-10-20",
+  "sdk_version_reviewed": "2.188.0",
+  "sdk_tag": "v2.188.0",
+  "source_commit": "df5a803743d2560ec37ef5d1e437d5978ef7d33a",
+  "notes": [
+    "Not an application dependency pin, implemented facade, permission proof or real OCI test.",
+    "Inputs are generated SDK signature/doc metadata, not a complete HTTP validation schema.",
+    "Selected candidate/conditional calls are not blanket approval to invoke or implement every method.",
+    "No vendor module was imported or executed; no credential or OCI endpoint was used.",
+    "Raw SDK responses and secret-bearing model contents must never become application responses."
+  ],
+  "sources": [
+    {
+      "path": "tenant_manager_control_plane/organization_client.py",
+      "sha256": "96a81b2cf1e105c7ec5731f465bc6fcae9aa9d490b6216ab04d21df1933f56d3",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/tenant_manager_control_plane/organization_client.py"
+    },
+    {
+      "path": "tenant_manager_control_plane/work_request_client.py",
+      "sha256": "56bd3953ef1a015a21d1b96b2ffa2bbd70c3b93a54d9d5f2c8a5d47e51721d5f",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/tenant_manager_control_plane/work_request_client.py"
+    },
+    {
+      "path": "tenant_manager_control_plane/link_client.py",
+      "sha256": "26eb632fed86d4b59b7e5aa0a38836e53acecdd003e801a19c9e3b4e30e8e378",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/tenant_manager_control_plane/link_client.py"
+    },
+    {
+      "path": "identity/identity_client.py",
+      "sha256": "a472016e2fb9babb1355ec70ac2c40d55dee24dcb9e3305e53ada13bdd59d227",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py"
+    },
+    {
+      "path": "identity_domains/identity_domains_client.py",
+      "sha256": "d9a317024684dac650ac982a3d03c2c76a9acc6d3bf09d1b048ce06e57b4f91a",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py"
+    },
+    {
+      "path": "limits/quotas_client.py",
+      "sha256": "d80dab0473740cc6f293b6300cb5a1b2ed82105f60e33a72997420b2fb82e99e",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/limits/quotas_client.py"
+    },
+    {
+      "path": "budget/budget_client.py",
+      "sha256": "63b84eab67478b2badda2ada0c0cf5333f7138f1c231c322eb810275226e2bf3",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/budget/budget_client.py"
+    },
+    {
+      "path": "usage_api/usageapi_client.py",
+      "sha256": "307ea0b475e08cec90a91b70c73502051405a1f536d0771e0d3ee80228b28c42",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/usage_api/usageapi_client.py"
+    },
+    {
+      "path": "vault/vaults_client.py",
+      "sha256": "b7994ad913e28c5c10631597b44d8b9afba466c7968ba28303aad3bd4d2d5041",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/vault/vaults_client.py"
+    },
+    {
+      "path": "secrets/secrets_client.py",
+      "sha256": "c910d26716b2cbf37885f8d51fdc333f6874b0cc62146eb135b139228ed69ef2",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/secrets/secrets_client.py"
+    }
+  ],
+  "calls": [
+    {
+      "call": "oci.tenant_manager_control_plane.OrganizationClient.get_organization",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/tenant_manager_control_plane/organization_client.py#L480",
+      "resource_path": "/organizations/{organizationId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "organization_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.tenant_manager_control_plane.models.Organization`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.tenant_manager_control_plane.OrganizationClient.list_organizations",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/tenant_manager_control_plane/organization_client.py#L809",
+      "resource_path": "/organizations",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "compartment_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.tenant_manager_control_plane.models.OrganizationCollection`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.tenant_manager_control_plane.OrganizationClient.get_organization_tenancy",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/tenant_manager_control_plane/organization_client.py#L583",
+      "resource_path": "/organizations/{organizationId}/tenancies/{tenancyId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "organization_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "tenancy_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.tenant_manager_control_plane.models.OrganizationTenancy`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.tenant_manager_control_plane.OrganizationClient.list_organization_tenancies",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/tenant_manager_control_plane/organization_client.py#L690",
+      "resource_path": "/organizations/{organizationId}/tenancies",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "organization_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.tenant_manager_control_plane.models.OrganizationTenancyCollection`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.tenant_manager_control_plane.OrganizationClient.create_child_tenancy",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/tenant_manager_control_plane/organization_client.py#L259",
+      "resource_path": "/childTenancies",
+      "method": "POST",
+      "parameters": [
+        {
+          "name": "create_child_tenancy_details",
+          "sdk_type": "oci.tenant_manager_control_plane.models.CreateChildTenancyDetails",
+          "documented_required": true
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type None",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.tenant_manager_control_plane.OrganizationClient.delete_organization_tenancy",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/tenant_manager_control_plane/organization_client.py#L360",
+      "resource_path": "/organizationTenancies/{organizationTenancyId}",
+      "method": "DELETE",
+      "parameters": [
+        {
+          "name": "organization_tenancy_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": true,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type None",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.tenant_manager_control_plane.WorkRequestClient.get_work_request",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/tenant_manager_control_plane/work_request_client.py#L127",
+      "resource_path": "/workRequests/{workRequestId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "work_request_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.tenant_manager_control_plane.models.WorkRequest`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.tenant_manager_control_plane.WorkRequestClient.list_work_requests",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/tenant_manager_control_plane/work_request_client.py#L496",
+      "resource_path": "/workRequests",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "compartment_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "sort_order",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.tenant_manager_control_plane.models.WorkRequestCollection`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.tenant_manager_control_plane.WorkRequestClient.list_work_request_errors",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/tenant_manager_control_plane/work_request_client.py#L230",
+      "resource_path": "/workRequests/{workRequestId}/errors",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "work_request_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "sort_order",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.tenant_manager_control_plane.models.WorkRequestErrorCollection`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.tenant_manager_control_plane.WorkRequestClient.list_work_request_logs",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/tenant_manager_control_plane/work_request_client.py#L363",
+      "resource_path": "/workRequests/{workRequestId}/logs",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "work_request_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "sort_order",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.tenant_manager_control_plane.models.WorkRequestLogEntryCollection`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.tenant_manager_control_plane.LinkClient.get_link",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/tenant_manager_control_plane/link_client.py#L237",
+      "resource_path": "/links/{linkId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "link_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.tenant_manager_control_plane.models.Link`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.tenant_manager_control_plane.LinkClient.list_links",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/tenant_manager_control_plane/link_client.py#L445",
+      "resource_path": "/links",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "parent_tenancy_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "child_tenancy_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "feature",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "lifecycle_state",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "sort_order",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.tenant_manager_control_plane.models.LinkCollection`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity.IdentityClient.get_tenancy",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L8644",
+      "resource_path": "/tenancies/{tenancyId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "tenancy_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity.models.Tenancy`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity.IdentityClient.list_regions",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L12563",
+      "resource_path": "/regions",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type list of `~oci.identity.models.Region`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity.IdentityClient.list_region_subscriptions",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L12469",
+      "resource_path": "/tenancies/{tenancyId}/regionSubscriptions",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "tenancy_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type list of `~oci.identity.models.RegionSubscription`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity.IdentityClient.list_domains",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L10421",
+      "resource_path": "/domains",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "compartment_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "display_name",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "url",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "home_region_url",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "type",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "license_type",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "is_hidden_on_login",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "name",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_by",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_order",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "lifecycle_state",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type list of `~oci.identity.models.DomainSummary`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity.IdentityClient.get_domain",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L7269",
+      "resource_path": "/domains/{domainId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "domain_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity.models.Domain`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity.IdentityClient.get_compartment",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L7168",
+      "resource_path": "/compartments/{compartmentId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "compartment_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity.models.Compartment`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity.IdentityClient.list_compartments",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L9835",
+      "resource_path": "/compartments",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "compartment_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "access_level",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "compartment_id_in_subtree",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "name",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_by",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_order",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "lifecycle_state",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type list of `~oci.identity.models.Compartment`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity.IdentityClient.create_compartment",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L2023",
+      "resource_path": "/compartments",
+      "method": "POST",
+      "parameters": [
+        {
+          "name": "create_compartment_details",
+          "sdk_type": "oci.identity.models.CreateCompartmentDetails",
+          "documented_required": true
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity.models.Compartment`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity.IdentityClient.create_policy",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L3462",
+      "resource_path": "/policies",
+      "method": "POST",
+      "parameters": [
+        {
+          "name": "create_policy_details",
+          "sdk_type": "oci.identity.models.CreatePolicyDetails",
+          "documented_required": true
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity.models.Policy`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity.IdentityClient.get_policy",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L8065",
+      "resource_path": "/policies/{policyId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "policy_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity.models.Policy`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity.IdentityClient.list_policies",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L12304",
+      "resource_path": "/policies",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "compartment_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "name",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_by",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_order",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "lifecycle_state",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type list of `~oci.identity.models.Policy`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity.IdentityClient.update_policy",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L16032",
+      "resource_path": "/policies/{policyId}",
+      "method": "PUT",
+      "parameters": [
+        {
+          "name": "policy_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "update_policy_details",
+          "sdk_type": "oci.identity.models.UpdatePolicyDetails",
+          "documented_required": true
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": true,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity.models.Policy`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity.IdentityClient.delete_policy",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L6008",
+      "resource_path": "/policies/{policyId}",
+      "method": "DELETE",
+      "parameters": [
+        {
+          "name": "policy_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": true,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type None",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity.IdentityClient.create_user",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L4316",
+      "resource_path": "/users",
+      "method": "POST",
+      "parameters": [
+        {
+          "name": "create_user_details",
+          "sdk_type": "oci.identity.models.CreateUserDetails",
+          "documented_required": true
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity.models.User`",
+      "design_scope": "reference_only_not_v1"
+    },
+    {
+      "call": "oci.identity.IdentityClient.get_user",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L8738",
+      "resource_path": "/users/{userId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "user_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity.models.User`",
+      "design_scope": "conditional_domain_identity_bridge"
+    },
+    {
+      "call": "oci.identity.IdentityClient.list_users",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L13784",
+      "resource_path": "/users",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "compartment_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "identity_provider_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "external_identifier",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "name",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_by",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_order",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "lifecycle_state",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type list of `~oci.identity.models.User`",
+      "design_scope": "reference_only_not_v1"
+    },
+    {
+      "call": "oci.identity.IdentityClient.create_group",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L2621",
+      "resource_path": "/groups",
+      "method": "POST",
+      "parameters": [
+        {
+          "name": "create_group_details",
+          "sdk_type": "oci.identity.models.CreateGroupDetails",
+          "documented_required": true
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity.models.Group`",
+      "design_scope": "reference_only_not_v1"
+    },
+    {
+      "call": "oci.identity.IdentityClient.get_group",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L7469",
+      "resource_path": "/groups/{groupId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "group_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity.models.Group`",
+      "design_scope": "reference_only_not_v1"
+    },
+    {
+      "call": "oci.identity.IdentityClient.list_groups",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L10877",
+      "resource_path": "/groups",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "compartment_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "name",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_by",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_order",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "lifecycle_state",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type list of `~oci.identity.models.Group`",
+      "design_scope": "reference_only_not_v1"
+    },
+    {
+      "call": "oci.identity.IdentityClient.add_user_to_group",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L636",
+      "resource_path": "/userGroupMemberships",
+      "method": "POST",
+      "parameters": [
+        {
+          "name": "add_user_to_group_details",
+          "sdk_type": "oci.identity.models.AddUserToGroupDetails",
+          "documented_required": true
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity.models.UserGroupMembership`",
+      "design_scope": "reference_only_not_v1"
+    },
+    {
+      "call": "oci.identity.IdentityClient.list_user_group_memberships",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L13659",
+      "resource_path": "/userGroupMemberships",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "compartment_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "user_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "group_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type list of `~oci.identity.models.UserGroupMembership`",
+      "design_scope": "reference_only_not_v1"
+    },
+    {
+      "call": "oci.identity.IdentityClient.remove_user_from_group",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L14570",
+      "resource_path": "/userGroupMemberships/{userGroupMembershipId}",
+      "method": "DELETE",
+      "parameters": [
+        {
+          "name": "user_group_membership_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": true,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type None",
+      "design_scope": "reference_only_not_v1"
+    },
+    {
+      "call": "oci.identity.IdentityClient.upload_api_key",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L17111",
+      "resource_path": "/users/{userId}/apiKeys",
+      "method": "POST",
+      "parameters": [
+        {
+          "name": "user_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "create_api_key_details",
+          "sdk_type": "oci.identity.models.CreateApiKeyDetails",
+          "documented_required": true
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity.models.ApiKey`",
+      "design_scope": "reference_only_not_v1"
+    },
+    {
+      "call": "oci.identity.IdentityClient.list_api_keys",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L9328",
+      "resource_path": "/users/{userId}/apiKeys",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "user_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type list of `~oci.identity.models.ApiKey`",
+      "design_scope": "reference_only_not_v1"
+    },
+    {
+      "call": "oci.identity.IdentityClient.delete_api_key",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L4583",
+      "resource_path": "/users/{userId}/apiKeys/{fingerprint}",
+      "method": "DELETE",
+      "parameters": [
+        {
+          "name": "user_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "fingerprint",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": true,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type None",
+      "design_scope": "reference_only_not_v1"
+    },
+    {
+      "call": "oci.identity.IdentityClient.update_user_capabilities",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L16887",
+      "resource_path": "/users/{userId}/capabilities",
+      "method": "PUT",
+      "parameters": [
+        {
+          "name": "user_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "update_user_capabilities_details",
+          "sdk_type": "oci.identity.models.UpdateUserCapabilitiesDetails",
+          "documented_required": true
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": true,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity.models.User`",
+      "design_scope": "reference_only_not_v1"
+    },
+    {
+      "call": "oci.identity.IdentityClient.create_or_reset_ui_password",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L3336",
+      "resource_path": "/users/{userId}/uiPassword",
+      "method": "POST",
+      "parameters": [
+        {
+          "name": "user_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity.models.UIPassword`",
+      "design_scope": "reference_only_not_v1"
+    },
+    {
+      "call": "oci.identity.IdentityClient.delete_user",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/identity_client.py#L6722",
+      "resource_path": "/users/{userId}",
+      "method": "DELETE",
+      "parameters": [
+        {
+          "name": "user_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": true,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type None",
+      "design_scope": "reference_only_not_v1"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.create_user",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L6045",
+      "resource_path": "/admin/v1/Users",
+      "method": "POST",
+      "parameters": [
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "user",
+          "sdk_type": "oci.identity_domains.models.User",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.User`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.get_user",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L19045",
+      "resource_path": "/admin/v1/Users/{userId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "user_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.User`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.list_users",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L29096",
+      "resource_path": "/admin/v1/Users",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "filter",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_by",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_order",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "start_index",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "count",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.Users`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.patch_user",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L36069",
+      "resource_path": "/admin/v1/Users/{userId}",
+      "method": "PATCH",
+      "parameters": [
+        {
+          "name": "user_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "patch_op",
+          "sdk_type": "oci.identity_domains.models.PatchOp",
+          "documented_required": false
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": true,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.User`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.delete_user",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L11442",
+      "resource_path": "/admin/v1/Users/{userId}",
+      "method": "DELETE",
+      "parameters": [
+        {
+          "name": "user_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "force_delete",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": true,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type None",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.create_group",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L2248",
+      "resource_path": "/admin/v1/Groups",
+      "method": "POST",
+      "parameters": [
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "group",
+          "sdk_type": "oci.identity_domains.models.Group",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.Group`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.get_group",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L14218",
+      "resource_path": "/admin/v1/Groups/{groupId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "group_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.Group`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.list_groups",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L22435",
+      "resource_path": "/admin/v1/Groups",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "filter",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_by",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_order",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "start_index",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "count",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.Groups`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.patch_group",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L31551",
+      "resource_path": "/admin/v1/Groups/{groupId}",
+      "method": "PATCH",
+      "parameters": [
+        {
+          "name": "group_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "patch_op",
+          "sdk_type": "oci.identity_domains.models.PatchOp",
+          "documented_required": false
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": true,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.Group`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.create_api_key",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L127",
+      "resource_path": "/admin/v1/ApiKeys",
+      "method": "POST",
+      "parameters": [
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "api_key",
+          "sdk_type": "oci.identity_domains.models.ApiKey",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.ApiKey`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.get_api_key",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L11978",
+      "resource_path": "/admin/v1/ApiKeys/{apiKeyId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "api_key_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.ApiKey`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.list_api_keys",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L19771",
+      "resource_path": "/admin/v1/ApiKeys",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "filter",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_by",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_order",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "start_index",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "count",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.ApiKeys`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.delete_api_key",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L6450",
+      "resource_path": "/admin/v1/ApiKeys/{apiKeyId}",
+      "method": "DELETE",
+      "parameters": [
+        {
+          "name": "api_key_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "force_delete",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": true,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type None",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.list_app_roles",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L19942",
+      "resource_path": "/admin/v1/AppRoles",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "filter",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_by",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_order",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "start_index",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "count",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.AppRoles`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.get_app_role",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L12258",
+      "resource_path": "/admin/v1/AppRoles/{appRoleId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "app_role_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.AppRole`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.create_grant",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L2105",
+      "resource_path": "/admin/v1/Grants",
+      "method": "POST",
+      "parameters": [
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "grant",
+          "sdk_type": "oci.identity_domains.models.Grant",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.Grant`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.get_grant",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L14078",
+      "resource_path": "/admin/v1/Grants/{grantId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "grant_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.Grant`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.list_grants",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L22264",
+      "resource_path": "/admin/v1/Grants",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "filter",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_by",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_order",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "start_index",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "count",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.Grants`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.delete_grant",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L8114",
+      "resource_path": "/admin/v1/Grants/{grantId}",
+      "method": "DELETE",
+      "parameters": [
+        {
+          "name": "grant_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "force_delete",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": true,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type None",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.put_user_capabilities_changer",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L41356",
+      "resource_path": "/admin/v1/UserCapabilitiesChanger/{userCapabilitiesChangerId}",
+      "method": "PUT",
+      "parameters": [
+        {
+          "name": "user_capabilities_changer_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "user_capabilities_changer",
+          "sdk_type": "oci.identity_domains.models.UserCapabilitiesChanger",
+          "documented_required": false
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": true,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.UserCapabilitiesChanger`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.put_user_password_changer",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L41493",
+      "resource_path": "/admin/v1/UserPasswordChanger/{userPasswordChangerId}",
+      "method": "PUT",
+      "parameters": [
+        {
+          "name": "user_password_changer_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "user_password_changer",
+          "sdk_type": "oci.identity_domains.models.UserPasswordChanger",
+          "documented_required": false
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": true,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.UserPasswordChanger`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.put_user_password_resetter",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L41630",
+      "resource_path": "/admin/v1/UserPasswordResetter/{userPasswordResetterId}",
+      "method": "PUT",
+      "parameters": [
+        {
+          "name": "user_password_resetter_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "user_password_resetter",
+          "sdk_type": "oci.identity_domains.models.UserPasswordResetter",
+          "documented_required": false
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": true,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.UserPasswordResetter`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.list_policies",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L27197",
+      "resource_path": "/admin/v1/Policies",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "filter",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_by",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_order",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "start_index",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "count",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.Policies`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.get_policy",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L17837",
+      "resource_path": "/admin/v1/Policies/{policyId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "policy_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.Policy`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.list_rules",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L27539",
+      "resource_path": "/admin/v1/Rules",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "filter",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_by",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_order",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "start_index",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "count",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.Rules`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.get_rule",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L17977",
+      "resource_path": "/admin/v1/Rules/{ruleId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "rule_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.Rule`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.list_authentication_factor_settings",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L20968",
+      "resource_path": "/admin/v1/AuthenticationFactorSettings",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.AuthenticationFactorSettings`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.identity_domains.IdentityDomainsClient.get_authentication_factor_setting",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/identity_domains_client.py#L12958",
+      "resource_path": "/admin/v1/AuthenticationFactorSettings/{authenticationFactorSettingId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "authentication_factor_setting_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "authorization",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "resource_type_schema_version",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attributes",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "attribute_sets",
+          "sdk_type": "list[str]",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": false,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.identity_domains.models.AuthenticationFactorSetting`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.limits.QuotasClient.create_quota",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/limits/quotas_client.py#L242",
+      "resource_path": "/20181025/quotas",
+      "method": "POST",
+      "parameters": [
+        {
+          "name": "create_quota_details",
+          "sdk_type": "oci.limits.models.CreateQuotaDetails",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.limits.models.Quota`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.limits.QuotasClient.get_quota",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/limits/quotas_client.py#L470",
+      "resource_path": "/20181025/quotas/{quotaId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "quota_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.limits.models.Quota`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.limits.QuotasClient.list_quotas",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/limits/quotas_client.py#L576",
+      "resource_path": "/20181025/quotas",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "compartment_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "name",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "lifecycle_state",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_order",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_by",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type list of `~oci.limits.models.QuotaSummary`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.limits.QuotasClient.update_quota",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/limits/quotas_client.py#L849",
+      "resource_path": "/20181025/quotas/{quotaId}",
+      "method": "PUT",
+      "parameters": [
+        {
+          "name": "quota_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "update_quota_details",
+          "sdk_type": "oci.limits.models.UpdateQuotaDetails",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "is_lock_override",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": true,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.limits.models.Quota`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.limits.QuotasClient.delete_quota",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/limits/quotas_client.py#L348",
+      "resource_path": "/20181025/quotas/{quotaId}",
+      "method": "DELETE",
+      "parameters": [
+        {
+          "name": "quota_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "is_lock_override",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": true,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type None",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.budget.BudgetClient.create_budget",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/budget/budget_client.py#L247",
+      "resource_path": "/budgets",
+      "method": "POST",
+      "parameters": [
+        {
+          "name": "create_budget_details",
+          "sdk_type": "oci.budget.models.CreateBudgetDetails",
+          "documented_required": true
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.budget.models.Budget`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.budget.BudgetClient.get_budget",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/budget/budget_client.py#L689",
+      "resource_path": "/budgets/{budgetId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "budget_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.budget.models.Budget`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.budget.BudgetClient.list_budgets",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/budget/budget_client.py#L966",
+      "resource_path": "/budgets",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "compartment_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_order",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_by",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "lifecycle_state",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "display_name",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "target_type",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type list of `~oci.budget.models.BudgetSummary`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.budget.BudgetClient.update_budget",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/budget/budget_client.py#L1273",
+      "resource_path": "/budgets/{budgetId}",
+      "method": "PUT",
+      "parameters": [
+        {
+          "name": "budget_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "update_budget_details",
+          "sdk_type": "oci.budget.models.UpdateBudgetDetails",
+          "documented_required": true
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": true,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.budget.models.Budget`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.budget.BudgetClient.delete_budget",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/budget/budget_client.py#L468",
+      "resource_path": "/budgets/{budgetId}",
+      "method": "DELETE",
+      "parameters": [
+        {
+          "name": "budget_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": true,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type None",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.budget.BudgetClient.create_alert_rule",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/budget/budget_client.py#L127",
+      "resource_path": "/budgets/{budgetId}/alertRules",
+      "method": "POST",
+      "parameters": [
+        {
+          "name": "budget_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "create_alert_rule_details",
+          "sdk_type": "oci.budget.models.CreateAlertRuleDetails",
+          "documented_required": true
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.budget.models.AlertRule`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.budget.BudgetClient.get_alert_rule",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/budget/budget_client.py#L580",
+      "resource_path": "/budgets/{budgetId}/alertRules/{alertRuleId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "budget_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "alert_rule_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.budget.models.AlertRule`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.budget.BudgetClient.list_alert_rules",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/budget/budget_client.py#L794",
+      "resource_path": "/budgets/{budgetId}/alertRules",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "budget_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_order",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_by",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "lifecycle_state",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "display_name",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type list of `~oci.budget.models.AlertRuleSummary`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.budget.BudgetClient.update_alert_rule",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/budget/budget_client.py#L1150",
+      "resource_path": "/budgets/{budgetId}/alertRules/{alertRuleId}",
+      "method": "PUT",
+      "parameters": [
+        {
+          "name": "budget_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "alert_rule_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "update_alert_rule_details",
+          "sdk_type": "oci.budget.models.UpdateAlertRuleDetails",
+          "documented_required": true
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": true,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.budget.models.AlertRule`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.budget.BudgetClient.delete_alert_rule",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/budget/budget_client.py#L352",
+      "resource_path": "/budgets/{budgetId}/alertRules/{alertRuleId}",
+      "method": "DELETE",
+      "parameters": [
+        {
+          "name": "budget_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "alert_rule_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": true,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type None",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.usage_api.UsageapiClient.request_summarized_usages",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/usage_api/usageapi_client.py#L3049",
+      "resource_path": "/usage",
+      "method": "POST",
+      "parameters": [
+        {
+          "name": "request_summarized_usages_details",
+          "sdk_type": "oci.usage_api.models.RequestSummarizedUsagesDetails",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.usage_api.models.UsageAggregation`",
+      "design_scope": "reference_only_not_v1",
+      "scope_note": "D41 accepted24October2026: V1 reads each child managed Budget object; Usage API financial/history reporting deferred post-V1."
+    },
+    {
+      "call": "oci.usage_api.UsageapiClient.request_summarized_configurations",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/usage_api/usageapi_client.py#L2950",
+      "resource_path": "/configuration",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "tenant_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.usage_api.models.ConfigurationAggregation`",
+      "design_scope": "reference_only_not_v1",
+      "scope_note": "D41 accepted24October2026: V1 reads each child managed Budget object; Usage API financial/history reporting deferred post-V1."
+    },
+    {
+      "call": "oci.vault.VaultsClient.create_secret",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/vault/vaults_client.py#L606",
+      "resource_path": "/secrets",
+      "method": "POST",
+      "parameters": [
+        {
+          "name": "create_secret_details",
+          "sdk_type": "oci.vault.models.CreateSecretDetails",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_retry_token",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": true,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.vault.models.Secret`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.vault.VaultsClient.get_secret",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/vault/vaults_client.py#L716",
+      "resource_path": "/secrets/{secretId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "secret_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.vault.models.Secret`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.vault.VaultsClient.update_secret",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/vault/vaults_client.py#L1617",
+      "resource_path": "/secrets/{secretId}",
+      "method": "PUT",
+      "parameters": [
+        {
+          "name": "secret_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "update_secret_details",
+          "sdk_type": "oci.vault.models.UpdateSecretDetails",
+          "documented_required": true
+        },
+        {
+          "name": "if_match",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": true,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.vault.models.Secret`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.vault.VaultsClient.get_secret_version",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/vault/vaults_client.py#L823",
+      "resource_path": "/secrets/{secretId}/version/{secretVersionNumber}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "secret_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "secret_version_number",
+          "sdk_type": "int",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.vault.models.SecretVersion`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.vault.VaultsClient.list_secret_versions",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/vault/vaults_client.py#L934",
+      "resource_path": "/secrets/{secretId}/versions",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "secret_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "limit",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "page",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_by",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "sort_order",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type list of `~oci.vault.models.SecretVersionSummary`",
+      "design_scope": "planned_candidate"
+    },
+    {
+      "call": "oci.secrets.SecretsClient.get_secret_bundle",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/secrets/secrets_client.py#L127",
+      "resource_path": "/secretbundles/{secretId}",
+      "method": "GET",
+      "parameters": [
+        {
+          "name": "secret_id",
+          "sdk_type": "str",
+          "documented_required": true
+        },
+        {
+          "name": "opc_request_id",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "version_number",
+          "sdk_type": "int",
+          "documented_required": false
+        },
+        {
+          "name": "secret_version_name",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "stage",
+          "sdk_type": "str",
+          "documented_required": false
+        },
+        {
+          "name": "retry_strategy",
+          "sdk_type": "obj",
+          "documented_required": false
+        },
+        {
+          "name": "allow_control_chars",
+          "sdk_type": "bool",
+          "documented_required": false
+        },
+        {
+          "name": "enable_strict_url_encoding",
+          "sdk_type": "bool",
+          "documented_required": false
+        }
+      ],
+      "supports_retry_token": false,
+      "supports_if_match": false,
+      "supports_request_id": true,
+      "sdk_response_description": "A `~oci.response.Response` object with data of type `~oci.secrets.models.SecretBundle`",
+      "design_scope": "planned_candidate"
+    }
+  ],
+  "models": [
+    {
+      "model": "oci.budget.models.CreateBudgetDetails",
+      "fields": {
+        "compartment_id": "str",
+        "target_compartment_id": "str",
+        "display_name": "str",
+        "description": "str",
+        "amount": "float",
+        "reset_period": "str",
+        "budget_processing_period_start_offset": "int",
+        "processing_period_type": "str",
+        "start_date": "datetime",
+        "end_date": "datetime",
+        "target_type": "str",
+        "targets": "list[str]",
+        "freeform_tags": "dict(str, str)",
+        "defined_tags": "dict(str, dict(str, object))",
+        "system_tags": "dict(str, dict(str, object))"
+      },
+      "sha256": "a50ae4d0191c05d6cabe0b5db708d75ab807fa2dd7220f9a447d6d8a7721d0c5",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/budget/models/create_budget_details.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.identity.models.CreateCompartmentDetails",
+      "fields": {
+        "compartment_id": "str",
+        "name": "str",
+        "description": "str",
+        "freeform_tags": "dict(str, str)",
+        "defined_tags": "dict(str, dict(str, object))"
+      },
+      "sha256": "51cbe3d67ef6054e57cd0ea821ce3f907b7ad2eb511fdd7e3962b4bec2a60c23",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/models/create_compartment_details.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.identity.models.CreateUserDetails",
+      "fields": {
+        "compartment_id": "str",
+        "name": "str",
+        "description": "str",
+        "email": "str",
+        "freeform_tags": "dict(str, str)",
+        "defined_tags": "dict(str, dict(str, object))"
+      },
+      "sha256": "9a8c448e8a2c9d6d10244a92b4391489688a529830fe7cfe03571b4826ae5bc6",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/models/create_user_details.py",
+      "design_scope": "reference_only_not_v1"
+    },
+    {
+      "model": "oci.identity.models.Domain",
+      "fields": {
+        "id": "str",
+        "compartment_id": "str",
+        "display_name": "str",
+        "description": "str",
+        "url": "str",
+        "home_region_url": "str",
+        "home_region": "str",
+        "replica_regions": "list[ReplicatedRegionDetails]",
+        "type": "str",
+        "license_type": "str",
+        "is_hidden_on_login": "bool",
+        "time_created": "datetime",
+        "lifecycle_state": "str",
+        "lifecycle_details": "str",
+        "freeform_tags": "dict(str, str)",
+        "defined_tags": "dict(str, dict(str, object))"
+      },
+      "sha256": "2536987df08275d560a9883f5e6d55ec8362a9de3e9862f8c16d377a003e3b52",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity/models/domain.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.identity_domains.models.ApiKey",
+      "fields": {
+        "id": "str",
+        "ocid": "str",
+        "schemas": "list[str]",
+        "meta": "Meta",
+        "idcs_created_by": "IdcsCreatedBy",
+        "idcs_last_modified_by": "IdcsLastModifiedBy",
+        "idcs_prevented_operations": "list[str]",
+        "tags": "list[Tags]",
+        "delete_in_progress": "bool",
+        "idcs_last_upgraded_in_release": "str",
+        "domain_ocid": "str",
+        "compartment_ocid": "str",
+        "tenancy_ocid": "str",
+        "description": "str",
+        "fingerprint": "str",
+        "key": "str",
+        "user": "ApiKeyUser",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_self_change_user": "ExtensionSelfChangeUser"
+      },
+      "sha256": "3308c7d883833307b341a5514add15ed6205b5be72d4746c365004cc2dbf55ed",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/models/api_key.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.identity_domains.models.AppRole",
+      "fields": {
+        "id": "str",
+        "ocid": "str",
+        "schemas": "list[str]",
+        "meta": "Meta",
+        "idcs_created_by": "IdcsCreatedBy",
+        "idcs_last_modified_by": "IdcsLastModifiedBy",
+        "idcs_prevented_operations": "list[str]",
+        "tags": "list[Tags]",
+        "delete_in_progress": "bool",
+        "idcs_last_upgraded_in_release": "str",
+        "domain_ocid": "str",
+        "compartment_ocid": "str",
+        "tenancy_ocid": "str",
+        "display_name": "str",
+        "unique_name": "str",
+        "description": "str",
+        "legacy_group_name": "str",
+        "admin_role": "bool",
+        "limited_to_one_or_more_groups": "bool",
+        "available_to_users": "bool",
+        "available_to_groups": "bool",
+        "available_to_clients": "bool",
+        "public": "bool",
+        "localized_display_name": "str",
+        "app": "AppRoleApp",
+        "members": "list[AppRoleMembers]"
+      },
+      "sha256": "aba0e13866c962c86c61e68ed40e1f723be344dee0cb4c9a060310382f012858",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/models/app_role.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.identity_domains.models.ExtensionUserUser",
+      "fields": {
+        "is_federated_user": "bool",
+        "is_authentication_delegated": "bool",
+        "status": "str",
+        "provider": "str",
+        "preferred_ui_landing_page": "str",
+        "creation_mechanism": "str",
+        "group_membership_last_modified": "str",
+        "do_not_show_getting_started": "bool",
+        "bypass_notification": "bool",
+        "is_account_recovery_enrolled": "bool",
+        "account_recovery_required": "bool",
+        "user_flow_controlled_by_external_client": "bool",
+        "is_group_membership_normalized": "bool",
+        "is_group_membership_synced_to_users_groups": "bool",
+        "notification_email_template_id": "str",
+        "service_user": "bool",
+        "support_accounts": "list[UserExtSupportAccounts]",
+        "idcs_app_roles_limited_to_groups": "list[UserExtIdcsAppRolesLimitedToGroups]",
+        "user_token": "UserExtUserToken",
+        "synced_from_app": "UserExtSyncedFromApp",
+        "applicable_authentication_target_app": "UserExtApplicableAuthenticationTargetApp",
+        "delegated_authentication_target_app": "UserExtDelegatedAuthenticationTargetApp",
+        "accounts": "list[UserExtAccounts]",
+        "grants": "list[UserExtGrants]",
+        "app_roles": "list[UserExtAppRoles]"
+      },
+      "sha256": "70c8be5e6212ac31254ead1e0902a09b1154323831994e7e2100f7e1cc3c841f",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/models/extension_user_user.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.identity_domains.models.Grant",
+      "fields": {
+        "id": "str",
+        "ocid": "str",
+        "schemas": "list[str]",
+        "meta": "Meta",
+        "idcs_created_by": "IdcsCreatedBy",
+        "idcs_last_modified_by": "IdcsLastModifiedBy",
+        "idcs_prevented_operations": "list[str]",
+        "tags": "list[Tags]",
+        "delete_in_progress": "bool",
+        "idcs_last_upgraded_in_release": "str",
+        "domain_ocid": "str",
+        "compartment_ocid": "str",
+        "tenancy_ocid": "str",
+        "grant_mechanism": "str",
+        "composite_key": "str",
+        "is_fulfilled": "bool",
+        "granted_attribute_values_json": "str",
+        "app_entitlement_collection": "GrantAppEntitlementCollection",
+        "grantor": "GrantGrantor",
+        "grantee": "GrantGrantee",
+        "app": "GrantApp",
+        "entitlement": "GrantEntitlement"
+      },
+      "sha256": "ecbf5a7c162a46e20625d0a3da0892f141d029e98c78633c2c3f69b1393a60b5",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/models/grant.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.identity_domains.models.Group",
+      "fields": {
+        "id": "str",
+        "ocid": "str",
+        "schemas": "list[str]",
+        "meta": "Meta",
+        "idcs_created_by": "IdcsCreatedBy",
+        "idcs_last_modified_by": "IdcsLastModifiedBy",
+        "idcs_prevented_operations": "list[str]",
+        "tags": "list[Tags]",
+        "delete_in_progress": "bool",
+        "idcs_last_upgraded_in_release": "str",
+        "domain_ocid": "str",
+        "compartment_ocid": "str",
+        "tenancy_ocid": "str",
+        "external_id": "str",
+        "display_name": "str",
+        "non_unique_display_name": "str",
+        "members": "list[GroupMembers]",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_group_group": "ExtensionGroupGroup",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_posix_group": "ExtensionPosixGroup",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_requestable_group": "ExtensionRequestableGroup",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_dbcs_group": "ExtensionDbcsGroup",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_dynamic_group": "ExtensionDynamicGroup",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_oci_tags": "ExtensionOCITags"
+      },
+      "sha256": "b307b37ddcb835185f833ce8fdf73ea9eb96b4b84dc740c5c0a6abbe12641c6b",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/models/group.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.identity_domains.models.User",
+      "fields": {
+        "id": "str",
+        "ocid": "str",
+        "schemas": "list[str]",
+        "meta": "Meta",
+        "idcs_created_by": "IdcsCreatedBy",
+        "idcs_last_modified_by": "IdcsLastModifiedBy",
+        "idcs_prevented_operations": "list[str]",
+        "tags": "list[Tags]",
+        "delete_in_progress": "bool",
+        "idcs_last_upgraded_in_release": "str",
+        "domain_ocid": "str",
+        "compartment_ocid": "str",
+        "tenancy_ocid": "str",
+        "external_id": "str",
+        "user_name": "str",
+        "description": "str",
+        "display_name": "str",
+        "nick_name": "str",
+        "profile_url": "str",
+        "title": "str",
+        "user_type": "str",
+        "locale": "str",
+        "preferred_language": "str",
+        "timezone": "str",
+        "active": "bool",
+        "password": "str",
+        "name": "UserName",
+        "emails": "list[UserEmails]",
+        "phone_numbers": "list[UserPhoneNumbers]",
+        "ims": "list[UserIms]",
+        "photos": "list[UserPhotos]",
+        "addresses": "list[Addresses]",
+        "groups": "list[UserGroups]",
+        "entitlements": "list[UserEntitlements]",
+        "roles": "list[UserRoles]",
+        "x509_certificates": "list[UserX509Certificates]",
+        "urn_ietf_params_scim_schemas_extension_enterprise2_0_user": "ExtensionEnterprise20User",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_user_user": "ExtensionUserUser",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_password_state_user": "ExtensionPasswordStateUser",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_user_state_user": "ExtensionUserStateUser",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_posix_user": "ExtensionPosixUser",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_kerberos_user_user": "ExtensionKerberosUserUser",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_mfa_user": "ExtensionMfaUser",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_adaptive_user": "ExtensionAdaptiveUser",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_sff_user": "ExtensionSffUser",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_security_questions_user": "ExtensionSecurityQuestionsUser",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_self_registration_user": "ExtensionSelfRegistrationUser",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_social_account_user": "ExtensionSocialAccountUser",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_db_user_user": "ExtensionDbUserUser",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_terms_of_use_user": "ExtensionTermsOfUseUser",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_passwordless_user": "ExtensionPasswordlessUser",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_oci_tags": "ExtensionOCITags",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_user_credentials_user": "ExtensionUserCredentialsUser",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_capabilities_user": "ExtensionCapabilitiesUser",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_db_credentials_user": "ExtensionDbCredentialsUser",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_self_change_user": "ExtensionSelfChangeUser"
+      },
+      "sha256": "0244c51820aced498d63ee7d5eb66476a40655c58cf822479f78e61fa1dfb62d",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/models/user.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.identity_domains.models.UserCapabilitiesChanger",
+      "fields": {
+        "id": "str",
+        "ocid": "str",
+        "schemas": "list[str]",
+        "meta": "Meta",
+        "idcs_created_by": "IdcsCreatedBy",
+        "idcs_last_modified_by": "IdcsLastModifiedBy",
+        "idcs_prevented_operations": "list[str]",
+        "tags": "list[Tags]",
+        "delete_in_progress": "bool",
+        "idcs_last_upgraded_in_release": "str",
+        "domain_ocid": "str",
+        "compartment_ocid": "str",
+        "tenancy_ocid": "str",
+        "can_use_api_keys": "bool",
+        "can_use_auth_tokens": "bool",
+        "can_use_console_password": "bool",
+        "can_use_customer_secret_keys": "bool",
+        "can_use_o_auth2_client_credentials": "bool",
+        "can_use_smtp_credentials": "bool",
+        "can_use_db_credentials": "bool",
+        "can_use_console": "bool",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_self_change_user": "ExtensionSelfChangeUser"
+      },
+      "sha256": "5a908d57c376107b5af1d911c3ac6b507d42c5d78af74b7315e961a6799bb425",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/models/user_capabilities_changer.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.identity_domains.models.UserPasswordChanger",
+      "fields": {
+        "id": "str",
+        "ocid": "str",
+        "schemas": "list[str]",
+        "meta": "Meta",
+        "idcs_created_by": "IdcsCreatedBy",
+        "idcs_last_modified_by": "IdcsLastModifiedBy",
+        "idcs_prevented_operations": "list[str]",
+        "tags": "list[Tags]",
+        "delete_in_progress": "bool",
+        "idcs_last_upgraded_in_release": "str",
+        "domain_ocid": "str",
+        "compartment_ocid": "str",
+        "tenancy_ocid": "str",
+        "external_id": "str",
+        "password": "str",
+        "bypass_notification": "bool",
+        "notification_email_template_id": "str",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_self_change_user": "ExtensionSelfChangeUser"
+      },
+      "sha256": "9aa85f5f6bdee2d85ed254b6ff528b68731a849271ef84ca09b6017e9bafd48e",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/models/user_password_changer.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.identity_domains.models.UserPasswordResetter",
+      "fields": {
+        "id": "str",
+        "ocid": "str",
+        "schemas": "list[str]",
+        "meta": "Meta",
+        "idcs_created_by": "IdcsCreatedBy",
+        "idcs_last_modified_by": "IdcsLastModifiedBy",
+        "idcs_prevented_operations": "list[str]",
+        "tags": "list[Tags]",
+        "delete_in_progress": "bool",
+        "idcs_last_upgraded_in_release": "str",
+        "domain_ocid": "str",
+        "compartment_ocid": "str",
+        "tenancy_ocid": "str",
+        "external_id": "str",
+        "bypass_notification": "bool",
+        "user_flow_controlled_by_external_client": "bool",
+        "user_token": "UserPasswordResetterUserToken",
+        "notification_email_template_id": "str",
+        "one_time_password": "str",
+        "urn_ietf_params_scim_schemas_oracle_idcs_extension_self_change_user": "ExtensionSelfChangeUser"
+      },
+      "sha256": "0cb045cf80f41dcd283a38bdb6a5354b4ede3d60d74b8de1ec4ba4d6f6402a0e",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/identity_domains/models/user_password_resetter.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.limits.models.CreateQuotaDetails",
+      "fields": {
+        "compartment_id": "str",
+        "description": "str",
+        "name": "str",
+        "statements": "list[str]",
+        "locks": "list[AddLockDetails]",
+        "freeform_tags": "dict(str, str)",
+        "defined_tags": "dict(str, dict(str, object))"
+      },
+      "sha256": "acc23ce02169b68b9946190cfc3b8bb5963f67107113d56a39e44c33110a9840",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/limits/models/create_quota_details.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.tenant_manager_control_plane.models.CreateChildTenancyDetails",
+      "fields": {
+        "compartment_id": "str",
+        "tenancy_name": "str",
+        "home_region": "str",
+        "admin_email": "str",
+        "policy_name": "str",
+        "governance_status": "str",
+        "subscription_id": "str",
+        "features": "list[str]"
+      },
+      "sha256": "98dd4a3023e65ec5c3b52f065b2dc16e72a0f049bba069521820611a5812b2f3",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/tenant_manager_control_plane/models/create_child_tenancy_details.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.tenant_manager_control_plane.models.Link",
+      "fields": {
+        "id": "str",
+        "parent_tenancy_id": "str",
+        "child_tenancy_id": "str",
+        "lifecycle_state": "str",
+        "time_created": "datetime",
+        "time_updated": "datetime",
+        "time_terminated": "datetime",
+        "feature": "str"
+      },
+      "sha256": "ba411cdf44568262faa3dfdcd948bdf9607c6f69725c285f70a012a12fe88866",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/tenant_manager_control_plane/models/link.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.tenant_manager_control_plane.models.Organization",
+      "fields": {
+        "id": "str",
+        "display_name": "str",
+        "compartment_id": "str",
+        "parent_name": "str",
+        "default_ucm_subscription_id": "str",
+        "lifecycle_state": "str",
+        "time_created": "datetime",
+        "time_updated": "datetime"
+      },
+      "sha256": "7ba8b3ee090fde8546c7ac0d5f99f37680945ddfd957b45991eace0c2a3592fd",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/tenant_manager_control_plane/models/organization.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.tenant_manager_control_plane.models.WorkRequest",
+      "fields": {
+        "operation_type": "str",
+        "status": "str",
+        "id": "str",
+        "compartment_id": "str",
+        "resources": "list[WorkRequestResource]",
+        "percent_complete": "float",
+        "time_accepted": "datetime",
+        "time_started": "datetime",
+        "time_finished": "datetime"
+      },
+      "sha256": "11bacd355840f340d03328422367d769012c28916d1707408c172b7d95b9c592",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/tenant_manager_control_plane/models/work_request.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.tenant_manager_control_plane.models.WorkRequestResource",
+      "fields": {
+        "entity_type": "str",
+        "action_type": "str",
+        "identifier": "str",
+        "entity_uri": "str"
+      },
+      "sha256": "bdea7cdcdc6e54aef2f777f4e5bb92f077fcc9c9375b28900924904e857fada0",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/tenant_manager_control_plane/models/work_request_resource.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.usage_api.models.Forecast",
+      "fields": {
+        "forecast_type": "str",
+        "time_forecast_started": "datetime",
+        "time_forecast_ended": "datetime"
+      },
+      "sha256": "988a8ed36c39b1d55a32d7ad7577a43b23ccd6a70fede005ac3c6283ff1f5724",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/usage_api/models/forecast.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.usage_api.models.RequestSummarizedUsagesDetails",
+      "fields": {
+        "tenant_id": "str",
+        "time_usage_started": "datetime",
+        "time_usage_ended": "datetime",
+        "granularity": "str",
+        "is_aggregate_by_time": "bool",
+        "forecast": "Forecast",
+        "query_type": "str",
+        "group_by": "list[str]",
+        "group_by_tag": "list[Tag]",
+        "compartment_depth": "float",
+        "filter": "Filter"
+      },
+      "sha256": "ffc735b67c542ab61fc9e336c1d3c7cbc5fe1e4b56ad7d1cd6afd97a1c5ed6dc",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/usage_api/models/request_summarized_usages_details.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.vault.models.CreateSecretDetails",
+      "fields": {
+        "compartment_id": "str",
+        "defined_tags": "dict(str, dict(str, object))",
+        "description": "str",
+        "freeform_tags": "dict(str, str)",
+        "key_id": "str",
+        "metadata": "dict(str, object)",
+        "secret_content": "SecretContentDetails",
+        "replication_config": "ReplicationConfig",
+        "rotation_config": "RotationConfig",
+        "secret_name": "str",
+        "secret_rules": "list[SecretRule]",
+        "vault_id": "str",
+        "secret_generation_context": "SecretGenerationContext",
+        "enable_auto_generation": "bool"
+      },
+      "sha256": "d68b8b574d8139615d00e78b060b7a9dcaf84c1c75bb36fe1f9123bdd4221242",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/vault/models/create_secret_details.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.vault.models.UpdateSecretDetails",
+      "fields": {
+        "current_version_number": "int",
+        "defined_tags": "dict(str, dict(str, object))",
+        "description": "str",
+        "freeform_tags": "dict(str, str)",
+        "metadata": "dict(str, object)",
+        "secret_content": "SecretContentDetails",
+        "replication_config": "ReplicationConfig",
+        "rotation_config": "RotationConfig",
+        "secret_rules": "list[SecretRule]",
+        "secret_generation_context": "SecretGenerationContext",
+        "enable_auto_generation": "bool"
+      },
+      "sha256": "74fa787bbdbee3091e1bcb9e2dc7d116d3f768a386d4b256252c825b4f90c4e3",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/vault/models/update_secret_details.py",
+      "design_scope": "reviewed_reference"
+    },
+    {
+      "model": "oci.budget.models.Budget",
+      "fields": {
+        "id": "str",
+        "compartment_id": "str",
+        "target_compartment_id": "str",
+        "display_name": "str",
+        "description": "str",
+        "amount": "float",
+        "reset_period": "str",
+        "budget_processing_period_start_offset": "int",
+        "processing_period_type": "str",
+        "start_date": "datetime",
+        "end_date": "datetime",
+        "target_type": "str",
+        "targets": "list[str]",
+        "lifecycle_state": "str",
+        "alert_rule_count": "int",
+        "version": "int",
+        "actual_spend": "float",
+        "forecasted_spend": "float",
+        "time_spend_computed": "datetime",
+        "time_created": "datetime",
+        "time_updated": "datetime",
+        "freeform_tags": "dict(str, str)",
+        "defined_tags": "dict(str, dict(str, object))",
+        "system_tags": "dict(str, dict(str, object))"
+      },
+      "sha256": "6e142f6d526c6c814fd0d74a16b74ea044e7865fd83e46bc2632ed2ee3f1c1ae",
+      "source_url": "https://github.com/oracle/oci-python-sdk/blob/df5a803743d2560ec37ef5d1e437d5978ef7d33a/src/oci/budget/models/budget.py",
+      "design_scope": "reviewed_reference",
+      "checked_on": "2026-10-25",
+      "qualification": "Static field inspection only; not service, currency, cycle or precision qualification."
+    }
+  ],
+  "scope_decision": {
+    "id": "D27",
+    "accepted_on": "2026-10-20",
+    "user_confirmation": "All use identity domains",
+    "legacy_identity_adapter_required": false,
+    "discovery_still_required": true,
+    "same_or_default_domain_not_assumed": true
+  },
+  "design_scope_counts": {
+    "planned_candidate": 74,
+    "reference_only_not_v1": 16,
+    "conditional_domain_identity_bridge": 1
+  }
+}

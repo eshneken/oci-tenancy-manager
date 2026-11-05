@@ -1,0 +1,143 @@
+{
+  "$defs": {
+    "DispatchGrant": {
+      "additionalProperties": false,
+      "properties": {
+        "access_binding_id": {
+          "format": "uuid",
+          "title": "Access Binding Id",
+          "type": "string"
+        },
+        "actor_key": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Actor Key",
+          "type": "string"
+        },
+        "credential_generation": {
+          "minimum": 1,
+          "title": "Credential Generation",
+          "type": "integer"
+        },
+        "policy_revision": {
+          "format": "uuid",
+          "title": "Policy Revision",
+          "type": "string"
+        },
+        "runtime_policy_revision": {
+          "format": "uuid",
+          "title": "Runtime Policy Revision",
+          "type": "string"
+        },
+        "workspace_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Workspace Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "actor_key",
+        "policy_revision",
+        "runtime_policy_revision",
+        "access_binding_id",
+        "credential_generation"
+      ],
+      "title": "DispatchGrant",
+      "type": "object"
+    },
+    "ExecutionContext": {
+      "additionalProperties": false,
+      "properties": {
+        "access_binding_id": {
+          "format": "uuid",
+          "title": "Access Binding Id",
+          "type": "string"
+        },
+        "attempt_id": {
+          "format": "uuid",
+          "title": "Attempt Id",
+          "type": "string"
+        },
+        "credential_generation": {
+          "minimum": 1,
+          "title": "Credential Generation",
+          "type": "integer"
+        },
+        "execution_generation": {
+          "minimum": 1,
+          "title": "Execution Generation",
+          "type": "integer"
+        },
+        "intent_revision": {
+          "minimum": 1,
+          "title": "Intent Revision",
+          "type": "integer"
+        },
+        "operation_id": {
+          "format": "uuid",
+          "title": "Operation Id",
+          "type": "string"
+        },
+        "step_key": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Step Key",
+          "type": "string"
+        },
+        "workspace_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Workspace Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "operation_id",
+        "step_key",
+        "attempt_id",
+        "intent_revision",
+        "execution_generation",
+        "access_binding_id",
+        "credential_generation"
+      ],
+      "title": "ExecutionContext",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "context": {
+      "$ref": "#/$defs/ExecutionContext"
+    },
+    "contract_version": {
+      "const": "inspection-worker-1",
+      "default": "inspection-worker-1",
+      "title": "Contract Version",
+      "type": "string"
+    },
+    "grant": {
+      "$ref": "#/$defs/DispatchGrant"
+    },
+    "intent_event_id": {
+      "format": "uuid",
+      "title": "Intent Event Id",
+      "type": "string"
+    },
+    "provider_mode": {
+      "const": "simulated",
+      "default": "simulated",
+      "title": "Provider Mode",
+      "type": "string"
+    }
+  },
+  "required": [
+    "context",
+    "grant",
+    "intent_event_id"
+  ],
+  "title": "DispatchEvent",
+  "type": "object"
+}

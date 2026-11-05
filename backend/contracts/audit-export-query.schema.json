@@ -1,0 +1,71 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "category": {
+      "default": "",
+      "enum": [
+        "",
+        "authentication",
+        "administration",
+        "operations",
+        "organization",
+        "email_delivery"
+      ],
+      "title": "Category",
+      "type": "string"
+    },
+    "direction": {
+      "default": "desc",
+      "enum": [
+        "asc",
+        "desc"
+      ],
+      "title": "Direction",
+      "type": "string"
+    },
+    "from_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "From At"
+    },
+    "query": {
+      "default": "",
+      "maxLength": 128,
+      "title": "Query",
+      "type": "string"
+    },
+    "sort": {
+      "default": "at",
+      "enum": [
+        "at",
+        "kind",
+        "actor_name"
+      ],
+      "title": "Sort",
+      "type": "string"
+    },
+    "to_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "To At"
+    }
+  },
+  "title": "AuditExportQuery",
+  "type": "object"
+}

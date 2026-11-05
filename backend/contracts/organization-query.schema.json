@@ -1,0 +1,57 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "direction": {
+      "default": "asc",
+      "enum": [
+        "asc",
+        "desc"
+      ],
+      "title": "Direction",
+      "type": "string"
+    },
+    "include_removed": {
+      "default": false,
+      "title": "Include Removed",
+      "type": "boolean"
+    },
+    "page": {
+      "default": 1,
+      "maximum": 100000,
+      "minimum": 1,
+      "title": "Page",
+      "type": "integer"
+    },
+    "page_size": {
+      "default": 10,
+      "enum": [
+        10,
+        25,
+        50
+      ],
+      "title": "Page Size",
+      "type": "integer"
+    },
+    "query": {
+      "default": "",
+      "maxLength": 128,
+      "title": "Query",
+      "type": "string"
+    },
+    "sort": {
+      "default": "full_name",
+      "enum": [
+        "full_name",
+        "email",
+        "manager_name",
+        "leader_name",
+        "lob_name",
+        "tenancy_count"
+      ],
+      "title": "Sort",
+      "type": "string"
+    }
+  },
+  "title": "OrganizationQuery",
+  "type": "object"
+}

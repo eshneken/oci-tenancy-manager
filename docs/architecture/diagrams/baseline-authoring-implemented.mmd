@@ -1,0 +1,64 @@
+%% P3.1 adds one physical table; P3.2a adds two metadata columns, for20; locally validated, simulated publication only.
+%% P3.2b added workspace/default and tenancy/pin columns; both remain physically stored.
+%% The workspace/default column/FK/guard are deprecated historical metadata, ignored by runtime selection.
+%% Latest-publication-only default correction validation is pending;15tables/20baseline columns remain.
+%% org_workspace and otm_tenancy are abbreviated; complete existing columns remain in the foundation ER.
+%% Combine this addition with organization-workflows-implemented.mmd for the fifteen-table physical model.
+%% The current source exposes one editable draft, explicit simulated publication and immutable history.
+%% Default is derived as highest published version_number in the workspace; no live stored selector.
+%% Existing operation/tenancy pins stay unchanged; selection is never OCI application.
+erDiagram
+  org_workspace ||--o{ otm_baseline_version : scoped_workspace_FK
+  otm_baseline_version o|--o| org_workspace : deprecated_historical_reference_FK
+  otm_baseline_version o|--o{ otm_tenancy : optional_admission_pin_FK
+  otm_baseline_version o|--o{ otm_baseline_version : optional_published_parent_FK
+  org_workspace {
+    string id PK
+    uuid current_baseline_id FK "deprecated historical metadata; ignored by runtime selection"
+  }
+  otm_tenancy {
+    uuid id PK
+    string workspace_id FK
+    uuid baseline_version_id FK "nullable; admission pin, not applied configuration"
+  }
+  otm_baseline_version {
+    uuid id PK
+    string workspace_id FK
+    int version_number
+    uuid based_on_id FK "nullable; exact latest publication when new draft is created"
+    string schema_version "baseline-1"
+    jsonb policy_statements
+    jsonb quota_statements
+    decimal monthly_budget_amount "NUMERIC(20,4)"
+    string budget_currency "three uppercase letters; structural only"
+    string budget_period "MONTHLY"
+    string tag_namespace "OTM"
+    jsonb tag_defaults
+    string content_hash "canonical SHA256"
+    int edit_revision
+    string created_by
+    timestamptz created_at
+    string published_by "nullable; publishing actor key"
+    timestamptz published_at "nullable; draft while null"
+    string published_by_name "nullable; captured publisher display name"
+    string publication_mode "nullable; simulated when published"
+  }
+%% UNIQUE(workspace_id,id), UNIQUE(workspace_id,version_number).
+%% Partial UNIQUE(workspace_id) WHERE published_at IS NULL permits one editable draft.
+%% Save before/after and full publication snapshot are typed data in existing audit_event, not new FKs.
+%% Runtime API receives narrow publication-column UPDATE; published rows remain immutable afterward.
+%% Publication increments edit_revision and atomically audits full content/lineage/mode and actor/time.
+%% Migration0012 stops for review if pre-existing manual publications are found; no inferred metadata.
+%% Local owner-only reset can remove test baselines; normal API has no DELETE/TRUNCATE.
+%% The revised UI shows one policy block and one quota block; Save splits nonblank LF/CRLF/CR lines.
+%% Physical policy_statements/quota_statements remain ordered JSONB arrays, not TEXT/per-statement rows.
+%% Backend legacy embedded-newline items remain valid; opening/cancelling never rewrites existing rows.
+
+%% Tenancy/pin reference includes workspace; full published snapshot is validated by the service/worker.
+%% Migration0013 leaves all prior default/pin values NULL; no publication/assignment backfill.
+%% Publish bumps registry_revision with audit; exact old publish replay never reselects a version.
+%% Migration0014 retains workspace/default data+guard+FK and only bumps registry_revision once.
+%% No runtime publication writes/selection reads of the deprecated column; no accepted pin rewrite.
+%% Historical default-change audit remains readable; no new selector/endpoint or default-change writes.
+%% Existing operation_intent contains full nullable BaselineVersion; worker validates exact pin, not default.
+%% Legacy operations stay unpinned; baseline application/readback, overrides and rollout remain future work.

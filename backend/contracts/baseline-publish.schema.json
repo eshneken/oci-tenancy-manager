@@ -1,0 +1,21 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "baseline_id": {
+      "format": "uuid",
+      "title": "Baseline Id",
+      "type": "string"
+    },
+    "expected_revision": {
+      "minimum": 1,
+      "title": "Expected Revision",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "baseline_id",
+    "expected_revision"
+  ],
+  "title": "PublishBaseline",
+  "type": "object"
+}

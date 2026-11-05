@@ -1,0 +1,143 @@
+{
+  "$defs": {
+    "MappingCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "root_email": {
+          "title": "Root Email",
+          "type": "string"
+        },
+        "segments": {
+          "items": {
+            "$ref": "#/$defs/MappingSegment"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Segments",
+          "type": "array"
+        }
+      },
+      "required": [
+        "root_email",
+        "segments"
+      ],
+      "title": "MappingCandidate",
+      "type": "object"
+    },
+    "MappingContext": {
+      "additionalProperties": false,
+      "properties": {
+        "applied_version_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Applied Version Id"
+        },
+        "configuration_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Configuration Id"
+        },
+        "proposed_version_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Proposed Version Id"
+        },
+        "registry_revision": {
+          "default": 0,
+          "title": "Registry Revision",
+          "type": "integer"
+        }
+      },
+      "title": "MappingContext",
+      "type": "object"
+    },
+    "MappingSegment": {
+      "additionalProperties": false,
+      "properties": {
+        "designee_emails": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Designee Emails",
+          "type": "array"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "label": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "leader_email": {
+          "title": "Leader Email",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "leader_email"
+      ],
+      "title": "MappingSegment",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "candidate": {
+      "$ref": "#/$defs/MappingCandidate"
+    },
+    "change_root": {
+      "default": false,
+      "title": "Change Root",
+      "type": "boolean"
+    },
+    "context": {
+      "$ref": "#/$defs/MappingContext"
+    }
+  },
+  "required": [
+    "context",
+    "candidate"
+  ],
+  "title": "MappingRequest",
+  "type": "object"
+}

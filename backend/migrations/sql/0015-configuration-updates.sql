@@ -1,0 +1,15 @@
+-- Baseline-only async verification; existing desired pins and historical data remain unchanged.
+ALTER TABLE public.otm_tenancy ADD COLUMN verified_baseline_version_id UUID;
+ALTER TABLE public.otm_tenancy ADD COLUMN configuration_verified_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE public.otm_tenancy ADD COLUMN configuration_observation JSONB;
+ALTER TABLE public.otm_tenancy ADD CONSTRAINT fk_tenancy_verified_baseline FOREIGN KEY(workspace_id,verified_baseline_version_id) REFERENCES public.otm_baseline_version(workspace_id,id);
+ALTER TABLE public.otm_tenancy ADD CONSTRAINT ck_tenancy_configuration_verified CHECK ((verified_baseline_version_id IS NULL)=(configuration_verified_at IS NULL));
+ALTER TABLE public.otm_tenancy ADD CONSTRAINT ck_tenancy_configuration_observation CHECK (configuration_observation IS NULL OR jsonb_typeof(configuration_observation)='object');
+ALTER TABLE public.otm_operation DROP CONSTRAINT ck_operation_kind;
+ALTER TABLE public.otm_operation ADD CONSTRAINT ck_operation_kind CHECK (kind IN ('inspect_import','organization_action','configuration_update'));
+ALTER TABLE public.audit_event DROP CONSTRAINT ck_audit_event_revision;
+ALTER TABLE public.audit_event ADD CONSTRAINT ck_audit_event_revision CHECK ((operation_id IS NOT NULL AND administrator_id IS NULL AND ((kind='operation_intent' AND intent_revision IS NOT NULL AND intent_revision>=1) OR (kind IN ('inspection_dispatch','inspection_outcome','organization_action_outcome','onboarding_action','onboarding_outcome','configuration_outcome','configuration_retry') AND intent_revision IS NULL))) OR (kind IN ('administrator_revoked','administrator_bootstrapped','local_credentials_reset','local_sign_in_succeeded','local_sign_in_failed','session_logged_out','audit_export') AND operation_id IS NULL AND intent_revision IS NULL AND administrator_id IS NOT NULL) OR (kind IN ('organization_configured','organization_feed_received','organization_feed_rejected','organization_published','organization_review_decided') AND operation_id IS NULL AND administrator_id IS NULL AND intent_revision IS NULL) OR (kind IN ('baseline_draft_saved','baseline_published','baseline_default_changed') AND operation_id IS NULL AND administrator_id IS NULL AND intent_revision IS NULL));
+ALTER TABLE public.otm_operation_step DROP CONSTRAINT ck_inspection_step_kind;
+ALTER TABLE public.otm_operation_step ADD CONSTRAINT ck_inspection_step_kind CHECK ((step_key='inspect_target' AND command_kind='inspect_tenancy') OR (step_key='apply_lifecycle' AND command_kind='organization_action') OR (command_kind='onboarding' AND step_key IN ('handoff','inspect_bootstrap','establish_automation','verify_automation','configure_required','verify_required','retire_temporary')) OR (command_kind='configuration_update' AND step_key ~ '^configuration:[0-9a-f-]{36}$'));
+ALTER TABLE public.otm_operation_step DROP CONSTRAINT ck_inspection_read_only;
+ALTER TABLE public.otm_operation_step ADD CONSTRAINT ck_inspection_read_only CHECK ((command_kind='inspect_tenancy' AND effect_knowledge='none') OR (command_kind IN ('organization_action','onboarding','configuration_update') AND effect_knowledge IN ('none','known')));

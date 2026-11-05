@@ -1,0 +1,28 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "client_request_key": {
+      "format": "uuid",
+      "title": "Client Request Key",
+      "type": "string"
+    },
+    "tenancy_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tenancy Id"
+    }
+  },
+  "required": [
+    "client_request_key"
+  ],
+  "title": "ConfigurationCheckRequest",
+  "type": "object"
+}

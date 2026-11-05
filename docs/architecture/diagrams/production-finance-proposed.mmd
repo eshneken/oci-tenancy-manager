@@ -1,0 +1,81 @@
+erDiagram
+  direction TB
+  org_workspace {
+    string id PK
+    bigint runtime_policy_revision
+    jsonb runtime_policy
+  }
+  org_tenancy {
+    uuid id PK
+    string tenancy_ocid UK
+    uuid desired_configuration_id FK
+    uuid financial_source_context_id FK
+  }
+  otm_operation {
+    uuid id PK
+    string workspace_id FK
+    string kind
+    string state
+  }
+  otm_financial_collection {
+    uuid id PK
+    uuid operation_id FK
+    uuid tenancy_id FK "one child per read"
+    uuid source_access_context_id FK "existing child automation"
+    bigint source_context_generation
+    uuid budget_binding_id FK
+    bigint budget_binding_generation
+    string budget_ocid
+    string source_kind "child_managed_budget"
+    string source_policy_revision
+    timestamptz expected_period_start
+    timestamptz expected_period_end
+    string schedule_occurrence_key UK
+    string state
+  }
+  otm_financial_observation {
+    uuid id PK
+    uuid collection_id FK,UK "one immutable Budget response"
+    uuid tenancy_id FK
+    string budget_ocid
+    decimal observed_budget_amount "not desired authoring value"
+    decimal actual_spend "nullable"
+    decimal forecasted_spend "nullable complete cycle end"
+    timestamptz time_spend_computed "nullable provider time"
+    timestamptz captured_at
+    timestamptz spend_period_start "nullable if unknown"
+    timestamptz spend_period_end
+    string period_state "current prior unknown"
+    string currency "qualified source policy not Budget field"
+    uuid currency_evidence_event_id FK
+    string actual_availability
+    string forecast_availability
+    uuid budget_configuration_id FK
+  }
+  audit_event {
+    uuid id PK
+    string workspace_id FK
+    uuid operation_id FK
+    string kind
+    string actor_subject
+    string client_command_key "nullable receipt"
+    jsonb data "typed immutable evidence"
+  }
+  notification_outbox {
+    uuid id PK
+    string workspace_id FK
+    uuid source_event_id FK
+    string channel
+    jsonb recipients
+    string state
+    timestamptz next_attempt_at
+  }
+  org_workspace ||--o{ org_tenancy : scoped_registry
+  org_workspace ||--o{ otm_operation : accepted_work
+  otm_operation |o--o{ otm_financial_collection : collection_work
+  otm_financial_collection ||--o| otm_financial_observation : same_budget_response
+  org_tenancy ||--o{ otm_financial_collection : exact_child_budget
+  org_tenancy ||--o{ otm_financial_observation : observed_child
+  otm_operation |o--o{ audit_event : intent_and_attempts
+  org_workspace ||--o{ audit_event : source_events
+  audit_event ||--o{ notification_outbox : captured_channel_intent

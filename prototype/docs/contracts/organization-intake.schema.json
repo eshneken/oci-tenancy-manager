@@ -1,0 +1,154 @@
+{
+  "$defs": {
+    "Completeness": {
+      "description": "Distinguish a declared census from partial or unconfirmed source coverage.",
+      "enum": [
+        "complete",
+        "partial",
+        "unconfirmed"
+      ],
+      "title": "Completeness",
+      "type": "string"
+    },
+    "Envelope": {
+      "additionalProperties": false,
+      "description": "Source-supplied snapshot identity, capture time and completeness declaration.",
+      "properties": {
+        "source_id": {
+          "minLength": 1,
+          "title": "Source Id",
+          "type": "string"
+        },
+        "population_id": {
+          "minLength": 1,
+          "title": "Population Id",
+          "type": "string"
+        },
+        "external_snapshot_id": {
+          "minLength": 1,
+          "title": "External Snapshot Id",
+          "type": "string"
+        },
+        "captured_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Captured At"
+        },
+        "declared_completeness": {
+          "$ref": "#/$defs/Completeness"
+        }
+      },
+      "required": [
+        "source_id",
+        "population_id",
+        "external_snapshot_id",
+        "captured_at",
+        "declared_completeness"
+      ],
+      "title": "Envelope",
+      "type": "object"
+    },
+    "Record": {
+      "additionalProperties": false,
+      "description": "One normalized source employee row; manager references need not have profiles.",
+      "properties": {
+        "source_record_id": {
+          "minLength": 1,
+          "title": "Source Record Id",
+          "type": "string"
+        },
+        "full_name": {
+          "minLength": 1,
+          "title": "Full Name",
+          "type": "string"
+        },
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "manager_email": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Manager Email"
+        },
+        "manager_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Manager Name"
+        },
+        "reported_top_manager_email": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reported Top Manager Email"
+        },
+        "territory": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Territory"
+        }
+      },
+      "required": [
+        "source_record_id",
+        "full_name",
+        "email",
+        "manager_email"
+      ],
+      "title": "Record",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Canonical source data. Trusted policy/configuration is never supplied here.",
+  "properties": {
+    "envelope": {
+      "$ref": "#/$defs/Envelope"
+    },
+    "records": {
+      "items": {
+        "$ref": "#/$defs/Record"
+      },
+      "title": "Records",
+      "type": "array"
+    }
+  },
+  "required": [
+    "envelope",
+    "records"
+  ],
+  "title": "Intake",
+  "type": "object"
+}

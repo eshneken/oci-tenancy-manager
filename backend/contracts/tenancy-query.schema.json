@@ -1,0 +1,56 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "direction": {
+      "default": "asc",
+      "enum": [
+        "asc",
+        "desc"
+      ],
+      "title": "Direction",
+      "type": "string"
+    },
+    "page": {
+      "default": 1,
+      "maximum": 100000,
+      "minimum": 1,
+      "title": "Page",
+      "type": "integer"
+    },
+    "page_size": {
+      "default": 10,
+      "enum": [
+        10,
+        25,
+        50
+      ],
+      "title": "Page Size",
+      "type": "integer"
+    },
+    "query": {
+      "default": "",
+      "maxLength": 128,
+      "title": "Query",
+      "type": "string"
+    },
+    "shared_only": {
+      "default": false,
+      "title": "Shared Only",
+      "type": "boolean"
+    },
+    "sort": {
+      "default": "name",
+      "enum": [
+        "name",
+        "owner_name",
+        "manager_name",
+        "lob_name",
+        "member_count"
+      ],
+      "title": "Sort",
+      "type": "string"
+    }
+  },
+  "title": "TenancyQuery",
+  "type": "object"
+}

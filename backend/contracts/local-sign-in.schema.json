@@ -1,0 +1,33 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "password": {
+      "format": "password",
+      "maxLength": 128,
+      "title": "Password",
+      "type": "string",
+      "writeOnly": true
+    },
+    "totp_code": {
+      "format": "password",
+      "maxLength": 6,
+      "minLength": 6,
+      "title": "Totp Code",
+      "type": "string",
+      "writeOnly": true
+    },
+    "username": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Username",
+      "type": "string"
+    }
+  },
+  "required": [
+    "username",
+    "password",
+    "totp_code"
+  ],
+  "title": "LocalSignIn",
+  "type": "object"
+}
