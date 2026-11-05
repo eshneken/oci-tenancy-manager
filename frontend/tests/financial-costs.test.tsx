@@ -118,3 +118,39 @@ it.each([401,503])("handles %s progress-read failures and clears a terminal acce
   await waitFor(()=>expect(screen.queryByRole("button",{name:"Retry progress check"})).toBeNull());
   expect(progress).toHaveBeenCalledTimes(2);expect(screen.queryByRole("status")).toBeNull();c.client.clear();
 });
+
+
+// Keyboard-owned retrieval details survive automatic scrolling and delayed pointer-leave events.
+it("retains and reanchors a focused tooltip until focus leaves or Escape is pressed", async () => {
+  const c = render(<CostFreshness cost={cost}/>);
+  const button = screen.getByRole("button", {name: "Cost retrieval time"});
+  const trigger = button.parentElement!;
+  const visible = {left:100, right:120, top:200, bottom:220, width:20, height:20, x:100, y:200, toJSON:()=>({})};
+  const rectangle = vi.spyOn(button, "getBoundingClientRect").mockReturnValue(visible);
+  await userEvent.tab();
+  expect(button).toHaveFocus();
+  expect(screen.getByRole("tooltip")).toBeVisible();
+  vi.useFakeTimers();
+  try {
+    fireEvent.mouseLeave(trigger);
+    act(() => vi.advanceTimersByTime(200));
+    expect(screen.getByRole("tooltip")).toBeVisible();
+    fireEvent(window, new Event("scroll"));
+    expect(screen.getByRole("tooltip")).toBeVisible();
+    fireEvent(window, new Event("resize"));
+    expect(screen.getByRole("tooltip")).toBeVisible();
+    rectangle.mockReturnValue({...visible, left:-40, right:-20});
+    fireEvent(window, new Event("scroll"));
+    expect(screen.queryByRole("tooltip")).toBeNull();
+    rectangle.mockReturnValue(visible);
+    act(() => { button.blur(); button.focus(); });
+    expect(screen.getByRole("tooltip")).toBeVisible();
+    fireEvent.keyDown(button, {key:"Escape"});
+    expect(screen.queryByRole("tooltip")).toBeNull();
+    fireEvent(window, new Event("scroll"));
+    expect(screen.queryByRole("tooltip")).toBeNull();
+  } finally {
+    vi.useRealTimers();
+    c.unmount();
+  }
+});

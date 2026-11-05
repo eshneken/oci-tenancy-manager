@@ -47,7 +47,13 @@ test("check a qualified child through HTTPS and the separate native worker", asy
     const tooltip=row.getByRole("button",{name:/Cost retrieval time/});
     await tooltip.scrollIntoViewIfNeeded();await tooltip.blur();await tooltip.focus();
     await expect(page.getByRole("tooltip")).toContainText("OTM retrieved");
-    const box=await page.getByRole("tooltip").boundingBox();expect(box!.x).toBeGreaterThanOrEqual(0);expect(box!.x+box!.width).toBeLessThanOrEqual(width);
+    // Focused details remain visible through the scroll/resize used to bring the trigger on screen.
+    await page.evaluate(() => window.dispatchEvent(new Event("scroll")));
+    await expect(page.getByRole("tooltip")).toBeVisible();
+    const box=await page.getByRole("tooltip").boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.x+box!.width).toBeLessThanOrEqual(width);
     await page.keyboard.press("Escape");await expect(page.getByRole("tooltip")).toHaveCount(0);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     await page.screenshot({path:resolve(".local-dev/browser",`cost-inventory-${width}.png`),fullPage:true});

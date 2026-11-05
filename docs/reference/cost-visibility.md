@@ -176,3 +176,11 @@ CI failure summaries expose only bounded test identifiers and, for browser failu
 file/line/column positions in the explicitly known public browser sources. They never export raw
 assertions, path prefixes, database values, screenshots or browser context. This permits diagnosis
 of hosted-only failures while retaining the publication boundary.
+
+
+Keyboard focus owns the retrieval tooltip until blur, Escape, explicit trigger toggling, outside interaction or the trigger
+leaving the viewport. While the focused trigger stays visible, scroll/resize repositions the open
+tooltip without reopening dismissed details. A delayed pointer-leave timer does not dismiss
+keyboard-owned information. Hover-only details retain their existing dismissal behavior. The
+regression replays delayed pointer leave and viewport movement; native browser checks retain exact
+viewport bounds and require a non-null visible tooltip before reading its geometry.

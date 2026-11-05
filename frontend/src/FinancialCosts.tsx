@@ -33,32 +33,47 @@ export function CostFreshness({ cost, name }: { cost: CostView; name?: string })
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState({ left: 8, top: 8 });
   const container = useRef<HTMLSpanElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
   const id = useId();
   const pointerWasOpen = useRef(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // A short hover grace period lets the pointer cross from the trigger into its fixed popover.
   function keepOpen() { if (hideTimer.current) clearTimeout(hideTimer.current); }
-  function hideSoon() { keepOpen(); hideTimer.current = setTimeout(() => setOpen(false), 160); }
+  // Pointer movement must not dismiss information still owned by keyboard focus.
+  function hideSoon() {
+    keepOpen();
+    hideTimer.current = setTimeout(() => {
+      if (document.activeElement !== trigger.current) setOpen(false);
+    }, 160);
+  }
   useEffect(() => () => { if (hideTimer.current) clearTimeout(hideTimer.current); }, []);
   useEffect(() => {
     if (!open) return;
-    // Dismiss an open popover on outside interaction or viewport movement rather than leaving it detached.
+    // Dismiss only pointer interactions outside this trigger and its details.
     function outside(event: PointerEvent) { if (!container.current?.contains(event.target as Node)) setOpen(false); }
-    function close() { setOpen(false); }
+    // Reanchor focused visible details; viewport changes never reopen a dismissed tooltip.
+    function viewportChanged() {
+      const box = trigger.current?.getBoundingClientRect();
+      if (document.activeElement === trigger.current && box && box.bottom > 0 && box.top < window.innerHeight && box.right > 0 && box.left < window.innerWidth) positionTooltip(box);
+      else setOpen(false);
+    }
     document.addEventListener("pointerdown", outside);
-    window.addEventListener("resize", close);
-    window.addEventListener("scroll", close, true);
-    return () => { document.removeEventListener("pointerdown", outside); window.removeEventListener("resize", close); window.removeEventListener("scroll", close, true); };
+    window.addEventListener("resize", viewportChanged);
+    window.addEventListener("scroll", viewportChanged, true);
+    return () => { document.removeEventListener("pointerdown", outside); window.removeEventListener("resize", viewportChanged); window.removeEventListener("scroll", viewportChanged, true); };
   }, [open]);
   // Anchor a bounded tooltip above the control, clamping both narrow and scrolled viewports.
+  function positionTooltip(box = trigger.current!.getBoundingClientRect()) {
+    setPosition({ left: Math.max(8, Math.min(box.left, window.innerWidth - 288)), top: Math.max(8, Math.min(box.top - 70, window.innerHeight - 80)) });
+  }
+  // Only direct trigger interaction opens details; a stale viewport event cannot reopen them.
   function show() {
     keepOpen();
-    const box = container.current!.getBoundingClientRect();
-    setPosition({ left: Math.max(8, Math.min(box.left, window.innerWidth - 288)), top: Math.max(8, Math.min(box.top - 70, window.innerHeight - 80)) });
+    positionTooltip();
     setOpen(true);
   }
   return <span ref={container} className="cost-freshness" onMouseEnter={show} onMouseLeave={hideSoon}>
-    <button type="button" className="cost-info" aria-label={"Cost retrieval time" + (name ? " for " + name : "")} aria-describedby={open ? id : undefined} aria-expanded={open} onFocus={show} onBlur={() => setOpen(false)} onPointerDown={() => { pointerWasOpen.current = open; }} onClick={event => { if (event.detail > 0 && pointerWasOpen.current) setOpen(false); else show(); }} onKeyDown={event => { if (event.key === "Escape") setOpen(false); }}>ⓘ</button>
+    <button ref={trigger} type="button" className="cost-info" aria-label={"Cost retrieval time" + (name ? " for " + name : "")} aria-describedby={open ? id : undefined} aria-expanded={open} onFocus={show} onBlur={() => setOpen(false)} onPointerDown={() => { pointerWasOpen.current = open; }} onClick={event => { if (event.detail > 0 && pointerWasOpen.current) setOpen(false); else show(); }} onKeyDown={event => { if (event.key === "Escape") setOpen(false); }}>ⓘ</button>
     {open && <span id={id} role="tooltip" className="cost-tooltip" onMouseEnter={keepOpen} onMouseLeave={hideSoon} style={position}>{cost.retrieved_at ? `OTM retrieved ${new Date(cost.retrieved_at).toLocaleString("en-US", { timeZone: "UTC", timeZoneName: "short" })}` : "No cost retrieval recorded"}</span>}
   </span>;
 }
