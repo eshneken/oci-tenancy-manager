@@ -1,3 +1,4 @@
+import type { CostRefreshReceipt, CostRefreshRequest } from "./contracts";
 import type { EmailPolicyView } from "./contracts";
 import type { ResponsibilityCommand } from "./contracts";
 import type { ConfigurationDriftQuery, ConfigurationDriftDirectory, ConfigurationCheckSummary, ConfigurationCheckRequest } from "./contracts";
@@ -249,6 +250,8 @@ export const api = {
     }
     return response.json() as Promise<ActionReceipt>;
   },
+  // Queue current-month reads without trusting browser-supplied OCI source identities.
+  refreshCosts(command: CostRefreshRequest) { return request<CostRefreshReceipt>("/api/costs/refresh", "POST", command); },
   // Read only registered children, not a fabricated cloud-wide tenancy inventory.
   tenancies(query: TenancyQuery, signal?: AbortSignal) {
     const params = new URLSearchParams(

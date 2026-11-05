@@ -1697,7 +1697,7 @@ dialog p {
 /* Creation metadata belongs to the status, with the same hover and keyboard affordance. */
 .tenancy-status-info { position: relative; display: inline-flex; }
 .tenancy-status-label:focus-visible { outline: 3px solid #2459ed; outline-offset: 3px; }
-.tenancy-created-tooltip { position: absolute; z-index: 20; inset-inline-end: 0; bottom: calc(100% + 8px); width: max-content; max-width: min(16rem, calc(100vw - 48px)); padding: 8px 12px; border-radius: 3px; background: #132035; color: #fff; font-size: 12px; font-weight: 400; line-height: 1.5; white-space: normal; visibility: hidden; pointer-events: none; }
+.tenancy-created-tooltip { position: fixed; z-index: 20; inset-inline-end: auto; bottom: auto; width: 16rem; max-width: min(16rem, calc(100vw - 48px)); padding: 8px 12px; border-radius: 3px; background: #132035; color: #fff; font-size: 12px; font-weight: 400; line-height: 1.5; white-space: normal; visibility: hidden; pointer-events: none; }
 .tenancy-status-info:not([data-tooltip-dismissed]):hover .tenancy-created-tooltip,
 .tenancy-status-info:not([data-tooltip-dismissed]):focus-within .tenancy-created-tooltip { visibility: visible; }
 .tenancy-overrides h2 { margin-top: 0; }
@@ -1749,3 +1749,27 @@ dialog p {
 .table-scroll .configuration-status-messages { align-items: flex-start; flex-direction: column; min-width: 170px; }
 .configuration-unverified { background: #f0f2f5; color: #52647d; }
 .configuration-status-links .configuration-issue-link { margin: 0; font-size: 11px; line-height: 1.4; }
+
+/* Financial values share one compact inventory; only qualified same-response comparisons get color. */
+.cost-pair,.cost-header-pair,.cost-forecast,.cost-panel-heading,.cost-refresh,.cost-detail-health { display:flex; align-items:center; gap:.5rem; }
+.cost-panel-heading { justify-content:space-between; flex-wrap:wrap; gap:1rem; }
+.cost-refresh { flex-wrap:wrap; max-width:30rem; }
+.cost-refresh .button { flex-shrink:0; }
+.cost-refresh [role=status],.cost-refresh [role=alert] { font-size:.8rem; }
+.cost-number { font-variant-numeric:tabular-nums; white-space:nowrap; padding:.18rem .35rem; border-radius:3px; }
+.cost-over { background:#fce4e6; color:#8e1427; }
+.cost-forecast-over { background:#fff0cc; color:#725005; }
+.cost-within { background:#e7f3ed; color:#20553e; }
+.cost-separator { color:var(--muted,#54647a); }
+.cost-info { display:inline-flex; align-items:center; justify-content:center; min-width:44px; min-height:44px; border:0; background:transparent; color:#526783; cursor:pointer; }
+.cost-info:focus-visible { outline:2px solid #2455ee; outline-offset:-3px; }
+.cost-tooltip { position:fixed; z-index:100; width:280px; max-width:calc(100vw - 16px); padding:.75rem; background:#13243c; color:white; font-size:.8rem; border-radius:3px; box-shadow:0 3px 12px #13243c33; white-space:normal; }
+.cost-detail-values { display:flex; flex-wrap:wrap; gap:2rem; margin:1.5rem 0 .5rem; }
+.cost-detail-values dt { font-size:.8rem; color:#526783; margin-bottom:.5rem; }
+.cost-detail-values dd { margin:0; font-size:1.25rem; }
+.cost-detail-health { margin-bottom:.75rem; }
+.cost-health { color:#725005; }
+.cost-actual-cell,.cost-forecast-cell { min-width:10rem; }
+@media(max-width:640px) { .cost-panel-heading { align-items:flex-start; } .cost-detail-values { gap:1rem; } }
+
+.cost-panel-heading h2 { margin:0; }
