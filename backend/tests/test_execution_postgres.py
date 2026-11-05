@@ -350,3 +350,21 @@ def test_forward_upgrade_preserves_existing_acceptance_and_immutable_intent(pg_e
             ).scalar_one()
             == 1
         )
+
+
+# Host/VM clock skew must not postpone jobs that were explicitly admitted for immediate execution.
+def test_immediate_admission_ignores_host_eta_clock(pg_case):
+    from datetime import UTC, datetime, timedelta
+    from unittest.mock import patch
+
+    future = datetime.now(UTC) + timedelta(seconds=5)
+    with patch("procrastinate.utils.datetime_from_timedelta_params", return_value=future):
+        receipt = accepted(pg_case)
+    with pg_case.engine.connect() as connection:
+        due = connection.scalar(
+            text(
+                "SELECT scheduled_at FROM public.procrastinate_jobs WHERE args->>'operation_id'=:id"
+            ),
+            {"id": str(receipt.operation_id)},
+        )
+    assert due is None

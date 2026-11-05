@@ -39,8 +39,8 @@ class InspectionEnqueuer:
 
     # Defer one fixed capability without inventing a no-op worker or claiming completion.
     #
-    # The registered handler currently supports simulated inspection only, with an injected
-    # authority. Real OCI and corporate entitlement composition remain separate work.
+    # Registered simulated handlers cover inspection, lifecycle, configuration and cost reads.
+    # Real OCI and corporate entitlement composition remain separate work.
     def enqueue(self, connection: Connection, operation_id: UUID, *, delay_seconds=0) -> None:
         raw = require_transaction(connection)
         # Prefer builtins, then migration-owned objects; explicitly put temp relations last.
@@ -52,5 +52,6 @@ class InspectionEnqueuer:
             queue=self.queue,
             connection=raw,
             lock="operation:" + str(operation_id),
-            schedule_in={"seconds": delay_seconds},
+            # None means immediately eligible; host-derived zero ETAs can be ahead of DB time.
+            schedule_in={"seconds": delay_seconds} if delay_seconds else None,
         ).defer(operation_id=str(operation_id))

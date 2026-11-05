@@ -35,7 +35,8 @@ class NotificationEnqueuer:
             queue=self.queue,
             connection=raw,
             lock="email:" + str(notification_id),
-            schedule_in={"seconds": delay_seconds},
+            # None means immediately eligible; host-derived zero ETAs can be ahead of DB time.
+            schedule_in={"seconds": delay_seconds} if delay_seconds else None,
         ).defer(notification_id=str(notification_id))
 
 

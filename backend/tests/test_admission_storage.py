@@ -195,8 +195,11 @@ def test_native_enqueue_has_fixed_capability_and_reference_only_payload():
         queue=OPERATIONS_QUEUE,
         connection=raw,
         lock="operation:" + str(identifier),
-        schedule_in={"seconds": 0},
+        schedule_in=None,
     )
     app.configure_task.return_value.defer.assert_called_once_with(operation_id=str(identifier))
+    with patch("otm.storage.enqueue.require_transaction", return_value=raw):
+        adapter.enqueue(connection, identifier, delay_seconds=30)
+    assert app.configure_task.call_args.kwargs["schedule_in"] == {"seconds": 30}
     app.open.assert_not_called()
     connection.commit.assert_not_called()

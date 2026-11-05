@@ -178,3 +178,14 @@ state commit together. Exceptions roll back that local simulation and attempt sa
 This bounded simulation is not the network-outside-transaction contract required of a future OCI
 adapter. The inspection algorithm/guards above retain their original distinct read capability.
 Final new worker tests/security evidence remain in progress.
+
+
+## Immediate work and delayed retries
+
+Immediate operation and email admission uses Procrastinate's unscheduled form (`schedule_in=None`),
+so its native row has no future `scheduled_at` threshold. A zero-second host-derived ETA can still
+be ahead of the database clock and make a one-shot worker exit without picking up that work.
+Immediate means eligible for fetching, subject to queue/lock/worker availability; it does not promise
+instant completion. Positive retry delays retain native ETA scheduling. Transaction boundaries,
+reference-only payloads, authorization and effect/retry safety remain unchanged. Regression tests
+include a host clock converter five seconds ahead and unchanged positive retry delays.
