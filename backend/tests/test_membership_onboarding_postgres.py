@@ -294,7 +294,9 @@ def test_legacy_onboarding_completes_without_binding_backfill(workflow_case, ver
 
     # Freeze an old server contract at admission to exercise real replay semantics, not JSON edits.
     def freeze_legacy(**fields):
-        return OrganizationIntent(**{**fields, "onboarding_version": version})
+        return OrganizationIntent(
+            **{**fields, "onboarding_version": version, "presence_connection_contract": None}
+        )
 
     extra = (
         {"import_ocid": "ocid1.tenancy.oc1..otmsimlegacycapture"}

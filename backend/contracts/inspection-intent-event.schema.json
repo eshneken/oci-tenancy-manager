@@ -1493,6 +1493,19 @@
           "title": "Policy Revision",
           "type": "string"
         },
+        "presence_connection_contract": {
+          "anyOf": [
+            {
+              "const": "simulated-user-presence-1",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Presence Connection Contract"
+        },
         "target": {
           "$ref": "#/$defs/LifecycleTarget"
         },

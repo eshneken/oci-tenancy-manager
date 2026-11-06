@@ -195,7 +195,10 @@ def test_insert_fault_normalization_and_retirement_scope(registry):
     assert caught.value.__suppress_context__
     assert connection.begin_nested.return_value.__exit__.called
     connection = MagicMock()
-    with patch("otm.storage.managed_bindings.require_transaction"):
+    with (
+        patch("otm.storage.managed_bindings.require_transaction"),
+        patch("otm.storage.user_presence_connections.require_transaction"),
+    ):
         retire_bindings(connection, c.intent.workspace_id, c.child["id"], c.row["id"], NOW)
     statement = connection.execute.call_args.args[0]
     assert statement.compile().params["state"] == "retired"

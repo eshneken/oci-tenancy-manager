@@ -360,3 +360,19 @@ This supersedes earlier statements that no Required users UI/API exists, only fo
 identity-record subset. The broader access assignments/context/credential heads, observations,
 readiness and repair model remains future work. No table/ER change is introduced. Local testing is
 covered by the [review runbook](../how-to/required-users-runbook.md); real-provider tests remain Pending.
+
+
+## Presence-only simplification and connection checkpoint — 6 November 2026
+
+The user approved exact identity bindings plus one automation connection revision for the first
+presence-only check. Access-assignment/profile and separate credential/context generation tables
+are deferred for this capability; broader privilege, repair and credential custody work remains.
+Authentication failure is unverified; no recovery/parent fallback is introduced.
+
+The [implemented 14-field connection model and ER](../reference/user-presence-connections.md) records
+the scoped simulated-only table, accepted onboarding marker, atomic capture, immutable provenance,
+legacy no-backfill behavior and verified termination retirement. This is a connection-registration
+checkpoint, not a check job/API, live signer, privilege profile or new UI action. The next integration
+must qualify current lifecycle, bindings, connection revision, selected provider and admin authority
+before/after reads. Earlier text requiring assignment IDs for the first presence check is superseded;
+future permission/repair requirements are not waived.

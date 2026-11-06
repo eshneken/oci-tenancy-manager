@@ -74,7 +74,14 @@ def test_actual_record_projection_and_read_only_behavior(workflow_case, kind):
 def test_legacy_unbound_and_retired_records_are_not_cloud_health(workflow_case):
     c = workflow_case
     person = next(p for p in c.store.head(c.principal).people if p.email == "engineer@example.test")
-    _, first = action(c, person.id, "create_tenancy")
+    from otm.tenancies.contracts import OrganizationIntent
+
+    # Preserve the accepted legacy shape before the connection marker existed.
+    def legacy(**fields):
+        return OrganizationIntent(**{**fields, "presence_connection_contract": None})
+
+    with patch("otm.tenancies.workflows.OrganizationIntent", side_effect=legacy):
+        _, first = action(c, person.id, "create_tenancy")
     with patch("otm.storage.managed_bindings.capture_bindings"):
         complete_setup(c, first.operation_id)
     old = c.workflow.tenancies(c.principal, TenancyQuery()).items[0]

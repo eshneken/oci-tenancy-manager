@@ -1,14 +1,16 @@
 # Required-user presence boundary
 
-This is the first internal access-health foundation. It implements exact-identity presence reads
+This is the current internal presence-only boundary. It implements exact-identity presence reads
 for **automation** and **recovery** users, independently per subject. It does not yet add an Access
-screen, API route, database table, native job, scheduled scan, notification or repair action.
+check screen/API, check-result table, native job, scheduled scan, notification or repair action.
+A separate [simulated connection table](user-presence-connections.md) is now implemented.
 The audit user remains V2. Existing saved tenancies are not backfilled or declared healthy.
 
 New version 3 onboarding now retains [exact permanent-user capture evidence](tenancy-onboarding.md#permanent-user-capture--6-november-2026)
 before temporary cleanup. Historical operations are not backfilled. Fresh captures now also retain [canonical domain/user bindings](managed-object-bindings.md).
-Access-assignment/context/credential heads are not yet implemented. Establish those scoped heads
-before composing presence reads into an application worker or UI.
+The approved presence-only integration uses a scoped automation connection revision rather than
+access-assignment/profile or separate credential/context generation heads. These broader models
+remain future privilege/repair work.
 Never reconstruct a required identity from a username, email, successful setup label or naming rule.
 
 ## What a result establishes
@@ -30,21 +32,21 @@ from other unverified conditions.
 ## Typed field map
 
 Source types live in `backend/src/otm/providers/required_user_contracts.py`; this is the narrow
-`required-user-presence-1` internal message version, not the full proposed access_observation/v1.
+`required-user-presence-2` internal message version, not the full proposed access_observation/v1.
 No HTTP/generated public contract is added in this checkpoint.
 
 | Model | Fields / boundary |
 | --- | --- |
-| RequiredUserTarget | Inherited organization_id, parent_tenancy_ocid, tenancy_ocid; workspace_id, registered tenancy_id, purpose, subject_binding_id, binding_generation, access_assignment_id, access_generation, identity_domain_binding_id, domain_ocid, scim_resource_id, nullable provider_ocid, user_name. Only automation/recovery and a child distinct from its parent are accepted. Names are labels, never lookup/adoption keys. |
-| RequiredUserReadContext | Existing ExecutionContext: workspace_id, operation_id, step_key, attempt_id, intent_revision, execution_generation, access_binding_id, credential_generation; adds context_generation and nullable credential_version_id. This describes the inspecting authority, independently of the subject being checked. Null is explicit, never an alternative-credential fallback. |
+| RequiredUserTarget | Inherited organization_id, parent_tenancy_ocid, tenancy_ocid; workspace_id, registered tenancy_id, purpose, subject_binding_id, binding_generation, identity_domain_binding_id, domain_ocid, scim_resource_id, nullable provider_ocid, user_name. Only automation/recovery and a child distinct from its parent are accepted. Names are labels, never lookup/adoption keys. |
+| RequiredUserReadContext | workspace_id, operation_id, step_key, attempt_id, intent_revision, execution_generation, connection_id, connection_revision. The exact selected automation connection is independent of the observed user; no credential/profile IDs or fallback are invented. |
 | InspectRequiredUser | contract_version, context, target. Context/target workspace must agree. This internal command grants no authorization. |
 | ObservedRequiredUser | Actual domain_ocid, scim_resource_id, nullable provider_ocid, user_name. OCI and SCIM identifiers are kept separate; an observed name change cannot select another identity. |
 | RequiredUserObservation | contract_version, context, target, captured_at, nullable read_id, checked_domain_ocid, checked_scim_resource_id, state, safe_code, authorized, complete, nullable observed. Confirmed states require nonnull read/checked-identity references. Unknown forbids complete coverage and observed identity facts. |
 
-References/generations are transport provenance in this foundation, not newly implemented foreign
-keys or proof that a current database assignment exists. `read_id` is an opaque per-read correlation,
+Transport references do not prove current authority. The scoped connection and canonical bindings
+now have persisted foreign keys; dispatch must still resolve/recheck their current state. `read_id` is an opaque per-read correlation,
 not a durable audit receipt or repair authority. The future worker must resolve/recheck live
-administrator/machine authority, active assignments, lifecycle and credential/binding generations
+administrator/machine authority, current connection revision, lifecycle and binding generations
 before and after acquisition, then seal separate per-subject evidence/current heads. A pairing
 wrapper cannot perform those database checks by comparing echoed fields alone.
 
@@ -72,12 +74,14 @@ credentials or eventual consistency. No account is created, removed, repaired or
 
 ## Integration order and qualification
 
-1. Implement exact permanent identity/domain binding capture from verified onboarding readback;
-   existing unrecorded bindings remain unverified, with no guessed historical backfill.
-2. Add durable scoped assignments/observations, authenticated read-only checks and the Required users
-   page using current-generation guards and the existing operation/native worker machinery.
-3. Add independently qualified signer/privilege/console/recovery-readiness probes, bounded identity
-   repair and event-driven notifications. Password custody/disclosure/rotation is a separate slice.
+1. Done: exact permanent identity/domain bindings from verified onboarding readback; historical
+   missing bindings remain unverified with no guessed backfill.
+2. Done: scoped simulated automation connection registration. Pending: per-subject observations,
+   authenticated read-only check admission/dispatch and current-revision publication through the
+   existing operation/native worker machinery. The identity-record section already exists.
+3. Later: independently qualified signer/privilege/console/recovery-readiness probes, bounded identity
+   repair and event-driven notifications. Password custody/disclosure/rotation remains separate.
+
 
 Unit tests exercise both purposes, exact subject scope, correct absence versus domain failure,
 partial/denied/timeout/delayed/unsupported reads, same-name nonadoption, returned context/generation
@@ -87,13 +91,17 @@ remain regression gates; they do not yet execute this uncomposed presence capabi
 remain pending in [the pending account-read checklist](../how-to/configuration-drift-runbook.md#pending-required-user-presence-qualification).
 
 
-Fresh canonical identity bindings now exist as described in the
-[binding field map](managed-object-bindings.md). They do not themselves supply the required target's
-access_assignment_id/access_generation or the inspecting credential/context heads. Historical
-captures remain unbound; no synthetic assignment IDs are generated to bypass this integration step.
-
+Fresh canonical identity bindings and the scoped simulated automation connection are implemented.
+They do not imply live signing, current presence or repair authority. Older captures remain unbound;
+no assignment or credential IDs are invented to bypass this integration boundary.
 
 The later [Required users identity-record view](required-users-screen.md) now exposes these stored
 facts in tenancy detail. Earlier no-UI statements describe the prior checkpoint; live presence/
 permission checks, authority heads, readiness and repair are still not composed by this read-only
 section. See its field map and local test runbook for the implemented boundary.
+
+
+The approved presence-only simplification now uses [one simulated automation connection revision](user-presence-connections.md). Earlier assignment/context/credential-head prerequisites above describe
+the withdrawn dependency for presence-only reads, not a requirement to fabricate IDs. Version 1
+was internal and had no saved public presence results; version 2 rejects old fields. The connection
+foundation is persisted, while observation jobs, publication and Check now are still future work.

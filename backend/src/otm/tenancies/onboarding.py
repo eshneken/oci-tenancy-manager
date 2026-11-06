@@ -1,6 +1,7 @@
 """Persist guided onboarding in existing operations and steps; no second workflow engine."""
 
 import json
+from contextlib import nullcontext
 from uuid import uuid4
 
 from sqlalchemy import select, update
@@ -406,23 +407,29 @@ def advance(connection, row, intent, facade, at):
                 facade.onboarding_step(intent, "verify_required", inspection["inputs"]["discovery"])
             else:
                 facade.onboarding_step(intent, current, inspection["inputs"]["discovery"])
-            captured_event = save_step(
-                connection,
-                row,
-                current,
-                at,
-                inputs={},
-                payload=OnboardingEvidence(
-                    step=current,
-                    outcome="verified",
-                    safe_code="ONBOARDING_VERIFIED",
-                    required_users=captured,
-                ),
-            )
-            if captured is not None:
-                from otm.storage.managed_bindings import capture_bindings
+            # Capture evidence, identities and opted-in connection either all persist or roll back.
+            with connection.begin_nested() if captured is not None else nullcontext():
+                captured_event = save_step(
+                    connection,
+                    row,
+                    current,
+                    at,
+                    inputs={},
+                    payload=OnboardingEvidence(
+                        step=current,
+                        outcome="verified",
+                        safe_code="ONBOARDING_VERIFIED",
+                        required_users=captured,
+                    ),
+                )
+                if captured is not None:
+                    from otm.storage.managed_bindings import capture_bindings
 
-                capture_bindings(connection, row, intent, captured, captured_event, at)
+                    capture_bindings(connection, row, intent, captured, captured_event, at)
+                if captured is not None:
+                    from otm.storage.user_presence_connections import capture_connection
+
+                    capture_connection(connection, row, intent, captured_event, at)
             # A known setup effect prevents the no-effect cancellation path from abandoning it.
             connection.execute(
                 update(operation)

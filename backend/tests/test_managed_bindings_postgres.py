@@ -228,7 +228,14 @@ def test_termination_retires_bindings_without_deleting_history(workflow_case, wh
 def test_historical_capture_is_not_materialized_on_redelivery(workflow_case):
     c = workflow_case
     person = next(p for p in c.store.head(c.principal).people if p.email == "engineer@example.test")
-    _, receipt = action(c, person.id, "create_tenancy")
+    from otm.tenancies.contracts import OrganizationIntent
+
+    # Preserve the accepted legacy shape before the connection marker existed.
+    def legacy(**fields):
+        return OrganizationIntent(**{**fields, "presence_connection_contract": None})
+
+    with patch("otm.tenancies.workflows.OrganizationIntent", side_effect=legacy):
+        _, receipt = action(c, person.id, "create_tenancy")
     with patch("otm.storage.managed_bindings.capture_bindings"):
         complete_setup(c, receipt.operation_id)
     assert bindings(c) == []

@@ -44,6 +44,8 @@ packages = ["src/otm"]
 
 # Deploy the frozen migration assets alongside the package; never bundle local environments.
 [tool.hatch.build.targets.wheel.force-include]
+"migrations/versions/0024_user_presence_connections.py" = "otm_migrations/migrations/versions/0024_user_presence_connections.py"
+"migrations/sql/0024-user-presence-connections.sql" = "otm_migrations/migrations/sql/0024-user-presence-connections.sql"
 "migrations/versions/0021_financial_collection.py" = "otm_migrations/migrations/versions/0021_financial_collection.py"
 "migrations/sql/0021-financial-collection.sql" = "otm_migrations/migrations/sql/0021-financial-collection.sql"
 "migrations/versions/0022_onboarding_users.py" = "otm_migrations/migrations/versions/0022_onboarding_users.py"

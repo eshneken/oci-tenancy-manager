@@ -1024,3 +1024,15 @@ retained records; no retained facts after401/403; private cache isolation/invali
 keyboard disclosures/refresh/source links and responsive widths1280/768/390/320. Use actual SQL
 and installed worker/browser flows as well as unit assertions. No live health/readiness claim is
 qualified; those cases remain Pending in the [OCI manifest](how-to/real-oci-test-manifest.md).
+
+
+## Presence-only connection regression matrix — 6 November 2026
+
+See the [implemented field/model guide](reference/user-presence-connections.md). Required cases:
+create/import capture; old marker-absent v3 captures remain unbound; exact replay versus conflict;
+whole capture rollback/retry before cleanup; current domain/automation role/source FKs; forged
+inserts while the child is legitimately pending; an in-memory marker cannot alter accepted intent;
+both deletion entry points retire, failed initiation preserves; API SELECT only, worker immutable
+columns denied; owner-only reset inventory; package includes frozen SQL/version/hash. Internal
+version 2 rejects obsolete assignment and credential fields, with independent connection-revision
+and user/domain fixture tests. No new UI control or live presence evidence is claimed by this slice.

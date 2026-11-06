@@ -1990,3 +1990,19 @@ entirely future work. Configuration objects keep their existing storage; future 
 own handlers/migrations. Access assignments, context/credential heads, current-generation checks,
 replacement and Required users UI remain future integration. An active binding is an identity mapping,
 not healthy access or authority to repair/disclose credentials. Saved previews remain unchanged.
+
+
+## Presence-only simplification and connection checkpoint — 6 November 2026
+
+The user approved exact identity bindings plus one automation connection revision for the first
+presence-only check. Access-assignment/profile and separate credential/context generation tables
+are deferred for this capability; broader privilege, repair and credential custody work remains.
+Authentication failure is unverified; no recovery/parent fallback is introduced.
+
+The [implemented 14-field connection model and ER](../reference/user-presence-connections.md) records
+the scoped simulated-only table, accepted onboarding marker, atomic capture, immutable provenance,
+legacy no-backfill behavior and verified termination retirement. This is a connection-registration
+checkpoint, not a check job/API, live signer, privilege profile or new UI action. The next integration
+must qualify current lifecycle, bindings, connection revision, selected provider and admin authority
+before/after reads. Earlier text requiring assignment IDs for the first presence check is superseded;
+future permission/repair requirements are not waived.

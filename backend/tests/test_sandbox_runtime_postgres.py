@@ -652,7 +652,18 @@ def test_installed_identity_binding_roles(runtime):
             ).all()
             == []
         )
+    with c.api.connect() as connection:
+        assert (
+            connection.execute(
+                text("SELECT * FROM public.otm_user_presence_connection WHERE false")
+            ).all()
+            == []
+        )
     for statement in (
+        "INSERT INTO public.otm_user_presence_connection DEFAULT VALUES",
+        "UPDATE public.otm_user_presence_connection SET state='retired' WHERE false",
+        "DELETE FROM public.otm_user_presence_connection WHERE false",
+        "TRUNCATE public.otm_user_presence_connection",
         "INSERT INTO public.otm_managed_object_binding DEFAULT VALUES",
         "UPDATE public.otm_managed_object_binding SET state='retired' WHERE false",
         "DELETE FROM public.otm_managed_object_binding WHERE false",
@@ -665,6 +676,24 @@ def test_installed_identity_binding_roles(runtime):
     worker = maintenance_engine(database_url(c.state, worker=True), None)
     try:
         with worker.connect() as connection:
+            assert connection.scalar(
+                text(
+                    "SELECT has_table_privilege(current_user,"
+                    "'public.otm_user_presence_connection','INSERT')"
+                )
+            )
+            assert connection.scalar(
+                text(
+                    "SELECT has_column_privilege(current_user,"
+                    "'public.otm_user_presence_connection','state','UPDATE')"
+                )
+            )
+            assert not connection.scalar(
+                text(
+                    "SELECT has_column_privilege(current_user,"
+                    "'public.otm_user_presence_connection','automation_binding_id','UPDATE')"
+                )
+            )
             assert connection.scalar(
                 text(
                     "SELECT has_table_privilege(current_user,"

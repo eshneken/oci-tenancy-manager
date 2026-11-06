@@ -25,6 +25,7 @@
     "0020-email-delivery.sql": "4a5508f04922c2c4250b87c6aba52ac9a6b0a567ee46d8a511620ea56b8a04bf",
     "0021-financial-collection.sql": "8d8df5395cb09921e37358bf858b384e73526a0c6041aac9492075246c050fd5",
     "0022-onboarding-users.sql": "0365d01790d92e662b3477db55ce384d3e7647a75bb59490876609309e297173",
-    "0023-managed-identity-bindings.sql": "911ef84b844f867bc85b2c381fd8cd23354aec7f785e24a869de513d338522c0"
+    "0023-managed-identity-bindings.sql": "911ef84b844f867bc85b2c381fd8cd23354aec7f785e24a869de513d338522c0",
+    "0024-user-presence-connections.sql": "fdca14b8e766d8da61944565cb23d7312402680d39a738a897ba2751b0381d07"
   }
 }

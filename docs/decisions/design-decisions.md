@@ -1048,3 +1048,11 @@ below now supplies the grant/authentication foundation and React directory/revoc
 corporate integration and ordinary add/regrant remain future work.
 
 
+
+## Presence-only simplification — 6 November 2026
+
+Accepted: first read-only user-presence checks use exact canonical identity bindings plus the current
+automation connection revision. Defer access-assignment/profile tables until privilege checks and
+repairs. Authentication failure means Unable to verify; recovery and parent credentials are never
+automatic fallback. The [implemented connection foundation](../reference/user-presence-connections.md)
+records the minimal simulated subset, legacy behavior and remaining worker/credential qualification.

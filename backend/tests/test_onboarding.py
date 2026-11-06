@@ -440,3 +440,15 @@ def test_onboarding_http_bounded_commands_and_scoped_reads(registry):
             operation_id=row["id"], state="succeeded", provider_mode="simulated", accepted_at=NOW
         )
         assert client.post(path, json=command).status_code == 200
+
+
+# Optional connection selection stays absent in old intent bytes and cannot alter an older graph.
+def test_presence_marker_preserves_legacy_intent(registry):
+    _, intent, _, _ = case(registry)
+    raw = intent.model_dump()
+    assert "presence_connection_contract" not in raw
+    raw["presence_connection_contract"] = "simulated-user-presence-1"
+    from otm.tenancies.contracts import OrganizationIntent
+
+    with pytest.raises(ValueError, match="PRESENCE_CONNECTION_REQUIRES_FRESH_CAPTURE"):
+        OrganizationIntent.model_validate(raw)

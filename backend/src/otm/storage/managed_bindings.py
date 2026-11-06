@@ -190,3 +190,6 @@ def retire_bindings(connection, workspace_id, tenancy_id, operation_id, at):
         )
         .values(state="retired", retired_operation_id=operation_id, updated_at=at)
     )
+    from otm.storage.user_presence_connections import retire_connection
+
+    retire_connection(connection, workspace_id, tenancy_id, operation_id, at)

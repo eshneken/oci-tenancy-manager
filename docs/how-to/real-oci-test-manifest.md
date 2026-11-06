@@ -54,6 +54,12 @@ linked local runbooks are preparation and comparison material, not live qualific
 | --- | --- | --- |
 | Stored identities versus live presence | Compare the Required users cards and expanded identifiers with qualified fresh OCI onboarding. Refresh records must only reload stored facts. Removing or changing a live account must not turn registration into a health assertion: presence and permissions remain Not checked until the separate access-check flow is implemented and qualified. Retired registration does not assert OCI account deletion. | Pending |
 
+## Presence-only automation connection
+
+| Planned live scenario | Steps / expected outcome | Status |
+| --- | --- | --- |
+| Qualified connection and stale-result fencing | With the real adapter/credential resolver implemented, bind the exact canonical automation signer and child domain. Qualify reads for both user subjects; change/revoke the selected connection during a read and reject stale results. Authentication failure remains Unable to verify, never Missing. No parent/recovery fallback. Existing simulated records must not be promoted to live authority. | Pending |
+
 ## Per-slice maintenance
 
 Add new live-only scenarios here or to a linked matrix in the same slice as implementation, including

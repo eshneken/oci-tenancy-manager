@@ -1161,6 +1161,9 @@ class OrganizationWorkflows:
             action=command.action,
             baseline=baseline,
             whole_tenancy_deletion=deletion_plan is not None,
+            presence_connection_contract="simulated-user-presence-1"
+            if command.action in {"create_tenancy", "import_tenancy"}
+            else None,
             onboarding_version=3
             if command.action in {"create_tenancy", "import_tenancy"}
             else None,

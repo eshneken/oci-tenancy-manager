@@ -22,3 +22,5 @@ Private original feeds, raw evidence, screenshots and machine-specific paths are
 - [Canonical managed identity bindings](managed-identity-bindings-checkpoint-2026-11-06.md)
 
 - [Required users identity-record screen](required-users-screen-checkpoint-2026-11-06.md)
+
+- [Presence-only connection foundation](presence-connection-checkpoint-2026-11-06.md)

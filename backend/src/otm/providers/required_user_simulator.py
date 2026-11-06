@@ -7,7 +7,6 @@ from uuid import UUID, uuid4
 
 from otm.contracts import Contract, Generation, Text, UtcInstant
 from otm.providers.inspection_contracts import InspectionTarget, TenancyOcid
-from otm.providers.inspection_simulator import SimulatedAccess
 from otm.providers.required_user_contracts import (
     DomainOcid,
     InspectRequiredUser,
@@ -18,9 +17,12 @@ from otm.providers.required_user_contracts import (
 
 
 # Keep inspecting authority independent of the automation/recovery subject under observation.
-class SimulatedUserReadAccess(SimulatedAccess):
-    context_generation: Generation
-    credential_version_id: UUID | None
+class SimulatedUserReadAccess(Contract):
+    workspace_id: Text
+    connection_id: UUID
+    connection_revision: Generation
+    permitted: bool
+    tenancy_ocids: frozenset[TenancyOcid]
 
 
 # An explicit domain fixture proves scope and exact-read coverage; absent domain data is unknown.
@@ -56,7 +58,7 @@ class SimulatedRequiredUserProvider:
     # Trusted test authority references contain permission/scope facts, never usable key material.
     def set_access(self, access: SimulatedUserReadAccess) -> None:
         access = SimulatedUserReadAccess.model_validate(access)
-        self._access[(access.workspace_id, access.access_binding_id)] = access
+        self._access[(access.workspace_id, access.connection_id)] = access
 
     # Synthetic-only domain fixtures cannot point this local adapter at a real tenancy.
     def set_domain(self, domain: SimulatedIdentityDomain) -> None:
@@ -105,16 +107,8 @@ class SimulatedRequiredUserProvider:
                 state="unknown", safe_code=code, authorized=False, complete=False, **common
             )
 
-        access = self._access.get((context.workspace_id, context.access_binding_id))
-        if not access or (
-            access.credential_generation,
-            access.context_generation,
-            access.credential_version_id,
-        ) != (
-            context.credential_generation,
-            context.context_generation,
-            context.credential_version_id,
-        ):
+        access = self._access.get((context.workspace_id, context.connection_id))
+        if not access or access.connection_revision != context.connection_revision:
             return unknown("ACCESS_UNVERIFIED")
         if not access.permitted or target.tenancy_ocid not in access.tenancy_ocids:
             return unknown("ACCESS_DENIED")

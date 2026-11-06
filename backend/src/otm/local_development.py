@@ -463,6 +463,14 @@ def setup_database(root: Path, state: LocalState, project: Path) -> LocalState:
                 "GRANT INSERT,UPDATE(state,retired_operation_id,updated_at) "
                 "ON public.otm_managed_object_binding TO otm_local_worker"
             )
+            connection.exec_driver_sql(
+                "GRANT SELECT ON public.otm_user_presence_connection "
+                "TO otm_local_api,otm_local_worker"
+            )
+            connection.exec_driver_sql(
+                "GRANT INSERT,UPDATE(state,retired_operation_id,updated_at) "
+                "ON public.otm_user_presence_connection TO otm_local_worker"
+            )
             from otm.organization.reviews import initialize_existing_reviews
 
             initialize_existing_reviews(connection)

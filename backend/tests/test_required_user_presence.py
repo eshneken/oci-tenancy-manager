@@ -37,8 +37,6 @@ def case(*, with_user=True):
         purpose="automation",
         subject_binding_id=uuid4(),
         binding_generation=1,
-        access_assignment_id=uuid4(),
-        access_generation=1,
         identity_domain_binding_id=uuid4(),
         domain_ocid="ocid1.domain.oc1..otmsimdomain",
         scim_resource_id="scim-automation",
@@ -55,18 +53,14 @@ def case(*, with_user=True):
         attempt_id=uuid4(),
         intent_revision=1,
         execution_generation=1,
-        access_binding_id=uuid4(),
-        credential_generation=1,
-        context_generation=1,
-        credential_version_id=uuid4(),
+        connection_id=uuid4(),
+        connection_revision=1,
     )
     command = InspectRequiredUser(context=context, target=target)
     access = SimulatedUserReadAccess(
         workspace_id=target.workspace_id,
-        access_binding_id=context.access_binding_id,
-        credential_generation=1,
-        context_generation=1,
-        credential_version_id=context.credential_version_id,
+        connection_id=context.connection_id,
+        connection_revision=1,
         permitted=True,
         tenancy_ocids=frozenset({target.tenancy_ocid}),
     )
@@ -125,9 +119,7 @@ def test_exact_presence_and_absence(with_user, state):
     "scenario,code",
     [
         ("no_access", "ACCESS_UNVERIFIED"),
-        ("credential", "ACCESS_UNVERIFIED"),
-        ("version", "ACCESS_UNVERIFIED"),
-        ("context", "ACCESS_UNVERIFIED"),
+        ("revision", "ACCESS_UNVERIFIED"),
         ("denied", "ACCESS_DENIED"),
         ("child", "ACCESS_DENIED"),
         ("domain", "DOMAIN_UNVERIFIED"),
@@ -149,20 +141,11 @@ def test_unknown_read_matrix(scenario, code):
     command = c.command
     if scenario == "no_access":
         command = command.model_copy(
-            update={"context": c.context.model_copy(update={"access_binding_id": uuid4()})}
+            update={"context": c.context.model_copy(update={"connection_id": uuid4()})}
         )
-    elif scenario in {"credential", "version", "context"}:
-        field = {
-            "credential": "credential_generation",
-            "version": "credential_version_id",
-            "context": "context_generation",
-        }[scenario]
+    elif scenario == "revision":
         command = command.model_copy(
-            update={
-                "context": c.context.model_copy(
-                    update={field: uuid4() if scenario == "version" else 2}
-                )
-            }
+            update={"context": c.context.model_copy(update={"connection_revision": 2})}
         )
     elif scenario == "denied":
         c.provider.set_access(c.access.model_copy(update={"permitted": False}))
@@ -228,7 +211,6 @@ def test_coverage_subject_isolation():
         update={
             "purpose": "recovery",
             "subject_binding_id": uuid4(),
-            "access_assignment_id": uuid4(),
             "scim_resource_id": "scim-recovery",
             "provider_ocid": "ocid1.user.oc1..otmsimrecovery",
             "user_name": "otm_recovery",
@@ -244,7 +226,7 @@ def test_coverage_subject_isolation():
         paired.inspect(request)
 
 
-# Every changed execution or credential reference invalidates returned facts from another read.
+# Every changed execution or connection reference invalidates returned facts from another read.
 @pytest.mark.parametrize(
     "field,value",
     [
@@ -252,10 +234,8 @@ def test_coverage_subject_isolation():
         ("operation_id", uuid4()),
         ("intent_revision", 2),
         ("execution_generation", 2),
-        ("access_binding_id", uuid4()),
-        ("credential_generation", 2),
-        ("credential_version_id", uuid4()),
-        ("context_generation", 2),
+        ("connection_id", uuid4()),
+        ("connection_revision", 2),
     ],
 )
 def test_returned_context_fences(field, value):
@@ -269,14 +249,12 @@ def test_returned_context_fences(field, value):
         service.inspect(c.command)
 
 
-# Binding, assignment and coverage generations are paired independently from execution attempts.
+# Binding identities and generations are paired independently from execution attempts.
 @pytest.mark.parametrize(
     "field,value",
     [
         ("subject_binding_id", uuid4()),
         ("binding_generation", 2),
-        ("access_assignment_id", uuid4()),
-        ("access_generation", 2),
         ("identity_domain_binding_id", uuid4()),
         ("tenancy_id", uuid4()),
     ],
@@ -454,13 +432,13 @@ def test_explicit_nullable_identity_and_authority_references():
     target = c.target.model_copy(update={"provider_ocid": None})
     c.provider.set_user(c.user.model_copy(update={"provider_ocid": None}))
     assert c.service.inspect(c.command.model_copy(update={"target": target})).state == "present"
-    context = c.context.model_copy(update={"credential_version_id": None})
-    assert c.service.inspect(c.command.model_copy(update={"context": context})).state == "unknown"
-    c.provider.set_access(c.access.model_copy(update={"credential_version_id": None}))
-    assert (
-        c.service.inspect(c.command.model_copy(update={"target": target, "context": context})).state
-        == "present"
-    )
+    # Obsolete credential/profile bookkeeping is rejected, never silently accepted as authority.
+    for field in ("credential_version_id", "credential_generation", "context_generation"):
+        with pytest.raises(ValidationError):
+            RequiredUserReadContext.model_validate({**c.context.model_dump(), field: None})
+    for field in ("access_assignment_id", "access_generation"):
+        with pytest.raises(ValidationError):
+            RequiredUserTarget.model_validate({**c.target.model_dump(), field: uuid4()})
 
 
 # Accept non-synthetic identity shapes without granting authority or choosing an adapter.

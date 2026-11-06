@@ -109,3 +109,8 @@ The later [Required users identity-record view](required-users-screen.md) now ex
 facts in tenancy detail. Earlier no-UI statements describe the prior checkpoint; live presence/
 permission checks, authority heads, readiness and repair are still not composed by this read-only
 section. See its field map and local test runbook for the implemented boundary.
+
+
+The later [presence-only connection model](user-presence-connections.md) references canonical
+automation/domain bindings without duplicating identities or adding access-assignment/profile
+heads. Its simulation-only selected connection is not OCI signing or healthy-access evidence.

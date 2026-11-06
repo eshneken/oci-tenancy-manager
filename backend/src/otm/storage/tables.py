@@ -1381,3 +1381,79 @@ Index(
     postgresql_where=(managed_object_binding.c.state == "active")
     & managed_object_binding.c.scim_resource_id.is_not(None),
 )
+
+
+# One explicit simulated read connection per child; canonical bindings retain all provider identity.
+user_presence_connection = Table(
+    "otm_user_presence_connection",
+    metadata,
+    Column("id", Uuid(as_uuid=True), primary_key=True),
+    Column("workspace_id", String(256), nullable=False),
+    Column("tenancy_id", Uuid(as_uuid=True), nullable=False),
+    Column("automation_binding_id", Uuid(as_uuid=True), nullable=False),
+    Column("domain_binding_id", Uuid(as_uuid=True), nullable=False),
+    Column("revision", Integer, nullable=False),
+    Column("provider_mode", String(16), nullable=False),
+    Column("contract_version", String(64), nullable=False),
+    Column("state", String(16), nullable=False),
+    Column("created_operation_id", Uuid(as_uuid=True), nullable=False),
+    Column("source_evidence_event_id", Uuid(as_uuid=True), nullable=False),
+    Column("retired_operation_id", Uuid(as_uuid=True)),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
+    UniqueConstraint("workspace_id", "tenancy_id", "id", name="uq_presence_connection_scope"),
+    ForeignKeyConstraint(
+        ["workspace_id", "tenancy_id"],
+        ["public.otm_tenancy.workspace_id", "public.otm_tenancy.id"],
+        name="fk_presence_connection_child",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "tenancy_id", "automation_binding_id"],
+        [
+            "public.otm_managed_object_binding.workspace_id",
+            "public.otm_managed_object_binding.tenancy_id",
+            "public.otm_managed_object_binding.id",
+        ],
+        name="fk_presence_connection_signer",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "tenancy_id", "domain_binding_id"],
+        [
+            "public.otm_managed_object_binding.workspace_id",
+            "public.otm_managed_object_binding.tenancy_id",
+            "public.otm_managed_object_binding.id",
+        ],
+        name="fk_presence_connection_domain",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "created_operation_id", "source_evidence_event_id"],
+        [
+            "public.audit_event.workspace_id",
+            "public.audit_event.operation_id",
+            "public.audit_event.id",
+        ],
+        name="fk_presence_connection_source",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "retired_operation_id"],
+        ["public.otm_operation.workspace_id", "public.otm_operation.id"],
+        name="fk_presence_connection_retirement",
+    ),
+    CheckConstraint(
+        "revision=1 AND provider_mode='simulated' AND contract_version='simulated-user-presence-1'",
+        name="ck_presence_connection_version",
+    ),
+    CheckConstraint(
+        "(state='active' AND retired_operation_id IS NULL) OR "
+        "(state='retired' AND retired_operation_id IS NOT NULL)",
+        name="ck_presence_connection_state",
+    ),
+    CheckConstraint("updated_at>=created_at", name="ck_presence_connection_time"),
+)
+Index(
+    "uq_presence_connection_active",
+    user_presence_connection.c.workspace_id,
+    user_presence_connection.c.tenancy_id,
+    unique=True,
+    postgresql_where=user_presence_connection.c.state == "active",
+)

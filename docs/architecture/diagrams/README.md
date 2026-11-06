@@ -31,3 +31,5 @@ Proposed fields and relationships require implementation/provider qualification 
 runtime guarantees. The retained prototype diagram remains separate in prototype/diagrams/.
 
 - [financial-implemented](financial-implemented.mmd): exact collection/observation scope and reused operations/outbox.
+
+- [user-presence-connections-implemented](user-presence-connections-implemented.mmd) — [all 14 fields and limits](../../reference/user-presence-connections.md)

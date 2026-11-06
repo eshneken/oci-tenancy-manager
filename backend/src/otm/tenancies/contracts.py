@@ -138,6 +138,10 @@ class OrganizationIntent(Contract):
     pending_association_id: UUID | None = None
     # Existing accepted intents retain the original one-step simulator when this is absent.
     onboarding_version: Literal[1, 2, 3] | None = None
+    # New opted-in captures may register a simulated connection; absence preserves legacy bytes.
+    presence_connection_contract: Literal["simulated-user-presence-1"] | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
     # Full immutable publication snapshot; absent only for previously accepted local operations.
     baseline: BaselineVersion | None = None
     # The initiating verified mailbox is frozen separately from ownership; local testing may
@@ -166,6 +170,8 @@ class OrganizationIntent(Contract):
             or self.baseline.published_at is None
         ):
             raise ValueError("PUBLISHED_ONBOARDING_BASELINE_REQUIRED")
+        if self.presence_connection_contract is not None and self.onboarding_version != 3:
+            raise ValueError("PRESENCE_CONNECTION_REQUIRES_FRESH_CAPTURE")
         return self
 
 
