@@ -10,7 +10,7 @@ No real cloud user, permission probe, email or password disclosure is part of Ch
    children may say Not recorded; some have Recorded identities but no selected connection.
 3. Check now must be disabled when the required current bindings/connection are absent, with an
    explanation. Do not interpret this as missing cloud users or try to manufacture a connection.
-4. Refresh records reloads stored data only. Permissions stays Not checked on both cards. No reset,
+4. Refresh reloads stored data only. Permissions stays Not checked on both cards. No reset,
    repair, password control or invented successful presence result is expected.
 
 ## 2. Create or import a fresh simulated child
@@ -26,14 +26,14 @@ No real cloud user, permission probe, email or password disclosure is part of Ch
    with keyboard or mouse: the user OCIDs and SCIM IDs differ, the domain is shared, UTC recording
    times and View setup operation are available. Permissions remains Not checked twice.
 5. Select Check now. Checking… and dated previous results reflect queued/running work. Keep the
-   foreground worker running; Refresh records alone cannot execute the job.
+   foreground worker running; Refresh alone cannot execute the job.
 6. When the check finishes, expect two Present results for the normal authenticated simulated
    producer fixture and two Permissions: Not checked labels. Each card has its own Checked (UTC)
    time and View check link. These labels establish simulator existence only, not live OCI access.
 7. Open View check. Verify the actual read-only required-user operation, safe result and retained
    history. Its tenancy context returns to the child. Check operations never offer repair or create
    an actionable attention badge. The setup operation remains a separate provenance link.
-8. Reload the child URL and Refresh records. The same recorded IDs and persisted last-check results
+8. Reload the child URL and Refresh. The same recorded IDs and persisted last-check results
    should remain, while timestamps continue to describe their original acquisition.
 
 ## 3. Freshness, failures and layout

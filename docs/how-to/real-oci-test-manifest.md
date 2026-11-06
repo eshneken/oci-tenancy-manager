@@ -52,7 +52,7 @@ linked local runbooks are preparation and comparison material, not live qualific
 
 | Planned live scenario | Steps / expected outcome | Status |
 | --- | --- | --- |
-| Stored identities versus live presence | Compare the Required users cards and expanded identifiers with qualified fresh OCI onboarding. Refresh records must only reload stored facts. Registration alone must never imply current presence or permissions. Current manual results use simulation fixtures; a future qualified live exact-subject check may update Presence, while Permissions remains Not checked until its separate probe is implemented and qualified. Retired registration does not assert OCI account deletion. | Pending |
+| Stored identities versus live presence | Compare the Required users cards and expanded identifiers with qualified fresh OCI onboarding. Refresh must only reload stored facts. Registration alone must never imply current presence or permissions. Current manual results use simulation fixtures; a future qualified live exact-subject check may update Presence, while Permissions remains Not checked until its separate probe is implemented and qualified. Retired registration does not assert OCI account deletion. | Pending |
 
 ## Presence-only automation connection
 

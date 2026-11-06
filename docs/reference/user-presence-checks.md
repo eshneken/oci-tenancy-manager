@@ -135,7 +135,7 @@ Each account becomes stale at exactly 24 hours after its own captured_at, or if 
 in the future relative to server UTC. The UI replaces its primary label with **Check out of date**
 and displays the last result separately. Only a fresh check can restore a current Present/Missing
 label. This freshness threshold is currently code-owned, not a new application setting. The UI polls
-GET once per second only while pending_operation_id exists; Refresh records itself remains a GET.
+GET once per second only while pending_operation_id exists; Refresh itself remains a GET.
 An uncertain Check now response retains its request key while this component is mounted. Retrying
 uses that key; navigation/reload may discard this local memory, so inspect pending Operations first.
 Server-side committed replay remains durable when a known key is reused.

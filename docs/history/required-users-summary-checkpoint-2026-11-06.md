@@ -65,3 +65,24 @@ This is local simulation qualification and a preserved-data main-preview update,
 repository push, PR merge or cloud deployment evidence. Live OCI, daily scheduling, email, privilege
 verification, credentials and repair remain separately Pending/future work in the
 [real-provider manifest](../how-to/real-oci-test-manifest.md).
+
+## Follow-up: check eligibility and Refresh wording — 6 November 2026
+
+Required users now labels its saved-record reload **Refresh**, with a contextual accessible
+name and loading state. Refresh remains a read-only GET and never starts a presence check or
+enrolls a connection. Check now retains its existing eligibility guards. When unavailable, a
+visible, accessible notice explains the prerequisite; unconfigured registrations require a
+registered automation connection and recorded user identities. Older registrations are not
+backfilled automatically. Local testing guidance points to completed create/import setup.
+
+The added regression verifies unavailable-to-eligible rendering after a saved-record refresh
+and proves that refreshing never submits a check. Final qualification: 1,587 backend units
+(9,315/9,692 lines, 96.1102%), 459 frontend units (1,805/1,851 lines, 97.51%), and all 352
+PostgreSQL/native/HTTPS Playwright cases in 420.587 seconds, with zero failures, errors or
+skips. Build, documentation/purpose checks, publication and secret checks, dependency audits
+and Bandit pass. Independent documentation, security and UI/UX reviews pass.
+
+The matching main-preview API, worker and immutable assets were upgraded after a verified
+private backup. All 29 preexisting public tables retain identical counts and content hashes;
+no schema or data migration was needed. The parallel preview was left unchanged. This remains
+local simulation qualification, with live checks pending in the real-provider manifest.

@@ -407,7 +407,7 @@ async function organizationFlows(page: Page) {
       await expect(users.getByText("Recorded", { exact: true })).toHaveCount(2);
       await expect(users.getByText("Not checked", { exact: true })).toHaveCount(4);
       await expect(users.getByText("otm-automation", { exact: true })).toBeVisible();
-      const refresh = users.getByRole("button", { name: "Refresh records", exact: true });
+      const refresh = users.getByRole("button", { name: "Refresh required users", exact: true });
       await refresh.click();
       await expect(refresh).toBeEnabled();
       // Real HTTPS admission and the native worker publish independent fixture observations.

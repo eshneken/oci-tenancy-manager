@@ -689,7 +689,7 @@ Neutral registration states and explicit Not checked guidance remain separate fr
 ## Manual required-user presence controls — 6 November 2026
 
 The [Required users field guide](reference/required-users-screen.md) supersedes the earlier identity-
-record-only subset: authenticated Check now queues an explicit simulated read; Refresh records
+record-only subset: authenticated Check now queues an explicit simulated read; Refresh
 remains GET only. Independent Presence labels/times and View check links are separate from identity
 registration and Permissions: Not checked. The simulation banner, historical-disabled reason,
 queued progress, uncertain-request retry, stale label and auth/cache boundaries are current source

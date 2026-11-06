@@ -72,14 +72,14 @@ it("keeps loading and refresh states honest", async () => {
   const c = mount(new Promise(resolve => { complete = resolve; }));
   expect(screen.getByRole("status")).toHaveTextContent("Loading required user records");
   expect(screen.queryByText("Not recorded")).not.toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Loading records…" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Loading required users" })).toBeDisabled();
   complete(directory); await screen.findByText("otm-recovery");
   let refresh!: (value: RequiredUsersDirectory) => void;
   c.read.mockReturnValueOnce(new Promise(resolve => { refresh = resolve; }));
-  await userEvent.click(screen.getByRole("button", { name: "Refresh records" }));
-  expect(screen.getByRole("button", { name: "Refreshing records…" })).toBeDisabled();
+  await userEvent.click(screen.getByRole("button", { name: "Refresh required users" }));
+  expect(screen.getByRole("button", { name: "Refreshing required users" })).toBeDisabled();
   expect(screen.getByText("otm-recovery")).toBeVisible();
-  refresh(directory); await screen.findByRole("button", { name: "Refresh records" }); c.client.clear();
+  refresh(directory); await screen.findByRole("button", { name: "Refresh required users" }); c.client.clear();
 });
 
 // A failed read offers retry and never synthesizes unregistered accounts from a network error.
@@ -88,10 +88,10 @@ it("distinguishes initial failure and a failed refresh of retained records", asy
   expect(await screen.findByRole("alert")).toHaveTextContent("Unable to load");
   expect(screen.queryByText("Not recorded")).not.toBeInTheDocument();
   c.read.mockResolvedValue(directory);
-  await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+  await userEvent.click(screen.getByRole("button", { name: "Refresh required users" }));
   await screen.findByText("otm-automation");
   c.read.mockRejectedValueOnce(new Error("private"));
-  await userEvent.click(screen.getByRole("button", { name: "Refresh records" }));
+  await userEvent.click(screen.getByRole("button", { name: "Refresh required users" }));
   expect(await screen.findByRole("alert")).toHaveTextContent("Previously loaded records are shown");
   expect(screen.getByText("otm-automation")).toBeVisible();
   expect(screen.queryByText("private")).not.toBeInTheDocument(); c.client.clear();
@@ -117,7 +117,7 @@ it("isolates each tenancy's query cache", async () => {
 it("does not retain visible records after a denied refresh", async () => {
   const c = mount(); await screen.findByText("otm-automation");
   c.read.mockRejectedValueOnce(new ApiError(403));
-  await userEvent.click(screen.getByRole("button", { name: "Refresh records" }));
+  await userEvent.click(screen.getByRole("button", { name: "Refresh required users" }));
   await waitFor(() => expect(c.expired).toHaveBeenCalled());
   expect(screen.queryByText("otm-automation")).not.toBeInTheDocument(); c.client.clear();
 });
@@ -138,7 +138,7 @@ it("shows independent current and failed account observations", async()=>{
   await userEvent.click(screen.getAllByRole("link",{name:"View check"})[0]);
   expect(c.navigate).toHaveBeenCalledWith("/operations/"+checkId);
   c.read.mockResolvedValue({...present,users:present.users.map(u=>({...u,presence:{...u.presence!,state:"unknown"}})) as RequiredUsersDirectory["users"]});
-  await userEvent.click(screen.getByRole("button",{name:"Refresh records"}));
+  await userEvent.click(screen.getByRole("button",{name:"Refresh required users"}));
   await waitFor(()=>expect(screen.getAllByText("Unable to verify")).toHaveLength(2));
   expect(screen.queryByText("Present",{exact:true})).not.toBeInTheDocument();
   expect(screen.getAllByText("Last attempt (UTC)")).toHaveLength(2);c.client.clear();
@@ -158,7 +158,7 @@ it.each(["not_configured","tenancy_inactive","tenancy_busy","provider_unavailabl
   const c=mount({...directory,check_available:false,check_unavailable_reason:reason});
   await screen.findByText("otm-automation");
   expect(screen.getByRole("button",{name:"Check now"})).toBeDisabled();
-  expect(screen.getByText(reason==="not_configured"?/No qualified automation connection/:reason==="tenancy_inactive"?/active tenancies/:reason==="tenancy_busy"?/operation is in progress/:/provider is currently unavailable/)).toBeVisible();c.client.clear();
+  expect(screen.getByText(reason==="not_configured"?/Presence checks require a registered automation connection/:reason==="tenancy_inactive"?/active tenancies/:reason==="tenancy_busy"?/operation is in progress/:/provider is currently unavailable/)).toBeVisible();c.client.clear();
 });
 
 // Acceptance is only progress; poll the exact child until its dated results are published.
@@ -248,4 +248,24 @@ it("focuses an unavailable section without revealing retained identity facts",as
   expect(screen.getByRole("region",{name:"Required users"})).toHaveAttribute("id","required-users");
   expect(screen.queryByText("otm-automation")).not.toBeInTheDocument();
   history.replaceState(null,"","/");c.client.clear();
+});
+
+
+// Refresh never enrolls a legacy tenancy or starts a job; qualified facts alone enable Check now.
+it("explains unavailable checks and distinguishes Refresh from enrollment",async()=>{
+  const check=vi.spyOn(api,"checkRequiredUsers");
+  const c=mount({...directory,check_available:false,check_unavailable_reason:"not_configured"});
+  await screen.findByText(/Presence checks require a registered automation connection/);
+  const action=screen.getByRole("button",{name:"Check now"});
+  expect(action).toBeDisabled();
+  expect(action).toHaveAccessibleDescription(/Existing tenancies are not enrolled automatically/);
+  expect(screen.getByText(/For local testing, complete setup/)).toBeVisible();
+  const refresh=screen.getByRole("button",{name:"Refresh required users"});
+  expect(refresh).toHaveTextContent(/^Refresh$/);
+  c.read.mockResolvedValue({...directory,check_available:true,check_unavailable_reason:null});
+  await userEvent.click(refresh);
+  await waitFor(()=>expect(action).toBeEnabled());
+  expect(action).not.toHaveAttribute("aria-describedby");
+  expect(screen.queryByText(/Existing tenancies are not enrolled automatically/)).not.toBeInTheDocument();
+  expect(check).not.toHaveBeenCalled();c.client.clear();
 });

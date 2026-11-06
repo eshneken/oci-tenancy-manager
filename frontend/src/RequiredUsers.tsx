@@ -5,7 +5,7 @@ import { followLink } from "./navigation";
 
 const purposes = { automation: "Automation user", recovery: "Recovery user" };
 const presenceNames = {not_checked:"Not checked", present:"Present", missing:"Missing", unknown:"Unable to verify"};
-const blocked = {not_configured:"No qualified automation connection is recorded for this tenancy.", tenancy_inactive:"Presence checks are available for active tenancies.", tenancy_busy:"A tenancy operation is in progress. Check again when it finishes.", provider_unavailable:"The selected provider is currently unavailable."};
+const blocked = {not_configured:"Presence checks require a registered automation connection and recorded user identities. This tenancy has not completed that setup. Existing tenancies are not enrolled automatically.", tenancy_inactive:"Presence checks are available for active tenancies.", tenancy_busy:"A tenancy operation is in progress. Check again when it finishes.", provider_unavailable:"The selected provider is currently unavailable."};
 const states = { recorded: "Recorded", not_recorded: "Not recorded", retired: "Retired record" };
 
 // Show registered identities without suggesting OCI presence, usable credentials or admin access.
@@ -78,11 +78,11 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
     <div className="required-users-heading">
       <h2 ref={heading} tabIndex={-1} id="required-users-title">Required users</h2>
       <div className="required-users-actions">
-      <button className="button primary" disabled={!data?.check_available || checking || result.isPending} onClick={checkNow}>
+      <button className="button primary" disabled={!data?.check_available || checking || result.isPending} aria-describedby={data && !data.check_available ? "required-users-unavailable" : undefined} onClick={checkNow}>
         {checking ? "Checking…" : ownMutation && mutation.isError ? "Retry check request" : "Check now"}
       </button>
-      <button className="button secondary" disabled={result.isFetching} onClick={() => void result.refetch()}>
-        {result.isPending ? "Loading records…" : result.isFetching ? "Refreshing records…" : result.isError ? "Try again" : "Refresh records"}
+      <button className="button secondary" aria-label={result.isPending ? "Loading required users" : result.isFetching ? "Refreshing required users" : "Refresh required users"} disabled={result.isFetching} onClick={() => void result.refetch()}>
+        {result.isPending ? "Loading…" : result.isFetching ? "Refreshing…" : "Refresh"}
       </button>
       </div>
     </div>
@@ -90,7 +90,10 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
     {result.isPending && <p role="status">Loading required user records…</p>}
     {result.isError && <p className="alert" role="alert">{data ? "Unable to refresh records. Previously loaded records are shown." : "Unable to load required user records. Try again."}</p>}
     {ownMutation && mutation.isError && !authorizationLost && <p className="alert" role="alert">Unable to confirm the check request. Retry uses the same request to avoid duplicate operations.</p>}
-    {data && !data.check_available && <p className="muted">{blocked[data.check_unavailable_reason ?? "not_configured"]}</p>}
+    {data && !data.check_available && <div id="required-users-unavailable" className="notice">
+      <p><strong>Check now is unavailable.</strong> {blocked[data.check_unavailable_reason ?? "not_configured"]}</p>
+      {(data.check_unavailable_reason ?? "not_configured")==="not_configured" && <p>For local testing, complete setup for a newly created or imported simulated tenancy. Refresh reloads saved records; it does not configure access.</p>}
+    </div>}
     {data?.pending_operation_id && <p role="status">Checking required-user presence… Previous results remain dated below.</p>}
     {data && <>
       {data.tenancy_status === "pending" && <p className="notice">Setup is still in progress. Recorded identities do not mean the tenancy is ready.</p>}

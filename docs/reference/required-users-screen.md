@@ -63,7 +63,7 @@ not access-assignment, credential or privilege heads. No read backfills historic
   dated; an accepted operation is not completion. On completion the per-account outcomes and times
   refresh, with View check linking to the actual operation. Operations success means bounded
   outcomes were recorded, even when an outcome is Missing or Unable to verify.
-- Refresh records is another GET only and cannot create a check/job. The main detail Refresh also
+- Refresh is another GET only and cannot create a check/job. The main detail Refresh also
   invalidates these records. Failed ordinary refreshes explicitly label retained data; initial
   loading/failure is distinct from a successful Not recorded result. 401/403 hides retained facts
   immediately while the app expires the session.
@@ -106,3 +106,16 @@ broken canonical connection is Unable to verify in inventory and a closed 503 in
 while genuinely unconfigured or validly changed contexts stay Not checked. Inventory configuration
 badges use Config: and account summaries use Users:; detail configuration labels retain section
 context. The final summary qualification and preserved-data main update pass.
+
+
+## Unavailable Check now and Refresh labels
+
+Check now requires both recorded exact identities and a qualified automation connection from the
+current create/import setup flow. Older registered tenancies are not enrolled automatically; merely
+having a tenancy record or reloading it cannot create that authority. The disabled button describes
+its visible prerequisite notice for assistive technology. Local testing can use a newly created or
+imported simulated tenancy after setup completes. Do not backfill or reinterpret older audit events.
+
+The secondary control is visibly **Refresh**, matching Configuration, with accessible name
+**Refresh required users** to distinguish it from the page-level Refresh. It reloads stored facts
+only, never admits a presence check or enrolls a tenancy. Busy labels are Loading…/Refreshing….
