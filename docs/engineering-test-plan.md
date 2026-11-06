@@ -1098,3 +1098,20 @@ source follow-up. Required cases:
 - Native Users link targets the real required-users section on the exact child; focus follows terminal success or 503 but never 401/403, with no retained unauthorized data. Cover reload/new tab, per-account accessible descriptions/UTC, pending refreshes, Users:/Config: visible/ARIA consistency and unchanged detail configuration labels. Verify actual 320-pixel body containment, including hidden description positioning; keep existing paging/search/sort and all configuration-link assertions.
 - No GET provider call, new job, mutation, navigation badge, daily scan, email, credential or
   privilege/repair claim. All required lanes/reviews and the main update pass: 1,587 backend units, 458 frontend units, all 352 integration/native/browser cases in 430.159 seconds; no failures/errors/skips/timeout. All 29 existing public tables are preserved and port 8444 is unchanged. [Final summary receipt](history/required-users-summary-checkpoint-2026-11-06.md).
+
+
+## Lifecycle notice parity regressions — 6 November 2026
+
+The [implemented lifecycle scope](reference/lifecycle-email.md#lifecycle-notice-parity--6-november-2026)
+retains the existing outbox and contracts. Required units cover every additional action's
+attention/failure notice, responsible-only frozen test routing, excluded local decisions/legacy
+unguided onboarding and silence for routine states or provider-only waits. PostgreSQL tests
+accept join/remove/transfer/offboard/delete through real previews and active grants, exercise
+normal completion and both blocked/unexpected provider failures, and verify one notice on
+replay. Send-time grant revocation, replaced authorization revision/email, unclaimed responsibility
+and resolved operation must prevent delivery. Email-less recovery failures remain blocked without
+fallback; ordinary success sends nothing. Existing known-rejection, uncertain-acceptance and
+transaction rollback protections remain required. Native worker/loopback Mailpit/HTTPS Playwright
+exercise a non-onboarding deletion notice through the installed runtime roles and existing
+read-only delivery panel, category and export. No product fault-injection control is introduced.
+These are local simulation assertions; staging/production provider mail remains a manual gate.

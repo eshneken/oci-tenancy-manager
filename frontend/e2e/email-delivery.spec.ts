@@ -47,6 +47,16 @@ test("inspect redirected lifecycle delivery and immutable identities through rea
  const contacts=page.getByRole("region",{name:"Tenancy email contacts"});await expect(contacts.getByText("Activation / bootstrap email",{exact:true})).toBeVisible();await expect(contacts).toContainText(email);await expect(page.getByText(/Activation delivery:/)).toContainText(email);await expect(page.getByText(/No OCI activation email is sent/)).toBeVisible();
  await capture(page,contacts,"email-onboarding-contacts");await capture(page,notifications,"email-delivery");
 
+ // The same delivery panel supports deletion failures without onboarding-only contacts or controls.
+ const lifecycleOperation=process.env.OTM_E2E_EMAIL_LIFECYCLE_OPERATION_ID!;expect(lifecycleOperation).toBeTruthy();
+ await page.goto("/operations/"+lifecycleOperation);
+ const lifecycleNotices=page.getByRole("region",{name:"Email notifications"});
+ await expect(lifecycleNotices.getByText("Accepted by mail server",{exact:true})).toBeVisible();
+ await expect(lifecycleNotices).toContainText(email);
+ await expect(lifecycleNotices.getByRole("button")).toHaveCount(0);
+ await expect(page.getByRole("region",{name:"Tenancy email contacts"})).toHaveCount(0);
+ await capture(page,lifecycleNotices,"email-non-onboarding-delivery");
+
  // Audit filtering and export use the same real category; delivery never crowds operational rows.
  await page.getByRole("link",{name:"Audit history",exact:true}).click();
  const category=page.getByRole("combobox",{name:"Category",exact:true});

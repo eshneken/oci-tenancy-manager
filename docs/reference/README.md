@@ -21,7 +21,7 @@ is in [the engineering chapters](../engineering-design/README.md).
 - [Canonical managed identity bindings](managed-object-bindings.md)
 - [Required-user presence boundary: internal foundation](required-user-presence.md)
 - [Internal tenancy inspection](inspection.md)
-- [Lifecycle email and environment contact routing](lifecycle-email.md)
+- [Lifecycle email and environment contact routing](lifecycle-email.md), including [all supported lifecycle action/failure notices](lifecycle-email.md#lifecycle-notice-parity--6-november-2026)
 - [Run the local application](local-application.md)
 - [Local recovery authentication](local-authentication.md)
 - [Read-only Operations list and detail](operations.md)

@@ -195,9 +195,9 @@ class NotificationDeliveryWorker:
             return Envelope(
                 notification_id=identifier,
                 recipient=recipient,
-                subject="Tenancy setup requires your attention"
+                subject="Tenancy operation requires your attention"
                 if intent.event == "action_required"
-                else "Tenancy setup failed",
+                else "Tenancy operation failed",
                 body=f"An OCI Tenancy Manager operation requires review.\n\nOperation: {op['id']}\n"
                 f"Stage: {intent.stage}\n\n"
                 + (
@@ -212,7 +212,7 @@ class NotificationDeliveryWorker:
     def _context_issue(self, connection, row, op, intent):
         if isinstance(intent, CostFailureNotice):
             return self._cost_context_issue(connection, row, op, intent)
-        frozen = load_intent(connection, op)
+        frozen = load_intent(connection, op, onboarding_only=False)
         authority_id, authority_revision, _ = execution_authority(connection, op, frozen)
         if (
             intent.responsible_subject != op["responsible_actor_subject"]

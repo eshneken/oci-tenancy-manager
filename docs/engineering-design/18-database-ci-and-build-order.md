@@ -1092,3 +1092,13 @@ exact-child deep link; heading focus follows terminal success or nonauthorizatio
 never 401/403. Inventory Config: and Users: labels/ARIA names are distinct, while detail configuration
 labels retain context. Relative hidden-description positioning preserves the actual 320-pixel body
 width without page-level clipping. Final summary qualification and the preserved-data main update pass.
+
+
+## Lifecycle notice parity — 6 November 2026 source checkpoint
+
+The [lifecycle reference](../reference/lifecycle-email.md#lifecycle-notice-parity--6-november-2026)
+now extends D49/D50's existing outbox to deletion, membership, ownership and offboarding
+action/failure states. Original responsibility and guided takeover eligibility are unchanged.
+No new tables, columns, contracts, scheduling or provider capability are added. Local source
+qualification and saved-preview upgrade evidence must be recorded before declaring completion;
+live OCI and hosted email remain separate manifest gates.

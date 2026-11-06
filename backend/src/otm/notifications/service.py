@@ -78,15 +78,29 @@ class LifecycleNotifier:
         require_transaction(connection)
         if row["kind"] != "organization_action":
             return None
-        # Non-onboarding lifecycle work is valid but has no guided-onboarding notice.
+        # Authenticate lifecycle scope without imposing handoff-only eligibility on other actions.
         frozen = load_intent(connection, row, onboarding_only=False)
         intent = frozen.intent
         if intent.action not in {
             "create_tenancy",
             "import_tenancy",
-        } or intent.onboarding_version not in {1, 2, 3}:
+            "join_shared",
+            "remove_member",
+            "transfer_owner",
+            "offboard_person",
+            "delete_tenancy",
+        }:
             return None
-        if row["state"] not in {"waiting", "needs_attention", "failed"}:
+        # Historical unguided create/import records do not acquire new notices on this extension.
+        if intent.action in {
+            "create_tenancy",
+            "import_tenancy",
+        } and intent.onboarding_version not in {1, 2, 3}:
+            return None
+        if row["state"] not in {"waiting", "needs_attention", "failed"} or (
+            row["state"] == "waiting"
+            and row["wait_reason"] not in {"onboarding_handoff", "onboarding_review"}
+        ):
             self._supersede(connection, row, at)
             return None
         uncertain = (

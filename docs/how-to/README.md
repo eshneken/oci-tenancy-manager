@@ -9,7 +9,7 @@ isolated synthetic fixtures; private enrollment factors do not belong in reports
 - [Manual review: configuration drift visibility](configuration-drift-runbook.md), including
   [pending real-OCI drift/repair tests and automated coverage](configuration-drift-runbook.md#pending-real-oci-manual-validation),
   plus [pending required-user presence cases](configuration-drift-runbook.md#pending-required-user-presence-qualification)
-- [Local review: lifecycle email and environment routing](lifecycle-email-runbook.md)
+- [Local review: lifecycle email and environment routing](lifecycle-email-runbook.md), including [additional lifecycle notices](lifecycle-email-runbook.md#additional-lifecycle-notices)
 - [Local quality checks](local-quality-checks.md)
 - [Organization Mapping — manual test runbook](organization-mapping-runbook.md)
 - [Parallel Atlas Test instance](parallel-local-instance.md)

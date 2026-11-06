@@ -221,7 +221,8 @@ needs no OCI access, adds no temporary simulator controls and does not qualify m
 
 ## Lifecycle email and environment routing
 
-The [lifecycle email guide](../docs/reference/lifecycle-email.md) maps responsible-admin create/import notices,
+The [lifecycle email guide](../docs/reference/lifecycle-email.md) maps responsible-admin lifecycle notices (create/import, deletion, shared membership, ownership
+transfer and offboarding),
 immutable contact/policy/profile/origin evidence and bounded SMTP delivery knowledge. One outbox
 table through 0020 brings source to 20 application tables. Both release kinds use the offline
 otm-validate-release gate against a trusted expected environment; hosted CI remains uninstalled.

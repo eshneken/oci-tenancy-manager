@@ -16,7 +16,8 @@ source to change schema fields and rerender.
 
 ## What this slice implements
 
-Durable create/import administrator-action and known-failure notices go to the current responsible
+Durable create/import, deletion, shared-membership, ownership-transfer and person-offboarding
+administrator-action and known-failure notices go to the current responsible
 administrator only. A lifecycle transaction freezes a notice and native delivery job together.
 Viewing/polling, ordinary progress and successful completion do not send mail; unchanged human
 attention does not manufacture another notice on every retry. Other diagnostics, security findings,
@@ -237,8 +238,9 @@ over-budget, optional-field, stale-data or qualification warnings.
 
 The installed lifecycle hook authenticates the immutable organization intent before selecting
 guided create/import notifications. Deletion, offboarding, shared-membership and ownership actions
-without an onboarding version are valid lifecycle work, not invalid handoffs. They currently produce
-no guided-onboarding email, and the hook must not roll back their completion or safe failure state.
+without an onboarding version are valid lifecycle work, not invalid handoffs. At that earlier checkpoint they produced
+no guided-onboarding email, and the hook could not roll back their completion or safe failure state.
+The following parity slice supersedes only that no-email limitation.
 Handoff endpoints retain their default requirement for a supported onboarding version. Hash, actor
 and workspace checks remain mandatory for both paths. PostgreSQL regressions attach the real
 notifier during deletion and cover successful initiation, a blocked provider and unexpected failure
@@ -252,3 +254,33 @@ record across 27 tables preserved; the separately saved test instance was unchan
 failed simulated job was resumed through the native retry function using its original operation,
 and verified successful termination, removed associations and retired registered identities.
 No new operation, schema change or live OCI call was needed.
+
+
+## Lifecycle notice parity — 6 November 2026
+
+Source implementation now admits `join_shared`, `remove_member`, `transfer_owner`,
+`offboard_person` and `delete_tenancy` through the same notifier as guided create/import.
+These actions currently reach `needs_attention` on blocked/unexpected execution; the notice
+asks the responsible administrator to review the exact operation. It does not promise an
+automatic repair, retry button, rollback of completed effects or successful cleanup.
+A terminal `failed` state uses the existing terminal-failure event. Only the implemented
+`onboarding_handoff` and `onboarding_review` human waits send waiting-state notices; provider
+waits without manual action remain silent. Queued/running/succeeded/cancelled are silent and
+supersede only known-unsent obsolete notices. Local organization decisions such as ignore,
+merge and exemption are not email-capable lifecycle operations. Historical unguided
+create/import records remain excluded.
+
+Notification staging and delivery both authenticate organization intents with
+`onboarding_only=False`; handoff and takeover still require guided onboarding. For the
+additional actions the original initiator remains responsible: no self-claim, substitute
+recipient or authority is introduced. Hash, workspace, actor, operation intent revision,
+current grant/contact, route, transport profile and origin checks remain mandatory. Notice
+replay deduplicates the same transition; uncertain SMTP acceptance never authorizes resend.
+Subjects say **Tenancy operation requires your attention** / **Tenancy operation failed**.
+The existing operation-detail delivery panel and Email delivery audit category apply unchanged.
+
+No contract field, schema, table, setting or ER changes are required. NotificationIntent,
+NotificationSummary and the outbox retain their documented field sets. Complete-source units,
+actual PostgreSQL workflows, restricted native delivery workers, loopback SMTP and HTTPS
+Playwright qualification are required before upgrading a saved preview. Live OCI and production
+mail remain Pending in the [manual manifest](../how-to/real-oci-test-manifest.md).

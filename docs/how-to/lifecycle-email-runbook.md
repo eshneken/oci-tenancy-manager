@@ -89,7 +89,9 @@ email-capable acceptance rather than deliver to an original employee address.
 
 ## 4. Observe a durable lifecycle notice
 
-Use synthetic permitted create/import work in an isolated review installation. Only durable
+Use synthetic permitted create/import work in an isolated review installation. Deletion,
+shared-membership, ownership transfer and offboarding use the same delivery panel when their
+execution requires review or fails. Routine success remains silent. Only durable
 administrator-action/known-failure states produce lifecycle notices, to the current responsible
 administrator; ordinary view/poll/progress/success must not send. Do not invent a second saved admin
 to test takeover. Multi-admin/creator-revocation scenarios belong to prepared disposable fixtures.
@@ -161,3 +163,15 @@ upgrades are recorded in the final local checkpoint below. This is a local insta
 ## Final local checkpoint — 4 November 2026
 
 See the validation record (private historical evidence; not distributed). The 1,421-test full suite passed with no failures/errors/skips; separate backend/frontend unit coverage exceeds 95%. Reviews are complete. Both saved local instances are on 0020 with every existing row preserved, and use separate loopback capture mailboxes. Hosted CI wiring, live OCI contacts and production secret/SMTP qualification remain later work. Earlier source-checkpoint pending labels above describe the pre-qualification snapshot.
+
+
+## Additional lifecycle notices
+
+The [parity reference](../reference/lifecycle-email.md#lifecycle-notice-parity--6-november-2026)
+uses the same responsible-only routing and outbox. There is no new saved-preview failure switch
+or reason to damage a tenancy merely to generate a notice. For a single email-less recovery
+admin, missing test routing records a blocked notice rather than sending to another person.
+With the deliberate local capture configuration above, an accepted notice can use the test
+mailbox without inventing an original address. Normal successful deletion/membership work does
+not email. Negative cases are exercised automatically in disposable fixtures; live provider
+failures and staging isolation remain on the manual manifest.

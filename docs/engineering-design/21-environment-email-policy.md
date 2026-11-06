@@ -86,7 +86,7 @@ a separate immutable route event; do not rewrite old intent or manufacture a his
 Parser compatibility is not authorization to send legacy email-capable work without proven current
 safety. Old local non-delivering workflows retain their qualified semantics.
 
-## Initial notification scope
+## Initial notification scope and subsequent parity
 
 The first email delivery slice covers durable administrator action/known failure notices for
 create/import, to the current responsible administrator only under D49/D50. It does not send mail
@@ -98,6 +98,11 @@ This does not reintroduce security-findings/audit-user workflows, Slack, spend-b
 repair or a generic notification composer. Other required future notice families retain their
 accepted recipient rules; the same environment email safety policy must apply when implemented.
 Real staged OCI contact behavior remains provider qualification, even when SMTP tests pass.
+
+The [6 November lifecycle parity implementation](../reference/lifecycle-email.md#lifecycle-notice-parity--6-november-2026)
+adds deletion, shared-membership, ownership and offboarding using the same existing outbox and
+recipient rules. Guided handoff/takeover authority is unchanged; the broader scope concerns
+notification loading only. No new storage, setting, fallback or routine-success email is added.
 
 ## Both release paths independently enforce the policy
 
