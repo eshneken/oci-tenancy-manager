@@ -169,7 +169,7 @@ class OrganizationLifecycleWorker:
                             raise ValueError("BASELINE_PIN_CHANGED")
                     except (ValueError, RuntimeError, OrganizationConflict):
                         raise LifecycleBlocked("TARGET_CHANGED") from None
-                if intent.onboarding_version in {1, 2}:
+                if intent.onboarding_version in {1, 2, 3}:
                     from otm.tenancies.onboarding import advance
 
                     if not advance(connection, row, intent, self.facade, at):

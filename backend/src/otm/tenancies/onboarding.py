@@ -31,7 +31,7 @@ STEPS = (
 
 # New onboarding applies the accepted baseline and reprobes access before retiring its bootstrap.
 def onboarding_steps(intent):
-    if intent.onboarding_version == 2 and intent.baseline is not None:
+    if intent.onboarding_version in {2, 3} and intent.baseline is not None:
         return (
             STEPS[:-1]
             + (
@@ -40,6 +40,11 @@ def onboarding_steps(intent):
                     "verify_configured_access",
                     "Reverify automation and recovery access after configuration",
                 ),
+            )
+            + (
+                (("capture_required_users", "Record permanent user identities"),)
+                if intent.onboarding_version == 3
+                else ()
             )
             + STEPS[-1:]
         )
@@ -82,7 +87,7 @@ def load_intent(connection, row):
         or frozen.intent.workspace_id != row["workspace_id"]
     ):
         raise ValueError("INVALID_ONBOARDING_INTENT")
-    if frozen.intent.onboarding_version not in {1, 2}:
+    if frozen.intent.onboarding_version not in {1, 2, 3}:
         raise OrganizationConflict("ONBOARDING_NOT_AVAILABLE")
     return frozen
 
@@ -383,7 +388,12 @@ def advance(connection, row, intent, facade, at):
         for current, _ in onboarding_steps(intent)[1:]:
             if current in steps and steps[current]["state"] == "verified":
                 continue
-            if current == "configure_baseline":
+            captured = None
+            if current == "capture_required_users":
+                from otm.tenancies.onboarding_users import capture_users
+
+                captured = capture_users(facade, intent, inspection["inputs"]["discovery"])
+            elif current == "configure_baseline":
                 from otm.tenancies.onboarding_baseline import configure_baseline
 
                 configure_baseline(connection, row, intent, facade, at)
@@ -402,7 +412,10 @@ def advance(connection, row, intent, facade, at):
                 at,
                 inputs={},
                 payload=OnboardingEvidence(
-                    step=current, outcome="verified", safe_code="ONBOARDING_VERIFIED"
+                    step=current,
+                    outcome="verified",
+                    safe_code="ONBOARDING_VERIFIED",
+                    required_users=captured,
                 ),
             )
             # A known setup effect prevents the no-effect cancellation path from abandoning it.

@@ -41,3 +41,9 @@ and [reference index](README.md).
 The next [required-user presence capability](required-user-presence.md) follows the existing
 inspection pattern: neutral contracts, a result-validation wrapper and a separate explicit
 simulator. It is not yet selected by the application or native worker.
+
+
+`LifecycleFacade.capture_onboarding_users` now returns the shared `OnboardingUsers` readback contract;
+its concrete synthetic implementation remains in `lifecycle_simulator.py`. The
+[version 3 onboarding capture](tenancy-onboarding.md#permanent-user-capture--6-november-2026)
+uses these facts as immutable provenance, not an access-health observation or credential binding.

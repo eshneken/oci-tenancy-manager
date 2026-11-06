@@ -3,7 +3,13 @@
 from hashlib import sha256
 
 from otm.operations.contracts import InspectionPolicy
-from otm.providers.lifecycle import LifecycleBlocked, LifecycleCompletion, MemberBinding
+from otm.providers.lifecycle import (
+    LifecycleBlocked,
+    LifecycleCompletion,
+    MemberBinding,
+    OnboardingUsers,
+)
+from otm.providers.required_user_contracts import ObservedRequiredUser
 from otm.tenancies.contracts import MemberRemoval
 from otm.tenancies.views import CompartmentOption, CreationRegion
 
@@ -94,6 +100,30 @@ class SimulatedLifecycleFacade:
             "retire_temporary",
         }:
             raise ValueError("TARGET_CHANGED")
+
+    # Return explicit synthetic provider facts, stable across retries and distinct from bootstrap.
+    def capture_onboarding_users(self, intent, discovery):
+        self.onboarding_step(intent, "verify_required", discovery)
+        suffix = intent.pending_tenancy_id.hex
+        return OnboardingUsers(
+            workspace_id=intent.workspace_id,
+            tenancy_ocid=intent.target.tenancy_ocid,
+            parent_tenancy_ocid=intent.parent_tenancy_ocid,
+            organization_id=intent.organization_id,
+            domain_ocid=discovery["domain_ocid"],
+            automation=ObservedRequiredUser(
+                domain_ocid=discovery["domain_ocid"],
+                scim_resource_id="automation-" + suffix,
+                provider_ocid="ocid1.user.oc1..otmsimautomation" + suffix,
+                user_name="otm-automation",
+            ),
+            recovery=ObservedRequiredUser(
+                domain_ocid=discovery["domain_ocid"],
+                scim_resource_id="recovery-" + suffix,
+                provider_ocid="ocid1.user.oc1..otmsimrecovery" + suffix,
+                user_name="otm-recovery",
+            ),
+        )
 
     # Simulated readback is exact-account scoped and never deletes a compartment or its resources.
     def remove_member_access(self, intent, association):

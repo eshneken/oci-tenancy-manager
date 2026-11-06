@@ -29,7 +29,7 @@ is in [the engineering chapters](../engineering-design/README.md).
 - [Guided onboarding responsibility takeover](responsibility.md)
 - [Submit and run a simulated inspection](simulation.md)
 - [Delete an individual or shared tenancy](tenancy-deletion.md)
-- [Guided tenancy onboarding](tenancy-onboarding.md)
+- [Guided tenancy onboarding](tenancy-onboarding.md), including [permanent-user capture](tenancy-onboarding.md#permanent-user-capture--6-november-2026)
 - [Tenancy overrides and staged baseline reviews](tenancy-overrides.md)
 - [Durable simulated inspection worker](worker.md)
 

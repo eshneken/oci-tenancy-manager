@@ -3,7 +3,11 @@
 from typing import Protocol
 from uuid import UUID
 
-from otm.contracts import Contract
+from pydantic import model_validator
+
+from otm.contracts import Contract, Text
+from otm.providers.inspection_contracts import TenancyOcid
+from otm.providers.required_user_contracts import DomainOcid, ObservedRequiredUser
 from otm.tenancies.contracts import MemberRemoval, OrganizationIntent
 from otm.tenancies.views import CompartmentOption, CreationRegion
 
@@ -40,6 +44,32 @@ class LifecycleCompletion(Contract):
     removals: tuple[MemberRemoval, ...] = ()
 
 
+# Capture actual read-back identities; this evidence is not an access grant or credential.
+class OnboardingUsers(Contract):
+    workspace_id: Text
+    tenancy_ocid: TenancyOcid
+    parent_tenancy_ocid: TenancyOcid
+    organization_id: Text
+    domain_ocid: DomainOcid
+    automation: ObservedRequiredUser
+    recovery: ObservedRequiredUser
+
+    # The two purposes require distinct identified users in the discovered child domain.
+    @model_validator(mode="after")
+    def distinct_users(self):
+        if (
+            self.tenancy_ocid == self.parent_tenancy_ocid
+            or self.automation.domain_ocid != self.domain_ocid
+            or self.recovery.domain_ocid != self.domain_ocid
+            or self.automation.scim_resource_id == self.recovery.scim_resource_id
+            or self.automation.provider_ocid is None
+            or self.recovery.provider_ocid is None
+            or self.automation.provider_ocid == self.recovery.provider_ocid
+        ):
+            raise ValueError("REQUIRED_USER_IDENTITIES_UNVERIFIED")
+        return self
+
+
 # The application depends on closed capabilities instead of SDK clients or credential material.
 class LifecycleFacade(Protocol):
     # Execute/read-back the exact frozen target; replaying an intent must retain target identity.
@@ -56,6 +86,11 @@ class LifecycleFacade(Protocol):
 
     # Apply and read back one dependency-satisfied setup step, preserving replay target identity.
     def onboarding_step(self, intent: OrganizationIntent, key: str, discovery: dict): ...
+
+    # Independently read the permanent users after setup; never derive IDs from account names.
+    def capture_onboarding_users(
+        self, intent: OrganizationIntent, discovery: dict
+    ) -> OnboardingUsers: ...
 
     # Read the configured parent's subscribed regions before admitting a child creation.
     def creation_regions(self) -> tuple[CreationRegion, ...]: ...

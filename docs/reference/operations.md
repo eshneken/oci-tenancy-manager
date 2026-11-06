@@ -219,7 +219,7 @@ A candidate must be an organization_action in waiting/needs_attention, joined to
 intent and the same workspace's person whose pending_operation_id still points to that operation;
 the intent must identify that person. It then needs either a supported guided onboarding continuation
 or safe local cancellation with effect_knowledge=none. The guided branch requires immutable intent
-onboarding_version in {1,2} and either needs_attention (the blocked recovery phase) or wait_reason equal to
+onboarding_version in {1,2,3} and either needs_attention (the blocked recovery phase) or wait_reason equal to
 onboarding_handoff/onboarding_review. A different wait can still count when no-effect cancellation
 is supported. Unsupported/orphaned work and known-effect work with no supported continuation do not become badge
 items merely because a status says attention. Current actor/responsibility, scope, policy/revision,
@@ -280,7 +280,9 @@ unsupported historical failures and inspection-only simulation issues. See
 ## Versioned onboarding and member-removal evidence — 3 November 2026
 
 Local simulation qualified and installed in both saved instances. Existing operation detail reads the accepted onboarding version: new
-version 2 includes configure_baseline and verify_configured_access before retire_temporary; version 1
+version 2 includes configure_baseline and verify_configured_access before retire_temporary;
+a 6 November source follow-up adds version 3 with capture_required_users before retirement
+(qualification in progress; not installed in saved instances). Version 1
 keeps the old graph. Shared-member outcomes may include exact MemberRemoval receipts, with durable
 remove_member_groups:{association_uuid} and delete_member_user:{association_uuid} steps. Both share
 the closed immutable lifecycle outcome, and commit atomically with membership retirement. These

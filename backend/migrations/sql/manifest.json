@@ -23,6 +23,7 @@
     "0018-configuration-drift.sql": "6f47d62be29f6dac0b3ec2390f3a5d5bef10314c713f9c4abb9400f1c5b53c5e",
     "0019-operation-responsibility.sql": "6ff2c1bb07b5da28422b14fd0855dce0f47710af2688cfcf2ce9a59f276196b5",
     "0020-email-delivery.sql": "4a5508f04922c2c4250b87c6aba52ac9a6b0a567ee46d8a511620ea56b8a04bf",
-    "0021-financial-collection.sql": "8d8df5395cb09921e37358bf858b384e73526a0c6041aac9492075246c050fd5"
+    "0021-financial-collection.sql": "8d8df5395cb09921e37358bf858b384e73526a0c6041aac9492075246c050fd5",
+    "0022-onboarding-users.sql": "0365d01790d92e662b3477db55ce384d3e7647a75bb59490876609309e297173"
   }
 }

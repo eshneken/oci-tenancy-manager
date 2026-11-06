@@ -979,3 +979,20 @@ foreign keys. ER diagrams and current persisted schema are unchanged. Current on
 yet retain permanent user bindings; verified binding capture and live-head checks must precede
 worker/UI composition. There is no guessed backfill, API route, schedule, repair, secret retrieval
 or saved-instance change. The broader proposed access model above remains future work.
+
+
+## Implemented onboarding identity capture — 6 November 2026
+
+Newly accepted create/import intents now use onboarding version 3. After baseline application and
+fresh access probes, a required capture step retains exact automation/recovery domain, SCIM and OCI
+identifiers in existing `otm_operation_step.last_outcome` and immutable `audit_event.data` before
+retiring temporary access. Failed capture blocks retirement. Historical accepted version 1/2/absent
+intents keep their graphs; no name-based adoption or historical binding backfill occurs.
+
+See the [implemented field/storage map](../reference/tenancy-onboarding.md#permanent-user-capture--6-november-2026).
+Migration 0022 only expands the existing step constraint. No table, column, credential store or new
+ER relationship is added. This supersedes earlier statements that onboarding retains no permanent
+identifiers, while keeping the proposed canonical managed-object binding, access-assignment heads,
+current-generation checks and full access-health model as future implementation. Capture evidence
+alone must not authorize repair, disclosure or live operations. Saved previews are not changed.
+Live qualification remains Pending in the [manual manifest](../how-to/real-oci-test-manifest.md).

@@ -242,9 +242,10 @@ def test_missing_user_removal_proof_is_rejected(missing):
 
 
 # A malformed new setup graph cannot downgrade itself into the old baseline-free sequence.
-def test_version_two_requires_a_published_baseline(registry):
+@pytest.mark.parametrize("version", [2, 3])
+def test_version_two_requires_a_published_baseline(registry, version):
     app, original, _, _ = case(registry)
     values = original.model_dump(mode="json")
-    values["onboarding_version"] = 2
+    values["onboarding_version"] = version
     with pytest.raises(ValueError, match="PUBLISHED_ONBOARDING_BASELINE_REQUIRED"):
         type(original).model_validate_json(json.dumps(values))

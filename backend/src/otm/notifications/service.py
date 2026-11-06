@@ -83,7 +83,7 @@ class LifecycleNotifier:
         if intent.action not in {
             "create_tenancy",
             "import_tenancy",
-        } or intent.onboarding_version not in {1, 2}:
+        } or intent.onboarding_version not in {1, 2, 3}:
             return None
         if row["state"] not in {"waiting", "needs_attention", "failed"}:
             self._supersede(connection, row, at)

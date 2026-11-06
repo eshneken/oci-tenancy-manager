@@ -13,6 +13,7 @@ are not competing implementation instructions or proof of real OCI behavior.
 | Accepted engineering decisions | [D1–D17](decisions/engineering-review-decisions.md), [D18–D58](decisions/design-decisions.md) |
 | Diagram source and generated views | [Architecture diagrams](architecture/diagrams/README.md) |
 | GitHub checkpoints and CI definitions | [Checkpoint workflow guide](how-to/github-checkpoints.md) |
+| All pending real-OCI manual qualification | [Live test manifest](how-to/real-oci-test-manifest.md) |
 | Pending real-OCI drift and repair validation | [Manual checklist and automated coverage](how-to/configuration-drift-runbook.md#pending-real-oci-manual-validation) |
 | Required quality/security conventions | [Testing](engineering-test-plan.md), [security](security-review-policy.md), [code documentation](code-documentation-policy.md), [UI review](ui-ux-review-policy.md) |
 | Visual and interaction authority | [UI baseline](../DESIGN.md), [screen authority](ui-screen-authority.md) |
@@ -21,8 +22,9 @@ are not competing implementation instructions or proof of real OCI behavior.
 ## Source of truth
 
 Access-health work begins with the [internal required-user presence boundary](reference/required-user-presence.md).
-It is not yet connected to application screens or durable checks; [checkpoint evidence](history/required-user-presence-checkpoint-2026-11-06.md)
-records this integration boundary.
+New onboarding now [retains exact permanent-user evidence](reference/tenancy-onboarding.md#permanent-user-capture--6-november-2026); presence reads are not yet connected to application screens or durable checks; [checkpoint evidence](history/required-user-presence-checkpoint-2026-11-06.md)
+records this integration boundary. The later [onboarding capture checkpoint](history/onboarding-user-capture-checkpoint-2026-11-06.md)
+records exact permanent-user provenance and the remaining current-binding work.
 Current configuration work includes [guarded selected-object repair](reference/configuration-repair.md)
 through the existing durable operation worker, with [all-category/override regression coverage](reference/configuration-repair.md#all-category-repair-qualification--6-november-2026). Its [local checkpoint](history/configuration-repair-checkpoint-2026-11-06.md)
 records qualification and remaining deployment boundaries.

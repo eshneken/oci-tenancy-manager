@@ -46,6 +46,8 @@ packages = ["src/otm"]
 [tool.hatch.build.targets.wheel.force-include]
 "migrations/versions/0021_financial_collection.py" = "otm_migrations/migrations/versions/0021_financial_collection.py"
 "migrations/sql/0021-financial-collection.sql" = "otm_migrations/migrations/sql/0021-financial-collection.sql"
+"migrations/versions/0022_onboarding_users.py" = "otm_migrations/migrations/versions/0022_onboarding_users.py"
+"migrations/sql/0022-onboarding-users.sql" = "otm_migrations/migrations/sql/0022-onboarding-users.sql"
 "migrations/versions/0020_email_delivery.py" = "otm_migrations/migrations/versions/0020_email_delivery.py"
 "migrations/sql/0020-email-delivery.sql" = "otm_migrations/migrations/sql/0020-email-delivery.sql"
 "migrations/versions/0019_operation_responsibility.py" = "otm_migrations/migrations/versions/0019_operation_responsibility.py"

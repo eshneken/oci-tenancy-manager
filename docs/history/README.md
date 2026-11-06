@@ -16,3 +16,5 @@ Private original feeds, raw evidence, screenshots and machine-specific paths are
 - [Provider separation and selected configuration repair](configuration-repair-checkpoint-2026-11-06.md)
 
 - [Required-user presence foundation](required-user-presence-checkpoint-2026-11-06.md)
+
+- [Permanent-user onboarding capture](onboarding-user-capture-checkpoint-2026-11-06.md)

@@ -30,7 +30,7 @@ from otm.providers.baseline import BaselineQualifier, PublicationUnavailable
 from otm.providers.budget import BudgetFacade, BudgetReadUnavailable
 from otm.providers.configuration import ConfigurationFacade, configure_target, desired_objects
 from otm.providers.lifecycle import (
-    LifecycleFacade, LifecycleBlocked, MemberBinding, LifecycleCompletion,
+    LifecycleFacade, LifecycleBlocked, MemberBinding, LifecycleCompletion, OnboardingUsers,
 )
 from otm.providers.inspection import TenancyInspection
 from otm.providers.required_user import RequiredUserInspection, RequiredUserProvider
@@ -38,7 +38,7 @@ from otm.providers.required_user_contracts import RequiredUserTarget
 assert all(callable(item) for item in (
     BaselineQualifier, PublicationUnavailable, BudgetFacade, BudgetReadUnavailable,
     ConfigurationFacade, configure_target, desired_objects, LifecycleFacade,
-    LifecycleBlocked, MemberBinding, LifecycleCompletion, TenancyInspection,
+    LifecycleBlocked, MemberBinding, LifecycleCompletion, OnboardingUsers, TenancyInspection,
     RequiredUserInspection, RequiredUserProvider, RequiredUserTarget,
 ))
 assert not any(name.endswith('_simulator') for name in sys.modules)

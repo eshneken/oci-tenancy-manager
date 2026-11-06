@@ -112,7 +112,7 @@ class SqlOperationDirectory:
             }
             else None,
             guided_onboarding=frozen.intent.kind == "organization_action"
-            and frozen.intent.onboarding_version in {1, 2},
+            and frozen.intent.onboarding_version in {1, 2, 3},
             target_tenancy_ocid=frozen.intent.target.tenancy_ocid,
             title=ACTION_LABELS[frozen.intent.action]
             if frozen.intent.kind == "organization_action"
@@ -154,7 +154,7 @@ class SqlOperationDirectory:
             .exists()
         )
         guided = and_(
-            audit_event.c.data["intent"]["onboarding_version"].astext.in_(("1", "2")),
+            audit_event.c.data["intent"]["onboarding_version"].astext.in_(("1", "2", "3")),
             or_(
                 operation.c.state == "needs_attention",
                 operation.c.wait_reason.in_(("onboarding_handoff", "onboarding_review")),

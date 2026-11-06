@@ -374,6 +374,7 @@ async function organizationFlows(page: Page) {
           exact: true,
         }),
       ).toBeVisible({ timeout: 20_000 });
+      await expect(page.getByText("Record permanent user identities", { exact: true })).toBeVisible();
     }
     await expect(page.getByText("Succeeded", { exact: true })).toBeVisible({
       timeout: 20_000,

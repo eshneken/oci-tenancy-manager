@@ -1,6 +1,6 @@
 # Guided tenancy onboarding
 
-Guided local simulator implemented · Version 2 baseline/access qualified and installed locally · Real OCI remains unqualified
+Guided local simulator implemented · Version 3 adds permanent-user capture in source · Saved previews remain on their installed revision · Real OCI remains unqualified
 
 [Journey design](../engineering-design/07-onboarding-journeys.md) ·
 [SDK call map](../engineering-design/08-oci-sdk-call-design.md) ·
@@ -26,7 +26,7 @@ Guided local simulator implemented · Version 2 baseline/access qualified and in
    It pauses again for review. Refresh/reopen retains the same operation and verified facts.
 5. Review the exact temporary accounts, explicitly confirm their cleanup, then Start setup.
    The worker establishes and independently checks permanent automation, models owner/recovery
-   access, and checks required access. New version 2 work then applies and reads back the frozen
+   access, and checks required access. New version 2/3 work then applies and reads back the frozen
    baseline's four managed categories, reprobes automation/required access, and only then retires
    temporary access. Import preserves
    existing human administrators; create retires only the verified activation account.
@@ -59,7 +59,7 @@ with its simulated read-back. No simulator reservation is proof of an existing O
 Every screen explicitly says Local simulation. This slice sends no activation email, issues no
 usable public/private key, creates no IAM objects, stores no tenancy passwords and calls no OCI SDK.
 `public_key` is null. The local recovery administrator has no verified corporate mailbox; show Not
-configured instead of inventing one. A baseline is selected and pinned at new admission. New version 2 work also applies/reads back its
+configured instead of inventing one. A baseline is selected and pinned at new admission. New version 2/3 work also applies/reads back its
 four authored categories in the local simulator and then repeats access checks. Actual OCI
 configuration, identity probes and Vault custody remain unqualified. These local observations are
 not a claim of production readiness; version 1 retains the earlier selection-only semantics.
@@ -143,7 +143,7 @@ Historical migration **0010_guided_onboarding** extended three allowed-value con
 retained14application tables. P3.1 later added the fifteenth baseline table;0012 added publication
 metadata and0013_baseline_pinning now adds two columns to existing tables, without another table.
 Frozen prior migrations and existing records are preserved. New create/import intents carry
-`onboarding_version=2`; previously accepted version 1 keeps its original access-only step graph and
+`onboarding_version=3`; previously accepted version 2 retains its baseline/access graph, version 1 keeps its original access-only step graph and
 an absent version keeps the historical one-step simulator. The browser cannot choose a compatibility
 bypass. Migration 0017 expands existing allowed step/evidence values only; the current inventory
 remains 18 application tables, with no new column or backfill.
@@ -172,8 +172,8 @@ remains 18 application tables, with no new column or backfill.
 
 Logical onboarding step keys are `handoff`, `inspect_bootstrap`, `establish_automation`,
 `verify_automation`, `configure_required`, `verify_required`, `configure_baseline`,
-`verify_configured_access`, `retire_temporary`. The two configuration/post-configuration keys apply
-only to new version 2 work with its frozen baseline; version 1 keeps the original seven-key graph.
+`verify_configured_access`, `capture_required_users`, `retire_temporary`. Capture applies only to
+version 3. The two configuration/post-configuration keys apply to version 2/3 with a frozen baseline; version 1 keeps the original seven-key graph.
 The `handoff` row's verified timestamp means **administrator input accepted**, not provider access
 verified; only `inspect_bootstrap` establishes the separate inspection result. Audit retains every
 attempt while the current logical step is updated in place. No credentials enter these payloads.
@@ -354,8 +354,8 @@ state; a network adapter requires separate dispatch/reconciliation qualification
 
 | New evidence/behavior | Existing authority and bounds |
 | --- | --- |
-| OrganizationIntent.onboarding_version | Closed 1 or 2, nullable for historical operations; only server-selected 2 on new create/import. Version 2 validation requires create/import plus a non-null BaselineVersion with published_at; it cannot silently skip configuration by omitting the pin. |
-| OnboardingEvidence.step | Adds configure_baseline and verify_configured_access to the existing closed step values; no additional DTO field. |
+| OrganizationIntent.onboarding_version | Closed 1, 2 or 3, nullable for historical operations; server-selected 3 on new create/import. Version 2/3 validation requires create/import plus a non-null BaselineVersion with published_at; it cannot silently skip configuration by omitting the pin. |
+| OnboardingEvidence.step | Versions 2/3 include configure_baseline and verify_configured_access; version 3 adds capture_required_users and its typed required_users evidence. |
 | OnboardingEvidence.safe_code | Adds BASELINE_UNVERIFIED; no arbitrary SDK error or credential text. |
 | OnboardingView.checks | Derived from the accepted version's step graph, preserving order/status/timestamp; same public fields. |
 | Category readback | Four existing ManagedConfigurationObject records: category, object_ocid, payload and payload_hash. Synthetic IDs/data are local provider evidence only. |
@@ -420,3 +420,55 @@ OCI path, not an extra SMTP recipient. Current notice routing follows the respon
 activation contact and provider intent stay unchanged through takeover.
 [Field/policy/outbox guide](lifecycle-email.md) ·
 [Capture and negative-test runbook](../how-to/lifecycle-email-runbook.md).
+
+
+## Permanent-user capture — 6 November 2026
+
+New create/import admissions use version 3. After the frozen baseline and fresh access probes,
+**Record permanent user identities** reads the permanent automation and recovery users separately,
+then stores their exact identifiers before **Retire temporary access**. A capture failure blocks
+cleanup and publishes a closed `REQUIRED_ACCESS_UNVERIFIED` issue. Retry uses existing operation
+steps; completed-work redelivery cannot overwrite the recorded evidence. Version 1/2 and absent-version
+accepted intents retain their original graphs; no identity is inferred or backfilled for them.
+
+The shared `OnboardingUsers` result is declared in the neutral lifecycle contract, with explicit
+simulation in `lifecycle_simulator.py`. `onboarding_users.capture_users` validates the returned
+workspace/organization/parent/child against the accepted intent and domain against discovery.
+Both purposes require distinct nonnull OCI user OCIDs and SCIM resource IDs in that domain.
+Neither may identify the bootstrap or activation administrator by either identifier.
+Names are observed labels, never matching or adoption keys. Results forbid unrecognized fields.
+
+| Model / field | Meaning and storage |
+| --- | --- |
+| OrganizationIntent.onboarding_version | Server-selected 3 for new create/import; persisted in immutable operation intent. Existing 1/2/absent values preserve accepted semantics. |
+| OnboardingUsers.workspace_id, organization_id, parent_tenancy_ocid, tenancy_ocid | Exact accepted scope; parent cannot be its own child. |
+| OnboardingUsers.domain_ocid | Exact domain discovered through bootstrap inspection. |
+| OnboardingUsers.automation, recovery | Separate ObservedRequiredUser values: domain_ocid, scim_resource_id, nonnull provider_ocid and user_name. OCI and SCIM identifiers remain distinct. |
+| OnboardingEvidence.required_users | Nonnull exactly on a verified capture_required_users outcome; forbidden on other/blocked outcomes. Omitted from historical outcomes when absent. |
+| otm_operation_step.last_outcome | Typed capture evidence in the existing workspace/operation/intent/step row; evidence_event_id references the immutable audit outcome. No second identity registry is introduced here. |
+| audit_event.data | Immutable onboarding_outcome containing the same capture payload, with existing operation/workspace provenance, timestamp and data hash. |
+
+Migration **0022_onboarding_users** only extends the existing step-key constraint; it adds no
+columns, tables, grants or backfill. Frozen earlier SQL remains unchanged. Existing ER relationships
+remain accurate because capture uses the current operation-step/audit relationship.
+
+These are onboarding provenance facts, **not** current managed-object binding/access-assignment heads,
+credentials or proof of signer/privilege/console/MFA/recovery readiness. The later access-health slice
+must establish canonical scoped binding heads and generation checks before using presence reads.
+No required-user check, repair, password disclosure, scheduled scan or new Access screen is enabled.
+The simulator returns only synthetic identities; no live user or key is created by this slice.
+
+### Review locally versus OCI
+
+After this source revision is deliberately installed in a local review instance, create or import a
+simulated tenancy through the existing guided flow. Complete the handoff and cleanup confirmation;
+**Record permanent user identities** should be verified before temporary cleanup and survive reload.
+An existing completed operation need not gain this step. Do not expect a new primary menu or Access page.
+The current saved previews are not automatically upgraded by development builds.
+
+Automated unit cases cover exact identities, independent role scope, collisions with temporary users,
+malformed/secret extras, closed failures and versioned step ordering. PostgreSQL cases check create
+and import evidence, immutable audit agreement and successful-operation redelivery. Browser cases
+check the capture step in the normal guided flow. These checks do not prove actual OCI readback,
+eventual consistency or credential cleanup; see the
+[real OCI manual test manifest](../how-to/real-oci-test-manifest.md).

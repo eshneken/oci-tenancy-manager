@@ -5,9 +5,10 @@ for **automation** and **recovery** users, independently per subject. It does no
 screen, API route, database table, native job, scheduled scan, notification or repair action.
 The audit user remains V2. Existing saved tenancies are not backfilled or declared healthy.
 
-The onboarding audit found that current setup steps retain bootstrap/domain discovery but not the
-exact permanent automation/recovery bindings. The next integration slice must capture those verified
-identifiers and establish durable scoped heads before composing these reads into a worker or UI.
+New version 3 onboarding now retains [exact permanent-user capture evidence](tenancy-onboarding.md#permanent-user-capture--6-november-2026)
+before temporary cleanup. Historical operations are not backfilled. This is immutable onboarding
+provenance, not yet canonical current binding/assignment heads. Establish those scoped heads before
+composing presence reads into an application worker or UI.
 Never reconstruct a required identity from a username, email, successful setup label or naming rule.
 
 ## What a result establishes

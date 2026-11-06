@@ -8,6 +8,13 @@ The dated test-plan record (private historical evidence; not distributed) preser
 milestone counts and proposed file names without making them current build instructions.
 
 
+## Live-provider qualification tracking
+
+Maintain the [real OCI manual test manifest](how-to/real-oci-test-manifest.md) with each slice.
+Every behavior that cannot be verified locally needs a pending live case with prerequisites,
+steps and expected outcomes. Passing simulated tests does not close live qualification cases.
+Checkpoint reports must distinguish local interactive checks, automated coverage and pending OCI tests.
+
 ## D53: required test and merge gates
 
 Accepted 26 October 2026. These are mandatory engineering requirements, not claims that CI,
@@ -970,3 +977,19 @@ facts and out-of-window timestamps. Unknown cannot carry confirmed identity fact
 secret fields and the deferred audit-user purpose. Neutral modules must load without simulators.
 Existing full database/browser suites remain regressions, not execution of an uncomposed capability.
 No new production binding/check/secret storage or public screen is qualified here.
+
+
+## Permanent-user capture regression matrix — 6 November 2026
+
+- Unit: separate automation/recovery OCI and SCIM identities, correct workspace/organization/parent/
+  child/domain, exclusion of both temporary identities, duplicate/null subjects, sanitized failures,
+  forbidden secret extras, evidence pairing, version 1/2 compatibility and capture-before-retirement.
+- PostgreSQL: version 3 create/import retain the same exact capture in operation-step and immutable
+  audit evidence; completed worker redelivery preserves it. Forward migration 0022 changes only the
+  step allowlist and must retain earlier data and valid legacy step keys.
+- Playwright: normal guided create/import displays the verified permanent-user capture step through
+  the real API/worker/store path. Existing handoff/reload/responsive regressions remain required.
+- Live OCI: exact returned identities, interrupted setup, same-name/different-ID protection and
+  post-policy checks before temporary retirement remain in the [manual manifest](how-to/real-oci-test-manifest.md).
+
+Do not treat retained onboarding provenance as canonical current access bindings or current health.

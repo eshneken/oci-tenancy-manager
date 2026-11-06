@@ -3,6 +3,7 @@
 Use a deliberate local installation and preserve saved user data. Tests that mutate state use
 isolated synthetic fixtures; private enrollment factors do not belong in reports or chat.
 
+- [Real OCI manual test manifest](real-oci-test-manifest.md) — maintain pending live-only cases for every slice
 - [Manual check: baseline updates](baseline-update-runbook.md)
 - [Manual review: configuration drift visibility](configuration-drift-runbook.md), including
   [pending real-OCI drift/repair tests and automated coverage](configuration-drift-runbook.md#pending-real-oci-manual-validation),

@@ -9,6 +9,7 @@ from otm.configuration.contracts import BaselineVersion
 from otm.contracts import Contract, UtcInstant
 from otm.email_policy import EmailContacts
 from otm.providers.inspection_contracts import TenancyOcid
+from otm.providers.lifecycle import OnboardingUsers
 
 SimulatedUser = Annotated[str, Field(pattern=r"^ocid1\.user\.oc1\.\.otmsim[a-z0-9]{1,100}$")]
 
@@ -104,6 +105,7 @@ class OnboardingEvidence(Contract):
         "retire_temporary",
         "configure_baseline",
         "verify_configured_access",
+        "capture_required_users",
     ]
     outcome: Literal["accepted", "verified", "blocked"]
     safe_code: Literal[
@@ -120,3 +122,15 @@ class OnboardingEvidence(Contract):
     request_hash: str | None = None
     handoff: OnboardingHandoff | None = None
     discovery: OnboardingDiscovery | None = None
+    # Absent on historical steps; exact readback evidence does not imply an active access binding.
+    required_users: OnboardingUsers | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
+
+    # Only a successful capture carries identity evidence; historical steps remain byte-compatible.
+    @model_validator(mode="after")
+    def capture_evidence(self):
+        captured = self.step == "capture_required_users" and self.outcome == "verified"
+        if captured != (self.required_users is not None):
+            raise ValueError("REQUIRED_USER_EVIDENCE_MISMATCH")
+        return self

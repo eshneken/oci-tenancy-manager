@@ -86,7 +86,7 @@ def action(c, person, action_name, *, review_id=None, **fields):
 
 
 # Drive the real persisted handoff and explicit cleanup preview rather than bypassing guided setup.
-def complete_setup(c, identifier):
+def complete_setup(c, identifier, *, expected_phase="complete"):
     from otm.tenancies.onboarding_contracts import OnboardingCommand
 
     c.worker.run(identifier)
@@ -119,7 +119,9 @@ def complete_setup(c, identifier):
     )
     c.worker.run(identifier)
     final = c.workflow.onboarding(c.principal, identifier)
-    assert final.phase == "complete" and all(s.state == "verified" for s in final.checks)
+    assert final.phase == expected_phase
+    if expected_phase == "complete":
+        assert all(s.state == "verified" for s in final.checks)
 
 
 # Baseline is quiet; later additions persist one inbox episode through repeat/no-op uploads.

@@ -202,7 +202,7 @@ class OrganizationWorkflows:
                         audit_event.c.kind == "operation_intent",
                     )
                 ).scalar_one_or_none()
-                if candidate and candidate["intent"].get("onboarding_version") in {1, 2}:
+                if candidate and candidate["intent"].get("onboarding_version") in {1, 2, 3}:
                     onboarding_id = row["operation_id"]
             config_operation = row["operation_id"] or row.get("last_operation_id")
             cost = (
@@ -1138,7 +1138,7 @@ class OrganizationWorkflows:
             action=command.action,
             baseline=baseline,
             whole_tenancy_deletion=deletion_plan is not None,
-            onboarding_version=2
+            onboarding_version=3
             if command.action in {"create_tenancy", "import_tenancy"}
             else None,
             activation_email=contacts.activation.effective_email
