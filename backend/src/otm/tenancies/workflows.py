@@ -237,6 +237,29 @@ class OrganizationWorkflows:
                 else (),
             )
 
+    # Authenticate the current workspace before reading stored identities; no provider or job runs.
+    def required_users(self, principal, identifier):
+        from otm.tenancies.required_users import required_user_records
+
+        workspace = self.store._principal(principal)
+        with read_snapshot(self.store.engine) as connection:
+            child = (
+                connection.execute(
+                    select(tenancy).where(
+                        tenancy.c.workspace_id == workspace,
+                        tenancy.c.id == identifier,
+                    )
+                )
+                .mappings()
+                .one_or_none()
+            )
+            if child is None:
+                raise OrganizationConflict("TENANCY_NOT_FOUND")
+            try:
+                return required_user_records(connection, workspace, child)
+            except ValueError:
+                raise RuntimeError("REQUIRED_USER_RECORDS_UNAVAILABLE") from None
+
     # Supplement inventory with the same immutable evidence projection as Configuration drift.
     def _check_view(self, view, check):
         if check is None:

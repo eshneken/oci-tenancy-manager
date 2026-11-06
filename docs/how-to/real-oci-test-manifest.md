@@ -48,6 +48,12 @@ linked local runbooks are preparation and comparison material, not live qualific
 | Fresh exact identity mappings | Complete approved disposable-child onboarding. Compare the domain and both user bindings with actual OCI/SCIM IDs and immutable capture provenance. Confirm each operational role identifies its intended managed account, distinct from the owner and temporary bootstrap/activation users; account presence alone does not establish that ownership or grant profile. Same-name unrelated accounts must never be adopted; historical unbound captures must remain unverified until a qualified reinspection is designed. | Pending |
 | Failed setup and termination | Interrupt binding persistence and verify temporary cleanup does not proceed. Retry without duplicate mappings. Deny termination initiation and verify bindings remain; accept it and verify logical retirement preserves creation/source history, without waiting for final OCI termination. | Pending |
 
+## Required users identity display
+
+| Planned live scenario | Steps / expected outcome | Status |
+| --- | --- | --- |
+| Stored identities versus live presence | Compare the Required users cards and expanded identifiers with qualified fresh OCI onboarding. Refresh records must only reload stored facts. Removing or changing a live account must not turn registration into a health assertion: presence and permissions remain Not checked until the separate access-check flow is implemented and qualified. Retired registration does not assert OCI account deletion. | Pending |
+
 ## Per-slice maintenance
 
 Add new live-only scenarios here or to a linked matrix in the same slice as implementation, including

@@ -103,3 +103,9 @@ The [presence boundary](required-user-presence.md) is still not composed into du
 Its targets require real scoped assignment/context/credential heads in addition to these identity
 mappings. No readiness, repair, notification or password-disclosure authority follows from a binding.
 All real-provider behavior remains Pending in the [manual manifest](../how-to/real-oci-test-manifest.md).
+
+
+The later [Required users identity-record view](required-users-screen.md) now exposes these stored
+facts in tenancy detail. Earlier no-UI statements describe the prior checkpoint; live presence/
+permission checks, authority heads, readiness and repair are still not composed by this read-only
+section. See its field map and local test runbook for the implemented boundary.

@@ -13,6 +13,7 @@ from otm.storage.organization import OrganizationConflict
 from otm.tenancies.contracts import ActionReceipt, OrganizationAction
 from otm.tenancies.deletion import TenancyDeletionCommand, TenancyDeletionPreview
 from otm.tenancies.onboarding_contracts import OnboardingCommand, OnboardingView
+from otm.tenancies.required_users import RequiredUsersDirectory
 from otm.tenancies.views import (
     PersonWorkflow,
     ReviewDirectory,
@@ -246,6 +247,11 @@ def workflow_router(service):
                 ),
             )
         )
+
+    # Read account identity records only; no URL/body can select workspace, credentials or probes.
+    @router.get("/api/tenancies/{identifier}/required-users", response_model=RequiredUsersDirectory)
+    def required_users(identifier: UUID, request: Request):
+        return guarded(lambda: service.required_users(request.user, identifier))
 
     # A foreign tenancy is indistinguishable from an unknown local identifier.
     @router.get("/api/tenancies/{identifier}", response_model=TenancyDetail)

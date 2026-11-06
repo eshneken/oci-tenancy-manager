@@ -1777,3 +1777,20 @@ dialog p {
 /* Paired root identity fields share a row and stack naturally on small screens. */
 .mapping-root-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 1rem; margin-top: 1rem; }
 .mapping-root-fields label { display: grid; gap: .5rem; min-width: 0; }
+
+
+/* Required identities are neutral records, never green access-health confirmations. */
+.required-users-heading { margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.required-users-heading h2 { margin:0; }
+.required-users-heading .button { min-height:44px; }
+.required-users-grid { align-items:start; list-style:none; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; padding:0; margin:20px 0 0; }
+.required-user-card { min-width:0; padding:18px; border:1px solid #d4deea; border-radius:3px; background:#f8fafc; }
+.required-user-card h3 { margin:0 0 16px; font-size:16px; line-height:1.4; }
+.required-user-facts { margin:0; display:grid; gap:12px; }
+.required-user-facts dt { color:#5b6877; font-size:12px; margin-bottom:4px; }
+.required-user-facts dd { margin:0; overflow-wrap:anywhere; }
+.required-user-state { background:#e8eef6; color:#33465e; }
+.required-user-details { margin-top:16px; border-top:1px solid #d4deea; }
+.required-user-details summary { min-height:44px; padding:12px 0; cursor:pointer; font-weight:600; }
+.required-user-details .required-user-facts { padding:8px 0 0; }
+@media(max-width:700px) { .required-users-grid { grid-template-columns:minmax(0,1fr); } }

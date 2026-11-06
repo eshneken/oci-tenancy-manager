@@ -1,3 +1,4 @@
+import { RequiredUsers } from "./RequiredUsers";
 import { CostCells, CostPanel, RefreshCosts } from "./FinancialCosts";
 import { configurationMessages, configurationMessageClass } from "./configurationStatus";
 import {TenancyOverride} from "./TenancyOverride";
@@ -6,7 +7,7 @@ import { DeleteTenancy } from "./DeleteTenancy";
 import { Onboarding } from "./Onboarding";
 import { Select } from "./Select";
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "./api";
 import type { OrganizationAction, TenancyQuery, TenancyView } from "./contracts";
 import { PersonActions } from "./PersonActions";
@@ -99,6 +100,7 @@ export function Tenancies({
     setDeleting(null);
     setSelected(null);
   }, [identifier]);
+  const client = useQueryClient();
   const list = useQuery({
     queryKey: ["tenancies", "list", query],
     queryFn: ({ signal }) => api.tenancies(query, signal),
@@ -192,7 +194,10 @@ export function Tenancies({
             className="button secondary"
             disabled={identifier ? detail.isFetching : list.isFetching}
             onClick={() =>
-              void (identifier ? detail.refetch() : list.refetch())
+              void (identifier ? Promise.all([
+                detail.refetch(),
+                client.invalidateQueries({ queryKey: ["tenancies", "required-users", identifier] }),
+              ]) : list.refetch())
             }
           >
             Refresh
@@ -556,6 +561,7 @@ export function Tenancies({
                   </a>
                 )}
               </section>
+              <RequiredUsers key={"required-users-"+tenant.id} tenancyId={tenant.id} expired={expired} navigate={navigate}/>
               <CostPanel key={"costs-"+tenant.id} cost={tenant.costs} tenancyId={tenant.id} expired={expired}/>
               {tenant.status === "active" && (
                 <section className="operation-panel tenancy-overrides" aria-labelledby="tenancy-overrides-title">

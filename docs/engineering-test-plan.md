@@ -1010,3 +1010,17 @@ Do not treat retained onboarding provenance as canonical current access bindings
   reset table set and foreign-key ordering; no CASCADE or weakened owner/container guards.
 - Live: binding identity/provenance agreement and accepted-termination ordering remain Pending in
   the [manual test manifest](how-to/real-oci-test-manifest.md). Active identity is not access health.
+
+
+## Required users read-only screen — 6 November 2026
+
+The [field/behavior reference](reference/required-users-screen.md) and
+[local review runbook](how-to/required-users-runbook.md) define this identity-record subset.
+Required cases: exactly two independent purposes; pending and legacy unrecorded states; actual
+create/import IDs and immutable source links; retained retired facts; scoped foreign-workspace404;
+no provider/job/audit/binding mutation on read; malformed target/auth/expiry/safe-error behavior;
+initial loading vs read failure vs successfully unrecorded identities; failed refresh with qualified
+retained records; no retained facts after401/403; private cache isolation/invalidation; native
+keyboard disclosures/refresh/source links and responsive widths1280/768/390/320. Use actual SQL
+and installed worker/browser flows as well as unit assertions. No live health/readiness claim is
+qualified; those cases remain Pending in the [OCI manifest](how-to/real-oci-test-manifest.md).

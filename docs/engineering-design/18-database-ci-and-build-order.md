@@ -1013,3 +1013,17 @@ entirely future work. Configuration objects keep their existing storage; future 
 own handlers/migrations. Access assignments, context/credential heads, current-generation checks,
 replacement and Required users UI remain future integration. An active binding is an identity mapping,
 not healthy access or authority to repair/disclose credentials. Saved previews remain unchanged.
+
+
+## Implemented Required users identity-record view — 6 November 2026
+
+The [Required users section and full 14-field map](../reference/required-users-screen.md) now expose
+stored automation/recovery identities within tenancy detail through an authenticated, scoped,
+read-only GET. Neutral Recorded/Not recorded/Retired record states are separate from the explicit
+Not checked presence/permission guidance. Source operations, exact IDs and UTC record dates are
+collapsible. No provider/secret read, job, repair, password action or health badge follows.
+
+This supersedes earlier statements that no Required users UI/API exists, only for this limited
+identity-record subset. The broader access assignments/context/credential heads, observations,
+readiness and repair model remains future work. No table/ER change is introduced. Local testing is
+covered by the [review runbook](../how-to/required-users-runbook.md); real-provider tests remain Pending.

@@ -8,6 +8,7 @@ are not competing implementation instructions or proof of real OCI behavior.
 | Product scope and acceptance criteria | [Product specification](product/oci-tenancy-manager-spec.md) |
 | Current architecture and approved future design | [Engineering design](engineering-design/README.md) |
 | Run the application | [Local HTTPS setup](reference/local-application.md) |
+| Review required user identities | [Screen and field map](reference/required-users-screen.md), [local runbook](how-to/required-users-runbook.md) |
 | Canonical domain/user identities and ER | [Binding field guide](reference/managed-object-bindings.md) |
 | Implemented fields, API behavior and limits | [Reference guides](reference/README.md) |
 | Review/test/operator procedures | [How-to guides](how-to/README.md) |
@@ -27,7 +28,9 @@ New onboarding now [retains exact permanent-user evidence](reference/tenancy-onb
 records this integration boundary. The later [onboarding capture checkpoint](history/onboarding-user-capture-checkpoint-2026-11-06.md)
 records exact permanent-user provenance and the remaining current-binding work. The later
 [canonical identity-binding checkpoint](history/managed-identity-bindings-checkpoint-2026-11-06.md)
-records the implemented domain/user mappings and the remaining access-authority integration.
+records the implemented domain/user mappings and the remaining access-authority integration. The later
+[Required users screen checkpoint](history/required-users-screen-checkpoint-2026-11-06.md) records the
+read-only identity display and its local review procedure; it adds no live presence claim.
 Current configuration work includes [guarded selected-object repair](reference/configuration-repair.md)
 through the existing durable operation worker, with [all-category/override regression coverage](reference/configuration-repair.md#all-category-repair-qualification--6-november-2026). Its [local checkpoint](history/configuration-repair-checkpoint-2026-11-06.md)
 records qualification and remaining deployment boundaries.

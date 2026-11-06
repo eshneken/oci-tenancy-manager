@@ -91,3 +91,9 @@ Fresh canonical identity bindings now exist as described in the
 [binding field map](managed-object-bindings.md). They do not themselves supply the required target's
 access_assignment_id/access_generation or the inspecting credential/context heads. Historical
 captures remain unbound; no synthetic assignment IDs are generated to bypass this integration step.
+
+
+The later [Required users identity-record view](required-users-screen.md) now exposes these stored
+facts in tenancy detail. Earlier no-UI statements describe the prior checkpoint; live presence/
+permission checks, authority heads, readiness and repair are still not composed by this read-only
+section. See its field map and local test runbook for the implemented boundary.

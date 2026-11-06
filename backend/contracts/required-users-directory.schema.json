@@ -1,0 +1,149 @@
+{
+  "$defs": {
+    "RequiredUserIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "domain_ocid": {
+          "maxLength": 256,
+          "minLength": 15,
+          "pattern": "^ocid1\\.domain\\.[A-Za-z0-9.]+$",
+          "title": "Domain Ocid",
+          "type": "string"
+        },
+        "recorded_at": {
+          "format": "date-time",
+          "title": "Recorded At",
+          "type": "string"
+        },
+        "retired_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Retired At"
+        },
+        "scim_resource_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Scim Resource Id",
+          "type": "string"
+        },
+        "source_operation_id": {
+          "format": "uuid",
+          "title": "Source Operation Id",
+          "type": "string"
+        },
+        "user_name": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "User Name",
+          "type": "string"
+        },
+        "user_ocid": {
+          "maxLength": 256,
+          "minLength": 15,
+          "pattern": "^ocid1\\.user\\.[A-Za-z0-9.]+$",
+          "title": "User Ocid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "user_name",
+        "user_ocid",
+        "scim_resource_id",
+        "domain_ocid",
+        "recorded_at",
+        "retired_at",
+        "source_operation_id"
+      ],
+      "title": "RequiredUserIdentity",
+      "type": "object"
+    },
+    "RequiredUserRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "identity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RequiredUserIdentity"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "identity_state": {
+          "enum": [
+            "recorded",
+            "not_recorded",
+            "retired"
+          ],
+          "title": "Identity State",
+          "type": "string"
+        },
+        "purpose": {
+          "enum": [
+            "automation",
+            "recovery"
+          ],
+          "title": "Purpose",
+          "type": "string"
+        }
+      },
+      "required": [
+        "purpose",
+        "identity_state",
+        "identity"
+      ],
+      "title": "RequiredUserRecord",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "provider_mode": {
+      "const": "simulated",
+      "title": "Provider Mode",
+      "type": "string"
+    },
+    "tenancy_id": {
+      "format": "uuid",
+      "title": "Tenancy Id",
+      "type": "string"
+    },
+    "tenancy_status": {
+      "enum": [
+        "pending",
+        "active",
+        "terminating",
+        "terminated",
+        "failed",
+        "cancelled"
+      ],
+      "title": "Tenancy Status",
+      "type": "string"
+    },
+    "users": {
+      "items": {
+        "$ref": "#/$defs/RequiredUserRecord"
+      },
+      "maxItems": 2,
+      "minItems": 2,
+      "title": "Users",
+      "type": "array"
+    }
+  },
+  "required": [
+    "tenancy_id",
+    "tenancy_status",
+    "provider_mode",
+    "users"
+  ],
+  "title": "RequiredUsersDirectory",
+  "type": "object"
+}

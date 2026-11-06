@@ -1,3 +1,4 @@
+import type { RequiredUsersDirectory } from "./contracts";
 import type { CostRefreshReceipt, CostRefreshRequest } from "./contracts";
 import type { EmailPolicyView } from "./contracts";
 import type { ResponsibilityCommand } from "./contracts";
@@ -273,6 +274,12 @@ export const api = {
       "GET",
       undefined,
       signal,
+    );
+  },
+  // Refresh stored account records only; this route never probes OCI or exposes credentials.
+  requiredUsers(id: string, signal?: AbortSignal) {
+    return request<RequiredUsersDirectory>(
+      "/api/tenancies/" + encodeURIComponent(id) + "/required-users", "GET", undefined, signal,
     );
   },
   // Read a scoped directory with allowlisted sort fields and literal search terms.

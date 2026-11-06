@@ -1,11 +1,29 @@
 // Generated from authoritative Pydantic schemas.
+export type ProviderMode = "simulated";
+export type TenancyId = string;
+export type TenancyStatus =
+  "pending" | "active" | "terminating" | "terminated" | "failed" | "cancelled";
+/**
+ * @minItems 2
+ * @maxItems 2
+ */
+export type Users = [RequiredUserRecord, RequiredUserRecord];
+export type DomainOcid = string;
+export type RecordedAt = string;
+export type RetiredAt = string | null;
+export type ScimResourceId = string;
+export type SourceOperationId = string;
+export type UserName = string;
+export type UserOcid = string;
+export type IdentityState = "recorded" | "not_recorded" | "retired";
+export type Purpose = "automation" | "recovery";
 export type ClientRequestKey = string;
-export type TenancyId = string | null;
+export type TenancyId1 = string | null;
 export type AcceptedAt = string;
 export type AcceptedCount = number;
 export type JoinedCount = number;
 export type OperationIds = string[];
-export type ProviderMode = "simulated";
+export type ProviderMode1 = "simulated";
 export type SkippedCount = number;
 export type Actual = string | null;
 export type ActualOverBudget = boolean;
@@ -101,7 +119,7 @@ export type Categories =
       "policy" | "quota" | "budget" | "tags",
       "policy" | "quota" | "budget" | "tags"
     ];
-export type TenancyId1 = string;
+export type TenancyId2 = string;
 export type CheckingCount = number;
 export type ConfirmedCount = number;
 export type BaselineId = string | null;
@@ -142,13 +160,13 @@ export type Stale = boolean;
 export type State3 =
   | ("matching" | "drifted" | "unavailable" | "superseded")
   | ("not_checked" | "checking");
-export type TenancyId2 = string;
+export type TenancyId3 = string;
 export type TenancyName = string;
 export type Items = ConfigurationCheckSummary[];
 export type Page = number;
 export type PageSize = number;
 export type Pages = number;
-export type ProviderMode1 = "simulated";
+export type ProviderMode2 = "simulated";
 export type StaleCount = number;
 export type Total = number;
 export type UnavailableCount = number;
@@ -167,7 +185,7 @@ export type State4 =
   | "checking"
   | "stale";
 export type Tab = "confirmed" | "checks";
-export type TenancyId3 = string | null;
+export type TenancyId4 = string | null;
 export type BaselineId1 = string | null;
 export type BaselineVersionNumber1 = number | null;
 export type CanCheck1 = boolean;
@@ -182,10 +200,10 @@ export type Stale1 = boolean;
 export type State5 =
   | ("matching" | "drifted" | "unavailable" | "superseded")
   | ("not_checked" | "checking");
-export type TenancyId4 = string;
+export type TenancyId5 = string;
 export type TenancyName1 = string;
 export type ClientRequestKey2 = string;
-export type TenancyId5 = string | null;
+export type TenancyId6 = string | null;
 export type BasedOnId = string | null;
 export type BudgetCurrency = string;
 export type BudgetPeriod = "MONTHLY";
@@ -230,8 +248,8 @@ export type PreviousId = string | null;
 export type QuotaOverrideStatements = [string, ...string[]] | null;
 export type ResolutionContractVersion = "simulated-config-1";
 export type RevisionNumber = number;
-export type TenancyId6 = string;
 export type TenancyId7 = string;
+export type TenancyId8 = string;
 export type TenancyName2 = string;
 export type TenancyRevision = number;
 export type MonthlyBudgetOverrideAmount1 = number | string | null;
@@ -240,7 +258,7 @@ export type QuotaOverrideStatements1 = [string, ...string[]] | null;
 export type BaselineVersionId1 = string;
 export type ConfigurationId = string | null;
 export type TenancyRevision1 = number;
-export type TenancyId8 = string;
+export type TenancyId9 = string;
 export type Id3 = string;
 export type OperationId2 = string | null;
 export type Code =
@@ -251,39 +269,39 @@ export type Code =
   | "OVERRIDE_CONTEXT_UNAVAILABLE";
 export type Name = string;
 export type OperationId3 = string | null;
-export type TenancyId9 = string;
+export type TenancyId10 = string;
 export type Blockers = ConfigurationBlocker[];
 export type PolicyChoice = ("use_new_baseline" | "keep_override") | null;
 export type PolicyReview = boolean;
 export type QuotaChoice = ("use_new_baseline" | "keep_override") | null;
 export type QuotaReview = boolean;
-export type TenancyId10 = string;
+export type TenancyId11 = string;
 export type TenancyName3 = string;
 export type Conflicts = OverrideConflict[];
 export type PendingCount = number;
 export type PreviewHash = string;
 export type ReadyCount = number;
-export type TenancyId11 = string | null;
+export type TenancyId12 = string | null;
 export type Revision = number;
 export type State6 = "draft" | "accepted" | "stale";
 export type ClientRequestKey3 = string;
-export type TenancyId12 = string | null;
+export type TenancyId13 = string | null;
 export type ExpectedRevision1 = number;
 export type PolicyChoice1 = ("use_new_baseline" | "keep_override") | null;
 export type QuotaChoice1 = ("use_new_baseline" | "keep_override") | null;
-export type TenancyId13 = string;
+export type TenancyId14 = string;
 export type Blockers1 = ConfigurationBlocker[];
 export type Conflicts1 = OverrideConflict[];
 export type PendingCount1 = number;
 export type PreviewHash1 = string;
 export type ReadyCount1 = number;
-export type TenancyId14 = string | null;
+export type TenancyId15 = string | null;
 export type ClientRequestKey4 = string;
 export type OverrideMode = boolean;
 export type PlanId = string | null;
 export type PreviewHash2 = string;
 export type RepairCategories = ("policy" | "quota" | "budget" | "tags")[];
-export type TenancyId15 = string | null;
+export type TenancyId16 = string | null;
 export type CanRetry = boolean;
 export type ChangeKind = "baseline_update" | "override_change" | "repair";
 export type OperationId4 = string;
@@ -291,7 +309,7 @@ export type State7 = string;
 export type Name1 = string;
 export type SafeCode2 = string | null;
 export type State8 = "pending" | "verified" | "needs_attention";
-export type TenancyId16 = string;
+export type TenancyId17 = string;
 export type VerifiedAt = string | null;
 export type Targets = ConfigurationTargetProgress[];
 export type Configured = boolean;
@@ -403,7 +421,7 @@ export type ConfigurationId2 = string;
 export type ProposedVersionId1 = string;
 export type RegistryRevision1 = number;
 export type Kind = "delete_registered_tenancy";
-export type TenancyId17 = string;
+export type TenancyId18 = string;
 export type ManagerWarning = boolean;
 export type Email2 = string;
 export type IsManager = boolean;
@@ -485,7 +503,7 @@ export type OwnerEmail = string | null;
 export type OwnerName = string | null;
 export type OwnerPersonId = string | null;
 export type ParentTenancyOcid = string;
-export type ProviderMode2 = "simulated";
+export type ProviderMode3 = "simulated";
 export type Status1 = string;
 export type TenancyOcid = string;
 export type VerifiedAt1 = string | null;
@@ -512,7 +530,7 @@ export type ActivationScimId = string | null;
 export type ActivationUserOcid1 = string | null;
 export type BootstrapScimId = string;
 export type BootstrapUserOcid1 = string;
-export type DomainOcid = string;
+export type DomainOcid1 = string;
 export type HomeRegion1 = string;
 export type Name5 = string;
 export type OrganizationId = string;
@@ -536,7 +554,7 @@ export type RequestedHomeRegion = string | null;
 export type RequestedName = string | null;
 export type Revision2 = number;
 export type State11 = string;
-export type TenancyId18 = string;
+export type TenancyId19 = string;
 export type Action1 =
   | "create_tenancy"
   | "import_tenancy"
@@ -574,11 +592,11 @@ export type RecipientPersonId = string | null;
 export type Plan = AssociationChoice[];
 export type RecipientPersonId1 = string | null;
 export type ReviewId = string | null;
-export type TenancyId19 = string | null;
+export type TenancyId20 = string | null;
 export type TenancyKind = "individual" | "shared";
 export type AcceptedAt1 = string;
 export type OperationId9 = string | null;
-export type ProviderMode3 = "simulated" | "application";
+export type ProviderMode4 = "simulated" | "application";
 export type State12 =
   | "queued"
   | "succeeded"
@@ -612,10 +630,10 @@ export type OperationId10 = string | null;
 export type PersonId3 = string;
 export type Role2 = "owner" | "member";
 export type Status2 = string;
-export type TenancyId20 = string;
+export type TenancyId21 = string;
 export type TenancyKind1 = "individual" | "shared";
 export type TenancyName4 = string;
-export type TenancyStatus = string;
+export type TenancyStatus1 = string;
 export type Associations = AssociationView[];
 export type Identifier = string;
 export type Name7 = string;
@@ -628,7 +646,7 @@ export type Id9 = string;
 export type Name8 = string;
 export type MergePartners = PersonOption[];
 export type PendingOperationId2 = string | null;
-export type ProviderMode4 = "simulated" | "unavailable";
+export type ProviderMode5 = "simulated" | "unavailable";
 export type Category1 = "actionable" | "informational" | "change";
 export type Email4 = string;
 export type FirstSeenAt = string;
@@ -734,7 +752,7 @@ export type Page9 = number;
 export type PageSize8 = number;
 export type Pages5 = number;
 export type PendingWorkflows = number;
-export type ProviderMode5 = "simulated" | "unavailable";
+export type ProviderMode6 = "simulated" | "unavailable";
 export type ServerTime = string;
 export type SourceAsOf = string | null;
 export type TestResetEnabled = boolean;
@@ -798,7 +816,7 @@ export type Kind3 =
   | "configuration_update"
   | "configuration_check"
   | "cost_collection";
-export type ProviderMode6 = "simulated";
+export type ProviderMode7 = "simulated";
 export type ResponsibilityRevision = number | null;
 export type ResponsibleAdministratorId = string | null;
 export type ResponsibleAdministratorName = string | null;
@@ -891,7 +909,7 @@ export type State19 =
 export type ClientRequestKey8 = string;
 export type TenancyOcid3 = string;
 export type ExecutionPaused = boolean;
-export type ProviderMode7 = "simulated";
+export type ProviderMode8 = "simulated";
 export type Name11 = string;
 export type Scenario =
   "healthy" | "access_denied" | "timeout" | "unsupported" | "unobservable";
@@ -987,6 +1005,7 @@ export type Sort7 = "at" | "kind" | "actor_name";
 export type ToAt1 = string | null;
 
 export interface ApiContracts {
+  RequiredUsersDirectory: RequiredUsersDirectory;
   CostRefreshRequest: CostRefreshRequest;
   CostRefreshReceipt: CostRefreshReceipt;
   CostView: CostView;
@@ -1047,16 +1066,36 @@ export interface ApiContracts {
   AuditQuery: AuditQuery;
   AuditExportQuery: AuditExportQuery;
 }
+export interface RequiredUsersDirectory {
+  provider_mode: ProviderMode;
+  tenancy_id: TenancyId;
+  tenancy_status: TenancyStatus;
+  users: Users;
+}
+export interface RequiredUserRecord {
+  identity: RequiredUserIdentity | null;
+  identity_state: IdentityState;
+  purpose: Purpose;
+}
+export interface RequiredUserIdentity {
+  domain_ocid: DomainOcid;
+  recorded_at: RecordedAt;
+  retired_at: RetiredAt;
+  scim_resource_id: ScimResourceId;
+  source_operation_id: SourceOperationId;
+  user_name: UserName;
+  user_ocid: UserOcid;
+}
 export interface CostRefreshRequest {
   client_request_key: ClientRequestKey;
-  tenancy_id?: TenancyId;
+  tenancy_id?: TenancyId1;
 }
 export interface CostRefreshReceipt {
   accepted_at: AcceptedAt;
   accepted_count: AcceptedCount;
   joined_count: JoinedCount;
   operation_ids: OperationIds;
-  provider_mode?: ProviderMode;
+  provider_mode?: ProviderMode1;
   skipped_count: SkippedCount;
 }
 export interface CostView {
@@ -1132,7 +1171,7 @@ export interface ResponsibilityCommand {
 }
 export interface ConfigurationRepairRequest {
   categories: Categories;
-  tenancy_id: TenancyId1;
+  tenancy_id: TenancyId2;
 }
 export interface ConfigurationDriftDirectory {
   checking_count: CheckingCount;
@@ -1141,7 +1180,7 @@ export interface ConfigurationDriftDirectory {
   page: Page;
   page_size: PageSize;
   pages: Pages;
-  provider_mode?: ProviderMode1;
+  provider_mode?: ProviderMode2;
   stale_count?: StaleCount;
   total: Total;
   unavailable_count: UnavailableCount;
@@ -1160,7 +1199,7 @@ export interface ConfigurationCheckSummary {
   pending_operation_id: PendingOperationId;
   stale?: Stale;
   state: State3;
-  tenancy_id: TenancyId2;
+  tenancy_id: TenancyId3;
   tenancy_name: TenancyName;
 }
 export interface ConfigurationIssue {
@@ -1181,7 +1220,7 @@ export interface ConfigurationDriftQuery {
   sort?: Sort;
   state?: State4;
   tab?: Tab;
-  tenancy_id?: TenancyId3;
+  tenancy_id?: TenancyId4;
 }
 export interface ConfigurationCheckSummary1 {
   baseline_id: BaselineId1;
@@ -1196,18 +1235,18 @@ export interface ConfigurationCheckSummary1 {
   pending_operation_id: PendingOperationId1;
   stale?: Stale1;
   state: State5;
-  tenancy_id: TenancyId4;
+  tenancy_id: TenancyId5;
   tenancy_name: TenancyName1;
 }
 export interface ConfigurationCheckRequest {
   client_request_key: ClientRequestKey2;
-  tenancy_id?: TenancyId5;
+  tenancy_id?: TenancyId6;
 }
 export interface OverrideEditor {
   baseline: BaselineVersion;
   can_edit: CanEdit;
   configuration: TenancyConfiguration | null;
-  tenancy_id: TenancyId7;
+  tenancy_id: TenancyId8;
   tenancy_name: TenancyName2;
   tenancy_revision: TenancyRevision;
   values: OverrideValues;
@@ -1252,7 +1291,7 @@ export interface TenancyConfiguration {
   quota_override_statements?: QuotaOverrideStatements;
   resolution_contract_version?: ResolutionContractVersion;
   revision_number: RevisionNumber;
-  tenancy_id: TenancyId6;
+  tenancy_id: TenancyId7;
 }
 export interface OverrideValues {
   monthly_budget_override_amount?: MonthlyBudgetOverrideAmount1;
@@ -1261,7 +1300,7 @@ export interface OverrideValues {
 }
 export interface OverridePreviewRequest {
   context: OverrideContext;
-  tenancy_id: TenancyId8;
+  tenancy_id: TenancyId9;
   values: OverrideValues;
 }
 export interface OverrideContext {
@@ -1285,13 +1324,13 @@ export interface ConfigurationPreview {
   ready_count: ReadyCount;
   repair_expected?: RepairExpected;
   repair_observed?: RepairObserved;
-  tenancy_id: TenancyId11;
+  tenancy_id: TenancyId12;
 }
 export interface ConfigurationBlocker {
   code: Code;
   name: Name;
   operation_id?: OperationId3;
-  tenancy_id: TenancyId9;
+  tenancy_id: TenancyId10;
 }
 export interface OverrideConflict {
   old_baseline: BaselineVersion | null;
@@ -1300,7 +1339,7 @@ export interface OverrideConflict {
   policy_review: PolicyReview;
   quota_choice?: QuotaChoice;
   quota_review: QuotaReview;
-  tenancy_id: TenancyId10;
+  tenancy_id: TenancyId11;
   tenancy_name: TenancyName3;
 }
 export interface RepairExpected {
@@ -1311,13 +1350,13 @@ export interface RepairObserved {
 }
 export interface CreateConfigurationPlan {
   client_request_key: ClientRequestKey3;
-  tenancy_id?: TenancyId12;
+  tenancy_id?: TenancyId13;
 }
 export interface SaveConfigurationReview {
   expected_revision: ExpectedRevision1;
   policy_choice?: PolicyChoice1;
   quota_choice?: QuotaChoice1;
-  tenancy_id: TenancyId13;
+  tenancy_id: TenancyId14;
 }
 export interface ConfigurationPreview1 {
   baseline: BaselineVersion | null;
@@ -1328,7 +1367,7 @@ export interface ConfigurationPreview1 {
   ready_count: ReadyCount1;
   repair_expected?: RepairExpected1;
   repair_observed?: RepairObserved1;
-  tenancy_id: TenancyId14;
+  tenancy_id: TenancyId15;
 }
 export interface RepairExpected1 {
   [k: string]: string;
@@ -1344,7 +1383,7 @@ export interface ConfigurationUpdate {
   plan_id?: PlanId;
   preview_hash: PreviewHash2;
   repair_categories?: RepairCategories;
-  tenancy_id?: TenancyId15;
+  tenancy_id?: TenancyId16;
 }
 export interface ConfigurationProgress {
   baseline: BaselineVersion;
@@ -1358,7 +1397,7 @@ export interface ConfigurationTargetProgress {
   name: Name1;
   safe_code?: SafeCode2;
   state: State8;
-  tenancy_id: TenancyId16;
+  tenancy_id: TenancyId17;
   verified_at?: VerifiedAt;
 }
 export interface BaselineDirectory {
@@ -1511,7 +1550,7 @@ export interface TenancyDeletionCommand {
   confirm_shared?: ConfirmShared;
   context: OrganizationContext;
   kind?: Kind;
-  tenancy_id: TenancyId17;
+  tenancy_id: TenancyId18;
 }
 export interface OrganizationContext {
   applied_version_id: AppliedVersionId1;
@@ -1567,7 +1606,7 @@ export interface TenancyView {
   owner_name: OwnerName;
   owner_person_id: OwnerPersonId;
   parent_tenancy_ocid: ParentTenancyOcid;
-  provider_mode: ProviderMode2;
+  provider_mode: ProviderMode3;
   status: Status1;
   tenancy_ocid: TenancyOcid;
   verified_at: VerifiedAt1;
@@ -1629,7 +1668,7 @@ export interface OnboardingView {
   state: State11;
   submitted_handoff: OnboardingHandoff | null;
   suggested_handoff: OnboardingHandoff;
-  tenancy_id: TenancyId18;
+  tenancy_id: TenancyId19;
 }
 export interface OnboardingCheck {
   key: Key1;
@@ -1642,7 +1681,7 @@ export interface OnboardingDiscovery {
   activation_user_ocid: ActivationUserOcid1;
   bootstrap_scim_id: BootstrapScimId;
   bootstrap_user_ocid: BootstrapUserOcid1;
-  domain_ocid: DomainOcid;
+  domain_ocid: DomainOcid1;
   home_region: HomeRegion1;
   name: Name5;
   organization_id: OrganizationId;
@@ -1676,7 +1715,7 @@ export interface OrganizationAction {
   plan?: Plan;
   recipient_person_id?: RecipientPersonId1;
   review_id?: ReviewId;
-  tenancy_id?: TenancyId19;
+  tenancy_id?: TenancyId20;
   tenancy_kind?: TenancyKind;
 }
 export interface AssociationChoice {
@@ -1687,7 +1726,7 @@ export interface AssociationChoice {
 export interface ActionReceipt {
   accepted_at: AcceptedAt1;
   operation_id: OperationId9;
-  provider_mode: ProviderMode3;
+  provider_mode: ProviderMode4;
   state: State12;
 }
 export interface PersonWorkflow {
@@ -1703,7 +1742,7 @@ export interface PersonWorkflow {
   merge_partners: MergePartners;
   pending_operation_id: PendingOperationId2;
   person: PersonOption;
-  provider_mode: ProviderMode4;
+  provider_mode: ProviderMode5;
   review: ReviewView | null;
   shared_tenancies: SharedTenancies;
   source_present: SourcePresent;
@@ -1719,10 +1758,10 @@ export interface AssociationView {
   person_id: PersonId3;
   role: Role2;
   status: Status2;
-  tenancy_id: TenancyId20;
+  tenancy_id: TenancyId21;
   tenancy_kind: TenancyKind1;
   tenancy_name: TenancyName4;
-  tenancy_status: TenancyStatus;
+  tenancy_status: TenancyStatus1;
 }
 export interface CreationRegion {
   identifier: Identifier;
@@ -1820,7 +1859,7 @@ export interface OrganizationDirectory {
   page_size: PageSize8;
   pages: Pages5;
   pending_workflows?: PendingWorkflows;
-  provider_mode?: ProviderMode5;
+  provider_mode?: ProviderMode6;
   server_time: ServerTime;
   source_as_of: SourceAsOf;
   test_reset_enabled?: TestResetEnabled;
@@ -1932,7 +1971,7 @@ export interface OperationSummary {
   id: Id13;
   initiated_by: InitiatedBy;
   kind: Kind3;
-  provider_mode?: ProviderMode6;
+  provider_mode?: ProviderMode7;
   responsibility_revision?: ResponsibilityRevision;
   responsible_administrator_id?: ResponsibleAdministratorId;
   responsible_administrator_name?: ResponsibleAdministratorName;
@@ -1995,7 +2034,7 @@ export interface InspectionSubmission {
 }
 export interface SandboxCatalog {
   execution_paused: ExecutionPaused;
-  provider_mode?: ProviderMode7;
+  provider_mode?: ProviderMode8;
   targets: Targets1;
 }
 export interface SandboxTarget {

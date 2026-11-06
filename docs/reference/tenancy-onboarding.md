@@ -483,3 +483,9 @@ all three rows. Already-verified historical captures are skipped rather than sil
 This advances the earlier provenance-only checkpoint; current access assignments/check heads,
 credentials and health checks are still separate future work. Migration 0023 and the implemented ER
 are described in that field guide. Termination initiation retires mappings without deleting history.
+
+
+The later [Required users identity-record view](required-users-screen.md) now exposes these stored
+facts in tenancy detail. Earlier no-UI statements describe the prior checkpoint; live presence/
+permission checks, authority heads, readiness and repair are still not composed by this read-only
+section. See its field map and local test runbook for the implemented boundary.

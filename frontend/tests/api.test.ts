@@ -283,6 +283,8 @@ it("transports scoped review/tenancy commands and refuses untrusted error codes"
   );
   await api.tenancy("tenant/id", signal);
   expect(fetch.mock.calls.at(-1)![0]).toBe("/api/tenancies/tenant%2Fid");
+  await api.requiredUsers("tenant/id", signal);
+  expect(fetch.mock.calls.at(-1)![0]).toBe("/api/tenancies/tenant%2Fid/required-users");
   const body = {
     client_request_key: "key",
     context: {

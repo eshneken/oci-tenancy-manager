@@ -15,6 +15,7 @@ is in [the engineering chapters](../engineering-design/README.md).
   [all-category/override qualification](configuration-repair.md#all-category-repair-qualification--6-november-2026)
 - [Baseline updates for existing tenancies](configuration-updates.md)
 - [Provider contracts and simulator layout](provider-layout.md)
+- [Required users: stored identity section](required-users-screen.md)
 - [Canonical managed identity bindings](managed-object-bindings.md)
 - [Required-user presence boundary: internal foundation](required-user-presence.md)
 - [Internal tenancy inspection](inspection.md)

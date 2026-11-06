@@ -361,6 +361,17 @@ async function organizationFlows(page: Page) {
       await expect(
         review.getByRole("button", { name: "Start setup" }),
       ).toBeDisabled();
+      // The pending child has no registered account identities; a GET must not invent them.
+      const setupUrl = page.url();
+      const operationId = new URL(setupUrl).pathname.split("/").at(-1)!;
+      const setupData = await (await page.request.get("/api/tenancy-onboarding/" + operationId)).json();
+      await page.goto("/tenancies/" + setupData.tenancy_id);
+      const pendingUsers = page.getByRole("region", { name: "Required users", exact: true });
+      await expect(pendingUsers.getByText("Not recorded", { exact: true })).toHaveCount(4);
+      await expect(pendingUsers.getByText(/Setup is still in progress/)).toBeVisible();
+      await expect(pendingUsers.locator("details")).toHaveCount(0);
+      await page.goto(setupUrl);
+      await expect(review).toBeVisible();
       await reviewCheckboxControl(
         page,
         "I confirm the exact temporary accounts above may be removed after replacement access is verified.",
@@ -392,6 +403,28 @@ async function organizationFlows(page: Page) {
           ? sharedName
           : personalName,
       );
+      const users = page.getByRole("region", { name: "Required users", exact: true });
+      await expect(users.getByText("Recorded", { exact: true })).toHaveCount(2);
+      await expect(users.getByText("Not checked", { exact: true })).toHaveCount(2);
+      await expect(users.getByText("otm-automation", { exact: true })).toBeVisible();
+      const refresh = users.getByRole("button", { name: "Refresh records", exact: true });
+      await refresh.click();
+      await expect(refresh).toBeEnabled();
+      const disclosure = users.locator("details").first().locator("summary");
+      await disclosure.focus(); await disclosure.press("Enter");
+      await expect(users.locator("details").first()).toHaveAttribute("open", "");
+      await expect(users.getByRole("link", { name: "View setup operation" }).first()).toHaveAttribute("href", /\/operations\/[a-f0-9-]+$/);
+      for (const width of [1280, 768, 390, 320]) {
+        await page.setViewportSize({ width, height: 900 });
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        const cards = await users.locator(".required-user-card").evaluateAll(elements => elements.map(e => {
+          const r = e.getBoundingClientRect(); return { x: r.x, y: r.y };
+        }));
+        if (width <= 700) expect(cards[1].y).toBeGreaterThan(cards[0].y);
+        else expect(Math.abs(cards[0].y - cards[1].y)).toBeLessThan(2);
+        await users.screenshot({ path: resolve(".local-dev/browser", `required-users-${action === "Create tenancy" ? "create" : "import"}-${width}.png`) });
+      }
+      await page.setViewportSize({ width: 1280, height: 900 });
     }
   }
 

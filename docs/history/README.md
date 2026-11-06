@@ -20,3 +20,5 @@ Private original feeds, raw evidence, screenshots and machine-specific paths are
 - [Permanent-user onboarding capture](onboarding-user-capture-checkpoint-2026-11-06.md)
 
 - [Canonical managed identity bindings](managed-identity-bindings-checkpoint-2026-11-06.md)
+
+- [Required users identity-record screen](required-users-screen-checkpoint-2026-11-06.md)

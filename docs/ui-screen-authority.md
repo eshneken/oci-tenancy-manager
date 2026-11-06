@@ -676,3 +676,12 @@ Earlier read-only checkpoint statements excluding Repair describe the check foun
 [explicit selected-object repair flow](reference/configuration-repair.md) now adds a guarded modal
 preview/confirmation and native worker verification. Checks remain read-only. No daily scheduler,
 live OCI repair or local drift-injection control is enabled.
+
+
+## Required users identity-record section — 6 November 2026
+
+[Implemented React section](../frontend/src/RequiredUsers.tsx) and its
+[API/UI field guide](reference/required-users-screen.md) are authoritative for the read-only
+identity-record subset embedded in tenancy detail. Static access walkthroughs still illustrate the
+future full presence/permission/repair flow; they must not imply those controls are implemented.
+Neutral registration states and explicit Not checked guidance remain separate from access health.
