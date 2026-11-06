@@ -314,6 +314,17 @@ def test_legacy_onboarding_completes_without_binding_backfill(workflow_case, ver
         )
     assert "capture_required_users" not in keys
     assert ("configure_baseline" in keys) == (version == 2)
+    from otm.storage.tables import managed_object_binding
+
+    with c.engine.connect() as connection:
+        assert (
+            connection.execute(
+                select(managed_object_binding.c.id).where(
+                    managed_object_binding.c.workspace_id == c.policy.workspace_id,
+                )
+            ).all()
+            == []
+        )
 
 
 # A failed identity capture persists a repairable stop and never retires temporary access.

@@ -7,6 +7,7 @@ migrations or Python validation.
 
 ## Implemented local subsets
 
+- [managed-identities-implemented](managed-identities-implemented.mmd) — [SVG](managed-identities-implemented.svg), [field guide](../../reference/managed-object-bindings.md); Excalidraw is an image annotation export
 - [baseline-authoring-implemented](baseline-authoring-implemented.mmd)
 - [configuration-drift-implemented](configuration-drift-implemented.mmd)
 - [configuration-updates-implemented](configuration-updates-implemented.mmd)

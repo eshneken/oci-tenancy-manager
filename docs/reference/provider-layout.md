@@ -47,3 +47,9 @@ simulator. It is not yet selected by the application or native worker.
 its concrete synthetic implementation remains in `lifecycle_simulator.py`. The
 [version 3 onboarding capture](tenancy-onboarding.md#permanent-user-capture--6-november-2026)
 uses these facts as immutable provenance, not an access-health observation or credential binding.
+
+
+Fresh onboarding capture now also creates [canonical identity mappings](managed-object-bindings.md)
+through the neutral storage boundary. Simulated provider identities remain synthetic; storage does
+not import a simulator, infer names or generate OCI IDs. Presence worker/UI composition still waits
+for real assignment and authority heads.

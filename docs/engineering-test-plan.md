@@ -993,3 +993,20 @@ No new production binding/check/secret storage or public screen is qualified her
   post-policy checks before temporary retirement remain in the [manual manifest](how-to/real-oci-test-manifest.md).
 
 Do not treat retained onboarding provenance as canonical current access bindings or current health.
+
+
+## Canonical identity-binding regression matrix — 6 November 2026
+
+- Unit: typed capture/hash/current-step/current scope and version gates, exact three-row shape,
+  idempotent IDs/generation, partial/conflicting mappings, transaction guard and closed DB failures.
+- PostgreSQL: actual create/import rows and immutable source, wrong workspace/child/domain/event/
+  operation/identifiers, no identity rewrite/delete/truncate, partial-insert rollback before cleanup,
+  retry, whole-tenancy and employee-flow termination retirement, failed termination preservation,
+  historical v1/v2 and already-captured v3 no-backfill behavior.
+- Installed roles: API SELECT only; denied insert/update/delete/truncate; worker insertion and narrow
+  retirement columns, with identity rewrite denied. Full native worker/browser onboarding remains
+  required and exercises the new table through actual runtime grants.
+- Migration/reset: no historical adoption, preserved operation/audit/step rows, reviewed local-only
+  reset table set and foreign-key ordering; no CASCADE or weakened owner/container guards.
+- Live: binding identity/provenance agreement and accepted-termination ordering remain Pending in
+  the [manual test manifest](how-to/real-oci-test-manifest.md). Active identity is not access health.

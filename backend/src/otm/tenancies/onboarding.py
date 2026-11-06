@@ -156,6 +156,7 @@ def save_step(connection, row, key, at, *, inputs, payload, state="verified", ac
             },
         )
     )
+    return event
 
 
 # Explicit waits end the job and release transaction locks; the next command enqueues fresh work.
@@ -405,7 +406,7 @@ def advance(connection, row, intent, facade, at):
                 facade.onboarding_step(intent, "verify_required", inspection["inputs"]["discovery"])
             else:
                 facade.onboarding_step(intent, current, inspection["inputs"]["discovery"])
-            save_step(
+            captured_event = save_step(
                 connection,
                 row,
                 current,
@@ -418,6 +419,10 @@ def advance(connection, row, intent, facade, at):
                     required_users=captured,
                 ),
             )
+            if captured is not None:
+                from otm.storage.managed_bindings import capture_bindings
+
+                capture_bindings(connection, row, intent, captured, captured_event, at)
             # A known setup effect prevents the no-effect cancellation path from abandoning it.
             connection.execute(
                 update(operation)

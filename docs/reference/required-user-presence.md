@@ -6,9 +6,9 @@ screen, API route, database table, native job, scheduled scan, notification or r
 The audit user remains V2. Existing saved tenancies are not backfilled or declared healthy.
 
 New version 3 onboarding now retains [exact permanent-user capture evidence](tenancy-onboarding.md#permanent-user-capture--6-november-2026)
-before temporary cleanup. Historical operations are not backfilled. This is immutable onboarding
-provenance, not yet canonical current binding/assignment heads. Establish those scoped heads before
-composing presence reads into an application worker or UI.
+before temporary cleanup. Historical operations are not backfilled. Fresh captures now also retain [canonical domain/user bindings](managed-object-bindings.md).
+Access-assignment/context/credential heads are not yet implemented. Establish those scoped heads
+before composing presence reads into an application worker or UI.
 Never reconstruct a required identity from a username, email, successful setup label or naming rule.
 
 ## What a result establishes
@@ -85,3 +85,9 @@ fences, optional identity references, strict clock windows and sanitized errors.
 tests reject simulator imports from neutral modules. Existing full PostgreSQL/Playwright suites
 remain regression gates; they do not yet execute this uncomposed presence capability. Real cases
 remain pending in [the pending account-read checklist](../how-to/configuration-drift-runbook.md#pending-required-user-presence-qualification).
+
+
+Fresh canonical identity bindings now exist as described in the
+[binding field map](managed-object-bindings.md). They do not themselves supply the required target's
+access_assignment_id/access_generation or the inspecting credential/context heads. Historical
+captures remain unbound; no synthetic assignment IDs are generated to bypass this integration step.

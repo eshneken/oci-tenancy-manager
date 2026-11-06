@@ -8,6 +8,7 @@ are not competing implementation instructions or proof of real OCI behavior.
 | Product scope and acceptance criteria | [Product specification](product/oci-tenancy-manager-spec.md) |
 | Current architecture and approved future design | [Engineering design](engineering-design/README.md) |
 | Run the application | [Local HTTPS setup](reference/local-application.md) |
+| Canonical domain/user identities and ER | [Binding field guide](reference/managed-object-bindings.md) |
 | Implemented fields, API behavior and limits | [Reference guides](reference/README.md) |
 | Review/test/operator procedures | [How-to guides](how-to/README.md) |
 | Accepted engineering decisions | [D1–D17](decisions/engineering-review-decisions.md), [D18–D58](decisions/design-decisions.md) |
@@ -24,7 +25,9 @@ are not competing implementation instructions or proof of real OCI behavior.
 Access-health work begins with the [internal required-user presence boundary](reference/required-user-presence.md).
 New onboarding now [retains exact permanent-user evidence](reference/tenancy-onboarding.md#permanent-user-capture--6-november-2026); presence reads are not yet connected to application screens or durable checks; [checkpoint evidence](history/required-user-presence-checkpoint-2026-11-06.md)
 records this integration boundary. The later [onboarding capture checkpoint](history/onboarding-user-capture-checkpoint-2026-11-06.md)
-records exact permanent-user provenance and the remaining current-binding work.
+records exact permanent-user provenance and the remaining current-binding work. The later
+[canonical identity-binding checkpoint](history/managed-identity-bindings-checkpoint-2026-11-06.md)
+records the implemented domain/user mappings and the remaining access-authority integration.
 Current configuration work includes [guarded selected-object repair](reference/configuration-repair.md)
 through the existing durable operation worker, with [all-category/override regression coverage](reference/configuration-repair.md#all-category-repair-qualification--6-november-2026). Its [local checkpoint](history/configuration-repair-checkpoint-2026-11-06.md)
 records qualification and remaining deployment boundaries.

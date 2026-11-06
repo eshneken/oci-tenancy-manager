@@ -1272,3 +1272,112 @@ Index(
     financial_collection.c.failure_scope_hash,
     financial_collection.c.updated_at.desc(),
 )
+
+
+managed_object_binding = Table(
+    "otm_managed_object_binding",
+    metadata,
+    Column("id", Uuid(as_uuid=True), primary_key=True),
+    Column("workspace_id", String(256), nullable=False),
+    Column("tenancy_id", Uuid(as_uuid=True), nullable=False),
+    Column("logical_key", String(64), nullable=False),
+    Column("kind", String(32), nullable=False),
+    Column("handler_contract_version", String(64), nullable=False),
+    Column("generation", Integer, nullable=False),
+    Column("identity_domain_binding_id", Uuid(as_uuid=True)),
+    Column("provider_ocid", String(256), nullable=False),
+    Column("scim_resource_id", String(256)),
+    Column("user_name", String(256)),
+    Column("ownership_mode", String(32), nullable=False),
+    Column("state", String(16), nullable=False),
+    Column("created_operation_id", Uuid(as_uuid=True), nullable=False),
+    Column("source_evidence_event_id", Uuid(as_uuid=True), nullable=False),
+    Column("retired_operation_id", Uuid(as_uuid=True)),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
+    UniqueConstraint("workspace_id", "tenancy_id", "id", name="uq_managed_binding_scope"),
+    UniqueConstraint(
+        "workspace_id",
+        "tenancy_id",
+        "logical_key",
+        "generation",
+        name="uq_managed_binding_generation",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "tenancy_id"],
+        ["public.otm_tenancy.workspace_id", "public.otm_tenancy.id"],
+        name="fk_managed_binding_tenancy",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "tenancy_id", "identity_domain_binding_id"],
+        [
+            "public.otm_managed_object_binding.workspace_id",
+            "public.otm_managed_object_binding.tenancy_id",
+            "public.otm_managed_object_binding.id",
+        ],
+        name="fk_managed_binding_domain",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "created_operation_id", "source_evidence_event_id"],
+        [
+            "public.audit_event.workspace_id",
+            "public.audit_event.operation_id",
+            "public.audit_event.id",
+        ],
+        name="fk_managed_binding_capture",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "retired_operation_id"],
+        ["public.otm_operation.workspace_id", "public.otm_operation.id"],
+        name="fk_managed_binding_retirement",
+    ),
+    CheckConstraint(
+        "generation>=1 AND handler_contract_version='required-user-binding-1'",
+        name="ck_managed_binding_version",
+    ),
+    CheckConstraint(
+        "(state='active' AND retired_operation_id IS NULL) OR "
+        "(state='retired' AND retired_operation_id IS NOT NULL)",
+        name="ck_managed_binding_state",
+    ),
+    CheckConstraint("updated_at>=created_at", name="ck_managed_binding_time"),
+    CheckConstraint(
+        "(kind='identity_domain' AND logical_key='identity/domain' "
+        "AND ownership_mode='observed_reference' AND identity_domain_binding_id IS NULL "
+        "AND scim_resource_id IS NULL AND user_name IS NULL "
+        "AND provider_ocid ~ '^ocid1[.]domain[.][A-Za-z0-9.]+$') OR "
+        "(kind='managed_user' AND logical_key IN "
+        "('identity/user/automation','identity/user/recovery') "
+        "AND ownership_mode='managed' AND identity_domain_binding_id IS NOT NULL "
+        "AND scim_resource_id IS NOT NULL AND length(btrim(scim_resource_id))>0 "
+        "AND user_name IS NOT NULL AND length(btrim(user_name))>0 "
+        "AND provider_ocid ~ '^ocid1[.]user[.][A-Za-z0-9.]+$')",
+        name="ck_managed_binding_shape",
+    ),
+)
+Index(
+    "uq_managed_binding_live_key",
+    managed_object_binding.c.workspace_id,
+    managed_object_binding.c.tenancy_id,
+    managed_object_binding.c.logical_key,
+    unique=True,
+    postgresql_where=managed_object_binding.c.state == "active",
+)
+Index(
+    "uq_managed_binding_live_ocid",
+    managed_object_binding.c.workspace_id,
+    managed_object_binding.c.tenancy_id,
+    managed_object_binding.c.provider_ocid,
+    unique=True,
+    postgresql_where=managed_object_binding.c.state == "active",
+)
+Index(
+    "uq_managed_binding_live_scim",
+    managed_object_binding.c.workspace_id,
+    managed_object_binding.c.tenancy_id,
+    managed_object_binding.c.identity_domain_binding_id,
+    managed_object_binding.c.scim_resource_id,
+    unique=True,
+    postgresql_where=(managed_object_binding.c.state == "active")
+    & managed_object_binding.c.scim_resource_id.is_not(None),
+)

@@ -629,6 +629,10 @@ class OrganizationLifecycleWorker:
                         revision=link["revision"] + 1,
                     )
                 )
+            if item.action == "delete":
+                from otm.storage.managed_bindings import retire_bindings
+
+                retire_bindings(connection, self.workspace, item.tenancy_id, identifier, at)
             connection.execute(
                 update(tenancy)
                 .where(tenancy.c.workspace_id == self.workspace, tenancy.c.id == item.tenancy_id)

@@ -472,3 +472,14 @@ and import evidence, immutable audit agreement and successful-operation redelive
 check the capture step in the normal guided flow. These checks do not prove actual OCI readback,
 eventual consistency or credential cleanup; see the
 [real OCI manual test manifest](../how-to/real-oci-test-manifest.md).
+
+
+## Canonical identity mappings after fresh capture — 6 November 2026
+
+Newly executed version 3 captures now persist the
+[domain and two required-user bindings](managed-object-bindings.md) atomically with their current
+step/immutable evidence before temporary cleanup. Failed insertion blocks cleanup and rolls back
+all three rows. Already-verified historical captures are skipped rather than silently backfilled.
+This advances the earlier provenance-only checkpoint; current access assignments/check heads,
+credentials and health checks are still separate future work. Migration 0023 and the implemented ER
+are described in that field guide. Termination initiation retires mappings without deleting history.

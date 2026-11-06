@@ -1,0 +1,61 @@
+erDiagram
+  otm_tenancy ||--o{ otm_managed_object_binding : same_workspace_child
+  otm_managed_object_binding o|--o{ otm_managed_object_binding : same_child_domain
+  otm_operation ||--o{ otm_managed_object_binding : creation_provenance
+  otm_operation o|--o{ otm_managed_object_binding : retirement_provenance
+  audit_event ||--o{ otm_managed_object_binding : immutable_capture
+  otm_operation ||--o{ otm_operation_step : current_intent_steps
+  audit_event o|--o{ otm_operation_step : current_evidence
+  otm_tenancy {
+    uuid id PK
+    string workspace_id
+    string tenancy_ocid
+    string parent_tenancy_ocid
+    string status
+    uuid operation_id
+  }
+  otm_managed_object_binding {
+    uuid id PK
+    string workspace_id FK
+    uuid tenancy_id FK
+    string logical_key
+    string kind
+    string handler_contract_version
+    int generation
+    uuid identity_domain_binding_id FK
+    string provider_ocid
+    string scim_resource_id
+    string user_name
+    string ownership_mode
+    string state
+    uuid created_operation_id FK
+    uuid source_evidence_event_id FK
+    uuid retired_operation_id FK
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  otm_operation {
+    uuid id PK
+    string workspace_id
+    int current_intent_revision
+    uuid current_intent_event_id
+    string state
+  }
+  audit_event {
+    uuid id PK
+    string workspace_id
+    uuid operation_id
+    string kind
+    jsonb data
+    string data_hash
+    timestamptz at
+  }
+  otm_operation_step {
+    string workspace_id PK
+    uuid operation_id PK
+    int intent_revision PK
+    string step_key PK
+    uuid evidence_event_id FK
+    jsonb last_outcome
+    string state
+  }

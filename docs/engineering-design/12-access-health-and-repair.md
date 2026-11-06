@@ -329,3 +329,20 @@ identifiers, while keeping the proposed canonical managed-object binding, access
 current-generation checks and full access-health model as future implementation. Capture evidence
 alone must not authorize repair, disclosure or live operations. Saved previews are not changed.
 Live qualification remains Pending in the [manual manifest](../how-to/real-oci-test-manifest.md).
+
+
+## Implemented canonical identity bindings — 6 November 2026
+
+Migration 0023 adds the first 18-column subset of `otm_managed_object_binding`: an observed domain
+reference and managed automation/recovery users from fresh typed onboarding capture. Same-child
+foreign keys, immutable capture/operation provenance, verified setup prerequisites, unique active
+identities and atomic three-row persistence precede temporary cleanup. Verified termination
+initiation retires management while retaining history. No historical capture is automatically adopted.
+
+The [complete implemented field map](../reference/managed-object-bindings.md) and
+[rendered ER](../architecture/diagrams/managed-identities-implemented.svg) distinguish physical fields
+from the fuller proposed model above. This supersedes earlier notes that canonical binding rows are
+entirely future work. Configuration objects keep their existing storage; future kinds require their
+own handlers/migrations. Access assignments, context/credential heads, current-generation checks,
+replacement and Required users UI remain future integration. An active binding is an identity mapping,
+not healthy access or authority to repair/disclose credentials. Saved previews remain unchanged.

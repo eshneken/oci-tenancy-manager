@@ -411,6 +411,17 @@ def test_local_organization_reset_cycle_and_rollback(runtime):
 
     c = runtime
 
+    # Check every reviewed reset table by its exact public guard, including newly added kinds.
+    def enabled_guards(connection):
+        return connection.scalar(
+            text(
+                "SELECT count(*) FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid "
+                "JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' "
+                "AND t.tgname=ANY(:names) AND t.tgenabled='O'"
+            ),
+            {"names": [name + "_no_truncate" for name in TABLES]},
+        )
+
     # Hash only synthetic rows locally; no credentials or private data are logged by assertions.
     def preserved():
         with c.owner.connect() as connection:
@@ -441,7 +452,10 @@ def test_local_organization_reset_cycle_and_rollback(runtime):
     for row in example_records():
         writer.writerow((row.full_name, row.email, row.manager_email or "", ""))
     store = SqlOrganizationStore(c.api, c.sessions, clock)
-    config = store.inspection(c.principal)[0] or example_config()
+    config = store.inspection(c.principal)[0]
+    if config is None:
+        config = example_config()
+        store.configure_initial(c.principal, config)
     web = OrganizationWeb(store, clock, config)
     assert (
         web.upload(c.principal, source.getvalue().encode(), clock(), uuid4(), True).state
@@ -488,16 +502,7 @@ def test_local_organization_reset_cycle_and_rollback(runtime):
             tuple(connection.scalar(text("SELECT count(*) FROM public." + name)) for name in TABLES)
             == counts_before
         )
-        assert connection.scalar(
-            text(
-                "SELECT count(*) FROM pg_trigger "
-                "WHERE (tgname LIKE 'org%no_truncate' "
-                "OR tgname LIKE 'otm_tenancy%no_truncate' OR tgname LIKE 'o"
-                "tm_baseline%no_truncate' OR tgname LIKE 'otm_configuration%no_truncate' "
-                "OR tgname LIKE 'otm_financial%no_truncate') "
-                "AND tgenabled='O'"
-            )
-        ) == len(TABLES)
+        assert enabled_guards(connection) == len(TABLES)
     with c.owner.connect().execution_options(isolation_level="AUTOCOMMIT") as connection:
         with pytest.raises(RuntimeError, match="ACTIVE_READ_COMMITTED"):
             clear_organization(
@@ -529,16 +534,7 @@ def test_local_organization_reset_cycle_and_rollback(runtime):
         assert all(
             connection.scalar(text("SELECT count(*) FROM public." + name)) == 0 for name in TABLES
         )
-        assert connection.scalar(
-            text(
-                "SELECT count(*) FROM pg_trigger "
-                "WHERE (tgname LIKE 'org%no_truncate' "
-                "OR tgname LIKE 'otm_tenancy%no_truncate' OR tgname LIKE 'o"
-                "tm_baseline%no_truncate' OR tgname LIKE 'otm_configuration%no_truncate' "
-                "OR tgname LIKE 'otm_financial%no_truncate') "
-                "AND tgenabled='O'"
-            )
-        ) == len(TABLES)
+        assert enabled_guards(connection) == len(TABLES)
     assert store.inspection(c.principal) == (None, None, None, None, ())
     store.configure_initial(c.principal, config)
     assert (
@@ -644,3 +640,57 @@ def test_installed_api_lifecycle_cancellation_permissions(runtime):
     ):
         with pytest.raises(DBAPIError), c.api.begin() as connection:
             connection.execute(text(statement))
+
+
+# API credentials cannot insert/rewrite/retire/delete/truncate; worker authority is column-limited.
+def test_installed_identity_binding_roles(runtime):
+    c = runtime
+    with c.api.connect() as connection:
+        assert (
+            connection.execute(
+                text("SELECT * FROM public.otm_managed_object_binding WHERE false")
+            ).all()
+            == []
+        )
+    for statement in (
+        "INSERT INTO public.otm_managed_object_binding DEFAULT VALUES",
+        "UPDATE public.otm_managed_object_binding SET state='retired' WHERE false",
+        "DELETE FROM public.otm_managed_object_binding WHERE false",
+        "TRUNCATE public.otm_managed_object_binding",
+    ):
+        with pytest.raises(DBAPIError) as caught:
+            with c.api.begin() as connection:
+                connection.execute(text(statement))
+        assert caught.value.orig.sqlstate == "42501"
+    worker = maintenance_engine(database_url(c.state, worker=True), None)
+    try:
+        with worker.connect() as connection:
+            assert connection.scalar(
+                text(
+                    "SELECT has_table_privilege(current_user,"
+                    "'public.otm_managed_object_binding','INSERT')"
+                )
+            )
+            assert connection.scalar(
+                text(
+                    "SELECT has_column_privilege(current_user,"
+                    "'public.otm_managed_object_binding','state','UPDATE')"
+                )
+            )
+            assert not connection.scalar(
+                text(
+                    "SELECT has_column_privilege(current_user,"
+                    "'public.otm_managed_object_binding','provider_ocid','UPDATE')"
+                )
+            )
+        with pytest.raises(DBAPIError) as caught:
+            with worker.begin() as connection:
+                connection.execute(
+                    text(
+                        "UPDATE public.otm_managed_object_binding "
+                        "SET user_name='changed' WHERE false"
+                    )
+                )
+        assert caught.value.orig.sqlstate == "42501"
+    finally:
+        worker.dispose()

@@ -150,6 +150,9 @@ def validate_deletion(state, intent, identifier):
 def publish_deletion(connection, state, intent, completion, identifier, at):
     if completion.bindings:
         raise LifecycleBlocked("TARGET_CHANGED")
+    from otm.storage.managed_bindings import retire_bindings
+
+    retire_bindings(connection, state.workspace, intent.associations[0].tenancy_id, identifier, at)
     ids = tuple(a.id for a in intent.associations)
     connection.execute(
         update(tenancy_membership)

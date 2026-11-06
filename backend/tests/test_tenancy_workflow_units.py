@@ -588,7 +588,9 @@ def test_worker_binding_publication_and_verified_deletion(registry):
     plan = app._plan(s, command(s, p, "delete_tenancy", tenancy_id=row["id"]), p)
     deleting = intent(s, app, p, action="delete_tenancy", associations=plan)
     connection.execute.return_value.first.return_value = None
-    worker._publish(connection, s, deleting, LifecycleCompletion(), op, NOW)
+    with patch("otm.storage.managed_bindings.retire_bindings") as retired:
+        worker._publish(connection, s, deleting, LifecycleCompletion(), op, NOW)
+        retired.assert_called_once_with(connection, s.workspace, row["id"], op, NOW)
     updates = [
         call.args[0].compile().params
         for call in connection.execute.call_args_list

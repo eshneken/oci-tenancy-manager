@@ -137,6 +137,7 @@ def test_capture_graph_and_pre_retirement_failure_guard(registry, update_case, v
         with (
             patch.object(flow, "step_rows", return_value=steps),
             patch.object(flow, "save_step") as saved,
+            patch("otm.storage.managed_bindings.capture_bindings"),
             patch.object(flow, "transition"),
             patch.object(
                 app.facade,

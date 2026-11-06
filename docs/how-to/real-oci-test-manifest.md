@@ -41,6 +41,13 @@ linked local runbooks are preparation and comparison material, not live qualific
 | Email and staging isolation | Route actual OCI activation/identity and application emails to the authorized testing administrator in staging. Verify every external email path is covered, correct responsible-admin delivery and bounded retry/failure handling. Production must reject staging override configuration. | [Email runbook](lifecycle-email-runbook.md) | Pending |
 | OKE schedules and recovery | Deploy reviewed infrastructure/configuration, verify daily drift/cost jobs and cleanup schedules run through the normal worker, and test least-privilege service access. Complete an in-region backup/restore drill against the 15-minute RPO/four-hour RTO targets. Verify corporate SSO and independent local recovery authentication in the hosted environment. | [Build/deployment design](../engineering-design/18-database-ci-and-build-order.md) | Pending |
 
+## Canonical binding qualification
+
+| Planned live scenario | Steps / expected outcome | Status |
+| --- | --- | --- |
+| Fresh exact identity mappings | Complete approved disposable-child onboarding. Compare the domain and both user bindings with actual OCI/SCIM IDs and immutable capture provenance. Confirm each operational role identifies its intended managed account, distinct from the owner and temporary bootstrap/activation users; account presence alone does not establish that ownership or grant profile. Same-name unrelated accounts must never be adopted; historical unbound captures must remain unverified until a qualified reinspection is designed. | Pending |
+| Failed setup and termination | Interrupt binding persistence and verify temporary cleanup does not proceed. Retry without duplicate mappings. Deny termination initiation and verify bindings remain; accept it and verify logical retirement preserves creation/source history, without waiting for final OCI termination. | Pending |
+
 ## Per-slice maintenance
 
 Add new live-only scenarios here or to a linked matrix in the same slice as implementation, including

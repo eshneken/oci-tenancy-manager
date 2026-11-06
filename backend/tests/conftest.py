@@ -120,6 +120,12 @@ def pg_engine():
             }
         migrate(engine)
         with engine.connect() as connection:
+            assert (
+                connection.exec_driver_sql(
+                    "SELECT count(*) FROM public.otm_managed_object_binding"
+                ).scalar_one()
+                == 0
+            )
             for table, rows in before_capture.items():
                 assert (
                     connection.exec_driver_sql(
