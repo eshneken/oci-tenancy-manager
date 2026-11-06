@@ -3,7 +3,7 @@ import type { EmailPolicyView } from "./contracts";
 import type { ResponsibilityCommand } from "./contracts";
 import type { ConfigurationDriftQuery, ConfigurationDriftDirectory, ConfigurationCheckSummary, ConfigurationCheckRequest } from "./contracts";
 import type {OverrideEditor,OverridePreviewRequest,ConfigurationPlanView,CreateConfigurationPlan,SaveConfigurationReview} from "./contracts";
-import type {ConfigurationPreview,ConfigurationUpdate,ConfigurationProgress} from "./contracts";
+import type {ConfigurationRepairRequest,ConfigurationPreview,ConfigurationUpdate,ConfigurationProgress} from "./contracts";
 import type { BaselineDirectory, BaselineVersion, BaselineQuery, PublishBaseline, SaveBaselineDraft } from "./contracts";
 import type {
   MappingSettings,
@@ -121,6 +121,8 @@ export const api = {
   createConfigurationPlan(body:CreateConfigurationPlan,signal?:AbortSignal){return request<ConfigurationPlanView>("/api/configuration/plans","POST",body,signal);},
   configurationPlan(id:string,signal?:AbortSignal){return request<ConfigurationPlanView>("/api/configuration/plans/"+encodeURIComponent(id),"GET",undefined,signal);},
   reviewConfigurationPlan(id:string,body:SaveConfigurationReview,signal?:AbortSignal){return request<ConfigurationPlanView>("/api/configuration/plans/"+encodeURIComponent(id)+"/reviews","POST",body,signal);},
+  // Selected-object repair always previews the assigned version; the client cannot author values.
+  previewConfigurationRepair(body:ConfigurationRepairRequest,signal?:AbortSignal){return request<ConfigurationPreview>("/api/configuration/repairs/preview","POST",body,signal);},
   configurationPreview(tenancyId?:string,signal?:AbortSignal){return request<ConfigurationPreview>("/api/configuration/updates/preview"+(tenancyId?"?tenancy_id="+encodeURIComponent(tenancyId):""),"GET",undefined,signal);},
   startConfigurationUpdate(body:ConfigurationUpdate,signal?:AbortSignal){return request<ActionReceipt>("/api/configuration/updates","POST",body,signal);},
   configurationProgress(id:string,signal?:AbortSignal){return request<ConfigurationProgress>("/api/configuration/updates/"+encodeURIComponent(id),"GET",undefined,signal);},

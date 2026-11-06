@@ -22,8 +22,8 @@ from otm.configuration.service import BaselineAuthoring
 from otm.notifications.runtime import compose_notifications
 from otm.operations.sandbox import load_sandbox
 from otm.organization.contracts import Intake
-from otm.providers.baseline import SimulatedBaselineQualifier
-from otm.providers.lifecycle import SimulatedLifecycleFacade
+from otm.providers.baseline_simulator import SimulatedBaselineQualifier
+from otm.providers.lifecycle_simulator import SimulatedLifecycleFacade
 from otm.settings import load_settings
 from otm.storage.enqueue import ORGANIZATION_TASK, InspectionEnqueuer, workspace_queue
 from otm.storage.organization import SqlOrganizationStore

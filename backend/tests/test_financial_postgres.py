@@ -15,7 +15,8 @@ from test_organization_workflows_postgres import workflow_case
 from otm.financial.contracts import CostPolicy, CostRefreshRequest
 from otm.financial.service import CostCollections, CostConflict
 from otm.financial.worker import CostCollectionWorker
-from otm.providers.budget import BudgetReadUnavailable, SimulatedBudgetFacade
+from otm.providers.budget import BudgetReadUnavailable
+from otm.providers.budget_simulator import SimulatedBudgetFacade
 from otm.storage.admission import RequestConflict
 from otm.storage.enqueue import COST_TASK, InspectionEnqueuer, workspace_queue
 from otm.storage.tables import (

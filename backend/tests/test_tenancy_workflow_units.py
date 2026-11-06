@@ -11,7 +11,8 @@ from test_organization_reconcile import revision
 
 from otm.operations.contracts import InspectionPolicy
 from otm.organization.reconcile import prepare
-from otm.providers.lifecycle import LifecycleBlocked, SimulatedLifecycleFacade
+from otm.providers.lifecycle import LifecycleBlocked
+from otm.providers.lifecycle_simulator import SimulatedLifecycleFacade
 from otm.storage.organization import OrganizationConflict
 from otm.tenancies.contracts import (
     LifecycleTarget,

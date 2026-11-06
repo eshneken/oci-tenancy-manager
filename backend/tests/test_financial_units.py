@@ -24,7 +24,8 @@ from otm.financial.records import current_records, decode_collection, decode_sna
 from otm.financial.service import CostCollections, CostConflict
 from otm.financial.worker import CostCollectionWorker, cost_intent
 from otm.operations.contracts import IntentEventData, canonical_hash
-from otm.providers.budget import BudgetReadUnavailable, SimulatedBudgetFacade
+from otm.providers.budget import BudgetReadUnavailable
+from otm.providers.budget_simulator import SimulatedBudgetFacade
 from otm.storage.admission import RequestConflict
 
 __all__ = ["drift_case", "update_case"]

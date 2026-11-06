@@ -208,7 +208,10 @@ def save_target_result(connection, row, target, baseline, at, *, code, category=
 # onboarding.
 class ConfigurationRollouts:
     # An absent provider/queue is explicitly unavailable; no hidden simulation fallback exists.
-    def __init__(self, store, *, policy=None, policy_loader=None, enqueuer=None):
+    def __init__(
+        self, store, *, policy=None, policy_loader=None, enqueuer=None, repair_facade=None
+    ):
+        self.repair_facade = repair_facade
         self.store, self.policy, self.policy_loader, self.enqueuer = (
             store,
             policy,
@@ -228,7 +231,13 @@ class ConfigurationRollouts:
 
     # Bind the assigned/latest publication, complete candidates and registry state into one preview
     # fingerprint.
-    def _preview(self, connection, workspace, identifier, override_request=None):
+    def _preview(
+        self, connection, workspace, identifier, override_request=None, repair_categories=()
+    ):
+        if repair_categories:
+            from otm.configuration.repairs import preview_repair
+
+            return preview_repair(self, connection, workspace, identifier, repair_categories)
         header = (
             connection.execute(select(org_workspace).where(org_workspace.c.id == workspace))
             .mappings()
@@ -312,6 +321,14 @@ class ConfigurationRollouts:
         with read_snapshot(self.store.engine) as connection:
             return self._preview(connection, workspace, identifier)[0]
 
+    # Fresh complete evidence and exact bindings gate one explicit selected-object repair preview.
+    def preview_repair(self, principal, command):
+        workspace = self.store._principal(principal)
+        with read_snapshot(self.store.engine) as connection:
+            return self._preview(
+                connection, workspace, command.tenancy_id, repair_categories=command.categories
+            )[0]
+
     # A scoped editor reads the assigned publication and immutable current overrides, never latest.
     def override_editor(self, principal, identifier):
         workspace = self.store._principal(principal)
@@ -372,6 +389,7 @@ class ConfigurationRollouts:
                 key: value
                 for key, value in payload.items()
                 if key in {"client_request_key", "tenancy_id", "preview_hash"}
+                or (key == "repair_categories" and bool(value))
                 or (key == "plan_id" and value is not None)
                 or (
                     key in {"overrides", "override_mode", "override_context"}
@@ -418,7 +436,11 @@ class ConfigurationRollouts:
                     else None
                 )
                 preview, targets = self._preview(
-                    connection, workspace, command.tenancy_id, override_request
+                    connection,
+                    workspace,
+                    command.tenancy_id,
+                    override_request,
+                    command.repair_categories,
                 )
             if preview.tenancy_id != command.tenancy_id:
                 raise OrganizationConflict("CONFIGURATION_PREVIEW_CHANGED")
@@ -445,22 +467,32 @@ class ConfigurationRollouts:
                     "id": target.tenancy_id,
                     "desired_configuration_id": target.source_configuration_id,
                 }
-                revision = accept_configuration(
-                    connection,
-                    workspace,
-                    registered,
-                    preview.baseline,
-                    target.overrides,
-                    key,
-                    principal.actor.key,
-                    at,
+                revision = (
+                    load_configuration(
+                        connection, workspace, target.tenancy_id, target.source_configuration_id
+                    )
+                    if command.repair_categories
+                    else accept_configuration(
+                        connection,
+                        workspace,
+                        registered,
+                        preview.baseline,
+                        target.overrides,
+                        key,
+                        principal.actor.key,
+                        at,
+                    )
                 )
                 accepted.append(target.model_copy(update={"configuration": revision}))
             # Deferred scoped operation FK allows the whole accepted revision/intent
             # graph to commit together.
             targets = tuple(accepted)
             intent = ConfigurationIntent(
-                change_kind="override_change" if command.override_mode else "baseline_update",
+                change_kind="repair"
+                if command.repair_categories
+                else "override_change"
+                if command.override_mode
+                else "baseline_update",
                 workspace_id=workspace,
                 policy_revision=policy.policy_revision,
                 organization_id=policy.organization_id,
@@ -490,7 +522,9 @@ class ConfigurationRollouts:
                     current_intent_revision=1,
                     current_intent_event_id=event,
                     state="queued",
-                    stage=f"Update baseline v{preview.baseline.version_number}",
+                    stage="Repair assigned configuration"
+                    if command.repair_categories
+                    else f"Update baseline v{preview.baseline.version_number}",
                     effect_knowledge="none",
                     revision=1,
                     accepted_at=at,
@@ -524,11 +558,15 @@ class ConfigurationRollouts:
                         tenancy.c.operation_id.is_(None),
                     )
                     .values(
-                        desired_configuration_id=target.configuration.id,
+                        desired_configuration_id=target.configuration.id
+                        if target.configuration
+                        else None,
                         baseline_version_id=preview.baseline.id,
                         operation_id=key,
                         last_operation_id=key,
-                        revision=target.revision + 1,
+                        revision=target.revision
+                        if command.repair_categories
+                        else target.revision + 1,
                         updated_at=at,
                     )
                 )

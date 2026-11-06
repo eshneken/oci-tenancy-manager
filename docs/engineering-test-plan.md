@@ -926,3 +926,21 @@ reload and desktop/mobile320/390 layouts. Saved-instance data is never a mutatin
 Daily scheduling, live Budget response/billing semantics, provider timeouts/permissions and OKE CronJob
 qualification remain staging work. No new simulator-control page or test-only production endpoint is
 a prerequisite for these checks. [Field/run contract](reference/cost-visibility.md).
+
+
+## Selected configuration repair regression matrix — 6 November 2026
+
+The [implemented flow and field map](reference/configuration-repair.md) requires these cases:
+
+| Scenario | Required evidence |
+| --- | --- |
+| Missing/different, fresh complete check | Preview and admission freeze exact categories, assigned content, source check, context and bindings |
+| Stale, unknown, foreign, busy, changed observations or assignment | Fail closed before provider writes; no latest-baseline substitution |
+| Selected policy with unselected quota drift | Only policy written; quota finding remains, no desired revision or false whole-config verification time |
+| Partial write/readback failure | Prior findings retained; explicit retry independently rereads exact bindings; no duplicate accepted work |
+| New publication while queued | Original assigned baseline and overrides remain frozen |
+| Concurrent/pending old check and repeated worker delivery | Final-generation check wins; superseded reads cannot green; exactly one sealed successful repair check |
+| Real UI preview/confirm/reload at desktop/mobile | Existing protected HTTPS session, native worker and disposable PostgreSQL; no fake production endpoint |
+
+Both unit-only 95% gates and independent documentation, security and responsive UI reviews remain
+required. A local simulator result does not qualify OCI writes or deploy daily drift scheduling.

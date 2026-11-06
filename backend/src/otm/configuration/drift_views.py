@@ -45,7 +45,11 @@ def check_summary(
         state = "unavailable"
     elif stale and not confirmed:
         state = "not_checked"
-    active = pending.get(row["id"])
+    active = pending.get(row["id"]) or (
+        row["operation_id"]
+        if row.get("reserved_operation_state") in {"queued", "running"}
+        else None
+    )
     if active:
         state = "checking"
     issues = []

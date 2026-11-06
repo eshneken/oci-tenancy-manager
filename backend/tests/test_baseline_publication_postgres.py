@@ -14,7 +14,7 @@ from test_organization_storage_postgres import factors, login_case, organization
 from otm.audit.contracts import AuditQuery
 from otm.configuration.contracts import BaselineQuery, PublishBaseline, SaveBaselineDraft
 from otm.configuration.service import BaselineAuthoring
-from otm.providers.baseline import SimulatedBaselineQualifier
+from otm.providers.baseline_simulator import SimulatedBaselineQualifier
 from otm.storage.audit_directory import SqlAuditDirectory
 from otm.storage.organization import OrganizationConflict
 from otm.storage.tables import audit_event, baseline_version, org_workspace

@@ -49,7 +49,8 @@ contain Unable to verify results; native/business completion is not universal he
 
 These cases are provided by synthetic fixture setup in the disposable PostgreSQL/native-worker/
 HTTPS-browser test harness. Do not reproduce them by editing saved databases or manually deleting
-objects in OCI. This milestone exposes no simulation-helper command and no Repair button.
+objects in OCI. There is no simulation-helper command. The later [explicit repair flow](../reference/configuration-repair.md)
+shows a Repair button only for fresh complete confirmed differences.
 
 - Matching: all four retained objects agree with the assigned effective content and original
   bindings. Complete current results can show Matching; object age and newer publications do not
@@ -151,3 +152,11 @@ Daily drift admission/worker qualification remains deferred to staging/Kubernete
 records passing unit, PostgreSQL, native-worker/browser and review gates. Both saved local instances
 have the same qualified build and unchanged data. Manual check actions remain available; the daily
 drift-detection CronJob waits for staging/Kubernetes deployment.
+
+
+### Explicit repair follow-up — 6 November 2026
+
+Earlier read-only checkpoint statements excluding Repair describe the check foundation. The current
+[explicit selected-object repair flow](../reference/configuration-repair.md) now adds a guarded modal
+preview/confirmation and native worker verification. Checks remain read-only. No daily scheduler,
+live OCI repair or local drift-injection control is enabled.

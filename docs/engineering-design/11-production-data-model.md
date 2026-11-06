@@ -1931,3 +1931,16 @@ clocks, change email identity or touch tenancy associations. Historical null/omi
 feed/reference fallback. `OrganizationEvidence.mapping_root_name_before` and
 `mapping_root_name_after` record immutable display-name changes alongside the existing email fields.
 No table or column is added. See the [implemented root-name guide](../reference/organization-mapping.md#root-manager-display-name).
+
+
+## Selected repair intent fields — 6 November 2026
+
+The [implemented repair field map](../reference/configuration-repair.md#contracts-and-storage) uses
+existing operation/step/check/audit tables. `ConfigurationRepairRequest` carries `tenancy_id` and
+unique selected `categories`; `ConfigurationUpdate.repair_categories` binds acceptance. Immutable
+`ConfigurationTarget` freezes `repair_categories`, all-four `repair_bindings`,
+`repair_context_hash`, `repair_observation_hash` and `repair_check_id`. The intent/progress
+`change_kind` adds `repair`. These are typed JSON fields, not new table columns. Repair creates no
+configuration revision, advances no baseline assignment and seals complete post-repair evidence
+against the released registry generation. Existing check/ER relationships remain unchanged; larger
+proposed live binding tables above remain separately qualified work.

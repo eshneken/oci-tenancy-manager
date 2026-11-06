@@ -14,7 +14,8 @@ from otm.maintenance import maintenance_engine, require_runtime_role
 from otm.notifications.runtime import compose_notifications
 from otm.operations.sandbox import SandboxAdmission, load_sandbox
 from otm.organization.web import OrganizationWeb, load_profile
-from otm.providers.lifecycle import SimulatedLifecycleFacade
+from otm.providers.configuration_simulator import SimulatedConfigurationFacade
+from otm.providers.lifecycle_simulator import SimulatedLifecycleFacade
 from otm.secrets.directory import DirectorySecrets
 from otm.settings import load_settings
 from otm.storage.administrators import SqlAdministratorStore
@@ -105,7 +106,7 @@ def create_local_application():
             )
         from otm.configuration.drift import ConfigurationChecks
         from otm.configuration.rollout import ConfigurationRollouts
-        from otm.providers.baseline import SimulatedBaselineQualifier
+        from otm.providers.baseline_simulator import SimulatedBaselineQualifier
         from otm.storage.enqueue import CONFIGURATION_CHECK_TASK, CONFIGURATION_TASK
 
         checks = ConfigurationChecks(
@@ -151,6 +152,9 @@ def create_local_application():
             cost_collections=costs,
             configuration_rollouts=ConfigurationRollouts(
                 organization_store,
+                repair_facade=SimulatedConfigurationFacade(workflow.policy)
+                if workflow.policy
+                else None,
                 policy=workflow.policy,
                 policy_loader=workflow.policy_loader,
                 enqueuer=InspectionEnqueuer(

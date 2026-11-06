@@ -13,6 +13,13 @@ and administrator-enforced master protection are verified at baseline `db08b3b`.
 required gates and protections apply to every reviewed candidate.
 
 ## Chapters
+Current configuration repair: [implemented flow and field map](../reference/configuration-repair.md).
+
+
+Provider implementation layout: the [5 November decision](02-operations-and-provider.md#provider-contract-and-implementation-files--5-november-2026)
+separates functional contracts, simulators and future OCI adapters. The
+[implemented extraction](../reference/provider-layout.md) preserves local behavior; real OCI
+integration remains separately qualified.
 
 | Design area |
 | --- |

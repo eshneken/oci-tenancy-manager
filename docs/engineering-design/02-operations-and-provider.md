@@ -54,6 +54,46 @@ A timeout after a write is an uncertain outcome, not a known failure. Keep provi
 identity and reconcile before another potentially non-idempotent call. Duplicate task delivery must
 not duplicate tenancies/users/budgets or grant disclosures. Do not claim exactly-once OCI effects.
 
+## Provider contract and implementation files — 5 November 2026
+
+Accepted decision: keep each functional area's typed facade/provider contract separate from its
+simulated implementations now and future real OCI implementations when introducing those adapters. A facade is a Protocol
+contract, not an additional forwarding object. Application composition explicitly injects the chosen
+implementation; workflows depend on capabilities, not concrete SDK clients or simulated classes.
+Inspection retains its existing `TenancyInspection` request/result validation wrapper.
+
+Use a simple flat module layout, for example:
+
+```text
+providers/lifecycle.py             # LifecycleFacade and shared boundary types
+providers/lifecycle_simulator.py   # SimulatedLifecycleFacade
+```
+
+Apply the same convention to configuration, budget and baseline qualification. The existing
+inspection contract/simulator split is the starting pattern. Keep shared target checks and pure
+request/result helpers in implementation-neutral modules; a real adapter must never import a
+simulator to reuse validation. Shared credential/scope/error utilities may support multiple real
+adapters, but do not add a universal facade, provider registry, plugin framework or forwarding layer
+solely for implementation selection. Preserve exact target/context guards and normalized errors.
+
+Current implementation: lifecycle, configuration, budget and baseline now separate contracts from
+concrete simulators in corresponding `*_simulator.py` files. Composition and tests import concrete
+classes explicitly from those files. Shared scope validation remains neutral; synthetic identity
+restrictions remain simulator-only. See the [implemented layout](../reference/provider-layout.md).
+Inspection and its validation wrapper are unchanged. Real OCI adapters remain future qualification
+work; no empty adapter files, SDK dependency, forwarding layer, registry or fallback are added.
+
+This is a small behavior-preserving cleanup within the active milestone. Request/result types,
+deterministic synthetic object identities, hashes, target/credential guards and normalized errors
+remain unchanged. The pure managed-object recipe retains its existing synthetic IDs and does not
+qualify real identity allocation. Future adapters must not import simulators.
+Extraction acceptance: update composition, simulator-to-simulator imports and tests; keep shared
+contracts usable without importing simulations or loading credentials. Preserve public request and
+result shapes, operation semantics and absence of OCI effects. Run the backend complete-source
+unit coverage gate, appropriate database/UI regressions and required checkpoint checks before
+milestone completion. Obtain the standing documentation and independent security reviews. No
+deployed instance restart, saved-preview asset change or data migration is required by this layout.
+
 ## SDK call mapping checkpoint
 
 [The call-design reference](08-oci-sdk-call-design.md) maps accepted journeys to pinned-source SDK

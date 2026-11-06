@@ -460,7 +460,8 @@
           "default": "baseline_update",
           "enum": [
             "baseline_update",
-            "override_change"
+            "override_change",
+            "repair"
           ],
           "title": "Change Kind",
           "type": "string"
@@ -594,6 +595,82 @@
           "pattern": "^ocid1\\.tenancy\\.[A-Za-z0-9.]+$",
           "title": "Parent Tenancy Ocid",
           "type": "string"
+        },
+        "repair_bindings": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "propertyNames": {
+                "enum": [
+                  "policy",
+                  "quota",
+                  "budget",
+                  "tags"
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Repair Bindings"
+        },
+        "repair_categories": {
+          "default": [],
+          "items": {
+            "enum": [
+              "policy",
+              "quota",
+              "budget",
+              "tags"
+            ],
+            "type": "string"
+          },
+          "title": "Repair Categories",
+          "type": "array"
+        },
+        "repair_check_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Repair Check Id"
+        },
+        "repair_context_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Repair Context Hash"
+        },
+        "repair_observation_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Repair Observation Hash"
         },
         "review": {
           "anyOf": [

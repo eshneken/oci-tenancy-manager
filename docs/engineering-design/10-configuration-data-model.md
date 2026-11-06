@@ -873,3 +873,13 @@ read locks. A failed/latest attempt and earlier same-context complete confirmati
 projection inputs; partial/unknown cannot resolve confirmed drift or leave old Matching green.
 The 24-hour freshness threshold adds no daily scheduler. No repair, notification or OCI binding/
 required-manifest qualification is claimed.
+
+
+## Selected repair implementation — 6 November 2026
+
+The [implemented repair guide](../reference/configuration-repair.md) maps selected categories,
+source check, assignment/observation hashes and exact bindings into immutable configuration-update
+intent JSON. Existing operation/step/check/audit tables support explicit preview, queued selected
+writes and all-four verification; there is no new desired revision or table. This is a local
+simulator boundary, not qualification of the larger proposed live-OCI binding inventory above.
+Daily scheduling stays deferred until staging/Kubernetes.

@@ -80,6 +80,28 @@ export type State1 =
 export type UpdatedAt = string;
 export type ClientRequestKey1 = string;
 export type ExpectedRevision = number;
+/**
+ * @minItems 1
+ * @maxItems 4
+ */
+export type Categories =
+  | ["policy" | "quota" | "budget" | "tags"]
+  | [
+      "policy" | "quota" | "budget" | "tags",
+      "policy" | "quota" | "budget" | "tags"
+    ]
+  | [
+      "policy" | "quota" | "budget" | "tags",
+      "policy" | "quota" | "budget" | "tags",
+      "policy" | "quota" | "budget" | "tags"
+    ]
+  | [
+      "policy" | "quota" | "budget" | "tags",
+      "policy" | "quota" | "budget" | "tags",
+      "policy" | "quota" | "budget" | "tags",
+      "policy" | "quota" | "budget" | "tags"
+    ];
+export type TenancyId1 = string;
 export type CheckingCount = number;
 export type ConfirmedCount = number;
 export type BaselineId = string | null;
@@ -109,7 +131,7 @@ export type SafeCode1 =
 export type State2 =
   | ("matching" | "missing" | "different" | "unavailable" | "conflict")
   | "not_checked";
-export type Categories = ConfigurationIssue[];
+export type Categories1 = ConfigurationIssue[];
 export type CheckedAt = string | null;
 export type ConfirmedIssueCount = number;
 export type IssueCount = number;
@@ -120,7 +142,7 @@ export type Stale = boolean;
 export type State3 =
   | ("matching" | "drifted" | "unavailable" | "superseded")
   | ("not_checked" | "checking");
-export type TenancyId1 = string;
+export type TenancyId2 = string;
 export type TenancyName = string;
 export type Items = ConfigurationCheckSummary[];
 export type Page = number;
@@ -145,11 +167,11 @@ export type State4 =
   | "checking"
   | "stale";
 export type Tab = "confirmed" | "checks";
-export type TenancyId2 = string | null;
+export type TenancyId3 = string | null;
 export type BaselineId1 = string | null;
 export type BaselineVersionNumber1 = number | null;
 export type CanCheck1 = boolean;
-export type Categories1 = ConfigurationIssue[];
+export type Categories2 = ConfigurationIssue[];
 export type CheckedAt1 = string | null;
 export type ConfirmedIssueCount1 = number;
 export type IssueCount1 = number;
@@ -160,10 +182,10 @@ export type Stale1 = boolean;
 export type State5 =
   | ("matching" | "drifted" | "unavailable" | "superseded")
   | ("not_checked" | "checking");
-export type TenancyId3 = string;
+export type TenancyId4 = string;
 export type TenancyName1 = string;
 export type ClientRequestKey2 = string;
-export type TenancyId4 = string | null;
+export type TenancyId5 = string | null;
 export type BasedOnId = string | null;
 export type BudgetCurrency = string;
 export type BudgetPeriod = "MONTHLY";
@@ -208,8 +230,8 @@ export type PreviousId = string | null;
 export type QuotaOverrideStatements = [string, ...string[]] | null;
 export type ResolutionContractVersion = "simulated-config-1";
 export type RevisionNumber = number;
-export type TenancyId5 = string;
 export type TenancyId6 = string;
+export type TenancyId7 = string;
 export type TenancyName2 = string;
 export type TenancyRevision = number;
 export type MonthlyBudgetOverrideAmount1 = number | string | null;
@@ -218,7 +240,7 @@ export type QuotaOverrideStatements1 = [string, ...string[]] | null;
 export type BaselineVersionId1 = string;
 export type ConfigurationId = string | null;
 export type TenancyRevision1 = number;
-export type TenancyId7 = string;
+export type TenancyId8 = string;
 export type Id3 = string;
 export type OperationId2 = string | null;
 export type Code =
@@ -229,46 +251,47 @@ export type Code =
   | "OVERRIDE_CONTEXT_UNAVAILABLE";
 export type Name = string;
 export type OperationId3 = string | null;
-export type TenancyId8 = string;
+export type TenancyId9 = string;
 export type Blockers = ConfigurationBlocker[];
 export type PolicyChoice = ("use_new_baseline" | "keep_override") | null;
 export type PolicyReview = boolean;
 export type QuotaChoice = ("use_new_baseline" | "keep_override") | null;
 export type QuotaReview = boolean;
-export type TenancyId9 = string;
+export type TenancyId10 = string;
 export type TenancyName3 = string;
 export type Conflicts = OverrideConflict[];
 export type PendingCount = number;
 export type PreviewHash = string;
 export type ReadyCount = number;
-export type TenancyId10 = string | null;
+export type TenancyId11 = string | null;
 export type Revision = number;
 export type State6 = "draft" | "accepted" | "stale";
 export type ClientRequestKey3 = string;
-export type TenancyId11 = string | null;
+export type TenancyId12 = string | null;
 export type ExpectedRevision1 = number;
 export type PolicyChoice1 = ("use_new_baseline" | "keep_override") | null;
 export type QuotaChoice1 = ("use_new_baseline" | "keep_override") | null;
-export type TenancyId12 = string;
+export type TenancyId13 = string;
 export type Blockers1 = ConfigurationBlocker[];
 export type Conflicts1 = OverrideConflict[];
 export type PendingCount1 = number;
 export type PreviewHash1 = string;
 export type ReadyCount1 = number;
-export type TenancyId13 = string | null;
+export type TenancyId14 = string | null;
 export type ClientRequestKey4 = string;
 export type OverrideMode = boolean;
 export type PlanId = string | null;
 export type PreviewHash2 = string;
-export type TenancyId14 = string | null;
+export type RepairCategories = ("policy" | "quota" | "budget" | "tags")[];
+export type TenancyId15 = string | null;
 export type CanRetry = boolean;
-export type ChangeKind = "baseline_update" | "override_change";
+export type ChangeKind = "baseline_update" | "override_change" | "repair";
 export type OperationId4 = string;
 export type State7 = string;
 export type Name1 = string;
 export type SafeCode2 = string | null;
 export type State8 = "pending" | "verified" | "needs_attention";
-export type TenancyId15 = string;
+export type TenancyId16 = string;
 export type VerifiedAt = string | null;
 export type Targets = ConfigurationTargetProgress[];
 export type Configured = boolean;
@@ -380,7 +403,7 @@ export type ConfigurationId2 = string;
 export type ProposedVersionId1 = string;
 export type RegistryRevision1 = number;
 export type Kind = "delete_registered_tenancy";
-export type TenancyId16 = string;
+export type TenancyId17 = string;
 export type ManagerWarning = boolean;
 export type Email2 = string;
 export type IsManager = boolean;
@@ -513,7 +536,7 @@ export type RequestedHomeRegion = string | null;
 export type RequestedName = string | null;
 export type Revision2 = number;
 export type State11 = string;
-export type TenancyId17 = string;
+export type TenancyId18 = string;
 export type Action1 =
   | "create_tenancy"
   | "import_tenancy"
@@ -551,7 +574,7 @@ export type RecipientPersonId = string | null;
 export type Plan = AssociationChoice[];
 export type RecipientPersonId1 = string | null;
 export type ReviewId = string | null;
-export type TenancyId18 = string | null;
+export type TenancyId19 = string | null;
 export type TenancyKind = "individual" | "shared";
 export type AcceptedAt1 = string;
 export type OperationId9 = string | null;
@@ -589,7 +612,7 @@ export type OperationId10 = string | null;
 export type PersonId3 = string;
 export type Role2 = "owner" | "member";
 export type Status2 = string;
-export type TenancyId19 = string;
+export type TenancyId20 = string;
 export type TenancyKind1 = "individual" | "shared";
 export type TenancyName4 = string;
 export type TenancyStatus = string;
@@ -972,6 +995,7 @@ export interface ApiContracts {
   EmailRoute: EmailRoute1;
   NotificationSummary: NotificationSummary;
   ResponsibilityCommand: ResponsibilityCommand;
+  ConfigurationRepairRequest: ConfigurationRepairRequest;
   ConfigurationDriftDirectory: ConfigurationDriftDirectory;
   ConfigurationDriftQuery: ConfigurationDriftQuery;
   ConfigurationCheckSummary: ConfigurationCheckSummary1;
@@ -1106,6 +1130,10 @@ export interface ResponsibilityCommand {
   client_request_key: ClientRequestKey1;
   expected_revision: ExpectedRevision;
 }
+export interface ConfigurationRepairRequest {
+  categories: Categories;
+  tenancy_id: TenancyId1;
+}
 export interface ConfigurationDriftDirectory {
   checking_count: CheckingCount;
   confirmed_count: ConfirmedCount;
@@ -1123,7 +1151,7 @@ export interface ConfigurationCheckSummary {
   baseline_id: BaselineId;
   baseline_version_number: BaselineVersionNumber;
   can_check?: CanCheck;
-  categories: Categories;
+  categories: Categories1;
   checked_at: CheckedAt;
   confirmed_issue_count: ConfirmedIssueCount;
   issue_count: IssueCount;
@@ -1132,7 +1160,7 @@ export interface ConfigurationCheckSummary {
   pending_operation_id: PendingOperationId;
   stale?: Stale;
   state: State3;
-  tenancy_id: TenancyId1;
+  tenancy_id: TenancyId2;
   tenancy_name: TenancyName;
 }
 export interface ConfigurationIssue {
@@ -1153,13 +1181,13 @@ export interface ConfigurationDriftQuery {
   sort?: Sort;
   state?: State4;
   tab?: Tab;
-  tenancy_id?: TenancyId2;
+  tenancy_id?: TenancyId3;
 }
 export interface ConfigurationCheckSummary1 {
   baseline_id: BaselineId1;
   baseline_version_number: BaselineVersionNumber1;
   can_check?: CanCheck1;
-  categories: Categories1;
+  categories: Categories2;
   checked_at: CheckedAt1;
   confirmed_issue_count: ConfirmedIssueCount1;
   issue_count: IssueCount1;
@@ -1168,18 +1196,18 @@ export interface ConfigurationCheckSummary1 {
   pending_operation_id: PendingOperationId1;
   stale?: Stale1;
   state: State5;
-  tenancy_id: TenancyId3;
+  tenancy_id: TenancyId4;
   tenancy_name: TenancyName1;
 }
 export interface ConfigurationCheckRequest {
   client_request_key: ClientRequestKey2;
-  tenancy_id?: TenancyId4;
+  tenancy_id?: TenancyId5;
 }
 export interface OverrideEditor {
   baseline: BaselineVersion;
   can_edit: CanEdit;
   configuration: TenancyConfiguration | null;
-  tenancy_id: TenancyId6;
+  tenancy_id: TenancyId7;
   tenancy_name: TenancyName2;
   tenancy_revision: TenancyRevision;
   values: OverrideValues;
@@ -1224,7 +1252,7 @@ export interface TenancyConfiguration {
   quota_override_statements?: QuotaOverrideStatements;
   resolution_contract_version?: ResolutionContractVersion;
   revision_number: RevisionNumber;
-  tenancy_id: TenancyId5;
+  tenancy_id: TenancyId6;
 }
 export interface OverrideValues {
   monthly_budget_override_amount?: MonthlyBudgetOverrideAmount1;
@@ -1233,7 +1261,7 @@ export interface OverrideValues {
 }
 export interface OverridePreviewRequest {
   context: OverrideContext;
-  tenancy_id: TenancyId7;
+  tenancy_id: TenancyId8;
   values: OverrideValues;
 }
 export interface OverrideContext {
@@ -1255,13 +1283,15 @@ export interface ConfigurationPreview {
   pending_count: PendingCount;
   preview_hash: PreviewHash;
   ready_count: ReadyCount;
-  tenancy_id: TenancyId10;
+  repair_expected?: RepairExpected;
+  repair_observed?: RepairObserved;
+  tenancy_id: TenancyId11;
 }
 export interface ConfigurationBlocker {
   code: Code;
   name: Name;
   operation_id?: OperationId3;
-  tenancy_id: TenancyId8;
+  tenancy_id: TenancyId9;
 }
 export interface OverrideConflict {
   old_baseline: BaselineVersion | null;
@@ -1270,18 +1300,24 @@ export interface OverrideConflict {
   policy_review: PolicyReview;
   quota_choice?: QuotaChoice;
   quota_review: QuotaReview;
-  tenancy_id: TenancyId9;
+  tenancy_id: TenancyId10;
   tenancy_name: TenancyName3;
+}
+export interface RepairExpected {
+  [k: string]: string;
+}
+export interface RepairObserved {
+  [k: string]: string | null;
 }
 export interface CreateConfigurationPlan {
   client_request_key: ClientRequestKey3;
-  tenancy_id?: TenancyId11;
+  tenancy_id?: TenancyId12;
 }
 export interface SaveConfigurationReview {
   expected_revision: ExpectedRevision1;
   policy_choice?: PolicyChoice1;
   quota_choice?: QuotaChoice1;
-  tenancy_id: TenancyId12;
+  tenancy_id: TenancyId13;
 }
 export interface ConfigurationPreview1 {
   baseline: BaselineVersion | null;
@@ -1290,7 +1326,15 @@ export interface ConfigurationPreview1 {
   pending_count: PendingCount1;
   preview_hash: PreviewHash1;
   ready_count: ReadyCount1;
-  tenancy_id: TenancyId13;
+  repair_expected?: RepairExpected1;
+  repair_observed?: RepairObserved1;
+  tenancy_id: TenancyId14;
+}
+export interface RepairExpected1 {
+  [k: string]: string;
+}
+export interface RepairObserved1 {
+  [k: string]: string | null;
 }
 export interface ConfigurationUpdate {
   client_request_key: ClientRequestKey4;
@@ -1299,7 +1343,8 @@ export interface ConfigurationUpdate {
   overrides?: OverrideValues | null;
   plan_id?: PlanId;
   preview_hash: PreviewHash2;
-  tenancy_id?: TenancyId14;
+  repair_categories?: RepairCategories;
+  tenancy_id?: TenancyId15;
 }
 export interface ConfigurationProgress {
   baseline: BaselineVersion;
@@ -1313,7 +1358,7 @@ export interface ConfigurationTargetProgress {
   name: Name1;
   safe_code?: SafeCode2;
   state: State8;
-  tenancy_id: TenancyId15;
+  tenancy_id: TenancyId16;
   verified_at?: VerifiedAt;
 }
 export interface BaselineDirectory {
@@ -1466,7 +1511,7 @@ export interface TenancyDeletionCommand {
   confirm_shared?: ConfirmShared;
   context: OrganizationContext;
   kind?: Kind;
-  tenancy_id: TenancyId16;
+  tenancy_id: TenancyId17;
 }
 export interface OrganizationContext {
   applied_version_id: AppliedVersionId1;
@@ -1584,7 +1629,7 @@ export interface OnboardingView {
   state: State11;
   submitted_handoff: OnboardingHandoff | null;
   suggested_handoff: OnboardingHandoff;
-  tenancy_id: TenancyId17;
+  tenancy_id: TenancyId18;
 }
 export interface OnboardingCheck {
   key: Key1;
@@ -1631,7 +1676,7 @@ export interface OrganizationAction {
   plan?: Plan;
   recipient_person_id?: RecipientPersonId1;
   review_id?: ReviewId;
-  tenancy_id?: TenancyId18;
+  tenancy_id?: TenancyId19;
   tenancy_kind?: TenancyKind;
 }
 export interface AssociationChoice {
@@ -1674,7 +1719,7 @@ export interface AssociationView {
   person_id: PersonId3;
   role: Role2;
   status: Status2;
-  tenancy_id: TenancyId19;
+  tenancy_id: TenancyId20;
   tenancy_kind: TenancyKind1;
   tenancy_name: TenancyName4;
   tenancy_status: TenancyStatus;

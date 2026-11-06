@@ -34,11 +34,8 @@ from otm.configuration.rollout_worker import (
 )
 from otm.configuration.service import draft_view
 from otm.operations.contracts import InspectionPolicy, IntentEventData, canonical_hash
-from otm.providers.configuration import (
-    SimulatedConfigurationFacade,
-    configure_target,
-    desired_objects,
-)
+from otm.providers.configuration import configure_target, desired_objects
+from otm.providers.configuration_simulator import SimulatedConfigurationFacade
 from otm.storage.admission import RequestConflict
 from otm.storage.organization import OrganizationConflict
 

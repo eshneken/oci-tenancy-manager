@@ -22,9 +22,9 @@ from otm.operations.runner import (
     register_organization_task,
 )
 from otm.operations.sandbox import SandboxAuthority, SandboxProvider, load_sandbox
-from otm.providers.configuration import SimulatedConfigurationFacade
+from otm.providers.configuration_simulator import SimulatedConfigurationFacade
 from otm.providers.inspection import TenancyInspection
-from otm.providers.lifecycle import SimulatedLifecycleFacade
+from otm.providers.lifecycle_simulator import SimulatedLifecycleFacade
 from otm.settings import load_settings
 from otm.storage.administrators import SqlAdministratorStore
 from otm.storage.enqueue import workspace_queue
@@ -151,7 +151,7 @@ def run_worker(*, once=False):
             queue,
         )
         from otm.financial.worker import CostCollectionWorker
-        from otm.providers.budget import SimulatedBudgetFacade
+        from otm.providers.budget_simulator import SimulatedBudgetFacade
         from otm.storage.enqueue import COST_TASK, InspectionEnqueuer
 
         # Reload only operator settings; old work cannot silently adopt changed cost policy.

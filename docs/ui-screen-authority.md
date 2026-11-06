@@ -572,7 +572,9 @@ A newer publication or a pending review remains separate.
 Check now / Check all tenancies explicitly queues read-only work. Refresh only fetches evidence;
 active checks poll. Exact child/category detail shows assigned baseline, overrides, expected/observed
 text, UTC timestamps and operation context with guarded Back routes. Queueing does not clear drift.
-No Repair, fake acknowledgment/delete or navigation-action badge is introduced. Four local category
+The original read-only check foundation added no Repair control. The later
+[explicit repair flow](reference/configuration-repair.md) adds its guarded preview/confirmation;
+there is still no fake acknowledgment/delete or drift navigation-action badge. Four local category
 bundles do not imply real OCI grammar/binding/access qualification.
 
 [Field/evidence authority](reference/configuration-drift.md) ·
@@ -666,3 +668,11 @@ manager remains searchable and in employee/detail context. Independent monetary 
 Actual/Budget header. Per-value colors and accessible status use observed same-response budget;
 missing/stale/prior-month/source-unqualified labels stay visible. Retrieval tooltips show only OTM
 retrieval; optional source diagnostics belong on detail. See [runtime fields](reference/cost-visibility.md).
+
+
+### Explicit repair follow-up — 6 November 2026
+
+Earlier read-only checkpoint statements excluding Repair describe the check foundation. The current
+[explicit selected-object repair flow](reference/configuration-repair.md) now adds a guarded modal
+preview/confirmation and native worker verification. Checks remain read-only. No daily scheduler,
+live OCI repair or local drift-injection control is enabled.

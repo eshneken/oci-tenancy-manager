@@ -18,6 +18,14 @@ are not competing implementation instructions or proof of real OCI behavior.
 | Prior checkpoints | [Dated history](history/README.md) |
 
 ## Source of truth
+Current configuration work includes [guarded selected-object repair](reference/configuration-repair.md)
+through the existing durable operation worker. Its [local checkpoint](history/configuration-repair-checkpoint-2026-11-06.md)
+records qualification and remaining deployment boundaries.
+
+
+The [provider file-separation decision](engineering-design/02-operations-and-provider.md#provider-contract-and-implementation-files--5-november-2026)
+records the contract/simulator/real-adapter layout. The [implemented provider layout](reference/provider-layout.md)
+describes the extracted files and qualification limits.
 
 Application source, frozen migrations and qualified tests describe implemented behavior. Python
 models and validators generate backend/contracts/ and frontend types; exported schemas do not encode

@@ -12,7 +12,7 @@ from test_organization_workflows_postgres import action, complete_setup, workflo
 
 from otm.configuration.contracts import PublishBaseline, SaveBaselineDraft
 from otm.configuration.service import BaselineAuthoring
-from otm.providers.baseline import SimulatedBaselineQualifier
+from otm.providers.baseline_simulator import SimulatedBaselineQualifier
 from otm.storage.organization import OrganizationConflict
 from otm.storage.tables import operation, org_workspace, tenancy
 

@@ -15,7 +15,7 @@ from otm.configuration.drift import ConfigurationChecks
 from otm.configuration.drift_contracts import ConfigurationCheckRequest
 from otm.configuration.drift_worker import ConfigurationCheckWorker
 from otm.operations.contracts import canonical_hash
-from otm.providers.configuration import SimulatedConfigurationFacade
+from otm.providers.configuration_simulator import SimulatedConfigurationFacade
 from otm.storage.tables import audit_event, configuration_check
 
 pytestmark = pytest.mark.postgres

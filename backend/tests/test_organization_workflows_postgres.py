@@ -12,7 +12,7 @@ from test_organization_storage_postgres import factors, intake, login_case, orga
 
 from otm.operations.contracts import InspectionPolicy
 from otm.organization.contracts import Record
-from otm.providers.lifecycle import SimulatedLifecycleFacade
+from otm.providers.lifecycle_simulator import SimulatedLifecycleFacade
 from otm.storage.enqueue import ORGANIZATION_TASK, InspectionEnqueuer, workspace_queue
 from otm.storage.tables import audit_event, operation, tenancy, tenancy_membership
 from otm.tenancies.contracts import OrganizationAction
@@ -52,7 +52,7 @@ def workflow_case(organization_case):
 
     from otm.configuration.contracts import PublishBaseline, SaveBaselineDraft
     from otm.configuration.service import BaselineAuthoring
-    from otm.providers.baseline import SimulatedBaselineQualifier
+    from otm.providers.baseline_simulator import SimulatedBaselineQualifier
 
     recipes = BaselineAuthoring(c.store, SimulatedBaselineQualifier())
     draft = recipes.save(c.principal, SaveBaselineDraft(content=content()))

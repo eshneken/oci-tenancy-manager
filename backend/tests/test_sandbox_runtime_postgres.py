@@ -555,7 +555,7 @@ def test_installed_api_lifecycle_cancellation_permissions(runtime):
     from unittest.mock import Mock
 
     from otm.operations.contracts import InspectionPolicy
-    from otm.providers.lifecycle import SimulatedLifecycleFacade
+    from otm.providers.lifecycle_simulator import SimulatedLifecycleFacade
     from otm.storage.organization import OrganizationConflict, SqlOrganizationStore
     from otm.tenancies.contracts import OrganizationAction
     from otm.tenancies.views import ReviewQuery, TenancyQuery
@@ -585,7 +585,7 @@ def test_installed_api_lifecycle_cancellation_permissions(runtime):
 
     from otm.configuration.contracts import PublishBaseline, SaveBaselineDraft
     from otm.configuration.service import BaselineAuthoring
-    from otm.providers.baseline import SimulatedBaselineQualifier
+    from otm.providers.baseline_simulator import SimulatedBaselineQualifier
 
     recipes = BaselineAuthoring(store, SimulatedBaselineQualifier())
     state = recipes.read(c.principal)

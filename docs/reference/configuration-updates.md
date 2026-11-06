@@ -394,4 +394,13 @@ The authored [on-demand drift check](configuration-drift.md), now qualified and 
 assigned baseline/overrides without invoking this update engine. Confirmation and current unknown
 status remain separate; four complete reads are needed before confirmation/resolution. A check
 does not advance this workflow's desired/verified pointers or mutate fake-cloud observations.
-Actual repair and daily scheduling remain future work.
+[Explicit selected-object repair](configuration-repair.md) is now implemented separately;
+daily scheduling remains deferred until staging/Kubernetes.
+
+
+### Explicit repair follow-up — 6 November 2026
+
+Earlier read-only checkpoint statements excluding Repair describe the check foundation. The current
+[explicit selected-object repair flow](../reference/configuration-repair.md) now adds a guarded modal
+preview/confirmation and native worker verification. Checks remain read-only. No daily scheduler,
+live OCI repair or local drift-injection control is enabled.

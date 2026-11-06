@@ -14,8 +14,8 @@ from otm.configuration.contracts import PublishBaseline, SaveBaselineDraft
 from otm.configuration.service import BaselineAuthoring
 from otm.operations.sandbox import load_sandbox
 from otm.organization.contracts import Intake
-from otm.providers.baseline import SimulatedBaselineQualifier
-from otm.providers.lifecycle import SimulatedLifecycleFacade
+from otm.providers.baseline_simulator import SimulatedBaselineQualifier
+from otm.providers.lifecycle_simulator import SimulatedLifecycleFacade
 from otm.storage.enqueue import ORGANIZATION_TASK, InspectionEnqueuer, workspace_queue
 from otm.storage.organization import SqlOrganizationStore
 from otm.tenancies.worker import OrganizationLifecycleWorker

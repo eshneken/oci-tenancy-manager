@@ -123,6 +123,9 @@ class SqlOperationDirectory:
             else "Update tenancy overrides"
             if frozen.intent.kind == "configuration_update"
             and frozen.intent.change_kind == "override_change"
+            else "Repair assigned configuration"
+            if frozen.intent.kind == "configuration_update"
+            and frozen.intent.change_kind == "repair"
             else f"Update baseline v{frozen.intent.baseline.version_number}"
             if frozen.intent.kind == "configuration_update"
             else None,

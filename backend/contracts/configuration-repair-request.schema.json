@@ -1,0 +1,31 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "categories": {
+      "items": {
+        "enum": [
+          "policy",
+          "quota",
+          "budget",
+          "tags"
+        ],
+        "type": "string"
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "title": "Categories",
+      "type": "array"
+    },
+    "tenancy_id": {
+      "format": "uuid",
+      "title": "Tenancy Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenancy_id",
+    "categories"
+  ],
+  "title": "ConfigurationRepairRequest",
+  "type": "object"
+}

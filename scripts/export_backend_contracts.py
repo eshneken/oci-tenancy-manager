@@ -33,6 +33,7 @@ from otm.configuration.override_contracts import (
     OverridePreviewRequest,
     SaveConfigurationReview,
 )
+from otm.configuration.repair_contracts import ConfigurationRepairRequest
 from otm.configuration.rollout_contracts import (
     ConfigurationPlanView,
     ConfigurationPreview,
@@ -104,6 +105,7 @@ def contracts() -> dict[str, dict]:
         "configuration-plan-create.schema.json": CreateConfigurationPlan.model_json_schema(),
         "configuration-plan-review.schema.json": SaveConfigurationReview.model_json_schema(),
         "configuration-preview.schema.json": ConfigurationPreview.model_json_schema(),
+        "configuration-repair-request.schema.json": ConfigurationRepairRequest.model_json_schema(),
         "configuration-update.schema.json": ConfigurationUpdate.model_json_schema(),
         "configuration-progress.schema.json": ConfigurationProgress.model_json_schema(),
         "baseline-version.schema.json": BaselineVersion.model_json_schema(),
