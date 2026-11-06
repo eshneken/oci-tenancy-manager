@@ -231,3 +231,24 @@ contact policy, SMTP guard and separate Email delivery audit category. They noti
 administrators after bounded read retries, deduplicate one continuing stable-source episode and
 reset only on a normalized observation. They do not adopt lifecycle D50 responsibility or send
 over-budget, optional-field, stale-data or qualification warnings.
+
+
+## Non-onboarding lifecycle transitions
+
+The installed lifecycle hook authenticates the immutable organization intent before selecting
+guided create/import notifications. Deletion, offboarding, shared-membership and ownership actions
+without an onboarding version are valid lifecycle work, not invalid handoffs. They currently produce
+no guided-onboarding email, and the hook must not roll back their completion or safe failure state.
+Handoff endpoints retain their default requirement for a supported onboarding version. Hash, actor
+and workspace checks remain mandatory for both paths. PostgreSQL regressions attach the real
+notifier during deletion and cover successful initiation, a blocked provider and unexpected failure
+reporting; replay never repeats completed lifecycle effects.
+
+Qualification on 6 November 2026: the full disposable PostgreSQL/native-worker/HTTPS browser gate
+passed 1,804 tests with no failures, errors, skips or timeout. Backend unit-only coverage remains
+96.0883% across all 131 source files. Independent security and documentation reviews passed.
+The main saved preview was privately backed up and coherently updated with every pre-existing
+record across 27 tables preserved; the separately saved test instance was unchanged. An affected
+failed simulated job was resumed through the native retry function using its original operation,
+and verified successful termination, removed associations and retired registered identities.
+No new operation, schema change or live OCI call was needed.

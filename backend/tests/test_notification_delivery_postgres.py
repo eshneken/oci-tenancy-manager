@@ -1,7 +1,7 @@
 """Disposable PostgreSQL notification staging, no-duplicate delivery and append-only boundaries."""
 
 from datetime import timedelta
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 from uuid import uuid4
 
 import pytest
@@ -351,3 +351,64 @@ def test_email_audit_category_and_csv_are_separate_from_operations(workflow_case
             .one()
         )
     assert dict(after) == dict(original)
+
+
+# The installed notification hook cannot roll back non-onboarding completion or failure reporting.
+@pytest.mark.parametrize("outcome", ["complete", "blocked", "unexpected"])
+def test_deletion_with_real_lifecycle_notification_hook(workflow_case, outcome):
+    from test_organization_workflows_postgres import action, complete_setup
+
+    from otm.providers.lifecycle import LifecycleBlocked
+    from otm.storage.tables import tenancy, tenancy_membership
+    from otm.tenancies.deletion import TenancyDeletionCommand
+    from otm.tenancies.views import TenancyQuery
+
+    c = workflow_case
+    person = next(p for p in c.store.head(c.principal).people if p.email == "engineer@example.test")
+    _, created = action(c, person.id, "create_tenancy")
+    complete_setup(c, created.operation_id)
+    child = c.workflow.tenancies(c.principal, TenancyQuery()).items[0]
+    preview = c.workflow.deletion_preview(c.principal, child.id)
+    receipt = c.workflow.delete_tenancy(
+        c.principal,
+        TenancyDeletionCommand(
+            client_request_key=uuid4(),
+            tenancy_id=child.id,
+            context=preview.context,
+            confirm_deletion=True,
+            confirm_shared=True,
+            confirm_manager=True,
+        ),
+    )
+    enqueue = Mock()
+    c.worker.notifications = LifecycleNotifier(MailPolicy(), enqueue)
+    effects = {"blocked": LifecycleBlocked("TARGET_CHANGED"), "unexpected": RuntimeError("TEST")}
+    if outcome == "complete":
+        c.worker.run(receipt.operation_id)
+    else:
+        with patch.object(c.provider, "apply", side_effect=effects[outcome]):
+            c.worker.run(receipt.operation_id)
+    with c.engine.connect() as connection:
+        current = (
+            connection.execute(select(operation).where(operation.c.id == receipt.operation_id))
+            .mappings()
+            .one()
+        )
+        status = connection.execute(
+            select(tenancy.c.status).where(tenancy.c.id == child.id)
+        ).scalar_one()
+        links = (
+            connection.execute(
+                select(tenancy_membership.c.status).where(
+                    tenancy_membership.c.tenancy_id == child.id
+                )
+            )
+            .scalars()
+            .all()
+        )
+        assert current["state"] == ("succeeded" if outcome == "complete" else "needs_attention")
+        assert status == ("terminated" if outcome == "complete" else "terminating")
+        assert links == (["removed"] if outcome == "complete" else ["removing"])
+        assert list_for_operation(connection, c.policy.workspace_id, receipt.operation_id) == ()
+    enqueue.enqueue.assert_not_called()
+    c.worker.run(receipt.operation_id)

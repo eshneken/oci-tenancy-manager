@@ -65,8 +65,8 @@ def step_rows(connection, row):
     }
 
 
-# Follow and authenticate the immutable intent pointer before accepting any handoff input.
-def load_intent(connection, row):
+# Authenticate immutable organization intent; handoff callers additionally require onboarding.
+def load_intent(connection, row, *, onboarding_only=True):
     event = (
         connection.execute(
             select(audit_event).where(
@@ -87,7 +87,7 @@ def load_intent(connection, row):
         or frozen.intent.workspace_id != row["workspace_id"]
     ):
         raise ValueError("INVALID_ONBOARDING_INTENT")
-    if frozen.intent.onboarding_version not in {1, 2, 3}:
+    if onboarding_only and frozen.intent.onboarding_version not in {1, 2, 3}:
         raise OrganizationConflict("ONBOARDING_NOT_AVAILABLE")
     return frozen
 

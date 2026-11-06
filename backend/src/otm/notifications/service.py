@@ -78,7 +78,8 @@ class LifecycleNotifier:
         require_transaction(connection)
         if row["kind"] != "organization_action":
             return None
-        frozen = load_intent(connection, row)
+        # Non-onboarding lifecycle work is valid but has no guided-onboarding notice.
+        frozen = load_intent(connection, row, onboarding_only=False)
         intent = frozen.intent
         if intent.action not in {
             "create_tenancy",

@@ -109,6 +109,12 @@ def test_intent_loading_and_step_evidence(registry):
     record.update(data=historical, data_hash=canonical_hash(historical))
     with pytest.raises(OrganizationConflict, match="NOT_AVAILABLE"):
         flow.load_intent(connection, row)
+    assert (
+        flow.load_intent(connection, row, onboarding_only=False).intent.onboarding_version is None
+    )
+    record["data_hash"] = "0" * 64
+    with pytest.raises(ValueError, match="INVALID_ONBOARDING_INTENT"):
+        flow.load_intent(connection, row, onboarding_only=False)
     connection.execute.return_value.mappings.return_value = [{"step_key": "handoff"}]
     assert flow.step_rows(connection, row)["handoff"]["step_key"] == "handoff"
     event = OnboardingEvidence(step="handoff", outcome="accepted", safe_code="ONBOARDING_ACCEPTED")
