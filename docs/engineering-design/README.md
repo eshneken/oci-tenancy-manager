@@ -13,6 +13,8 @@ and administrator-enforced master protection are verified at baseline `db08b3b`.
 required gates and protections apply to every reviewed candidate.
 
 ## Chapters
+
+Required-account foundation: [implemented presence boundary and remaining integration](../reference/required-user-presence.md).
 Current configuration repair: [implemented flow and field map](../reference/configuration-repair.md).
 
 

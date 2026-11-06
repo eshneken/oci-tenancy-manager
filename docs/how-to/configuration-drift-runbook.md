@@ -232,3 +232,20 @@ Source: [comparison/history units](../../backend/tests/test_configuration_drift.
 [repair units](../../backend/tests/test_configuration_repairs.py),
 [repair SQL/worker cases](../../backend/tests/test_configuration_repairs_postgres.py),
 [native browser repair](../../frontend/e2e/configuration-repair.spec.ts).
+
+
+## Pending required-user presence qualification
+
+**Status: Pending.** The [presence boundary](../reference/required-user-presence.md) is internal
+only. A real adapter, durable exact permanent-user bindings and check/UI integration are prerequisites
+for hands-on account checks. No account is queried or changed by adding this checklist. Use the
+approved disposable-child/independent-access rules above when live testing becomes available.
+
+| Planned live scenario | Required outcome | Status |
+| --- | --- | --- |
+| Automation and recovery exact-user reads | Separate subject evidence for each known domain/SCIM/OCI binding; one passing read cannot cover another account. | Pending |
+| Complete authorized absence versus failed/domain reads | Only qualified exact-domain absence is Missing; wrong-domain404, denial, timeout, incomplete coverage and delayed propagation stay Unknown. | Pending |
+| Same name/different ID and renamed bound user | Never adopt the same-name account; unchanged verified IDs can return changed username metadata. | Pending |
+| Binding/assignment/credential changes during acquisition | The later integrated worker rechecks live generations and refuses stale publication; echoed transport fields alone are not current authority. | Pending |
+| Present account with unusable signing/privileges/console | Presence alone cannot show full access health or enable repair/password release; independent probes remain necessary. | Pending |
+| OCI/SCIM mapping and provider failure normalization | Preserve distinct identifiers, require explicit mapping updates and expose only closed diagnostics, keeping raw/private provider evidence out of public artifacts. | Pending |

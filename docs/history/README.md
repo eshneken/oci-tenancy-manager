@@ -14,3 +14,5 @@ Private original feeds, raw evidence, screenshots and machine-specific paths are
 - [Current-month cost visibility and final local qualification](cost-visibility-checkpoint-2026-11-05.md)
 
 - [Provider separation and selected configuration repair](configuration-repair-checkpoint-2026-11-06.md)
+
+- [Required-user presence foundation](required-user-presence-checkpoint-2026-11-06.md)

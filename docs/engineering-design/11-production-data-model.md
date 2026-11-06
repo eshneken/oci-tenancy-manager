@@ -1944,3 +1944,15 @@ unique selected `categories`; `ConfigurationUpdate.repair_categories` binds acce
 configuration revision, advances no baseline assignment and seals complete post-repair evidence
 against the released registry generation. Existing check/ER relationships remain unchanged; larger
 proposed live binding tables above remain separately qualified work.
+
+
+## Required-user presence foundation — 6 November 2026
+
+The [internal implemented boundary and full field map](../reference/required-user-presence.md)
+separates automation/recovery subject identity, inspecting authority and returned presence evidence.
+Only Present/Missing/Unknown are implemented; no privilege, signer, console or recovery-readiness
+qualification follows. These are typed transport models, not new database tables or established
+foreign keys. ER diagrams and current persisted schema are unchanged. Current onboarding does not
+yet retain permanent user bindings; verified binding capture and live-head checks must precede
+worker/UI composition. There is no guessed backfill, API route, schedule, repair, secret retrieval
+or saved-instance change. The broader proposed access model above remains future work.

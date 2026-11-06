@@ -967,3 +967,15 @@ a historical reporting product.
 Local financial gates and both preserved-preview upgrades are qualified in the
 [5 November cost checkpoint](../history/cost-visibility-checkpoint-2026-11-05.md). Hosted results
 remain bound to each checked commit; scheduling/live-provider qualification remains deferred.
+
+
+## Required-user presence foundation — 6 November 2026
+
+The [internal implemented boundary and full field map](../reference/required-user-presence.md)
+separates automation/recovery subject identity, inspecting authority and returned presence evidence.
+Only Present/Missing/Unknown are implemented; no privilege, signer, console or recovery-readiness
+qualification follows. These are typed transport models, not new database tables or established
+foreign keys. ER diagrams and current persisted schema are unchanged. Current onboarding does not
+yet retain permanent user bindings; verified binding capture and live-head checks must precede
+worker/UI composition. There is no guessed backfill, API route, schedule, repair, secret retrieval
+or saved-instance change. The broader proposed access model above remains future work.

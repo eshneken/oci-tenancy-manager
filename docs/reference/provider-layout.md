@@ -36,3 +36,8 @@ PostgreSQL and Playwright suites continue to qualify the unchanged local behavio
 apply to both contract and simulator files. See the
 [accepted file-layout decision](../engineering-design/02-operations-and-provider.md#provider-contract-and-implementation-files--5-november-2026)
 and [reference index](README.md).
+
+
+The next [required-user presence capability](required-user-presence.md) follows the existing
+inspection pattern: neutral contracts, a result-validation wrapper and a separate explicit
+simulator. It is not yet selected by the application or native worker.

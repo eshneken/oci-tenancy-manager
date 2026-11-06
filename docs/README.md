@@ -19,6 +19,10 @@ are not competing implementation instructions or proof of real OCI behavior.
 | Prior checkpoints | [Dated history](history/README.md) |
 
 ## Source of truth
+
+Access-health work begins with the [internal required-user presence boundary](reference/required-user-presence.md).
+It is not yet connected to application screens or durable checks; [checkpoint evidence](history/required-user-presence-checkpoint-2026-11-06.md)
+records this integration boundary.
 Current configuration work includes [guarded selected-object repair](reference/configuration-repair.md)
 through the existing durable operation worker, with [all-category/override regression coverage](reference/configuration-repair.md#all-category-repair-qualification--6-november-2026). Its [local checkpoint](history/configuration-repair-checkpoint-2026-11-06.md)
 records qualification and remaining deployment boundaries.

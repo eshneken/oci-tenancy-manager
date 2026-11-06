@@ -958,3 +958,15 @@ remain Pending. No local drift-injection scaffolding or saved-instance mutation 
 The 20-case unit comparison matrix remains distinct from the 16-case repair-write matrix and
 all-category browser journey. None is a claim of live OCI qualification. See the
 [all-category repair field/coverage note](reference/configuration-repair.md#all-category-repair-qualification--6-november-2026).
+
+
+## Required-user presence boundary — 6 November 2026
+
+[Source field map and integration limits](reference/required-user-presence.md) define this internal
+read-only capability. Units must distinguish exact authorized complete presence/absence from
+unqualified domain, denied/timeout/delayed/partial/unsupported reads; isolate automation/recovery
+subjects; reject same-name adoption, wrong-domain404, changed actual IDs, cross-attempt/generation
+facts and out-of-window timestamps. Unknown cannot carry confirmed identity facts. Models reject
+secret fields and the deferred audit-user purpose. Neutral modules must load without simulators.
+Existing full database/browser suites remain regressions, not execution of an uncomposed capability.
+No new production binding/check/secret storage or public screen is qualified here.
