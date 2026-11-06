@@ -944,3 +944,13 @@ The [implemented flow and field map](reference/configuration-repair.md) requires
 
 Both unit-only 95% gates and independent documentation, security and responsive UI reviews remain
 required. A local simulator result does not qualify OCI writes or deploy daily drift scheduling.
+
+
+### Real OCI configuration drift and repair manual gate
+
+Hands-on validation is explicitly deferred until a real provider and disposable child tenancy are
+available. The [pending manual checklist and current automated coverage](how-to/configuration-drift-runbook.md#pending-real-oci-manual-validation)
+cover each managed category, selected-only repair, overrides/assigned baseline, authorization loss,
+partial/unknown effects, real object recreation/OCID rebinding and overlapping reads. All live cases
+remain Pending. No local drift-injection scaffolding or saved-instance mutation is requested.
+The 20-case unit comparison matrix is not a claim of all-category live or browser repair coverage.

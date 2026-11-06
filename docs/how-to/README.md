@@ -4,7 +4,8 @@ Use a deliberate local installation and preserve saved user data. Tests that mut
 isolated synthetic fixtures; private enrollment factors do not belong in reports or chat.
 
 - [Manual check: baseline updates](baseline-update-runbook.md)
-- [Manual review: configuration drift visibility](configuration-drift-runbook.md)
+- [Manual review: configuration drift visibility](configuration-drift-runbook.md), including
+  [pending real-OCI drift/repair tests and automated coverage](configuration-drift-runbook.md#pending-real-oci-manual-validation)
 - [Local review: lifecycle email and environment routing](lifecycle-email-runbook.md)
 - [Local quality checks](local-quality-checks.md)
 - [Organization Mapping — manual test runbook](organization-mapping-runbook.md)

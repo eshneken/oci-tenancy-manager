@@ -160,3 +160,67 @@ Earlier read-only checkpoint statements excluding Repair describe the check foun
 [explicit selected-object repair flow](../reference/configuration-repair.md) now adds a guarded modal
 preview/confirmation and native worker verification. Checks remain read-only. No daily scheduler,
 live OCI repair or local drift-injection control is enabled.
+
+
+## Pending real OCI manual validation
+
+**Status: not run.** Hands-on repair validation is deferred until a real OCI adapter and an approved
+disposable child tenancy are available (6 November 2026). No extra local drift-injection page,
+command or saved-data edit will be added for this exercise. Automated simulator/SQL/browser tests
+continue to run meanwhile. Passing them does not qualify OCI permissions or response semantics.
+
+Use an active registered disposable child with a verified assigned baseline and accepted overrides.
+Retain independent administrator access. Capture the initial managed object identities and expected
+configuration; record only sanitized test outcomes in the repository, keeping credentials, private
+contacts, screenshots and raw cloud responses in approved private evidence storage.
+
+| Manual scenario | Expected outcome | Status |
+| --- | --- | --- |
+| All managed objects match | Complete check reports Matching; inventory and drift detail agree. | Pending |
+| Missing managed policy, quota, budget or tag default | Exercise each category separately; an authorized complete read reports Missing rather than unknown. Exercise safe tag definition/default changes on disposable resources only. | Pending |
+| Changed policy/quota statement block, budget amount or defined-tag/default value | Check reports Different against the assigned baseline plus accepted overrides; preserve exact intended values for comparison. | Pending |
+| Permission denied, unavailable automation, timeout or incomplete enumeration | Unable to verify; no fabricated Missing/Matching result and no repair without verified sufficient access. Existing confirmed findings remain visible. | Pending |
+| Two confirmed differences, repair only one | Preview fresh current/expected content, select one category, confirm; only that selected managed object changes and the other finding remains open. | Pending |
+| Repair the remaining selected differences | Repeat selected-only and complete-repair checks for policy, quota, budget and tags, including permitted non-default statement/budget overrides. All-four independent verification clears findings only when matching; dashboard, detail, Operations and audit agree. | Pending |
+| Assigned older baseline with an override; newer baseline published | Repair restores the assigned effective configuration, preserving the override and baseline assignment. It does not silently upgrade or create a new desired revision. | Pending |
+| Source changes after preview or while queued | Changed assignment, scope or retained binding blocks stale authorization; refresh/review is required. No cross-tenancy write or name-based adoption. | Pending |
+| Delete and recreate a real managed object | Qualify OCI's actual new-OCID/binding lifecycle and safe identity reconciliation; deterministic simulator identities are not evidence that this works live. | Pending |
+| Partial write or readback/permission failure | Findings stay open until qualified verification; known effects and unknown outcomes are distinguished. Retry/reconciliation must not blindly repeat ambiguous OCI writes. | Pending |
+| Duplicate request/delivery and overlapping old check | No duplicate logical repair; stale checks cannot overwrite current verification. Qualify real network timing and eventual consistency rather than assuming local transaction behavior. | Pending |
+| Owner-created objects and unrelated resources | They remain unchanged. Check any protected automation policies/access separately after configuration repair. | Pending |
+| Expired/incomplete source evidence and delayed OCI reads | A stale/unknown result does not authorize an unsafe repair or falsely clear drift; freshness, timestamps and retry guidance remain understandable. | Pending |
+
+Record completion by adapter/build version, category/scenario, expected versus observed outcome and
+private evidence reference. OCI grammar, tag namespace/key/default enumeration, budget scope and
+currency, recreation bindings, permission probes, retries and response completeness need live
+qualification. Daily scheduling is a separate staging/Kubernetes test, not enabled by this checklist.
+
+### What automation currently covers
+
+- **Unit comparison matrix:** each of policy/quota/budget/tags is tested as matching, missing,
+  different, unavailable and binding-conflicted (20 combinations). Changed values use synthetic JSON;
+  these are comparison tests, not OCI grammar or per-service response tests.
+- **Unit guards/history:** malformed or absent inventory, permission/timeout/value errors, incomplete
+  bundles, assigned configuration/policy/parent/revision fences, invalid evidence hashes, retained
+  findings after failed reads, expiry boundaries, pending work and pause behavior.
+- **PostgreSQL/native-worker checks:** matching/read-only behavior, representative policy drift,
+  missing then unavailable then recovered, partial/unbound/conflicting reads, assigned versus newest
+  baseline, stale dispatch, replay, scope/busy guards and acquisition ordering independent of clocks.
+- **Repair units and PostgreSQL:** closed selected-category requests, fresh complete evidence,
+  changed bindings/observations/context, selected-only mutation, failed pre-read/apply/readback/
+  post-read, unchanged desired configuration, unselected quota drift retained after policy repair,
+  failed repair/retry, later publication, older pending check and expired-source rejection. Queued
+  repairs and failed reservations have distinct progress states.
+- **Native Playwright:** real protected HTTPS/API/native worker against disposable databases;
+  matching-check flow and one missing-policy repair through selection, preview, confirmation,
+  completion and reload, including desktop/mobile widths. It is not an end-to-end repair matrix
+  for every OCI object category or actual cloud faults.
+
+Dedicated budget/tag repair mutation journeys and non-default override repair combinations are not
+yet covered end to end. The per-category comparison matrix must not be counted as those repair tests.
+
+Source: [comparison/history units](../../backend/tests/test_configuration_drift.py),
+[check SQL/worker cases](../../backend/tests/test_configuration_drift_postgres.py),
+[repair units](../../backend/tests/test_configuration_repairs.py),
+[repair SQL/worker cases](../../backend/tests/test_configuration_repairs_postgres.py),
+[native browser repair](../../frontend/e2e/configuration-repair.spec.ts).
