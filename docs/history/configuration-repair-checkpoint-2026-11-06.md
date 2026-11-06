@@ -63,10 +63,11 @@ code, settings, dependency locks, generated contracts and database schema are un
 | Documentation/inline/lint/generated/design contracts | Pass |
 | Independent documentation, security and responsive visual review | Pass after comment/prose fixes |
 | Publication, credential scanning, Bandit and Python advisories | Pass |
-| npm advisories | Blocked by registry TLS certificate verification, including trusted-system-CA retry; not counted as a passing audit |
+| npm advisories | Strict-TLS retry passes after connection change: zero vulnerabilities |
 
-The unchanged dependency locks do not waive the npm audit. Retry it after connectivity is corrected
-before publishing/merging this milestone; TLS verification is not disabled. This local commit is
-not hosted CI or a protected-master release. No remote push/new PR, saved-instance refresh, live
+Initial registry certificate errors blocked the npm audit and were not counted as a pass. After
+the user changed connection, the same strict-TLS audit passed with zero vulnerabilities. No TLS
+verification was disabled and no dependencies changed. All local checkpoint gates now pass; this
+is not hosted CI or a protected-master release. No remote push/new PR, saved-instance refresh, live
 OCI action or cloud test was performed. All 13 [real-OCI manual cases](../how-to/configuration-drift-runbook.md#pending-real-oci-manual-validation)
 remain Pending; no local drift-injection product feature was added.
