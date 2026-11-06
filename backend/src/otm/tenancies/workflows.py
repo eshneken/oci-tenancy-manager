@@ -72,6 +72,7 @@ class OrganizationWorkflows:
         self.store, self.enqueuer, self.policy, self.facade = store, enqueuer, policy, facade
         self.mail_policy, self.notifications = mail_policy, notifications
         self.configuration_checks = configuration_checks
+        self.presence_checks = None
         self.cost_collections = cost_collections
         self.policy_loader = policy_loader
         self.mode = "simulated" if policy and facade and enqueuer else "unavailable"
@@ -256,7 +257,12 @@ class OrganizationWorkflows:
             if child is None:
                 raise OrganizationConflict("TENANCY_NOT_FOUND")
             try:
-                return required_user_records(connection, workspace, child)
+                directory = required_user_records(connection, workspace, child)
+                return (
+                    self.presence_checks.project(connection, workspace, child, directory)
+                    if self.presence_checks
+                    else directory
+                )
             except ValueError:
                 raise RuntimeError("REQUIRED_USER_RECORDS_UNAVAILABLE") from None
 

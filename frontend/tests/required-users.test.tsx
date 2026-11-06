@@ -32,7 +32,7 @@ it("shows both identities and contextual setup links", async () => {
   const c = mount();
   await screen.findByText("otm-automation");
   expect(screen.getAllByText("Recorded", { exact: true })).toHaveLength(2);
-  expect(screen.getAllByText("Not checked", { exact: true })).toHaveLength(2);
+  expect(screen.getAllByText("Not checked", { exact: true })).toHaveLength(4);
   expect(screen.queryByText(/healthy|verified|missing/i)).not.toBeInTheDocument();
   const card = screen.getByRole("heading", { name: "Automation user" }).closest("li")!;
   const details = card.querySelector("details")!;
@@ -120,4 +120,107 @@ it("does not retain visible records after a denied refresh", async () => {
   await userEvent.click(screen.getByRole("button", { name: "Refresh records" }));
   await waitFor(() => expect(c.expired).toHaveBeenCalled());
   expect(screen.queryByText("otm-automation")).not.toBeInTheDocument(); c.client.clear();
+});
+
+
+const configured:RequiredUsersDirectory = {...directory,check_available:true,check_unavailable_reason:null};
+const checkId="33333333-3333-4333-8333-333333333333";
+const receipt={operation_id:checkId,state:"queued" as const,provider_mode:"simulated" as const,accepted_at:"2026-11-06T12:00:00Z"};
+
+// Account presence, permissions and recorded identity stay distinct; failed latest reads replace old facts.
+it("shows independent current and failed account observations", async()=>{
+  const present:RequiredUsersDirectory={...configured,users:configured.users.map((u,i)=>({...u,presence:{state:i?"missing":"present",checked_at:"2026-11-06T12:00:00Z",stale:false,operation_id:checkId}})) as RequiredUsersDirectory["users"]};
+  const c=mount(present);
+  expect(await screen.findByText("Present",{exact:true})).toBeVisible();
+  expect(screen.getByText("Missing",{exact:true})).toBeVisible();
+  expect(screen.getAllByText("Permissions")).toHaveLength(2);
+  expect(screen.getAllByText("Not checked",{exact:true})).toHaveLength(2);
+  await userEvent.click(screen.getAllByRole("link",{name:"View check"})[0]);
+  expect(c.navigate).toHaveBeenCalledWith("/operations/"+checkId);
+  c.read.mockResolvedValue({...present,users:present.users.map(u=>({...u,presence:{...u.presence!,state:"unknown"}})) as RequiredUsersDirectory["users"]});
+  await userEvent.click(screen.getByRole("button",{name:"Refresh records"}));
+  await waitFor(()=>expect(screen.getAllByText("Unable to verify")).toHaveLength(2));
+  expect(screen.queryByText("Present",{exact:true})).not.toBeInTheDocument();
+  expect(screen.getAllByText("Last attempt (UTC)")).toHaveLength(2);c.client.clear();
+});
+
+// An old positive result is labeled out of date and never retains current green styling.
+it("neutralizes stale presence evidence",async()=>{
+  const c=mount({...configured,users:configured.users.map(u=>({...u,presence:{state:"present",checked_at:"2026-11-06T12:00:00Z",stale:true,operation_id:checkId}})) as RequiredUsersDirectory["users"]});
+  await screen.findByText("otm-automation");
+  expect(screen.getAllByText("Check out of date")).toHaveLength(2);
+  expect(screen.getAllByText(/Last result: Present/)).toHaveLength(2);
+  expect(document.querySelectorAll(".required-users .badge.active")).toHaveLength(0);c.client.clear();
+});
+
+// Disabled states explain actual server availability visibly, rather than implying a missing account.
+it.each(["not_configured","tenancy_inactive","tenancy_busy","provider_unavailable"] as const)("explains %s",async reason=>{
+  const c=mount({...directory,check_available:false,check_unavailable_reason:reason});
+  await screen.findByText("otm-automation");
+  expect(screen.getByRole("button",{name:"Check now"})).toBeDisabled();
+  expect(screen.getByText(reason==="not_configured"?/No qualified automation connection/:reason==="tenancy_inactive"?/active tenancies/:reason==="tenancy_busy"?/operation is in progress/:/provider is currently unavailable/)).toBeVisible();c.client.clear();
+});
+
+// Acceptance is only progress; poll the exact child until its dated results are published.
+it("queues once and displays background completion",async()=>{
+  let server:RequiredUsersDirectory=configured;
+  const start=vi.spyOn(api,"checkRequiredUsers").mockImplementation(async()=>{server={...configured,pending_operation_id:checkId};return receipt;});
+  const c=mount(configured);c.read.mockImplementation(()=>Promise.resolve(server));
+  await screen.findByText("otm-automation");
+  await userEvent.click(screen.getByRole("button",{name:"Check now"}));
+  await waitFor(()=>expect(screen.getByRole("button",{name:"Checking…"})).toBeDisabled());
+  expect(start).toHaveBeenCalledTimes(1);
+  expect(start.mock.calls[0][0]).toBe(id);
+  const first=start.mock.calls[0][1].client_request_key;
+  expect(first).toMatch(/^[0-9a-f-]{36}$/);
+  server={...configured,pending_operation_id:null,users:configured.users.map(u=>({...u,presence:{state:"present",checked_at:"2026-11-06T12:00:00Z",stale:false,operation_id:checkId}})) as RequiredUsersDirectory["users"]};
+  await waitFor(()=>expect(screen.getAllByText("Present",{exact:true})).toHaveLength(2),{timeout:3000});
+  expect(screen.getByRole("button",{name:"Check now"})).toBeEnabled();
+  await userEvent.click(screen.getByRole("button",{name:"Check now"}));
+  await waitFor(()=>expect(start).toHaveBeenCalledTimes(2));
+  expect(start.mock.calls[1][1].client_request_key).not.toBe(first);c.client.clear();
+});
+
+// Losing the HTTP response preserves its command key; retry never creates duplicate work.
+it("retries an uncertain request with the original key",async()=>{
+  const start=vi.spyOn(api,"checkRequiredUsers").mockRejectedValueOnce(new ApiError(503)).mockResolvedValue(receipt);
+  const c=mount(configured);await screen.findByText("otm-automation");
+  await userEvent.click(screen.getByRole("button",{name:"Check now"}));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Unable to confirm");
+  await userEvent.click(screen.getByRole("button",{name:"Retry check request"}));
+  await waitFor(()=>expect(start).toHaveBeenCalledTimes(2));
+  expect(start.mock.calls[1][1]).toEqual(start.mock.calls[0][1]);c.client.clear();
+});
+
+// Mutation authorization failure hides all cached identities even if the concurrent GET still succeeds.
+it.each([401,403])("hides cached data after denied check %s",async status=>{
+  vi.spyOn(api,"checkRequiredUsers").mockRejectedValue(new ApiError(status));
+  const c=mount(configured);await screen.findByText("otm-automation");
+  await userEvent.click(screen.getByRole("button",{name:"Check now"}));
+  await waitFor(()=>expect(c.expired).toHaveBeenCalled());
+  expect(screen.queryByText("otm-automation")).not.toBeInTheDocument();c.client.clear();
+});
+
+// A response arriving after navigation updates only its originating tenancy's private cache.
+it("does not apply a late command receipt to another tenancy",async()=>{
+  let resolve!:(value:typeof receipt)=>void;
+  vi.spyOn(api,"checkRequiredUsers").mockReturnValue(new Promise(done=>{resolve=done;}));
+  const c=mount(configured);await screen.findByText("otm-automation");
+  await userEvent.click(screen.getByRole("button",{name:"Check now"}));
+  const other="22222222-2222-4222-8222-222222222222";
+  c.read.mockResolvedValue({...directory,tenancy_id:other,users:directory.users.map(u=>({...u,identity:{...u.identity!,user_name:"other-"+u.purpose}})) as RequiredUsersDirectory["users"]});
+  c.rerender(<QueryClientProvider client={c.client}><RequiredUsers tenancyId={other} expired={c.expired} navigate={c.navigate}/></QueryClientProvider>);
+  await screen.findByText("other-automation");resolve(receipt);
+  await waitFor(()=>expect(c.client.getQueryData<RequiredUsersDirectory>(["tenancies","required-users",id])?.pending_operation_id).toBe(checkId));
+  expect(screen.queryByRole("button",{name:"Checking…"})).not.toBeInTheDocument();
+  expect(screen.getByText("other-automation")).toBeVisible();c.client.clear();
+});
+
+// A malformed acceptance does not produce a false completed check or arbitrary navigation target.
+it("rejects a receipt without an operation reference",async()=>{
+  vi.spyOn(api,"checkRequiredUsers").mockResolvedValue({...receipt,operation_id:null});
+  const c=mount(configured);await screen.findByText("otm-automation");
+  await userEvent.click(screen.getByRole("button",{name:"Check now"}));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Unable to confirm");
+  expect(screen.queryByText("Present",{exact:true})).not.toBeInTheDocument();c.client.clear();
 });

@@ -46,6 +46,28 @@ the number. Critical authorization, scope, failure/retry, destructive-operation 
 branches still require behavior assertions; 95% aggregate coverage is not proof of their correctness.
 Exact Python/frontend test-runner tooling and report formats are implementation setup work.
 
+### Complementary backend test lanes
+
+The required backend lanes partition the complete authored suite by the postgres marker:
+
+- Backend unit/coverage runs every test selected by `-m "not postgres"` through
+  `scripts/check_unit_coverage.py`. Its complete-source, unit-only coverage must remain at least 95%.
+- Database/browser integration runs every test selected by `-m postgres` through
+  `scripts/run_backend_postgres_tests.py`, including the native HTTP/worker/Playwright cases hosted
+  by PostgreSQL-marked fixtures. It uses disposable Docker PostgreSQL, never a saved preview.
+
+Each backend test belongs to exactly one of these selections. Deselection by the complementary
+marker is lane ownership, not a skipped required test; the separately required companion lane must
+still pass. Frontend unit/coverage remains independently required. An integration result alone
+cannot establish the complete test gate or unit coverage. Do not reclassify tests to avoid execution.
+
+The integration runner previously repeated the non-database unit suite. Removing that duplicate
+execution preserves the same assertions and required checks. On 6 November 2026 the user approved
+a 600-second aggregate integration deadline after the growing suite exceeded 420 seconds without
+test failures. Individual test/browser/database limits and the 95% coverage gate are unchanged.
+Earlier timed-out runs remain incomplete evidence. A fresh complete manual-presence run now passes all 351 postgres cases in 429.457 seconds, with zero failures/errors/skips and valid JUnit. Separate unit lanes pass 1,556 backend and 446 frontend cases. The disjoint backend selections cover 1,907 tests, not an overlapping sum. [Final local receipt](history/manual-presence-checkpoint-2026-11-06.md). The earlier deadline-expired attempts supply no completed full-suite evidence. Missing, failed, skipped, cancelled, timed-out or
+invalid reports still block qualification. Do not add counts from overlapping historical runs.
+
 ### Prototype-to-production transition
 
 The 95% merge gate applies to production application source from its first slice. Do not postpone
@@ -1036,3 +1058,25 @@ both deletion entry points retire, failed initiation preserves; API SELECT only,
 columns denied; owner-only reset inventory; package includes frozen SQL/version/hash. Internal
 version 2 rejects obsolete assignment and credential fields, with independent connection-revision
 and user/domain fixture tests. No new UI control or live presence evidence is claimed by this slice.
+
+## Manual user-presence checks — locally qualified, 6 November 2026
+
+Source scope and all fields: [check reference](reference/user-presence-checks.md). Required cases:
+
+- Exact fresh create/import capture and accepted connection; historical/partial/unconfigured/pending/
+  inactive/busy children disabled, no name-based or read-triggered backfill.
+- Current session/admin/revision/actor, CSRF/Origin, foreign scope, one-key replay, different-request
+  conflict, distinct-key independent admission and atomic intent/check/audit/native deferral.
+- Provider reads outside transactions; independent subject results and timestamps, exact response
+  scope/read window, malformed/denied/domain/absence cases, no expected-ID-to-observed-fact shortcut.
+- Attempt reclaim/late callback fences, no terminal overwrite, changed binding/connection/child/
+  policy/grant before or after read, paused execution, superseded results and backward clocks.
+- Latest admission sequence wins even when older work finishes later. Freshness at 24 hours,
+  per-account stale labels, pending progress preserving dated results, new unavailable results not
+  silently borrowing earlier success. The 30-second window is late-result validation, not SDK timeout.
+- Real PostgreSQL provenance/guard/grant/rollback/reset evidence; authenticated native browser
+  Check now → independent Present/Permissions Not checked → View check, cache/auth handling,
+  uncertain-response key reuse while mounted, keyboard focus and responsive containment.
+- Read-only behavior: no cloud mutation, credential disclosure, repair, notification or scheduler.
+  Actual OCI credentials, SDK bounded I/O, exact-domain absence and propagation stay Pending in the
+  [live manifest](how-to/real-oci-test-manifest.md). All required local lanes, independent reviews and main-preview preservation now pass; the parallel preview remains unchanged. [Final receipt](history/manual-presence-checkpoint-2026-11-06.md).

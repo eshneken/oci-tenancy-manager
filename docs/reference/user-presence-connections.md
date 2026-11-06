@@ -3,7 +3,7 @@
 This is the implemented foundation for the approved presence-only model. It records one selected
 **simulated automation connection**, not a real API credential, verified signing authority,
 permission profile or healthy account. The Required users screen is unchanged and still says
-Not checked. No check API/job, provider read, scheduled scan, repair or password action is added.
+Not checked at that earlier checkpoint. The later [manual check pipeline](user-presence-checks.md) now adds explicit API/worker acquisition and independent result display. No scheduled scan, repair or password action is added.
 
 ## Accepted simplification
 
@@ -118,10 +118,7 @@ paths, failed termination, direct forged inserts during a valid pending capture,
 immutability, scoped foreign keys and installed API/worker privileges. Existing native HTTPS browser
 flows remain regression gates; this checkpoint adds no UI controls.
 
-No new manual screen test is needed yet. The eventual live connection/signing qualification is
-Pending in the [real OCI manifest](../how-to/real-oci-test-manifest.md). The next checkpoint is scoped
-read-only acquisition and result publication through the existing worker, followed by Check now and
-per-user Present/Missing/Unable to verify display. Do not infer that these are already implemented.
+The connection foundation itself added no manual screen controls. The later [manual check pipeline](user-presence-checks.md) now implements scoped acquisition and result publication through the existing worker, Check now and per-user Present/Missing/Unable to verify display. Its local qualification and main-preview installation now pass; the parallel preview remains unchanged. Actual live connection/signing qualification remains Pending in the [real OCI manifest](../how-to/real-oci-test-manifest.md).
 
 
 For an optional database review after the updated revision is installed, complete a new simulated
@@ -143,3 +140,15 @@ Expect one active simulated connection for the new setup, pointing to its canoni
 Older setups may have no row. Do not insert or edit rows to make a tenancy appear configured. On
 successful simulated termination initiation, the existing connection becomes retired and is retained.
 There is still no Check now action or independent observation timestamp in this checkpoint.
+
+## Manual presence checks — 6 November 2026 source checkpoint
+
+The [manual check implementation](user-presence-checks.md) now connects the selected simulated
+connection and exact bound automation/recovery identities to explicit authenticated Check now,
+existing native operations/worker/audit and independent dated presence results. This supersedes
+no-check/no-result/no-UI statements from the preceding foundation only for this presence-only path.
+The [screen map](required-users-screen.md) has 22 effective display fields; Permissions remains
+Not checked. Legacy unbound/unconfigured children cannot check. Simulation reconstructs authenticated
+producer fixtures and does not verify live OCI. Assignments/profiles are deferred until separately
+needed for privileges/repair; no credential IDs are fabricated. Daily scheduling, emails, credential
+custody, readiness and repair remain outside this checkpoint. Local simulation qualification and the main-preview upgrade pass; the parallel preview is unchanged. [Final receipt](../history/manual-presence-checkpoint-2026-11-06.md).

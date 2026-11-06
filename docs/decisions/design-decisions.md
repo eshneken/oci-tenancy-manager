@@ -1056,3 +1056,12 @@ automation connection revision. Defer access-assignment/profile tables until pri
 repairs. Authentication failure means Unable to verify; recovery and parent credentials are never
 automatic fallback. The [implemented connection foundation](../reference/user-presence-connections.md)
 records the minimal simulated subset, legacy behavior and remaining worker/credential qualification.
+
+## Manual presence implementation boundary — 6 November 2026
+
+The earlier accepted simplification now has a [source implementation](../reference/user-presence-checks.md):
+exact canonical subjects and one current connection revision feed manual authenticated worker reads.
+No assignment/profile tables are needed for this presence-only subset. Simulation producer fixtures
+are explicit and not live OCI verification; current authority/attempt/context and per-subject time
+checks remain mandatory. Daily scheduler/notifications/privilege repair remain later work, with
+local qualification and the main-preview upgrade complete; the parallel preview is unchanged. [Final receipt](../history/manual-presence-checkpoint-2026-11-06.md).

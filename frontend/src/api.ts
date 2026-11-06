@@ -1,4 +1,4 @@
-import type { RequiredUsersDirectory } from "./contracts";
+import type { RequiredUsersDirectory, PresenceCheckRequest } from "./contracts";
 import type { CostRefreshReceipt, CostRefreshRequest } from "./contracts";
 import type { EmailPolicyView } from "./contracts";
 import type { ResponsibilityCommand } from "./contracts";
@@ -277,6 +277,9 @@ export const api = {
     );
   },
   // Refresh stored account records only; this route never probes OCI or exposes credentials.
+  checkRequiredUsers(id:string, command:PresenceCheckRequest) {
+    return request<ActionReceipt>("/api/tenancies/"+encodeURIComponent(id)+"/required-users/check", "POST", command);
+  },
   requiredUsers(id: string, signal?: AbortSignal) {
     return request<RequiredUsersDirectory>(
       "/api/tenancies/" + encodeURIComponent(id) + "/required-users", "GET", undefined, signal,

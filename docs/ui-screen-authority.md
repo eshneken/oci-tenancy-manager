@@ -685,3 +685,12 @@ live OCI repair or local drift-injection control is enabled.
 identity-record subset embedded in tenancy detail. Static access walkthroughs still illustrate the
 future full presence/permission/repair flow; they must not imply those controls are implemented.
 Neutral registration states and explicit Not checked guidance remain separate from access health.
+
+## Manual required-user presence controls — 6 November 2026
+
+The [Required users field guide](reference/required-users-screen.md) supersedes the earlier identity-
+record-only subset: authenticated Check now queues an explicit simulated read; Refresh records
+remains GET only. Independent Presence labels/times and View check links are separate from identity
+registration and Permissions: Not checked. The simulation banner, historical-disabled reason,
+queued progress, uncertain-request retry, stale label and auth/cache boundaries are current source
+behavior. There is no live OCI health, repair, email or daily schedule. Local qualification and the main-preview upgrade pass; the parallel preview is unchanged. [Final receipt](history/manual-presence-checkpoint-2026-11-06.md). Current source and the [review runbook](how-to/required-users-runbook.md) define this slice.

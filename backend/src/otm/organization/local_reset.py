@@ -10,6 +10,7 @@ from otm.storage.tables import metadata
 from otm.storage.transaction import require_transaction
 
 TABLES = (
+    "otm_user_presence_check",
     "otm_user_presence_connection",
     "otm_managed_object_binding",
     "otm_financial_observation",
@@ -112,7 +113,8 @@ def clear_organization(connection, workspace, issuer):
         text(
             "SELECT EXISTS(SELECT 1 FROM public.otm_operation WHERE workspace_id=:workspace A"
             "ND kind IN ('organization_action','configurati"
-            "on_update','configuration_check','cost_collection') AND state IN "
+            "on_update','configuration_check','cost_collection','required_user_check') AND "
+            "state IN "
             "('queued','running','waiting','needs_"
             "attention'))"
         ),

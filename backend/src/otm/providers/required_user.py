@@ -42,26 +42,32 @@ class RequiredUserInspection:
         except Exception:
             raise ProviderContractError("REQUIRED_USER_PROVIDER_FAILED") from None
         completed = self._now()
-        try:
-            result = RequiredUserObservation.model_validate(raw)
-        except (ValidationError, TypeError):
-            raise ProviderContractError("INVALID_REQUIRED_USER_RESULT") from None
-        if result.context != command.context or result.target != command.target:
-            raise ProviderContractError("REQUIRED_USER_CONTEXT_MISMATCH")
-        if not started <= result.captured_at <= completed:
-            raise ProviderContractError("REQUIRED_USER_CAPTURE_WINDOW_MISMATCH")
-        target = command.target
-        if (
-            result.checked_domain_ocid is not None
-            and result.checked_domain_ocid != target.domain_ocid
-            or result.checked_scim_resource_id is not None
-            and result.checked_scim_resource_id != target.scim_resource_id
-        ):
-            raise ProviderContractError("REQUIRED_USER_CHECKED_IDENTITY_MISMATCH")
-        if result.observed and (
-            result.observed.domain_ocid,
-            result.observed.scim_resource_id,
-            result.observed.provider_ocid,
-        ) != (target.domain_ocid, target.scim_resource_id, target.provider_ocid):
-            raise ProviderContractError("REQUIRED_USER_OBSERVED_IDENTITY_MISMATCH")
-        return result
+        return paired_observation(command, raw, started, completed)
+
+
+# Reuse exact-subject/time validation at adapter and worker boundaries without trusting factories.
+def paired_observation(command, raw, started, completed):
+    command = InspectRequiredUser.model_validate(command)
+    try:
+        result = RequiredUserObservation.model_validate(raw)
+    except (ValidationError, TypeError):
+        raise ProviderContractError("INVALID_REQUIRED_USER_RESULT") from None
+    if result.context != command.context or result.target != command.target:
+        raise ProviderContractError("REQUIRED_USER_CONTEXT_MISMATCH")
+    if not started <= result.captured_at <= completed:
+        raise ProviderContractError("REQUIRED_USER_CAPTURE_WINDOW_MISMATCH")
+    target = command.target
+    if (
+        result.checked_domain_ocid is not None
+        and result.checked_domain_ocid != target.domain_ocid
+        or result.checked_scim_resource_id is not None
+        and result.checked_scim_resource_id != target.scim_resource_id
+    ):
+        raise ProviderContractError("REQUIRED_USER_CHECKED_IDENTITY_MISMATCH")
+    if result.observed and (
+        result.observed.domain_ocid,
+        result.observed.scim_resource_id,
+        result.observed.provider_ocid,
+    ) != (target.domain_ocid, target.scim_resource_id, target.provider_ocid):
+        raise ProviderContractError("REQUIRED_USER_OBSERVED_IDENTITY_MISMATCH")
+    return result

@@ -86,6 +86,9 @@
           "title": "Identity State",
           "type": "string"
         },
+        "presence": {
+          "$ref": "#/$defs/UserPresenceView"
+        },
         "purpose": {
           "enum": [
             "automation",
@@ -102,10 +105,95 @@
       ],
       "title": "RequiredUserRecord",
       "type": "object"
+    },
+    "UserPresenceView": {
+      "additionalProperties": false,
+      "properties": {
+        "checked_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Checked At"
+        },
+        "operation_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Operation Id"
+        },
+        "stale": {
+          "default": false,
+          "title": "Stale",
+          "type": "boolean"
+        },
+        "state": {
+          "default": "not_checked",
+          "enum": [
+            "not_checked",
+            "present",
+            "missing",
+            "unknown"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "title": "UserPresenceView",
+      "type": "object"
     }
   },
   "additionalProperties": false,
   "properties": {
+    "check_available": {
+      "default": false,
+      "title": "Check Available",
+      "type": "boolean"
+    },
+    "check_unavailable_reason": {
+      "anyOf": [
+        {
+          "enum": [
+            "not_configured",
+            "tenancy_inactive",
+            "tenancy_busy",
+            "provider_unavailable"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "not_configured",
+      "title": "Check Unavailable Reason"
+    },
+    "pending_operation_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Pending Operation Id"
+    },
     "provider_mode": {
       "const": "simulated",
       "title": "Provider Mode",

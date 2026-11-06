@@ -9,6 +9,7 @@ from sqlalchemy import select
 from otm.contracts import Contract, Text, UtcInstant
 from otm.providers.required_user_contracts import DomainOcid, UserOcid
 from otm.storage.tables import managed_object_binding as binding
+from otm.tenancies.presence_contracts import UserPresenceView
 
 
 # Expose only useful account/provenance facts; no credentials, internal heads or readiness claims.
@@ -27,6 +28,7 @@ class RequiredUserRecord(Contract):
     purpose: Literal["automation", "recovery"]
     identity_state: Literal["recorded", "not_recorded", "retired"]
     identity: RequiredUserIdentity | None
+    presence: UserPresenceView = Field(default_factory=UserPresenceView)
 
     # An absent record cannot carry invented identity details or a retirement timestamp.
     @model_validator(mode="after")
@@ -45,6 +47,11 @@ class RequiredUsersDirectory(Contract):
     tenancy_id: UUID
     tenancy_status: Literal["pending", "active", "terminating", "terminated", "failed", "cancelled"]
     provider_mode: Literal["simulated"]
+    check_available: bool = False
+    check_unavailable_reason: (
+        Literal["not_configured", "tenancy_inactive", "tenancy_busy", "provider_unavailable"] | None
+    ) = "not_configured"
+    pending_operation_id: UUID | None = None
     users: Annotated[tuple[RequiredUserRecord, ...], Field(min_length=2, max_length=2)]
 
     # The API cannot accidentally omit, duplicate or reorder a required purpose.

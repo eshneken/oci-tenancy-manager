@@ -61,3 +61,5 @@ as history; dated receipts and progress do not supersede current requirements. P
 feeds, screenshots and unsanitized reports are not distributed.
 
 Current-month financial implementation and deferred/live boundaries: [cost visibility](../reference/cost-visibility.md).
+
+Current manual user-presence source, fields and qualification boundary: [presence checks](../reference/user-presence-checks.md).

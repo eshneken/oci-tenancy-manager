@@ -99,9 +99,7 @@ constraints, termination success/failure, historical unbound behavior and instal
 The full native browser flow exercises onboarding with the real worker/database; no new UI or Access
 screen is introduced. Saved review instances remain unchanged until deliberately upgraded.
 
-The [presence boundary](required-user-presence.md) is still not composed into durable checks.
-Its targets require real scoped assignment/context/credential heads in addition to these identity
-mappings. No readiness, repair, notification or password-disclosure authority follows from a binding.
+The [presence boundary](required-user-presence.md) is now composed into [manual simulated checks](user-presence-checks.md) using these identities and one selected connection revision. The accepted presence-only simplification defers assignment/profile and credential/context heads until separately needed. No readiness, repair, notification or password-disclosure authority follows from a binding.
 All real-provider behavior remains Pending in the [manual manifest](../how-to/real-oci-test-manifest.md).
 
 
@@ -114,3 +112,15 @@ section. See its field map and local test runbook for the implemented boundary.
 The later [presence-only connection model](user-presence-connections.md) references canonical
 automation/domain bindings without duplicating identities or adding access-assignment/profile
 heads. Its simulation-only selected connection is not OCI signing or healthy-access evidence.
+
+## Manual presence checks — 6 November 2026 source checkpoint
+
+The [manual check implementation](user-presence-checks.md) now connects the selected simulated
+connection and exact bound automation/recovery identities to explicit authenticated Check now,
+existing native operations/worker/audit and independent dated presence results. This supersedes
+no-check/no-result/no-UI statements from the preceding foundation only for this presence-only path.
+The [screen map](required-users-screen.md) has 22 effective display fields; Permissions remains
+Not checked. Legacy unbound/unconfigured children cannot check. Simulation reconstructs authenticated
+producer fixtures and does not verify live OCI. Assignments/profiles are deferred until separately
+needed for privileges/repair; no credential IDs are fabricated. Daily scheduling, emails, credential
+custody, readiness and repair remain outside this checkpoint. Local simulation qualification and the main-preview upgrade pass; the parallel preview is unchanged. [Final receipt](../history/manual-presence-checkpoint-2026-11-06.md).

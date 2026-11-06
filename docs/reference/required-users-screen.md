@@ -1,78 +1,91 @@
-# Required users: stored identity records
+# Required users: identity records and manual presence checks
 
 Tenancies → select a tenancy → **Required users**, below Accountability & registration.
-This embedded section reads stored account identities. It does not query OCI, start an operation,
-check presence/permissions, repair accounts or disclose credentials. No new primary menu is added.
+The section has two independent cards, **Automation user** and **Recovery user**. Identity records
+and presence are separate. Recorded/Not recorded/Retired record describe stored mappings; they do
+not establish cloud existence or credentials. Retired record does not assert OCI account deletion.
 
-Two cards always appear after a successful read: **Automation user** and **Recovery user**.
-They use neutral registration labels. Presence and permissions explicitly remain **Not checked**.
-An absent stored identity is **Not recorded**, never evidence that an OCI account is missing.
-**Retired record** describes OTM's retained management record, not confirmed OCI account deletion.
-Pending setup and inactive-tenancy history have separate contextual notices.
+**Check now** now admits an asynchronous presence-only operation when a qualified current simulated
+connection and both exact bound users exist. It does not check administrative permissions, console
+access, MFA or recovery readiness. **Permissions: Not checked** remains on both cards. The banner
+explicitly identifies local simulated fixture data; Present must never be described as live OCI
+verification. No new primary menu, daily scheduler, repair, email or password action is added.
+Local qualification and the main-preview upgrade pass; the parallel test preview is unchanged. See the [final receipt](../history/manual-presence-checkpoint-2026-11-06.md).
 
-## API and complete field map
+## API and all 22 public display fields
 
-`GET /api/tenancies/{UUID}/required-users` uses the existing current administrator/session boundary.
-Scope derives from the principal, never a URL workspace parameter. A foreign registered child and
-an unknown UUID return the same 404 response. Malformed UUIDs are rejected before the service.
-Each response is noncacheable; one read-only repeatable snapshot covers registry and binding facts.
-No provider, secret service or queue is invoked. Stored-shape/relation errors return a closed
-unavailable response rather than a successful empty inventory.
+`GET /api/tenancies/{UUID}/required-users` uses current administrator/session authorization and a
+single noncacheable read-only repeatable snapshot. Workspace comes from the principal. Foreign and
+unknown UUIDs share a 404; malformed UUIDs fail validation. No provider or queue is invoked by GET.
+Broken stored relations/evidence return unavailable rather than an invented empty inventory.
+
+`POST /api/tenancies/{UUID}/required-users/check` accepts only PresenceCheckRequest.client_request_key,
+under existing unsafe-request/Origin protections. A 202 ActionReceipt records admission/replay; the
+separate native worker acquires results. The [check reference](user-presence-checks.md) maps the
+request, authority, immutable evidence, attempt fencing, SQL columns and failure semantics.
 
 | DTO / field | Source and interpretation |
 | --- | --- |
-| RequiredUsersDirectory.tenancy_id | Exact same-workspace otm_tenancy.id. |
-| tenancy_status | Registry status in that snapshot; pending, active, terminating, terminated, failed or cancelled. It does not certify current OCI lifecycle state. |
-| provider_mode | Registry provider context, currently simulated; not a live probe result. |
-| users | Exactly two ordered records, automation then recovery. Uniform item schema with min/max length 2 and a server purpose-order validator. |
-| RequiredUserRecord.purpose | Closed automation/recovery purpose derived from logical identity keys. |
-| identity_state | recorded for an active canonical user mapping; not_recorded when none exists; retired for retained retired mapping. These are registration states, not cloud health. |
-| identity | Null exactly for not_recorded; otherwise the following closed identity model. |
-| RequiredUserIdentity.user_name | Managed user binding.user_name; escaped display metadata. |
-| user_ocid | User binding.provider_ocid; distinct from SCIM identity. |
-| scim_resource_id | Exact user binding.scim_resource_id. |
+| RequiredUsersDirectory.tenancy_id | Same-workspace otm_tenancy.id. |
+| tenancy_status | Registry pending/active/terminating/terminated/failed/cancelled; not independent OCI lifecycle proof. |
+| provider_mode | Registry context, currently simulated. |
+| check_available | Derived from active idle registered child, current provider availability and all exact bindings/selected connection. False for historical unqualified children; no guessed backfill. |
+| check_unavailable_reason | Null when eligible; otherwise tenancy_inactive, tenancy_busy, provider_unavailable or not_configured, with explanatory UI text. |
+| pending_operation_id | Matching-current-context queued/running check UUID, nullable. Drives progress/polling, not a positive observation. |
+| users | Exactly two ordered RequiredUserRecord values, automation then recovery. |
+| RequiredUserRecord.purpose | automation/recovery from canonical logical keys. |
+| identity_state | recorded for active mapping, not_recorded for none, retired for retained retired mapping. |
+| identity | Null exactly when not_recorded; otherwise the following seven-field model. |
+| presence | Independent four-field UserPresenceView below, defaulting to not_checked. |
+| RequiredUserIdentity.user_name | User binding.user_name; escaped observed display metadata, never an adoption key. |
+| user_ocid | User binding.provider_ocid, separate from SCIM ID. |
+| scim_resource_id | User binding.scim_resource_id. |
 | domain_ocid | Referenced same-child domain binding.provider_ocid. |
-| recorded_at | User binding.created_at, displayed in UTC; not a new provider-read time. |
+| recorded_at | User binding.created_at, displayed UTC; not a later provider-read timestamp. |
 | retired_at | User binding.updated_at only when retired, otherwise null. |
-| source_operation_id | Binding.created_operation_id; UUID-only internal View setup operation link. |
+| source_operation_id | Binding.created_operation_id; internal View setup operation link. |
+| UserPresenceView.state | not_checked, present, missing or unknown; rendered Not checked, Present, Missing or Unable to verify. |
+| checked_at | This subject observation's captured_at; null if no current-context result. Unknown is labeled Last attempt (UTC); confirmed results use Checked (UTC). |
+| stale | Server UTC is outside [captured_at, captured_at+24 hours); out-of-date label supersedes fresh-result styling and preserves last result text. |
+| operation_id | Exact check operation UUID, nullable; View check opens its retained Operations detail. |
 
-The reader selects only the three canonical logical keys and takes their latest binding generation.
-Domain/user kind, ownership mode, exact domain reference, shared capture source and compatible
-record states must agree. The existing [binding schema/ER](managed-object-bindings.md) is unchanged;
-no table, migration, assignment, credential/context head or current-health observation is added.
-Historical unbound records remain unbound on every GET. This does not backfill or adopt accounts.
+The reader selects the latest canonical generation per logical identity key, checking domain/user
+kind, ownership, exact same-child reference, shared capture provenance and compatible record state.
+[Bindings](managed-object-bindings.md) and [connections](user-presence-connections.md) remain their
+own storage. Migration 0025 adds a [14-column check record](user-presence-checks.md#physical-storage-all-14-check-columns),
+not access-assignment, credential or privilege heads. No read backfills historical mappings.
 
-## Screen behavior and field coverage
+## Behavior, progress and error boundaries
 
-- Username and Identity record map to the record/identity fields above. No fake username or OCID is
-  shown for an unrecorded identity. Presence and permissions: Not checked is explicit capability
-  guidance for this view; it is not a positive observation from stored registration.
-- Identity details is a native keyboard-operable disclosure. It contains domain/user OCIDs, SCIM ID,
-  recorded/retired UTC times and the scoped setup-operation link. Internal binding IDs and generation
-  counters are not exposed as ordinary user controls. Long identifiers wrap inside each card.
-- Refresh records performs another GET only. It preserves focus, disables while busy and cannot
-  create a job or repair accounts. The main detail Refresh also invalidates these records.
-- Initial loading, initial read failure and successfully unrecorded identities are distinct. A failed
-  nonauthorization refresh labels retained earlier records explicitly and offers Try again. After a
- 401/403 response, retained identities are hidden immediately while the app expires the session.
-- The query key is under tenancies and includes the child UUID. Existing workflow invalidation
-  refreshes it, and private-cache clearing removes it on logout. Switching children does not display
-  another child's identities. There is no extra polling or new navigation/action badge.
-- Cards share a row on desktop/tablet and stack below 700px. Header actions align vertically; card
-  expansion is independent. Existing Field Console spacing/colors/focus styles remain authoritative.
+- Check now is disabled with an explanation for pending/inactive/busy/unqualified tenancies or an
+  unavailable selected provider. A historical identity alone cannot enable acquisition.
+- A pending receipt shows Checking… and polls records once per second. Previous results remain
+  dated; an accepted operation is not completion. On completion the per-account outcomes and times
+  refresh, with View check linking to the actual operation. Operations success means bounded
+  outcomes were recorded, even when an outcome is Missing or Unable to verify.
+- Refresh records is another GET only and cannot create a check/job. The main detail Refresh also
+  invalidates these records. Failed ordinary refreshes explicitly label retained data; initial
+  loading/failure is distinct from a successful Not recorded result. 401/403 hides retained facts
+  immediately while the app expires the session.
+- A failed/uncertain Check now request retains its UUID while this component is mounted, allowing
+  Retry check request with the same logical request. After navigation/reload, inspect Operations
+  before issuing another request; no reload-durable browser key cache is claimed.
+- The private query key includes the child UUID. Switching children cannot borrow another child's
+  data; logout clears private cache. No navigation attention badge is added for diagnostic reads.
+- Presence and identity remain separate. Independent observations can be Present/Missing/Unable
+  to verify. At 24 hours, Check out of date and last-result text replace a current success claim.
+  A changed binding/connection/policy/child context cannot make old evidence current.
+- Identity details uses native keyboard disclosure with domain/user OCIDs, SCIM ID, UTC record/
+  retirement times and the setup link. Long IDs wrap. Cards share a row on desktop/tablet and
+  stack below 700px; disclosure expansion remains independent. Refresh/check controls stay reachable.
 
-## Qualification and remaining work
+## Qualification boundary
 
-Unit/API tests cover role cardinality/order, registration/retirement coupling, inconsistent stored
-relations, authenticated reads, missing/foreign targets, safe server failures and no mutation route.
-PostgreSQL tests cover actual pending/new/imported/legacy/retired records, exact IDs/provenance,
-foreign-workspace isolation and unchanged audit/operation/binding counts. Native Playwright checks
-create/import transitions, read refresh, keyboard disclosure, source links and responsive containment
-at 1280/768/390/320. Frontend units cover loading/error/retained refresh, expiry and cache isolation.
+The complete unit/coverage and all-postgres/native-browser lanes pass, with independent security/UI review. Main-preview preservation is verified; the parallel preview remains unchanged. Unit/API, disposable PostgreSQL and native browser scenarios distinguish exact presence from scope/permission failure, exercise replay/attempt/context/ordering/freshness guards and retain the auth/error/cache/responsive cases. The local adapter reconstructs fixtures
+from authenticated onboarding producer evidence rather than current expected IDs. This is not
+real account discovery and cannot qualify SDK/network failures or actual authorization.
 
-The proposed full Access view still requires scoped assignments, authority/credential/context heads,
-independent presence/probe publication and qualified repair/readiness. This section is the implemented
-identity-record subset, not that full feature. Real cases remain Pending in the
-[manual manifest](../how-to/real-oci-test-manifest.md). Use the
-[local review runbook](../how-to/required-users-runbook.md) only after this revision is installed in
-the saved preview. Before coordinated upgrade, its older screens/data remain unchanged.
+See the [manual local runbook](../how-to/required-users-runbook.md) and
+[pending real OCI manifest](../how-to/real-oci-test-manifest.md). Privilege, credential custody,
+readiness and repair remain separate future work; presence-only reads do not require fabricated
+assignment/profile tables.

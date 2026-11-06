@@ -38,9 +38,7 @@ apply to both contract and simulator files. See the
 and [reference index](README.md).
 
 
-The next [required-user presence capability](required-user-presence.md) follows the existing
-inspection pattern: neutral contracts, a result-validation wrapper and a separate explicit
-simulator. It is not yet selected by the application or native worker.
+The [required-user presence capability](required-user-presence.md) follows the existing inspection pattern: neutral contracts, a result-validation wrapper and a separate explicit simulator. The later [manual check worker](user-presence-checks.md) selects that simulator explicitly from authenticated producer facts, with no live adapter or fallback.
 
 
 `LifecycleFacade.capture_onboarding_users` now returns the shared `OnboardingUsers` readback contract;
@@ -53,3 +51,15 @@ Fresh onboarding capture now also creates [canonical identity mappings](managed-
 through the neutral storage boundary. Simulated provider identities remain synthetic; storage does
 not import a simulator, infer names or generate OCI IDs. Presence worker/UI composition still waits
 for real assignment and authority heads.
+
+## Manual presence checks — 6 November 2026 source checkpoint
+
+The [manual check implementation](user-presence-checks.md) now connects the selected simulated
+connection and exact bound automation/recovery identities to explicit authenticated Check now,
+existing native operations/worker/audit and independent dated presence results. This supersedes
+no-check/no-result/no-UI statements from the preceding foundation only for this presence-only path.
+The [screen map](required-users-screen.md) has 22 effective display fields; Permissions remains
+Not checked. Legacy unbound/unconfigured children cannot check. Simulation reconstructs authenticated
+producer fixtures and does not verify live OCI. Assignments/profiles are deferred until separately
+needed for privileges/repair; no credential IDs are fabricated. Daily scheduling, emails, credential
+custody, readiness and repair remain outside this checkpoint. Local simulation qualification and the main-preview upgrade pass; the parallel preview is unchanged. [Final receipt](../history/manual-presence-checkpoint-2026-11-06.md).

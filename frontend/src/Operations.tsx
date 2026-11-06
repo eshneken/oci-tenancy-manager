@@ -515,6 +515,7 @@ function OperationDetail({
     onboarding_outcome: "Onboarding check",
     configuration_outcome: "Configuration verification",
     cost_collection_outcome: "Cost collection result",
+    required_user_check_outcome: "User presence check result",
     configuration_check_outcome: "Configuration check result",
     configuration_retry: "Configuration retry",
     operation_responsibility_changed: "Operation responsibility changed",
@@ -580,7 +581,7 @@ function OperationDetail({
             )}
             {operation.state === "succeeded" && (
               <p className="notice">
-                {operation.kind === "cost_collection" ? "Cost collection completed in local simulation. Review each tenancy for partial or unqualified source data; no OCI resources were changed." : operation.kind === "configuration_check" ? "Read-only configuration check completed. Review its results for differences or categories that could not be verified; completion does not mean the configuration matches." : operation.kind === "configuration_update" ? "Baseline update verified in local simulation; no OCI resources were changed." : operation.kind === "organization_action"
+                {operation.kind === "required_user_check" ? "Simulated account-presence check completed. Review the tenancy for individual results; permissions were not checked." : operation.kind === "cost_collection" ? "Cost collection completed in local simulation. Review each tenancy for partial or unqualified source data; no OCI resources were changed." : operation.kind === "configuration_check" ? "Read-only configuration check completed. Review its results for differences or categories that could not be verified; completion does not mean the configuration matches." : operation.kind === "configuration_update" ? "Baseline update verified in local simulation; no OCI resources were changed." : operation.kind === "organization_action"
                   ? "Local lifecycle simulation completed. Registry changes are verified; no OCI resources were changed."
                   : "Inspection completed successfully. This tenancy has not been adopted by this inspection."}
                 {operation.kind !== "configuration_check" && operation.result_tenancy_id && (
@@ -661,7 +662,7 @@ function OperationDetail({
                     {detail.steps.map((step) => (
                       <li key={step.step_key}>
                         <h3>
-                          {step.step_key.startsWith("cost:") ? "Read current month costs" : step.step_key.startsWith("configuration_check:") ? "Check assigned managed configuration" : step.step_key === "inspect_target"
+                          {step.step_key.startsWith("required_users:") ? "Read required-user presence" : step.step_key.startsWith("cost:") ? "Read current month costs" : step.step_key.startsWith("configuration_check:") ? "Check assigned managed configuration" : step.step_key === "inspect_target"
                             ? "Inspect target"
                             : step.step_key.startsWith("remove_member_groups:") ? "Remove shared user group memberships" : step.step_key.startsWith("delete_member_user:") ? "Delete shared tenancy user" : step.step_key === "apply_lifecycle"
                               ? "Apply simulated lifecycle"
@@ -670,14 +671,14 @@ function OperationDetail({
                         <p>
                           <span className={"badge " + step.state}>
                             {step.state === "verified"
-                              ? ["configuration_check", "cost_collection"].includes(operation.kind) ? "Completed" : "Verified"
+                              ? ["configuration_check", "cost_collection", "required_user_check"].includes(operation.kind) ? "Completed" : "Verified"
                               : step.state === "needs_attention"
                                 ? "Simulation issue"
                                 : "Running"}
                           </span>{" "}
                           <span>Attempt {step.attempt_number}</span>
                         </p>
-                        <p>{["configuration_check", "cost_collection"].includes(operation.kind) ? "Completed" : "Verified"}: {stamp(step.verified_at)}</p>
+                        <p>{["configuration_check", "cost_collection", "required_user_check"].includes(operation.kind) ? "Completed" : "Verified"}: {stamp(step.verified_at)}</p>
                         {step.safe_code && (
                           <p>
                             Outcome code: <code>{step.safe_code}</code>

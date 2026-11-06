@@ -2006,3 +2006,26 @@ checkpoint, not a check job/API, live signer, privilege profile or new UI action
 must qualify current lifecycle, bindings, connection revision, selected provider and admin authority
 before/after reads. Earlier text requiring assignment IDs for the first presence check is superseded;
 future permission/repair requirements are not waived.
+
+## Manual required-user presence checks — 6 November 2026 source checkpoint
+
+The [implemented check reference](../reference/user-presence-checks.md) now connects exact identities
+and one selected simulated automation connection to authenticated manual Check now. Migration 0025
+adds the 14-column otm_user_presence_check table (25 actual application tables), immutable context,
+database admission sequence, attempt fences and sealed per-subject results. Existing operations,
+steps, audit and native queue are reused; the operation/task kind is required_user_check and native
+task is otm.required_user_check. The [implemented ER](../architecture/diagrams/user-presence-checks-implemented.mmd)
+and [22-field screen dictionary](../reference/required-users-screen.md) cover all current fields.
+
+Authorization, exact bindings/connection/child/provider context are rechecked before and after
+provider work outside DB transactions. Latest admission sequence, not callback order, selects the
+terminal projection. Each account has its own captured time and 24-hour freshness; changed context
+cannot make old evidence current. The 30-second late-return bound does not cancel I/O or qualify an
+SDK timeout. Present/Missing/Unable to verify are existence-only simulator results; Permissions stays
+Not checked. Legacy unqualified children remain disabled. No live OCI adapter, daily scheduler,
+email, privilege repair or password action is added. Presence-only requires no fabricated assignment/
+profile/credential heads. Daily machine admission/authorization stays a staging/Kubernetes task.
+
+Local test/review qualification and the main-preview update pass; all 28 preexisting public tables are preserved and the parallel preview is unchanged. [Final receipt](../history/manual-presence-checkpoint-2026-11-06.md). The [local runbook](../how-to/required-users-runbook.md)
+describes the intended fresh create/import → Check now → View check review; the
+[real-provider manifest](../how-to/real-oci-test-manifest.md) remains Pending for actual OCI behavior.

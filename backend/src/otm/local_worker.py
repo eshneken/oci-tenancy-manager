@@ -150,6 +150,22 @@ def run_worker(*, once=False):
             ),
             queue,
         )
+        from otm.operations.runner import register_presence_task
+        from otm.providers.presence_simulator import simulated_presence_inspection
+        from otm.tenancies.presence_worker import UserPresenceWorker
+
+        register_presence_task(
+            native,
+            UserPresenceWorker(
+                engine,
+                policy.workspace_id,
+                clock,
+                organization_policy,
+                organization_policy().policy,
+                simulated_presence_inspection,
+            ),
+            queue,
+        )
         from otm.financial.worker import CostCollectionWorker
         from otm.providers.budget_simulator import SimulatedBudgetFacade
         from otm.storage.enqueue import COST_TASK, InspectionEnqueuer

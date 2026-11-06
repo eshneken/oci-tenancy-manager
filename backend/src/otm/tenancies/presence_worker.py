@@ -1,0 +1,257 @@
+"""Fenced user-presence reads release database locks before any provider work."""
+
+import json
+from datetime import timedelta
+from uuid import uuid4
+
+from sqlalchemy import select, update
+
+from otm.operations.contracts import canonical_hash
+from otm.providers.required_user import paired_observation
+from otm.providers.required_user_contracts import (
+    InspectRequiredUser,
+    RequiredUserReadContext,
+)
+from otm.storage.tables import administrator, audit_event, operation, org_workspace, tenancy
+from otm.storage.tables import user_presence_check as checks
+from otm.storage.tables import user_presence_connection as connections
+from otm.tenancies.onboarding_contracts import OnboardingEvidence
+from otm.tenancies.presence_context import capture_snapshot
+from otm.tenancies.presence_records import decode_intent, operation_rows, seal, unknown
+
+# Post-return freshness budget; this does not cancel I/O or configure an OCI SDK timeout.
+READ_WINDOW = timedelta(seconds=30)
+
+
+# The explicit adapter factory consumes authenticated producer facts; no live/fake fallback exists.
+class UserPresenceWorker:
+    # Deployment scope, policy, UTC and selected adapter are all host-owned dependencies.
+    def __init__(self, engine, workspace, clock, policy_loader, policy, inspection_factory):
+        self.engine, self.workspace, self.clock = engine, workspace, clock
+        self.policy_loader, self.policy, self.inspection_factory = (
+            policy_loader,
+            policy,
+            inspection_factory,
+        )
+
+    # A new attempt fences interrupted workers; only its callback may publish a terminal result.
+    def run(self, identifier):
+        ticket = self.begin(identifier)
+        if ticket is None:
+            return
+        frozen, check, commands, source = ticket
+        results = []
+        inspection = None
+        if source is not None:
+            try:
+                inspection = self.inspection_factory(frozen.intent.snapshot, source, self.clock)
+            except Exception:
+                inspection = None
+        for command in commands:
+            try:
+                started = self.clock()
+                result = (
+                    paired_observation(command, inspection.inspect(command), started, self.clock())
+                    if inspection
+                    else unknown(command, self.clock())
+                )
+            except Exception:
+                result = unknown(command, self.clock())
+            results.append(result)
+        self.finish(identifier, check["attempt_id"], tuple(commands), tuple(results))
+
+    # Serialize the same anchor/workspace/operation/child order as existing lifecycle mutations.
+    def locked(self, connection, identifier):
+        if (
+            connection.scalar(
+                select(administrator.c.id)
+                .where(
+                    administrator.c.workspace_id == self.workspace,
+                    administrator.c.identity_kind == "local_recovery",
+                    administrator.c.status == "active",
+                )
+                .with_for_update()
+            )
+            is None
+        ):
+            return None
+        connection.execute(
+            select(org_workspace.c.id).where(org_workspace.c.id == self.workspace).with_for_update()
+        ).scalar_one()
+        connection.execute(
+            select(operation.c.id)
+            .where(operation.c.workspace_id == self.workspace, operation.c.id == identifier)
+            .with_for_update()
+        ).scalar_one_or_none()
+        rows = operation_rows(connection, self.workspace, identifier)
+        if not rows or rows[0]["state"] not in {"queued", "running"}:
+            return None
+        row = rows[0]
+        frozen = decode_intent(row)
+        child = (
+            connection.execute(
+                select(tenancy)
+                .where(
+                    tenancy.c.workspace_id == self.workspace,
+                    tenancy.c.id == frozen.intent.snapshot.tenancy_id,
+                )
+                .with_for_update()
+            )
+            .mappings()
+            .one()
+        )
+        check = (
+            connection.execute(
+                select(checks)
+                .where(checks.c.workspace_id == self.workspace, checks.c.operation_id == identifier)
+                .with_for_update()
+            )
+            .mappings()
+            .one()
+        )
+        return row, frozen, child, check
+
+    # Current admin grant and all selected context facts must agree before and after I/O.
+    def current(self, connection, frozen, child):
+        intent = frozen.intent
+        grant = (
+            connection.execute(
+                select(administrator).where(
+                    administrator.c.workspace_id == self.workspace,
+                    administrator.c.id == intent.administrator_id,
+                )
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if (
+            grant is None
+            or grant["status"] != "active"
+            or grant["authorization_revision"] != intent.authorization_revision
+            or (grant["issuer"], grant["subject"]) != (frozen.actor.issuer, frozen.actor.subject)
+        ):
+            return False
+        policy = self.policy_loader()
+        if policy.execution_paused or policy.policy != self.policy:
+            return False
+        return capture_snapshot(connection, self.workspace, child, policy.policy) == intent.snapshot
+
+    # Producer evidence is independently authenticated; current expected user IDs never seed facts.
+    def source(self, connection, snapshot):
+        binding = (
+            connection.execute(
+                select(connections).where(
+                    connections.c.workspace_id == self.workspace,
+                    connections.c.tenancy_id == snapshot.tenancy_id,
+                    connections.c.id == snapshot.connection_id,
+                )
+            )
+            .mappings()
+            .one()
+        )
+        event = (
+            connection.execute(
+                select(audit_event).where(
+                    audit_event.c.workspace_id == self.workspace,
+                    audit_event.c.operation_id == binding["created_operation_id"],
+                    audit_event.c.id == binding["source_evidence_event_id"],
+                    audit_event.c.kind == "onboarding_outcome",
+                )
+            )
+            .mappings()
+            .one()
+        )
+        evidence = OnboardingEvidence.model_validate_json(json.dumps(event["data"]))
+        if (
+            canonical_hash(event["data"]) != event["data_hash"]
+            or evidence.step != "capture_required_users"
+            or evidence.outcome != "verified"
+            or evidence.required_users is None
+        ):
+            raise ValueError("PRESENCE_SOURCE_INVALID")
+        return evidence.required_users
+
+    # Persist attempt identity before dispatch, then release the transaction and all row locks.
+    def begin(self, identifier):
+        with self.engine.begin() as connection:
+            locked = self.locked(connection, identifier)
+            if locked is None:
+                return None
+            row, frozen, child, stored = locked
+            if stored["state"] not in {"queued", "reading"}:
+                return None
+            check = dict(stored)
+            check.update(
+                state="reading",
+                attempt_number=stored["attempt_number"] + 1,
+                attempt_id=uuid4(),
+                started_at=self.clock(),
+            )
+            connection.execute(
+                update(checks)
+                .where(checks.c.workspace_id == self.workspace, checks.c.operation_id == identifier)
+                .values(
+                    **{k: check[k] for k in ("state", "attempt_number", "attempt_id", "started_at")}
+                )
+            )
+            connection.execute(
+                update(operation)
+                .where(operation.c.workspace_id == self.workspace, operation.c.id == identifier)
+                .values(
+                    state="running",
+                    stage="Reading required-user presence",
+                    updated_at=check["started_at"],
+                    revision=operation.c.revision + 1,
+                )
+            )
+            commands = tuple(
+                InspectRequiredUser(
+                    target=target,
+                    context=RequiredUserReadContext(
+                        workspace_id=self.workspace,
+                        operation_id=identifier,
+                        step_key="required_users:" + str(child["id"]),
+                        attempt_id=check["attempt_id"],
+                        execution_generation=check["attempt_number"],
+                        intent_revision=row["current_intent_revision"],
+                        connection_id=frozen.intent.snapshot.connection_id,
+                        connection_revision=frozen.intent.snapshot.connection_revision,
+                    ),
+                )
+                for target in frozen.intent.snapshot.subjects
+            )
+            source = None
+            try:
+                if self.current(connection, frozen, child):
+                    source = self.source(connection, frozen.intent.snapshot)
+            except (ValueError, RuntimeError):
+                source = None
+            return frozen, check, commands, source
+
+    # Late/replayed callbacks never replace a newer attempt or a terminal result.
+    def finish(self, identifier, attempt, commands, results):
+        with self.engine.begin() as connection:
+            locked = self.locked(connection, identifier)
+            if locked is None:
+                return
+            row, frozen, child, check = locked
+            if check["state"] != "reading" or check["attempt_id"] != attempt:
+                return
+            at = self.clock()
+            clock_invalid = at < check["started_at"]
+            at = max(at, check["started_at"])
+            try:
+                current = self.current(connection, frozen, child)
+            except (ValueError, RuntimeError):
+                current = False
+            if not current:
+                results = tuple(unknown(c, at) for c in commands)
+                state = "superseded"
+            elif clock_invalid or at - check["started_at"] > READ_WINDOW:
+                # A read that returned too late cannot establish current presence or absence.
+                at = max(at, check["started_at"])
+                results = tuple(unknown(c, at, "READ_TIMEOUT") for c in commands)
+                state = "unavailable"
+            else:
+                state = "complete" if all(r.state != "unknown" for r in results) else "unavailable"
+            seal(connection, row, check, results, state, at)

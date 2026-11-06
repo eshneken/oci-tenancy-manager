@@ -281,8 +281,10 @@ unsupported historical failures and inspection-only simulation issues. See
 
 Local simulation qualified and installed in both saved instances. Existing operation detail reads the accepted onboarding version: new
 version 2 includes configure_baseline and verify_configured_access before retire_temporary;
-a 6 November source follow-up adds version 3 with capture_required_users before retirement
-(qualification in progress; not installed in saved instances). Version 1
+a 6 November source follow-up added version 3 with capture_required_users before retirement. At that
+earlier source checkpoint qualification was in progress and saved instances were not upgraded; the
+later [manual-presence receipt](../history/manual-presence-checkpoint-2026-11-06.md) records the
+qualified main-preview upgrade and unchanged parallel preview. Version 1
 keeps the old graph. Shared-member outcomes may include exact MemberRemoval receipts, with durable
 remove_member_groups:{association_uuid} and delete_member_user:{association_uuid} steps. Both share
 the closed immutable lifecycle outcome, and commit atomically with membership retirement. These
@@ -335,3 +337,13 @@ message body or credentials. Sent is SMTP acceptance; unknown has no blind resen
 operation events also read immutable email_delivery evidence.
 [Every summary and outbox field](lifecycle-email.md). No generic Send/Resend/recipient editing or
 notification-driven ownership change is added.
+
+## Manual required-user check operations — 6 November 2026
+
+Local qualification and the main-preview upgrade pass; the parallel preview is unchanged. The required_user_check kind, step
+required_users:{tenancy UUID}, and immutable required_user_check_outcome use existing operation/
+step/audit records. View check from either account opens its exact operation. Succeeded means both
+bounded outcomes were recorded, including Missing or Unable to verify; it does not establish access
+health. No retry/repair or actionable navigation count is added for these diagnostics. Return to the
+child's Required users context for a new explicit Check now. See the
+[full source/storage map](user-presence-checks.md).

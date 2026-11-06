@@ -1794,3 +1794,5 @@ dialog p {
 .required-user-details summary { min-height:44px; padding:12px 0; cursor:pointer; font-weight:600; }
 .required-user-details .required-user-facts { padding:8px 0 0; }
 @media(max-width:700px) { .required-users-grid { grid-template-columns:minmax(0,1fr); } }
+
+.required-users-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.required-users .presence-missing{background:#fee2e2;color:#991b1b}@media(max-width:420px){.required-users-actions{width:100%}.required-users-actions>.button{flex:1 1 100%}}

@@ -52,7 +52,7 @@ linked local runbooks are preparation and comparison material, not live qualific
 
 | Planned live scenario | Steps / expected outcome | Status |
 | --- | --- | --- |
-| Stored identities versus live presence | Compare the Required users cards and expanded identifiers with qualified fresh OCI onboarding. Refresh records must only reload stored facts. Removing or changing a live account must not turn registration into a health assertion: presence and permissions remain Not checked until the separate access-check flow is implemented and qualified. Retired registration does not assert OCI account deletion. | Pending |
+| Stored identities versus live presence | Compare the Required users cards and expanded identifiers with qualified fresh OCI onboarding. Refresh records must only reload stored facts. Registration alone must never imply current presence or permissions. Current manual results use simulation fixtures; a future qualified live exact-subject check may update Presence, while Permissions remains Not checked until its separate probe is implemented and qualified. Retired registration does not assert OCI account deletion. | Pending |
 
 ## Presence-only automation connection
 
@@ -69,3 +69,20 @@ checks and any new pending live cases. Keep earlier pending cases until they are
 
 This is an ongoing qualification register, not evidence that every future design feature is already
 implemented. Expand it as provider, credentials, scheduling and deployment slices are delivered.
+
+## Manual presence acquisition qualification
+
+The [manual simulated pipeline](../reference/user-presence-checks.md) is a source checkpoint, not
+live qualification. Keep every case below Pending until a real adapter and approved disposable
+children exist. The local [review runbook](required-users-runbook.md) exercises only producer fixtures.
+
+| Case | Live prerequisites / expected outcome | Status |
+| --- | --- | --- |
+| Exact independent accounts | Authenticate the selected child automation connection and query exact qualified domain/SCIM subjects. Confirm Present/Missing independently, with actual observed IDs and capture times; same-name identities cannot substitute. | Pending |
+| Authentication versus absence | Test missing/revoked signer, denied domain access, wrong-domain 404, partial inventory and delayed visibility. They must be Unable to verify, not false Missing. Never fall back to recovery/parent credentials. | Pending |
+| Bounded I/O and context changes | Qualify SDK/network timeouts, interrupted reads and adapter cancellation/reconciliation separately from the local 30-second late-return fence. Rotate/revoke connection or alter lifecycle/bindings during reads; stale context cannot publish current success. | Pending |
+| Ordering, freshness and retained evidence | Overlap acquisitions and reverse completion order; newest admitted context governs. Verify independent 24-hour freshness, dated last results, safe unavailable outcomes and immutable audit/operation links without certifying privileges. | Pending |
+
+Daily scheduled checks remain deferred to staging/Kubernetes. Their noninteractive machine
+admission/authorization must be qualified separately; an interactive admin session is not an
+implemented scheduler identity. No scheduled deployment or lifecycle email is claimed by this row.

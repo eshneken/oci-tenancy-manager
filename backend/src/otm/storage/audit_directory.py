@@ -34,6 +34,7 @@ from otm.storage.read_snapshot import read_snapshot
 from otm.storage.tables import administrator, audit_event, tenancy
 from otm.tenancies.contracts import OrganizationActionOutcome
 from otm.tenancies.onboarding_contracts import OnboardingEvidence
+from otm.tenancies.presence_contracts import PresenceCheckEvidence
 
 AUTHENTICATION = ("local_sign_in_succeeded", "local_sign_in_failed", "session_logged_out")
 ADMINISTRATION = (
@@ -51,6 +52,7 @@ OPERATIONS = (
     "operation_responsibility_changed",
     "configuration_check_outcome",
     "cost_collection_outcome",
+    "required_user_check_outcome",
     "cost_refresh_requested",
     "operation_intent",
     "inspection_dispatch",
@@ -73,6 +75,7 @@ ORGANIZATION = (
 # Failed proofs expose no verified actor or attempted username; operator labels stay generic.
 def actor_expression():
     return case(
+        (audit_event.c.kind == "required_user_check_outcome", "User presence worker"),
         (audit_event.c.kind == "cost_collection_outcome", "Cost collection worker"),
         (audit_event.c.kind == "local_sign_in_failed", None),
         (
@@ -157,6 +160,9 @@ def entry(row):
     if kind == "cost_refresh_requested":
         receipt = CostRefreshReceipt.model_validate_json(json.dumps(row["data"]["receipt"]))
         summary = f"Cost refresh: {receipt.accepted_count} queued, {receipt.joined_count} joined"
+    if kind == "required_user_check_outcome":
+        proof = PresenceCheckEvidence.model_validate_json(json.dumps(row["data"]))
+        summary = "Read-only user presence check: " + proof.state
     if kind == "configuration_check_outcome":
         check = ConfigurationCheckEvidence.model_validate_json(json.dumps(row["data"]))
         summary = "Read-only configuration check: " + check.state
@@ -185,6 +191,13 @@ def entry(row):
         }:
             raise ValueError("INVALID_AUDIT_ACTOR")
         actor_name = "Email delivery worker"
+    elif kind == "required_user_check_outcome":
+        if row["actor_subject"] != "otm-worker:user-presence" or row["actor_snapshot"] != {
+            "kind": "worker",
+            "subject": "user-presence",
+        }:
+            raise ValueError("INVALID_AUDIT_ACTOR")
+        actor_name = "User presence worker"
     elif kind == "cost_collection_outcome":
         if row["actor_subject"] != "otm-worker:costs" or row["actor_snapshot"] != {
             "kind": "worker",
@@ -249,7 +262,9 @@ def entry(row):
     )
     outcome = (
         (
-            ConfigurationOutcome
+            PresenceCheckEvidence
+            if kind == "required_user_check_outcome"
+            else ConfigurationOutcome
             if kind == "configuration_outcome"
             else ConfigurationRetryEvidence
             if kind == "configuration_retry"
@@ -262,6 +277,7 @@ def entry(row):
         if kind
         in {
             "inspection_outcome",
+            "required_user_check_outcome",
             "configuration_outcome",
             "configuration_retry",
             "organization_action_outcome",
@@ -339,7 +355,9 @@ def resource_context(connection, workspace, rows):
             continue
         resources = []
         wanted = set()
-        if intent.kind in {"configuration_update", "configuration_check", "cost_collection"}:
+        if intent.kind == "required_user_check":
+            wanted = {intent.snapshot.tenancy_id}
+        elif intent.kind in {"configuration_update", "configuration_check", "cost_collection"}:
             wanted = {
                 target.configuration.tenancy_id
                 if intent.kind == "cost_collection"

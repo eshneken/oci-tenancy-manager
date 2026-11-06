@@ -489,3 +489,15 @@ The later [Required users identity-record view](required-users-screen.md) now ex
 facts in tenancy detail. Earlier no-UI statements describe the prior checkpoint; live presence/
 permission checks, authority heads, readiness and repair are still not composed by this read-only
 section. See its field map and local test runbook for the implemented boundary.
+
+## Manual presence checks — 6 November 2026 source checkpoint
+
+The [manual check implementation](user-presence-checks.md) now connects the selected simulated
+connection and exact bound automation/recovery identities to explicit authenticated Check now,
+existing native operations/worker/audit and independent dated presence results. This supersedes
+no-check/no-result/no-UI statements from the preceding foundation only for this presence-only path.
+The [screen map](required-users-screen.md) has 22 effective display fields; Permissions remains
+Not checked. Legacy unbound/unconfigured children cannot check. Simulation reconstructs authenticated
+producer fixtures and does not verify live OCI. Assignments/profiles are deferred until separately
+needed for privileges/repair; no credential IDs are fabricated. Daily scheduling, emails, credential
+custody, readiness and repair remain outside this checkpoint. Local simulation qualification and the main-preview upgrade pass; the parallel preview is unchanged. [Final receipt](../history/manual-presence-checkpoint-2026-11-06.md).

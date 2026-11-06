@@ -405,11 +405,31 @@ async function organizationFlows(page: Page) {
       );
       const users = page.getByRole("region", { name: "Required users", exact: true });
       await expect(users.getByText("Recorded", { exact: true })).toHaveCount(2);
-      await expect(users.getByText("Not checked", { exact: true })).toHaveCount(2);
+      await expect(users.getByText("Not checked", { exact: true })).toHaveCount(4);
       await expect(users.getByText("otm-automation", { exact: true })).toBeVisible();
       const refresh = users.getByRole("button", { name: "Refresh records", exact: true });
       await refresh.click();
       await expect(refresh).toBeEnabled();
+      // Real HTTPS admission and the native worker publish independent fixture observations.
+      const childUrl = page.url();
+      const check = users.getByRole("button", { name: "Check now", exact: true });
+      await expect(check).toBeEnabled();
+      const accepted = page.waitForResponse(response =>
+        response.request().method() === "POST" && response.url().endsWith("/required-users/check"));
+      await check.click();
+      const response = await accepted;
+      expect(response.status()).toBe(202);
+      const checkId = (await response.json()).operation_id;
+      await expect(users.getByText("Present", { exact: true })).toHaveCount(2, { timeout: 20_000 });
+      await expect(users.getByText("Not checked", { exact: true })).toHaveCount(2);
+      await expect(users.getByText("Checked (UTC)", { exact: true })).toHaveCount(2);
+      await expect(users.getByRole("link", { name: "View check", exact: true })).toHaveCount(2);
+      await users.getByRole("link", { name: "View check", exact: true }).first().click();
+      await expect(page).toHaveURL(new RegExp("/operations/" + checkId + "$"));
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText("Check required users");
+      await expect(page.getByText("Completed", { exact: true }).first()).toBeVisible();
+      await page.goto(childUrl);
+      await expect(users.getByText("Present", { exact: true })).toHaveCount(2);
       const disclosure = users.locator("details").first().locator("summary");
       await disclosure.focus(); await disclosure.press("Enter");
       await expect(users.locator("details").first()).toHaveAttribute("open", "");

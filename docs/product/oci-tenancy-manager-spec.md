@@ -1469,3 +1469,14 @@ The [implemented cost guide](../reference/cost-visibility.md) delivers the accep
 inventory/cost view through a read-only facade and saved observations. On-demand local refresh is
 implemented in simulation; daily scheduling and OCI response qualification await staging. Historical
 budget reporting and over-budget email/resource actions remain outside V1.
+
+## Manual required-user presence subset — 6 November 2026
+
+The [manual simulated presence check](../reference/user-presence-checks.md) now has a source implementation:
+Check now is an authenticated asynchronous operation against exact registered automation/recovery
+subjects and a selected connection revision. Results/times are independent; current confirmed
+existence is distinct from permissions, credentials and recovery readiness. Permissions remains Not
+checked. Historical unbound records cannot check, errors never imply Missing, and stale/context-
+changed results cannot imply current success. No daily scheduling, email, repair or live OCI
+qualification is included. Local test/review qualification and the main-preview upgrade pass with existing data preserved; the parallel preview is unchanged. [Final receipt](../history/manual-presence-checkpoint-2026-11-06.md). See the
+[manual local review](../how-to/required-users-runbook.md) and pending live manifest.

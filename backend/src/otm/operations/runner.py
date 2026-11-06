@@ -86,3 +86,19 @@ def register_cost_task(app, worker, queue):
         worker.run(UUID(operation_id))
 
     return collect_costs
+
+
+# Manual account-presence checks carry only the accepted operation reference and no credentials.
+def register_presence_task(app, worker, queue):
+    from otm.storage.enqueue import PRESENCE_TASK
+
+    # Replayed reads are fenced by the persisted attempt; no automatic provider fallback exists.
+    @app.task(name=PRESENCE_TASK, queue=queue, retry=False)
+    def required_user_check(operation_id):
+        try:
+            identifier = UUID(operation_id)
+        except (ValueError, TypeError, AttributeError):
+            raise ValueError("INVALID_OPERATION_REFERENCE") from None
+        worker.run(identifier)
+
+    return required_user_check

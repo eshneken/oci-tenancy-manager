@@ -121,6 +121,20 @@ def create_local_application():
             else None,
         )
         workflow.configuration_checks = checks
+        from otm.storage.enqueue import PRESENCE_TASK
+        from otm.tenancies.presence import PresenceChecks
+
+        workflow.presence_checks = PresenceChecks(
+            organization_store,
+            policy=workflow.policy,
+            policy_loader=workflow.policy_loader,
+            enqueuer=InspectionEnqueuer(
+                queue=workspace_queue(settings.local_auth.workspace_id), task=PRESENCE_TASK
+            )
+            if workflow.policy
+            else None,
+        )
+
         from otm.financial.service import CostCollections
         from otm.storage.enqueue import COST_TASK
 

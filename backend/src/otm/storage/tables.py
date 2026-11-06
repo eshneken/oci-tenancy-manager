@@ -55,7 +55,7 @@ operation = Table(
     ),
     CheckConstraint(
         "kind IN ('inspect_import','organization_action"
-        "','configuration_update','configuration_check','cost_collection')",
+        "','configuration_update','configuration_check','cost_collection','required_user_check')",
         name="ck_operation_kind",
     ),
     CheckConstraint(
@@ -108,7 +108,7 @@ audit_event = Table(
         "((kind='operation_intent' AND intent_revision IS NOT NULL AND intent_revision>=1) "
         "OR (kind IN ('inspection_dispatch','inspection_outcome','organization_action_out"
         "come','onboarding_action','onboarding_outcome','configuration_outcome',"
-        "'configuration_retry','configuration_check_outcome','cost_collection_outcome','operation_responsibility_changed',"
+        "'configuration_retry','configuration_check_outcome','cost_collection_outcome','required_user_check_outcome','operation_responsibility_changed',"
         "'email_delivery') "
         "AND intent_revision IS NULL))) "
         "OR (kind IN ('administrator_revoked','administrator_bootstrapped',"
@@ -185,7 +185,8 @@ operation_step = Table(
         "OR (command_kind='configuration_update' AND step_key ~ '^configuration:[0-9a-f-]{36}$') "
         "OR (command_kind='configuration_check' AND ste"
         "p_key ~ '^configuration_check:[0-9a-f-]{36}$') "
-        "OR (command_kind='cost_collection' AND step_key ~ '^cost:[0-9a-f-]{36}$')",
+        "OR (command_kind='cost_collection' AND step_key ~ '^cost:[0-9a-f-]{36}$') "
+        "OR (command_kind='required_user_check' AND step_key ~ '^required_users:[0-9a-f-]{36}$')",
         name="ck_inspection_step_kind",
     ),
     CheckConstraint(
@@ -197,7 +198,7 @@ operation_step = Table(
     ),
     CheckConstraint(
         "(command_kind IN ('inspect_tenancy','configur"
-        "ation_check','cost_collection') AND effect_knowledge='none') OR "
+        "ation_check','cost_collection','required_user_check') AND effect_knowledge='none') OR "
         "(command_kind IN ('organization_action','onboarding','configuration_update') "
         "AND effect_knowledge IN ('none','known'))",
         name="ck_inspection_read_only",
@@ -1456,4 +1457,76 @@ Index(
     user_presence_connection.c.tenancy_id,
     unique=True,
     postgresql_where=user_presence_connection.c.state == "active",
+)
+
+
+# One admitted check owns monotonic ordering, fenced read attempts and an immutable terminal result.
+user_presence_check = Table(
+    "otm_user_presence_check",
+    metadata,
+    Column("operation_id", Uuid(as_uuid=True), primary_key=True),
+    Column("workspace_id", String(256), nullable=False),
+    Column("tenancy_id", Uuid(as_uuid=True), nullable=False),
+    Column("acquisition_sequence", BigInteger, Identity(always=True), nullable=False, unique=True),
+    Column("context", JSONB, nullable=False),
+    Column("context_hash", String(64), nullable=False),
+    Column("state", String(16), nullable=False),
+    Column("attempt_id", Uuid(as_uuid=True)),
+    Column("attempt_number", Integer, nullable=False),
+    Column("started_at", DateTime(timezone=True)),
+    Column("checked_at", DateTime(timezone=True)),
+    Column("results", JSONB),
+    Column("evidence_event_id", Uuid(as_uuid=True)),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    ForeignKeyConstraint(
+        ["workspace_id", "operation_id"],
+        ["public.otm_operation.workspace_id", "public.otm_operation.id"],
+        name="fk_presence_check_operation",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "tenancy_id"],
+        ["public.otm_tenancy.workspace_id", "public.otm_tenancy.id"],
+        name="fk_presence_check_tenancy",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "operation_id", "evidence_event_id"],
+        [
+            "public.audit_event.workspace_id",
+            "public.audit_event.operation_id",
+            "public.audit_event.id",
+        ],
+        name="fk_presence_check_evidence",
+    ),
+    CheckConstraint(
+        "context_hash ~ '^[0-9a-f]{64}$' AND jsonb_typeof(context)='object' AND "
+        "acquisition_sequence>0",
+        name="ck_presence_check_context",
+    ),
+    CheckConstraint(
+        "(state='queued' AND attempt_number=0 AND attempt_id IS NULL AND started_at IS NULL) OR "
+        "(state IN ('reading','complete','unavailable','superseded') AND attempt_number>=1 AND "
+        "attempt_id IS NOT NULL AND started_at IS NOT NULL AND started_at>=created_at)",
+        name="ck_presence_check_attempt",
+    ),
+    CheckConstraint(
+        "(state IN ('queued','reading') AND checked_at IS NULL AND results IS NULL AND "
+        "evidence_event_id IS NULL) OR (state IN ('complete','unavailable','superseded') AND "
+        "checked_at IS NOT NULL AND checked_at>=started_at AND results IS NOT NULL AND "
+        "jsonb_typeof(results)='array' AND "
+        "jsonb_array_length(results)=2 AND evidence_event_id IS NOT NULL)",
+        name="ck_presence_check_result",
+    ),
+)
+Index(
+    "ix_presence_check_latest",
+    user_presence_check.c.workspace_id,
+    user_presence_check.c.tenancy_id,
+    user_presence_check.c.acquisition_sequence.desc(),
+)
+Index(
+    "ix_presence_check_pending",
+    user_presence_check.c.workspace_id,
+    user_presence_check.c.tenancy_id,
+    user_presence_check.c.context_hash,
+    postgresql_where=user_presence_check.c.state.in_(("queued", "reading")),
 )

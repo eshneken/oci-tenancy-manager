@@ -13,6 +13,7 @@ from otm.storage.organization import OrganizationConflict
 from otm.tenancies.contracts import ActionReceipt, OrganizationAction
 from otm.tenancies.deletion import TenancyDeletionCommand, TenancyDeletionPreview
 from otm.tenancies.onboarding_contracts import OnboardingCommand, OnboardingView
+from otm.tenancies.presence_contracts import PresenceCheckRequest
 from otm.tenancies.required_users import RequiredUsersDirectory
 from otm.tenancies.views import (
     PersonWorkflow,
@@ -27,6 +28,7 @@ from otm.tenancies.views import (
 # text.
 PUBLIC_CONFLICTS = frozenset(
     {
+        "REQUIRED_USERS_CHECK_UNAVAILABLE",
         "RESPONSIBILITY_PREVIEW_CHANGED",
         "EMAIL_CONTACT_CONFIGURATION_REQUIRED",
         "PUBLISHED_BASELINE_REQUIRED",
@@ -252,6 +254,24 @@ def workflow_router(service):
     @router.get("/api/tenancies/{identifier}/required-users", response_model=RequiredUsersDirectory)
     def required_users(identifier: UUID, request: Request):
         return guarded(lambda: service.required_users(request.user, identifier))
+
+    # Reads are queued only by an authenticated CSRF-protected command with one request UUID.
+    @router.post(
+        "/api/tenancies/{identifier}/required-users/check",
+        response_model=ActionReceipt,
+        status_code=202,
+    )
+    async def check_required_users(identifier: UUID, request: Request):
+        from otm.configuration.rollout_http import bounded_command
+
+        command = await bounded_command(request, PresenceCheckRequest, 4096)
+        if isinstance(command, JSONResponse):
+            return command
+        if service.presence_checks is None:
+            return JSONResponse({"code": "REQUIRED_USERS_CHECK_UNAVAILABLE"}, status_code=409)
+        return await run_in_threadpool(
+            guarded, lambda: service.presence_checks.start(request.user, identifier, command)
+        )
 
     # A foreign tenancy is indistinguishable from an unknown local identifier.
     @router.get("/api/tenancies/{identifier}", response_model=TenancyDetail)

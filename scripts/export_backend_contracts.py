@@ -69,6 +69,7 @@ from otm.settings import ApplicationSettings, BrandingView
 from otm.tenancies.contracts import ActionReceipt, OrganizationAction
 from otm.tenancies.deletion import TenancyDeletionCommand, TenancyDeletionPreview
 from otm.tenancies.onboarding_contracts import OnboardingCommand, OnboardingView
+from otm.tenancies.presence_contracts import PresenceCheckRequest
 from otm.tenancies.required_users import RequiredUsersDirectory
 from otm.tenancies.views import (
     PersonWorkflow,
@@ -131,6 +132,7 @@ def contracts() -> dict[str, dict]:
         "tenancy-directory.schema.json": TenancyDirectory.model_json_schema(),
         "tenancy-detail.schema.json": TenancyDetail.model_json_schema(),
         "required-users-directory.schema.json": RequiredUsersDirectory.model_json_schema(),
+        "presence-check-request.schema.json": PresenceCheckRequest.model_json_schema(),
         "tenancy-query.schema.json": TenancyQuery.model_json_schema(),
         "organization-directory.schema.json": OrganizationDirectory.model_json_schema(),
         "organization-query.schema.json": OrganizationQuery.model_json_schema(),

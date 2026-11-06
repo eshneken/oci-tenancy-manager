@@ -4,7 +4,7 @@ Use a deliberate local installation and preserve saved user data. Tests that mut
 isolated synthetic fixtures; private enrollment factors do not belong in reports or chat.
 
 - [Real OCI manual test manifest](real-oci-test-manifest.md) — maintain pending live-only cases for every slice
-- [Local review: Required users](required-users-runbook.md)
+- [Local review: Required users and manual Check now](required-users-runbook.md) — fresh simulated create/import, result provenance and historical unqualified records
 - [Manual check: baseline updates](baseline-update-runbook.md)
 - [Manual review: configuration drift visibility](configuration-drift-runbook.md), including
   [pending real-OCI drift/repair tests and automated coverage](configuration-drift-runbook.md#pending-real-oci-manual-validation),
@@ -20,7 +20,7 @@ Cloud bootstrap, managed services and scheduled drift acquisition have separate 
 requirements in [the build order](../engineering-design/18-database-ci-and-build-order.md).
 These procedures do not authorize deployment, repository publication or live OCI changes.
 
-- [GitHub checkpoints and CI definitions](github-checkpoints.md)
+- [GitHub checkpoints and CI definitions](github-checkpoints.md) — complementary backend unit and PostgreSQL/browser lanes, with all required checks retained
 
 Workflow definitions are repository artifacts; hosted runs, branch protection and deployment
 qualification must be verified separately. This guide does not authorize cloud deployment.

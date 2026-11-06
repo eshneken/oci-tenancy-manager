@@ -35,6 +35,7 @@ from otm.storage.tables import (
 from otm.tenancies.contracts import OrganizationActionOutcome
 from otm.tenancies.labels import ACTION_LABELS
 from otm.tenancies.onboarding_contracts import OnboardingEvidence
+from otm.tenancies.presence_contracts import PresenceCheckEvidence
 
 
 # Convert stored timestamps to UTC without substituting a retrieval time for missing evidence.
@@ -109,6 +110,7 @@ class SqlOperationDirectory:
                 "configuration_update",
                 "configuration_check",
                 "cost_collection",
+                "required_user_check",
             }
             else None,
             guided_onboarding=frozen.intent.kind == "organization_action"
@@ -116,6 +118,8 @@ class SqlOperationDirectory:
             target_tenancy_ocid=frozen.intent.target.tenancy_ocid,
             title=ACTION_LABELS[frozen.intent.action]
             if frozen.intent.kind == "organization_action"
+            else "Check required users"
+            if frozen.intent.kind == "required_user_check"
             else "Refresh current month costs"
             if frozen.intent.kind == "cost_collection"
             else "Check configuration"
@@ -136,6 +140,7 @@ class SqlOperationDirectory:
                 "configuration_update",
                 "configuration_check",
                 "cost_collection",
+                "required_user_check",
             }
             else None,
         )
@@ -304,7 +309,9 @@ class SqlOperationDirectory:
     def step(self, row):
         outcome = (
             (
-                CostEvidence
+                PresenceCheckEvidence
+                if row["command_kind"] == "required_user_check"
+                else CostEvidence
                 if row["command_kind"] == "cost_collection"
                 else ConfigurationCheckEvidence
                 if row["command_kind"] == "configuration_check"
@@ -337,7 +344,9 @@ class SqlOperationDirectory:
             ResponsibilityEvidence.model_validate_json(json.dumps(row["data"]))
         outcome = (
             (
-                CostEvidence
+                PresenceCheckEvidence
+                if row["kind"] == "required_user_check_outcome"
+                else CostEvidence
                 if row["kind"] == "cost_collection_outcome"
                 else ConfigurationCheckEvidence
                 if row["kind"] == "configuration_check_outcome"
@@ -357,6 +366,7 @@ class SqlOperationDirectory:
                 "configuration_outcome",
                 "configuration_check_outcome",
                 "cost_collection_outcome",
+                "required_user_check_outcome",
                 "configuration_retry",
                 "organization_action_outcome",
                 "onboarding_action",

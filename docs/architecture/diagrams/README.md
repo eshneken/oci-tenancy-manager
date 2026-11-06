@@ -7,6 +7,9 @@ migrations or Python validation.
 
 ## Implemented local subsets
 
+- [financial-implemented](financial-implemented.mmd): exact collection/observation scope and reused operations/outbox.
+- [user-presence-connections-implemented](user-presence-connections-implemented.mmd) — [all 14 fields and limits](../../reference/user-presence-connections.md)
+- [user-presence-checks-implemented](user-presence-checks-implemented.mmd) — all 14 check columns; context connection/subject references remain typed JSON, not invented SQL FKs
 - [managed-identities-implemented](managed-identities-implemented.mmd) — [SVG](managed-identities-implemented.svg), [field guide](../../reference/managed-object-bindings.md); Excalidraw is an image annotation export
 - [baseline-authoring-implemented](baseline-authoring-implemented.mmd)
 - [configuration-drift-implemented](configuration-drift-implemented.mmd)
@@ -29,7 +32,3 @@ and its runtime guide links for the whole implementation boundary.
 
 Proposed fields and relationships require implementation/provider qualification before they become
 runtime guarantees. The retained prototype diagram remains separate in prototype/diagrams/.
-
-- [financial-implemented](financial-implemented.mmd): exact collection/observation scope and reused operations/outbox.
-
-- [user-presence-connections-implemented](user-presence-connections-implemented.mmd) — [all 14 fields and limits](../../reference/user-presence-connections.md)

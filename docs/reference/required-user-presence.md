@@ -1,8 +1,7 @@
 # Required-user presence boundary
 
 This is the current internal presence-only boundary. It implements exact-identity presence reads
-for **automation** and **recovery** users, independently per subject. It does not yet add an Access
-check screen/API, check-result table, native job, scheduled scan, notification or repair action.
+for **automation** and **recovery** users, independently per subject. Its provider boundary is now composed into [manual simulated checks](user-presence-checks.md) with authenticated API, durable results and existing worker/UI integration. It adds no scheduled scan, notification or repair action.
 A separate [simulated connection table](user-presence-connections.md) is now implemented.
 The audit user remains V2. Existing saved tenancies are not backfilled or declared healthy.
 
@@ -45,9 +44,7 @@ No HTTP/generated public contract is added in this checkpoint.
 
 Transport references do not prove current authority. The scoped connection and canonical bindings
 now have persisted foreign keys; dispatch must still resolve/recheck their current state. `read_id` is an opaque per-read correlation,
-not a durable audit receipt or repair authority. The future worker must resolve/recheck live
-administrator/machine authority, current connection revision, lifecycle and binding generations
-before and after acquisition, then seal separate per-subject evidence/current heads. A pairing
+not a durable audit receipt or repair authority. The manual worker resolves/rechecks current administrator entitlement, selected connection revision, lifecycle and binding generations before and after acquisition, then seals separate per-subject evidence. A future scheduled machine identity requires its own qualification. A pairing
 wrapper cannot perform those database checks by comparing echoed fields alone.
 
 ## Contract and simulator separation
@@ -57,8 +54,7 @@ wrapper cannot perform those database checks by comparing echoed fields alone.
 - `providers/required_user_contracts.py` contains closed nonsecret models, using shared contract and
   inspection primitives. Neutral types accept non-synthetic OCID shapes without claiming membership.
 - `providers/required_user_simulator.py` holds independent fake authority, domain and user fixtures.
-  Only synthetic child/domain/user fixtures are accepted. No API/worker composes it automatically,
-  and there is no product simulation control or live fallback.
+  Only synthetic child/domain/user fixtures are accepted. The explicit local worker composition restores authenticated producer fixtures; no live fallback or product fault-injection control is added.
 
 The wrapper revalidates provider results and pairs all context/target/generation fields, actual
 checked/observed identifiers and aware-UTC capture time with the call window. Wrong-domain results,
@@ -76,9 +72,7 @@ credentials or eventual consistency. No account is created, removed, repaired or
 
 1. Done: exact permanent identity/domain bindings from verified onboarding readback; historical
    missing bindings remain unverified with no guessed backfill.
-2. Done: scoped simulated automation connection registration. Pending: per-subject observations,
-   authenticated read-only check admission/dispatch and current-revision publication through the
-   existing operation/native worker machinery. The identity-record section already exists.
+2. Locally qualified and main preview upgraded: scoped simulated automation connection, per-subject observations, authenticated manual check admission/dispatch and current-revision publication through existing operations/native workers. The Required users cards now expose these simulated existence results separately from permissions.
 3. Later: independently qualified signer/privilege/console/recovery-readiness probes, bounded identity
    repair and event-driven notifications. Password custody/disclosure/rotation remains separate.
 
@@ -86,8 +80,7 @@ credentials or eventual consistency. No account is created, removed, repaired or
 Unit tests exercise both purposes, exact subject scope, correct absence versus domain failure,
 partial/denied/timeout/delayed/unsupported reads, same-name nonadoption, returned context/generation
 fences, optional identity references, strict clock windows and sanitized errors. Fresh-process import
-tests reject simulator imports from neutral modules. Existing full PostgreSQL/Playwright suites
-remain regression gates; they do not yet execute this uncomposed presence capability. Real cases
+tests reject simulator imports from neutral modules. The manual check's PostgreSQL/Playwright suites now exercise the explicitly composed simulated capability; those results do not qualify live OCI reads. Real cases
 remain pending in [the pending account-read checklist](../how-to/configuration-drift-runbook.md#pending-required-user-presence-qualification).
 
 
@@ -104,4 +97,16 @@ section. See its field map and local test runbook for the implemented boundary.
 The approved presence-only simplification now uses [one simulated automation connection revision](user-presence-connections.md). Earlier assignment/context/credential-head prerequisites above describe
 the withdrawn dependency for presence-only reads, not a requirement to fabricate IDs. Version 1
 was internal and had no saved public presence results; version 2 rejects old fields. The connection
-foundation is persisted, while observation jobs, publication and Check now are still future work.
+foundation is persisted; the later manual check source implementation now adds observation jobs, publication and Check now. Local qualification and the main-preview upgrade pass; live OCI remains unqualified.
+
+## Manual presence checks — 6 November 2026 source checkpoint
+
+The [manual check implementation](user-presence-checks.md) now connects the selected simulated
+connection and exact bound automation/recovery identities to explicit authenticated Check now,
+existing native operations/worker/audit and independent dated presence results. This supersedes
+no-check/no-result/no-UI statements from the preceding foundation only for this presence-only path.
+The [screen map](required-users-screen.md) has 22 effective display fields; Permissions remains
+Not checked. Legacy unbound/unconfigured children cannot check. Simulation reconstructs authenticated
+producer fixtures and does not verify live OCI. Assignments/profiles are deferred until separately
+needed for privileges/repair; no credential IDs are fabricated. Daily scheduling, emails, credential
+custody, readiness and repair remain outside this checkpoint. Local simulation qualification and the main-preview upgrade pass; the parallel preview is unchanged. [Final receipt](../history/manual-presence-checkpoint-2026-11-06.md).

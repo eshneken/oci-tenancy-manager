@@ -14,6 +14,7 @@ React sign-in/logout, an authenticated administrator directory, ordinary-grant r
 now accepts durable work, which a separately started foreground worker executes asynchronously.
 The [Organization directory/upload and current drift](../docs/reference/organization-screens.md) now use
 authorized production snapshots. The [workflow guide](../docs/reference/organization-workflows.md) describes durable reviews, registered simulated tenancy/member flows and managed-person decisions.
+[Manual required-user checks](../docs/reference/user-presence-checks.md) connect authenticated API admission to a separate worker and independent dated simulated results. Local qualification and the main-preview upgrade pass; [the receipt](../docs/history/manual-presence-checkpoint-2026-11-06.md) preserves exact test lanes and installation limits.
 Public shell/assets contain no identity data; APIs retain current authority and request guards.
 There is no permissive provider or corporate SSO. Tenancy routes expose only the explicitly simulated local registry in this parity candidate.
 The durable simulated provider runs in a separate worker process; HTTP acceptance does not claim

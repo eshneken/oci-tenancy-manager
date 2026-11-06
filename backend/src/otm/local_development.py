@@ -471,6 +471,24 @@ def setup_database(root: Path, state: LocalState, project: Path) -> LocalState:
                 "GRANT INSERT,UPDATE(state,retired_operation_id,updated_at) "
                 "ON public.otm_user_presence_connection TO otm_local_worker"
             )
+            connection.exec_driver_sql(
+                "GRANT SELECT ON public.otm_user_presence_check TO otm_local_api,otm_local_worker"
+            )
+            connection.exec_driver_sql(
+                "GRANT "
+                "INSERT(operation_id,workspace_id,tenancy_id,context,context_hash,"
+                "state,attempt_number,created_at) ON public.otm_user_presence_check "
+                "TO otm_local_api"
+            )
+            connection.exec_driver_sql(
+                "GRANT USAGE,SELECT ON SEQUENCE "
+                "public.otm_user_presence_check_acquisition_sequence_seq TO otm_local_api"
+            )
+            connection.exec_driver_sql(
+                "GRANT "
+                "UPDATE(state,attempt_id,attempt_number,started_at,checked_at,results,"
+                "evidence_event_id) ON public.otm_user_presence_check TO otm_local_worker"
+            )
             from otm.organization.reviews import initialize_existing_reviews
 
             initialize_existing_reviews(connection)
