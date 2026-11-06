@@ -30,10 +30,30 @@ export async function existingCompartmentMembership(page:Page,sharedName:string)
  await modal.getByRole("link",{name:"View operation",exact:true}).click();
  await expect(page.getByText("Succeeded",{exact:true})).toBeVisible({timeout:20000});
  await page.getByRole("link",{name:"Organization",exact:true}).click();
+ const workflowResponse=page.waitForResponse(response=>response.url().includes("/workflow")&&response.request().method()==="GET");
  await page.getByRole("button",{name:"Leader Two",exact:true}).click();
+ const workflow=await(await workflowResponse).json();
  await modal.getByRole("combobox",{name:"Action",exact:true}).selectOption("remove_member");
  await modal.getByRole("combobox",{name:"Tenancy",exact:true}).selectOption(selectedTenancy);
- await modal.getByRole("checkbox").check();
+ await modal.getByRole("checkbox",{name:/I reviewed the shared tenancy impact/}).check();
+ const destructiveConsent=modal.getByRole("checkbox",{name:/I acknowledge the consequences/});
+ const removal=modal.getByRole("button",{name:"Remove shared member",exact:true});
+ await expect(destructiveConsent).not.toBeChecked();await expect(removal).toBeDisabled();
+ const attempted:string[]=[];
+ const track=(request:import("@playwright/test").Request)=>{if(request.method()==="POST"&&request.url().endsWith("/api/organization/actions"))attempted.push(request.url());};
+ page.on("request",track);
+ await destructiveConsent.focus();await page.keyboard.press("Enter");
+ await modal.locator("form").evaluate(form=>form.dispatchEvent(new Event("submit",{bubbles:true,cancelable:true})));
+ expect(attempted).toHaveLength(0);
+ const rejected=await page.evaluate(async body=>{const response=await fetch("/api/organization/actions",{method:"POST",headers:{"Content-Type":"application/json","X-OTM-Request":"1"},body:JSON.stringify(body)});return{status:response.status,data:await response.json()};},{client_request_key:crypto.randomUUID(),context:workflow.context,person_id:workflow.person.id,action:"remove_member",tenancy_id:selectedTenancy,confirm_shared:true,confirm_destructive:false});
+ expect(rejected.status).toBe(409);expect(rejected.data.code).toBe("DESTRUCTIVE_CONFIRMATION_REQUIRED");
+ page.off("request",track);
+ await destructiveConsent.check();
+ await modal.getByRole("combobox",{name:"Tenancy",exact:true}).selectOption("");
+ await expect(destructiveConsent).not.toBeChecked();
+ await modal.getByRole("combobox",{name:"Tenancy",exact:true}).selectOption(selectedTenancy);
+ await expect(removal).toBeDisabled();await destructiveConsent.check();
+ await capture(page,"destructive-member-confirmation");
  await modal.getByRole("button",{name:"Remove shared member",exact:true}).click();
  await modal.getByRole("link",{name:"View operation",exact:true}).click();
  await expect(page.getByText("Succeeded",{exact:true})).toBeVisible({timeout:20000});
@@ -65,6 +85,16 @@ async function capture(page:Page,name:string){
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   const dialog=page.getByRole("dialog");if(await dialog.count())expect(await dialog.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
   await page.screenshot({path:resolve(".local-dev/browser",`${name}-${width}.png`),fullPage:true});
+  if(name==="destructive-member-confirmation"){
+   await dialog.locator(".dialog-actions").scrollIntoViewIfNeeded();
+   const consent=dialog.getByRole("checkbox",{name:/I acknowledge the consequences/});
+   const submit=dialog.getByRole("button",{name:"Remove shared member",exact:true});
+   for(const control of [consent,submit,dialog.getByRole("button",{name:"Cancel",exact:true})]){
+    await expect(control).toBeVisible();const box=(await control.boundingBox())!;
+    expect(box.y).toBeGreaterThanOrEqual(0);expect(box.y+box.height).toBeLessThanOrEqual(900);
+   }
+   await page.screenshot({path:resolve(".local-dev/browser",`${name}-controls-${width}.png`),fullPage:true});
+  }
  }
  await page.setViewportSize({width:1280,height:900});
 }

@@ -376,7 +376,9 @@ def setup_database(root: Path, state: LocalState, project: Path) -> LocalState:
                 "ocal_worker"
             )
             connection.exec_driver_sql(
-                "GRANT UPDATE(directory_status,pending_operation_id,removed_capture_at) ON public"
+                # Verified last-association cleanup may create a new directory setup episode.
+                "GRANT UPDATE(directory_status,pending_operation_id,removed_capture_at,"
+                "setup_required,setup_episode_id) ON public"
                 ".org_person TO otm_local_worker"
             )
             connection.exec_driver_sql(

@@ -141,8 +141,7 @@ tenancy cleanup. Link the related work and derive completion from current role e
 saved settings; an acknowledgment never makes an ineligible person a valid recipient. Preserve
 existing valid per-condition decisions without allowing suppression to restore invalid routing.
 If a person returns while an absence decision remains unresolved, retain that decision requirement
-and reevaluate all configured roles. Preserve the existing qualified-return renewal semantics after
-completed offboarding; that path can clear the old absence episode and reopen onboarding. In either
+and reevaluate all configured roles. After completed offboarding, a newly applied fresh actual employee row (full or partial) can settle only the handled absence and restore directory/onboarding as needed without an intervening absence cycle. In either
 case, validate every role against current reporting evidence and saved nominations; return alone
 does not prove a leader/designee is eligible or settle an outstanding mapping defect.
 
@@ -200,7 +199,7 @@ passing before completion. This is a requirement list, not a claim that these te
 | Designee changes branch or no longer has rooted ancestry | Flag role eligibility separately from person absence; preview shows recipient changes. |
 | Same person has several roles; leader and designee depart together | Detect all affected nominations even under invalid leadership; no hidden defect or duplicate episode. |
 | Offboarding, directory exclusion or review acknowledgment precedes repair | Outstanding mapping defects persist; repairing mappings does not settle tenancy cleanup and vice versa. |
-| Partial, stale, incomplete and repeated feeds; later return | No unsupported departure inference; stable episodes; unresolved absence stays open; qualified return after completed offboarding retains renewal behavior and rechecks every role. |
+| Partial, stale, incomplete and repeated feeds; later return | No unsupported departure inference; stable episodes; unresolved absence stays open; fresh applied actual-row return after completed offboarding restores directory/setup as needed even on a partial feed, without an absence cycle; every role is checked independently. |
 | Reapply/role repair, concurrent imports and accepted operations | No fresh absence/return/clocks from config-only work; stale previews rejected; frozen accepted intent/routing/history preserved. |
 
 Use pure reconciliation/settings unit tests for eligibility and episodes; disposable PostgreSQL
@@ -214,7 +213,7 @@ widths with keyboard access. D53's coverage and required-suite gates continue to
 The user approved immediate preview/Apply and requested implementation of the departure extension
 and required regression matrix. Pre-implementation documentation, security and UI/spec reviews
 shaped this contract. Their planning notes are superseded by the implementation checkpoint below.
-Existing qualified-return renewal remains intact; no alternate departure coordinator was introduced.
+The former absence-cycle return gate is superseded by the fresh actual-row correction below; independent role/departure guards remain intact and no alternate coordinator is introduced.
 
 ## Implementation checkpoint — 2 November 2026
 
@@ -351,3 +350,16 @@ Actionable reviews, historical label provenance, source scope, indefinite retent
 guards remain unchanged. This is a frontend use of existing APIs, not a new backend contract/table,
 permission or dependency. Unit/browser validation passed: 178 frontend units at97.54% coverage and 2 real HTTPS/browser tests. The [runtime guide](../reference/organization-workflows.md#optional-full-history-in-the-information-tab)
 records the exact current flow and count semantics.
+
+## Fresh actual-row return and explicit offboarding — source checkpoint
+
+The [workflow correction](../reference/organization-workflows.md#destructive-consent-and-directory-return-correction--source-checkpoint)
+keeps source presence, directory decisions and infrastructure cleanup separate. Only explicit
+absent-person offboarding changes a person to offboarded; standalone delete/remove/transfer never
+changes directory status or settles independent absence, even at zero links. Fresh applied actual
+employee rows restore already-offboarded identities/setup as needed, full or partial, with strict
+later capture and legacy prior-source/publication fallback. No reference/stale/staged/replay/
+config-only/exempt/merged/pending return, infrastructure resurrection, historical rewrite or blanket
+role closure is allowed. Current actual presence hides/refuses Offboard employee. Five destructive
+person actions require action-bound consent; historical exact replay preserves old hashes/receipts.
+No table or migration is added. Qualification and saved-preview updates are pending.

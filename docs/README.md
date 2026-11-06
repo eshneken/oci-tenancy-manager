@@ -15,6 +15,7 @@ are not competing implementation instructions or proof of real OCI behavior.
 | Review required user identities | [Screen and field map](reference/required-users-screen.md), [local runbook](how-to/required-users-runbook.md) |
 | Canonical domain/user identities and ER | [Binding field guide](reference/managed-object-bindings.md) |
 | Implemented fields, API behavior and limits | [Reference guides](reference/README.md) |
+| Directory return and destructive consent correction | [Current source contract](reference/organization-workflows.md#destructive-consent-and-directory-return-correction--source-checkpoint) — locally qualified; main preview updated, live OCI pending |
 | Review/test/operator procedures | [How-to guides](how-to/README.md) |
 | Accepted engineering decisions | [D1–D17](decisions/engineering-review-decisions.md), [D18–D58](decisions/design-decisions.md) |
 | Diagram source and generated views | [Architecture diagrams](architecture/diagrams/README.md) |
@@ -89,3 +90,5 @@ Cost-refresh audit regression coverage: [Audit history](reference/audit-history.
 
 Root manager naming and paired settings controls are specified in the
 [implemented Organization Mapping guide](reference/organization-mapping.md#root-manager-display-name).
+
+Current directory-return and destructive-consent qualification: [6 November checkpoint](history/employee-restoration-consent-checkpoint-2026-11-06.md).

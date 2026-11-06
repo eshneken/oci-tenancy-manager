@@ -28,6 +28,18 @@ Action = Literal[
 ]
 
 
+# These person commands remove access, ownership or stable identity; local review decisions do not.
+DESTRUCTIVE_ACTIONS = frozenset(
+    {
+        "offboard_person",
+        "delete_tenancy",
+        "remove_member",
+        "transfer_owner",
+        "merge",
+    }
+)
+
+
 # A preview binds decisions to both organization heads, configuration and registry changes.
 class OrganizationContext(Contract):
     applied_version_id: UUID
@@ -85,6 +97,9 @@ class OrganizationAction(Contract):
     recipient_person_id: UUID | None = None
     partner_person_id: UUID | None = None
     plan: Annotated[tuple[AssociationChoice, ...], Field(max_length=100)] = ()
+    # Omitted false preserves pre-consent request hashes for exact historical replay.
+    # New destructive admissions require true; it never substitutes for target-specific warnings.
+    confirm_destructive: bool = Field(default=False, exclude_if=lambda value: value is False)
     confirm_no_associations: bool = False
     confirm_manager: bool = False
     confirm_shared: bool = False

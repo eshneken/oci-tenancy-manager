@@ -114,6 +114,11 @@
       "default": null,
       "title": "Compartment Name"
     },
+    "confirm_destructive": {
+      "default": false,
+      "title": "Confirm Destructive",
+      "type": "boolean"
+    },
     "confirm_manager": {
       "default": false,
       "title": "Confirm Manager",

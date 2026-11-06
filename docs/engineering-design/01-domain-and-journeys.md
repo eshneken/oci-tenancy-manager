@@ -19,10 +19,12 @@ Stable people own zero/multiple individual or shared tenancies and may belong to
 tenancies. Reorgs change derived accountability, not provider topology or ownership by themselves.
 Keep actual observed OCI identity/parentage and tenancy origin separate from organizational mappings.
 
-Organization reviews close when an operation is durably accepted, not when an HTTP request merely
-arrives. Associations are retired only after verified execution; the last required cleanup completes
-offboarding. Failed/unknown work stays visible elsewhere in Operations. Feed returns, exemptions,
-identity merges and shared-owner guards retain the tested semantics in the current prototype.
+The selected onboarding or explicit offboarding review closes on durable acceptance, not merely an
+HTTP request. Standalone tenancy/member/ownership cleanup leaves independent absence reviews open.
+Associations retire only after verified execution; directory offboarding completes only as part of
+an explicitly confirmed absent-person offboarding plan. Failed/unknown work remains in Operations.
+Fresh applied employee-row returns, exemptions, identity merges and shared-owner guards follow the
+current implemented rules below.
 
 ## Workflow design worksheet
 
@@ -317,7 +319,7 @@ a query that cannot distinguish absence from denial cannot. Session and alternat
 must remain accurately reported under C4.
 
 When user/membership removal is verified, the association can retire and the final successful
-association cleanup can remove the person from the managed directory. Manual resource cleanup does
+association cleanup retires the relationship without offboarding the person or settling an independent absence decision. Manual resource cleanup does
 not retain the former member or delay completed offboarding. If another association is kept or still
 requires identity/tenancy work, the person remains visible under the accepted complete-plan rules.
 The shared-tenancy owner remains accountable for resources and cost after the person leaves.
@@ -336,8 +338,7 @@ approver, mandatory Reason, cleanup ticket or new task-tracking subsystem is int
 D21's desired member assignment must be retired/suspended appropriately before conflicting queued
 profile applications or repairs can recreate its user/grants. Recheck current association intent
 under per-tenancy mutation coordination. A stale job may not resurrect access merely because it
-captured an older profile. A later feed containing the employee does not undo explicit offboarding;
-accepted absence/return, No tenancy required and retained-association rules remain in force.
+captured an older profile. A fresh applied actual employee row may restore an already-offboarded directory identity and one onboarding episode when needed, including from a partial feed and without an intervening absence cycle. This never restores the old infrastructure or grants; No tenancy required and retained outside-association decisions remain independently guarded.
 
 Person-level offboarding still previews every association: individual-tenancy Delete/Transfer/Keep,
 shared ownership Transfer/Keep with D22 disposition, and shared membership Remove/Keep. Publish verified
@@ -497,4 +498,20 @@ remains the next implementation slice.
 
 ## Tenancy-level deletion clarification — 31 October2026
 
-Administrators may explicitly initiate termination of a registered individual or shared child from tenancy detail. Preview every affected owner/member and their remaining associations, with manager/shared impact warnings. Accepted work reserves all links; verified initiation retires them and computes each person’s directory outcome independently. This is distinct from shared-member removal and employee offboarding. [Implemented local field/flow contract](../reference/tenancy-deletion.md); no real OCI qualification is implied.
+Administrators may explicitly initiate termination of a registered individual or shared child from tenancy detail. Preview every affected owner/member and their remaining associations, with manager/shared impact warnings. Accepted work reserves all links; verified initiation retires them while preserving every person’s directory status and independent absence review. Source-present zero-link people can need a new onboarding episode. This is distinct from shared-member removal and employee offboarding. [Implemented local field/flow contract](../reference/tenancy-deletion.md); no real OCI qualification is implied.
+
+## Explicit offboarding, fresh directory return and consent — source checkpoint
+
+Standalone tenancy deletion, member removal and owner transfer preserve managed-directory status
+and independent absence decisions, even for absent zero-link people. Only explicit offboard_person
+for a currently absent employee may offboard; current actual employee rows hide/refuse that action.
+An already-offboarded identity returns only from newly applied fresh actual-row evidence (full or
+partial), not references/replay/staging/config-only work. It retains the stable UUID and history and
+opens one setup episode when needed; no pending/exempt/merged resurrection, blanket role closure,
+old association/user/tenancy recreation or automatic provisioning is implied.
+
+New person actions offboard_person/delete_tenancy/remove_member/transfer_owner/merge require explicit
+confirm_destructive consent in addition to existing impact warnings. False is omitted for historical
+request-hash compatibility; authenticated exact committed replay precedes the new-admission guard.
+Action/target/plan/preview changes reset the checkbox. Separate tenancy-level termination retains
+its existing confirm_deletion consent; leaves_directory is always false. This source correction adds the one public OrganizationAction field above, with no database schema/table change or new authority model. Qualification and preview upgrade remain pending.

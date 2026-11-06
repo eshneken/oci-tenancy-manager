@@ -1,7 +1,7 @@
 """Whole-child termination reuses admission and preserves every affected person's obligations."""
 
 from typing import Literal
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import select, update
 
@@ -9,7 +9,7 @@ from otm.contracts import Contract
 from otm.organization.reviews import add_change
 from otm.providers.lifecycle import LifecycleBlocked
 from otm.storage.organization import OrganizationConflict
-from otm.storage.tables import org_person, org_recommendation, tenancy, tenancy_membership
+from otm.storage.tables import org_person, tenancy, tenancy_membership
 from otm.tenancies.contracts import FrozenAssociation, OrganizationContext
 from otm.tenancies.views import TenancyView
 
@@ -193,7 +193,13 @@ def publish_deletion(connection, state, intent, completion, identifier, at):
                 tenancy_membership.c.status.in_(("active", "pending", "removing")),
             )
         ).first()
-        remove = remaining is None and person.email != state.config.policy.root_email
+        # Removing any tenancy never offboards a person, even after confirmed source absence.
+        control = state.controls[person_id]
+        needs_setup = (
+            remaining is None
+            and control["directory_status"] == "included"
+            and person.email in state.supplied
+        )
         connection.execute(
             update(org_person)
             .where(
@@ -202,33 +208,16 @@ def publish_deletion(connection, state, intent, completion, identifier, at):
                 org_person.c.pending_operation_id == identifier,
             )
             .values(
-                directory_status="offboarded"
-                if remove
-                else state.controls[person_id]["directory_status"],
+                directory_status=control["directory_status"],
                 pending_operation_id=None,
-                removed_capture_at=state.head.source_captured_at
-                if remove and person.absence_review
-                else None,
+                removed_capture_at=control["removed_capture_at"],
+                **(
+                    {"setup_required": True, "setup_episode_id": uuid4()}
+                    if needs_setup and not control["setup_required"]
+                    else {}
+                ),
             )
         )
-        if remove:
-            connection.execute(
-                update(org_recommendation)
-                .where(
-                    org_recommendation.c.workspace_id == state.workspace,
-                    org_recommendation.c.person_id == person_id,
-                    org_recommendation.c.status == "open",
-                    org_recommendation.c.kind.in_(
-                        ("PERSON_ABSENCE_REVIEW", "TENANCY_SETUP_REVIEW")
-                    ),
-                )
-                .values(
-                    status="resolved",
-                    resolved_at=at,
-                    resolution="delete_tenancy",
-                    operation_id=identifier,
-                )
-            )
         add_change(
             connection,
             state.workspace,

@@ -149,6 +149,7 @@ async function organizationFlows(page: Page) {
   ];
   let uploadIndex = 0;
   const modal = page.getByRole("dialog");
+  const employeeReview = page.getByRole("row").filter({hasText:"new@example.test"});
 
   // Distinct qualified source times keep successive observations ordered without wall-clock waits.
   async function upload(values: string[]) {
@@ -168,9 +169,13 @@ async function organizationFlows(page: Page) {
           .toISOString()
           .slice(0, 16),
       );
+    // Await this upload's committed receipt, not a success notice retained from an earlier feed.
+    const delivery=page.waitForResponse(response=>response.url().endsWith("/api/organization/feeds")&&response.request().method()==="POST");
     await page
       .getByRole("button", { name: "Process feed", exact: true })
       .click();
+    const response=await delivery;expect(response.ok()).toBe(true);expect((await response.json()).state).toBe("published");
+    await expect(page.getByRole("heading",{name:"Upload organization CSV",exact:true})).not.toBeVisible();
     await expect(
       page.getByText(
         "Organization feed processed. Valid metadata is up to date.",
@@ -508,7 +513,7 @@ async function organizationFlows(page: Page) {
   await page
     .getByRole("link", { name: "Organization drift", exact: true })
     .click();
-  await page.getByRole("button", { name: "Review", exact: true }).click();
+  await employeeReview.filter({has:page.getByText("New employee",{exact:true})}).getByRole("button", { name: "Review", exact: true }).click();
   await expect(
     modal.getByRole("combobox", { name: "Action", exact: true }),
   ).toHaveValue("");
@@ -596,7 +601,7 @@ async function organizationFlows(page: Page) {
   await page
     .getByRole("link", { name: "Organization drift", exact: true })
     .click();
-  await page.getByRole("button", { name: "Review", exact: true }).click();
+  await employeeReview.filter({has:page.getByText("Absence review",{exact:true})}).getByRole("button", { name: "Review", exact: true }).click();
   await modal
     .getByRole("combobox", { name: "Action", exact: true })
     .selectOption("offboard_person");
@@ -618,6 +623,7 @@ async function organizationFlows(page: Page) {
     "shared-impact",
   );
   await modal.getByLabel(/I reviewed the shared tenancy impact/).check();
+  await modal.getByLabel(/I acknowledge the consequences/).check();
   await page.screenshot({
     path: resolve(".local-dev/browser/organization-offboard-1280.png"),
     fullPage: true,
@@ -632,12 +638,22 @@ async function organizationFlows(page: Page) {
   await expect(
     page.getByRole("heading", { name: "Manual cleanup guidance", exact: true }),
   ).toBeVisible();
+  // A partial positive row immediately restores directory presence, not deleted infrastructure.
+  await upload(joinedRows.filter(row=>row.startsWith("New Employee,")));
+  await expect(page.getByRole("button",{name:"New Employee",exact:true})).toBeVisible();
+  const afterPartial=await(await page.request.get("/api/organization/reviews")).json();
+  const restored=afterPartial.items.filter((row:{kind:string,email:string})=>row.kind==="TENANCY_SETUP_REVIEW"&&row.email==="new@example.test");
+  expect(restored).toHaveLength(1);
+  const afterRestore=await(await page.request.get("/api/tenancies")).json();
+  expect(afterRestore.items.some((child:{name:string})=>child.name===personalName)).toBe(false);
   await upload(joinedRows);
+  const afterFull=await(await page.request.get("/api/organization/reviews")).json();
+  expect(afterFull.items.filter((row:{kind:string,email:string})=>row.kind==="TENANCY_SETUP_REVIEW"&&row.email==="new@example.test").map((row:{id:string})=>row.id)).toEqual([restored[0].id]);
   await page
     .getByRole("link", { name: "Organization drift", exact: true })
     .click();
-  await expect(page.getByText("New employee", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Review", exact: true }).click();
+  await expect(employeeReview.getByText("New employee", { exact: true })).toBeVisible();
+  await employeeReview.filter({has:page.getByText("New employee",{exact:true})}).getByRole("button", { name: "Review", exact: true }).click();
   await modal
     .getByRole("combobox", { name: "Action", exact: true })
     .selectOption("import_tenancy");
@@ -771,6 +787,10 @@ async function organizationFlows(page: Page) {
     await expect(page.getByText("Succeeded", { exact: true })).toBeVisible({
       timeout: 20_000,
     });
+    // Even the final tenancy deletion leaves every employee independently managed.
+    await page.getByRole("link",{name:"Organization",exact:true}).click();
+    await expect(page.getByRole("button",{name:"New Employee",exact:true})).toBeVisible();
+    await expect(page.getByRole("button",{name:"Leader One",exact:true})).toBeVisible();
   }
 }
 

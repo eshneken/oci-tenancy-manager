@@ -1115,3 +1115,30 @@ transaction rollback protections remain required. Native worker/loopback Mailpit
 exercise a non-onboarding deletion notice through the installed runtime roles and existing
 read-only delivery panel, category and export. No product fault-injection control is introduced.
 These are local simulation assertions; staging/production provider mail remains a manual gate.
+
+## Directory restoration and destructive consent — source correction, qualification pending
+
+[Workflow fields/rules](reference/organization-workflows.md#destructive-consent-and-directory-return-correction--source-checkpoint)
+and [manual review](how-to/organization-mapping-runbook.md#return-and-destructive-consent-correction-review-after-installation)
+require the following regression matrix, without weakening complete-census departure inference:
+
+- Fresh applied full and partial actual employee rows restore already-offboarded stable identities,
+  settle only handled absence on an immutable evaluation copy and open one setup episode as needed.
+  Cover legacy removed_capture_at=null with prior source/publication fallback and no absence cycle. Include merged survivor → cleanup → absence/explicit offboard → fresh current-email return, resolving canonical supplied rows to the retained stable UUID rather than immutable original org_person.email.
+- No restoration from references, stale/equal/replayed/staged/rejected/config-only evidence or while
+  pending, exempt or merged. Repeated presence creates no duplicate setup episode. No source/audit/
+  operation history, tenancy, user or association resurrection; role defects stay independently open.
+- Standalone whole/person tenancy deletion, member removal and owner transfer preserve directory
+  status/independent absence for both present and absent zero-link people, including review rows, source-derived absence flags and application-decision/reclassification paths. Source-present last-link
+  cleanup can set existing setup flags, without automatic provisioning or absence settlement.
+- Only explicit offboard_person for an actually absent eligible employee changes offboarding state;
+  current actual-row presence hides/refuses it. Root, kept-obligation and pending-work guards remain.
+- New admissions for exactly offboard_person/delete_tenancy/remove_member/transfer_owner/merge need
+  confirm_destructive=true. Missing/false consent produces no mutation/queue/audit transition. False
+  omission preserves old canonical hashes and current-authenticated exact committed replay precedes
+  the new guard; changed requests still conflict. Consent resets on action/target/plan/preview changes.
+- Separate TenancyDeletionCommand keeps its seven fields/confirm_deletion; DeletionPerson's seven
+  fields retain leaves_directory, always false. OrganizationAction has 21 fields; no storage change.
+- Unit, disposable PostgreSQL and actual browser coverage must include all cross-surface directory/
+  review/cache outcomes and consent UI/API negatives. Current notification parity work is preserved;
+  new full validation and saved-preview qualification are not claimed yet.

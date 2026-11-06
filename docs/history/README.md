@@ -30,3 +30,5 @@ Private original feeds, raw evidence, screenshots and machine-specific paths are
 - [Required users inventory summary: complete local qualification and preserved main update](required-users-summary-checkpoint-2026-11-06.md)
 
 - [Lifecycle notice parity source qualification](lifecycle-notice-parity-checkpoint-2026-11-06.md)
+
+- [Employee restoration and destructive-consent qualification](employee-restoration-consent-checkpoint-2026-11-06.md)

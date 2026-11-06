@@ -71,6 +71,14 @@ def feed(c, records):
 # Construct a real preview-bound command and preserve a request UUID across deliberate replay tests.
 def action(c, person, action_name, *, review_id=None, **fields):
     preview = c.workflow.preview(c.principal, person, review_id)
+    if action_name in {
+        "offboard_person",
+        "delete_tenancy",
+        "remove_member",
+        "transfer_owner",
+        "merge",
+    }:
+        fields.setdefault("confirm_destructive", True)
     if action_name == "create_tenancy":
         fields.setdefault("name", "sandbox" + uuid4().hex[:12])
         fields.setdefault("home_region", "us-ashburn-1")
@@ -225,6 +233,7 @@ def test_shared_membership_and_complete_offboarding(workflow_case):
                 "person_id": str(engineer),
                 "review_id": str(review.id),
                 "action": "offboard_person",
+                "confirm_destructive": True,
                 "plan": choices,
                 "confirm_shared": True,
             }
@@ -314,6 +323,31 @@ def test_identity_merge_preserves_associations_and_closes_pair(workflow_case):
     feed(c, rows)
     assert c.workflow.reviews(c.principal, ReviewQuery()).total == 0
     assert c.store.head(c.principal).people
+    # A merged survivor's original anchor email is not the current feed identity.
+    _, deletion = action(c, old, "delete_tenancy", tenancy_id=before[0].tenancy_id)
+    c.worker.run(deletion.operation_id)
+    feed(c, tuple(r for r in rows if r.email != renamed.email))
+    absence = next(
+        r
+        for r in c.workflow.reviews(c.principal, ReviewQuery()).items
+        if r.kind == "PERSON_ABSENCE_REVIEW" and r.person_id == old
+    )
+    action(c, old, "offboard_person", review_id=absence.id, confirm_no_associations=True)
+    assert c.workflow.preview(c.principal, old).directory_status == "offboarded"
+    feed(c, rows)
+    restored = c.workflow.preview(c.principal, old)
+    assert restored.directory_status == "included" and restored.person.email == renamed.email
+    assert restored.associations == ()
+    assert (
+        len(
+            [
+                r
+                for r in c.workflow.reviews(c.principal, ReviewQuery()).items
+                if r.kind == "TENANCY_SETUP_REVIEW" and r.person_id == old
+            ]
+        )
+        == 1
+    )
 
 
 # Fixed source warnings close automatically and identical later recurrence begins a distinct dated
@@ -474,9 +508,8 @@ def test_shared_owner_transfer_promotes_existing_member(workflow_case):
     assert next(a for a in detail.memberships if a.status == "active").role == "owner"
 
 
-# A source-present deletion stays closed until a later complete omission and then confirmed
-# reappearance.
-def test_present_offboard_then_later_absence_and_return(workflow_case):
+# Source-present tenancy cleanup keeps directory presence and opens one new onboarding episode.
+def test_present_last_tenancy_deletion_preserves_employee(workflow_case):
     c = workflow_case
     p = next(p for p in c.store.head(c.principal).people if p.email == "engineer@example.test")
     _, receipt = action(c, p.id, "create_tenancy", name="presentownerchild")
@@ -484,20 +517,19 @@ def test_present_offboard_then_later_absence_and_return(workflow_case):
     tenant = c.workflow.tenancies(c.principal, TenancyQuery()).items[0]
     _, deleted = action(c, p.id, "delete_tenancy", tenancy_id=tenant.id)
     c.worker.run(deleted.operation_id)
-    feed(c, example_records())
-    assert c.workflow.preview(c.principal, p.id).directory_status == "offboarded"
-    assert not any(
-        r.kind == "TENANCY_SETUP_REVIEW"
-        for r in c.workflow.reviews(c.principal, ReviewQuery()).items
-    )
-    feed(c, tuple(r for r in example_records() if r.email != p.email))
-    feed(c, example_records())
     assert c.workflow.preview(c.principal, p.id).directory_status == "included"
-    assert ("PERSON_ABSENCE_REVIEW", p.email) not in c.store.inspection(c.principal)[4]
-    assert any(
-        r.kind == "TENANCY_SETUP_REVIEW" and r.person_id == p.id
+    feed(c, example_records())
+    first = next(
+        r
         for r in c.workflow.reviews(c.principal, ReviewQuery()).items
+        if r.person_id == p.id and r.kind == "TENANCY_SETUP_REVIEW"
     )
+    feed(c, example_records())
+    reviews = c.workflow.reviews(c.principal, ReviewQuery()).items
+    assert [r.id for r in reviews if r.person_id == p.id and r.kind == "TENANCY_SETUP_REVIEW"] == [
+        first.id
+    ]
+    assert c.workflow.tenancies(c.principal, TenancyQuery()).total == 0
 
 
 # Cancelling an absence handoff restores its original episode; the queued job cannot act.
@@ -644,7 +676,7 @@ def test_delete_shared_tenancy_complete_impact_and_replay(workflow_case):
     preview = c.workflow.deletion_preview(c.principal, row.id)
     assert len(preview.people) == 3 and preview.shared_warning and preview.manager_warning
     assert next(p for p in preview.people if p.person_id == engineer).other_tenancy_count == 1
-    assert next(p for p in preview.people if p.person_id == delegate).leaves_directory
+    assert not next(p for p in preview.people if p.person_id == delegate).leaves_directory
     command = TenancyDeletionCommand(
         client_request_key=uuid4(),
         tenancy_id=row.id,
@@ -665,7 +697,8 @@ def test_delete_shared_tenancy_complete_impact_and_replay(workflow_case):
     final = c.workflow.tenancy_detail(c.principal, row.id)
     assert final.tenancy.status == "terminated" and final.tenancy.operation_state == "succeeded"
     assert all(a.status == "removed" for a in final.memberships)
-    assert c.workflow.preview(c.principal, delegate).directory_status == "offboarded"
+    assert c.workflow.preview(c.principal, delegate).directory_status == "included"
+    assert c.workflow.preview(c.principal, owner).directory_status == "included"
     assert c.workflow.preview(c.principal, engineer).directory_status == "included"
     assert any(
         r.person_id == engineer and r.kind == "PERSON_ABSENCE_REVIEW"

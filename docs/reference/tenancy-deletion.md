@@ -9,9 +9,7 @@
 
 Open **Tenancies → tenancy name → Delete tenancy**. This is a tenancy-level decision and works for
 both individual and shared registered children. The preview shows exact child/parent OCIDs, every
-registered owner/member, their last-known manager role, other current tenancy associations and whether
-removing this final association will take them out of the managed directory. The configured
-organization root remains in the directory. Source and audit history are retained.
+registered owner/member, their last-known manager role and other current tenancy associations. Removing this tenancy never removes anyone from the managed directory, including absent people with no other associations. Explicit absent-person offboarding is a separate decision; the configured root remains protected. Source and audit history are retained.
 
 The list is OTM’s tracked associations, not a complete inventory of OCI users an owner may have created.
 The action initiates termination of the **entire tenancy and its resources**, including untracked users. It is different from
@@ -25,11 +23,15 @@ These remain tracked obligations. Successful **simulated termination initiation*
 links and marks the tenancy `terminated` (the UI says Termination initiated). This does not mean OCI
 has completed permanent deletion. V1 does not wait 30 days or monitor final resource destruction.
 
-Each person's other associations are checked independently. A person with other active/pending/
-removing associations stays in the managed directory; a last-link person becomes `offboarded`.
-Existing directory states on people with remaining obligations are preserved. Remaining absence
-work is not dismissed merely because one shared tenancy was deleted. Last-link absence/setup cases
-close only after successful publication. No source identity, snapshot or audit record is deleted.
+Each person's associations remain independently tracked, but whole-tenancy termination preserves
+their existing directory status and removed_capture_at. It never settles an independent absence
+review, even when this was the last association and the employee is absent. For an included,
+source-present person losing their final association, existing setup flags can mark onboarding as
+needed for the next organization reconciliation without changing source identity or creating a
+replacement tenancy. Explicit Offboard employee remains separate and is refused while an actual
+current employee row is present. No source snapshot, audit history or completed association is
+rewritten or restored.
+
 
 Failures keep the tenancy and every mapping visible as pending work. A second deletion cannot bypass
 that reservation. Before any known simulated effect, the existing owner-context Cancel local
@@ -61,11 +63,10 @@ There is no new table, column or migration. The existing 14-table schema support
 | Exact target IDs/roles/bindings | Existing FrozenAssociation tenancy/user/compartment/revision fields, not browser-supplied member targets. |
 | Pending deletion | Existing tenancy `status=terminating`, memberships `status=removing`, person/link/tenancy operation pointers. |
 | Verified local initiation | Existing lifecycle outcome, tenancy status/time and removed membership history. |
-| Per-person final disposition | Existing `org_person.directory_status`/pending pointer/absence capture boundary; derived from remaining obligations and protected root. |
-| Related cases/history | Existing `org_recommendation`, scoped last-link case closure and one lifecycle-history item per affected person. |
+| Per-person final disposition | Existing directory_status and absence capture boundary are preserved; release the operation reservation. Existing setup flags may mark source-present last-link onboarding as needed, without offboarding or new infrastructure. |
+| Related cases/history | Existing lifecycle-history items remain. Standalone termination does not close independent absence decisions or role/mapping defects merely because no association remains. |
 
-The restricted worker gains only UPDATE(status,resolved_at,resolution,operation_id) on review rows
-for these scoped closures. Existing API/worker roles remain separate; no auth-secret permission is
+Historical worker review-column privileges remain bounded; the current termination path does not use association cleanup to settle independent absence decisions. Existing API/worker roles remain separate; no auth-secret permission is
 added. Real OCI deletion and its credential/parentage qualification remain behind the facade design.
 
 ## Complete public contract dictionary
@@ -73,7 +74,7 @@ added. Real OCI deletion and its credential/parentage qualification remain behin
 | Contract | Every field | Meaning/defaults |
 |---|---|---|
 | `TenancyDeletionCommand` (7) | `kind`, `client_request_key`, `tenancy_id`, `context`, `confirm_manager`, `confirm_shared`, `confirm_deletion` | Fixed kind delete_registered_tenancy; request UUID, registered UUID, full org/registry context. Confirmations default `false`. UI sends warning acknowledgments only after visible impact review and explicit consent. |
-| `DeletionPerson` (7) | `person_id`, `name`, `email`, `role`, `is_manager`, `other_tenancy_count`, `leaves_directory` | Server-derived stable identity, current/last-known labels/role and consequences. Other count excludes this target and includes outstanding obligations. Root has leaves_directory=false. |
+| `DeletionPerson` (7) | `person_id`, `name`, `email`, `role`, `is_manager`, `other_tenancy_count`, `leaves_directory` | Server-derived stable identity, current/last-known labels/role and consequences. Other count excludes this target and includes outstanding obligations. leaves_directory is retained for compatibility and is always false for every person; this operation never offboards anyone. |
 | `TenancyDeletionPreview` (5) | `context`, `tenancy`, `people`, `manager_warning`, `shared_warning` | Current fenced context, registered TenancyView, complete affected people and required warning flags. |
 
 `GET /api/tenancies/{id}/deletion-preview` is read-only. `POST /api/tenancy-deletions` accepts at most
@@ -87,3 +88,12 @@ are disabled during preview refresh. Unchanged uncertain retries retain request 
 Reload preview requires new consent. Cancel/Escape closes the native dialog and restores focus.
 On sign-out/expiry, one central private-query inventory cancels/removes onboarding/deletion and
 other privileged caches. No private preview survives into another administrator's session.
+
+## Directory/consent correction — source checkpoint
+
+Qualification/reviews and preview updates are pending for the correction above. Existing
+TenancyDeletionCommand still has seven fields and requires confirm_deletion with manager/shared
+impact acknowledgments. Its preview change is semantic only: DeletionPerson.leaves_directory is
+always false. Person-centric OrganizationAction deletion separately requires the new explicit
+confirm_destructive acknowledgment; authenticated exact historical replay retains its receipt.
+No new table, migration or field is added to the tenancy-level deletion API.

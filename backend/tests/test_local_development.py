@@ -134,6 +134,10 @@ def test_owned_database_setup(tmp_path, local_state, existing, role_exists):
         migrate.assert_called_once()
         statements = [call.args[0] for call in connection.exec_driver_sql.call_args_list]
         assert "GRANT UPDATE(id) ON public.otm_administrator TO otm_local_worker" in statements
+        assert (
+            "GRANT UPDATE(directory_status,pending_operation_id,removed_capture_at,"
+            "setup_required,setup_episode_id) ON public.org_person TO otm_local_worker"
+        ) in statements
         assert not any("GRANT UPDATE ON public.otm_administrator" in text for text in statements)
         assert connection.connection.driver_connection.execute.call_count == (
             0 if role_exists else 2

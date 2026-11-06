@@ -250,7 +250,7 @@ unchanged. Independent whole-flow responsive/UI review and final test evidence a
 
 ## Tenancy detail deletion — 31 October2026
 
-[DeleteTenancy](../frontend/src/DeleteTenancy.tsx) is the current local runtime action for whole-tenancy impact review on both individual and shared child detail. The wrapping person list shows other association counts/directory outcomes; one explicit confirmation follows manager/shared warnings. It reuses shared native dialog/checkbox controls and links accepted work to Operations. This does not change shared-member removal or introduce real OCI effects.
+[DeleteTenancy](../frontend/src/DeleteTenancy.tsx) is the current local runtime action for whole-tenancy impact review on both individual and shared child detail. The wrapping person list shows other association counts and explicitly unchanged employee directory status; one explicit confirmation follows manager/shared warnings. It reuses shared native dialog/checkbox controls and links accepted work to Operations. This does not change shared-member removal or introduce real OCI effects.
 
 ## Create request metadata and completion — 31 October2026
 
@@ -702,3 +702,22 @@ inside the existing active-tenancy Status cell. It names the exact child's Requi
 focuses the actual section heading after terminal success/503 (never 401/403), retains each account's UTC state/time in title/accessible text
 and distinguishes simulation from permissions. Checking is secondary; fresh dated Missing, invalid positive provenance/unavailable, stale, Unknown/unavailable, both fresh dated Present and Not checked use the documented order. Configured corruption is not a clean default. Inventory Config: and Users: prefixes match visible/ARIA labels; detail configuration labels are unchanged. Container-relative hidden descriptions preserve body containment at 320 pixels. No new nav/column/filter
 or attention badge is added. Local qualification and the preserved-data main update pass; the parallel preview is unchanged. [Final summary receipt](history/required-users-summary-checkpoint-2026-11-06.md). Earlier qualified manual-check UI retains its original scope.
+
+
+## Employee restoration and destructive consent — 6 November 2026
+
+Current React PersonActions is authoritative for the five destructive person actions: employee
+offboarding, tenancy termination, shared-member removal, ownership transfer and identity merge.
+Each shows named targets and consequences, an initially unchecked acknowledgment and a danger
+submit control. Action/person/target/recipient/plan/preview changes clear consent; the browser
+and server enforce it independently. Existing manager/shared/empty-association warnings remain.
+The [workflow reference](reference/organization-workflows.md) maps the new request flag and
+historical replay rule. Readonly/refetch failures cannot mask another query's authorization loss.
+
+DeleteTenancy retains its separate explicit checkbox. Both whole-tenancy and person-centric
+cleanup preserve employee directory status and independent absence work, even at zero associations.
+Only explicit absent-person offboarding changes that status. Fresh positive full/partial employee
+rows can later restore directory/onboarding, never deleted infrastructure or access. Review
+checkbox/control frames at 1280/390/320 are locally visually approved. Complete local runtime
+qualification and the preserved-data main-preview upgrade pass; the parallel preview is unchanged.
+See the [final receipt](history/employee-restoration-consent-checkpoint-2026-11-06.md).

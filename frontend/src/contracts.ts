@@ -590,6 +590,7 @@ export type Action1 =
   | "cancel_simulation";
 export type ClientRequestKey8 = string;
 export type CompartmentName = string | null;
+export type ConfirmDestructive = boolean;
 export type ConfirmManager1 = boolean;
 export type ConfirmNoAssociations = boolean;
 export type ConfirmShared1 = boolean;
@@ -1742,6 +1743,7 @@ export interface OrganizationAction {
   action: Action1;
   client_request_key: ClientRequestKey8;
   compartment_name?: CompartmentName;
+  confirm_destructive?: ConfirmDestructive;
   confirm_manager?: ConfirmManager1;
   confirm_no_associations?: ConfirmNoAssociations;
   confirm_shared?: ConfirmShared1;

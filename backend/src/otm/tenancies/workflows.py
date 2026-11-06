@@ -27,6 +27,7 @@ from otm.storage.tables import (
     tenancy_membership,
 )
 from otm.tenancies.contracts import (
+    DESTRUCTIVE_ACTIONS,
     ActionReceipt,
     AssociationChoice,
     FrozenAssociation,
@@ -410,8 +411,7 @@ class OrganizationWorkflows:
                         role=item.role,
                         is_manager=person.known_manager,
                         other_tenancy_count=other,
-                        leaves_directory=other == 0
-                        and person.email != state.config.policy.root_email,
+                        leaves_directory=False,
                     )
                 )
             return TenancyDeletionPreview(
@@ -655,6 +655,9 @@ class OrganizationWorkflows:
             )
             if command.action not in preview.actions:
                 raise OrganizationConflict("ORGANIZATION_ACTION_UNAVAILABLE")
+            # Accepted retries return above; every new destructive admission needs explicit consent.
+            if command.action in DESTRUCTIVE_ACTIONS and not command.confirm_destructive:
+                raise OrganizationConflict("DESTRUCTIVE_CONFIRMATION_REQUIRED")
             person = state.people[command.person_id]
             review = next((r for r in state.reviews if r["id"] == command.review_id), None)
             config = state.config
@@ -707,7 +710,16 @@ class OrganizationWorkflows:
 
     # Close related onboarding/absence/LOB cases only for the explicitly decided stable identity.
     def _close_related(
-        self, connection, state, identifiers, action, at, operation_id=None, *, include_lob=False
+        self,
+        connection,
+        state,
+        identifiers,
+        action,
+        at,
+        operation_id=None,
+        *,
+        include_lob=False,
+        include_absence=True,
     ):
         connection.execute(
             update(org_recommendation)
@@ -716,7 +728,8 @@ class OrganizationWorkflows:
                 org_recommendation.c.person_id.in_(identifiers),
                 org_recommendation.c.status == "open",
                 org_recommendation.c.kind.in_(
-                    ("TENANCY_SETUP_REVIEW", "PERSON_ABSENCE_REVIEW")
+                    ("TENANCY_SETUP_REVIEW",)
+                    + (("PERSON_ABSENCE_REVIEW",) if include_absence else ())
                     + (("LOB_MAPPING_REVIEW",) if include_lob else ())
                 ),
             )
@@ -730,6 +743,8 @@ class OrganizationWorkflows:
         # A tenancy exemption preserves the source graph; offboarding the boundary is forbidden.
         if action == "offboard_person" and person.email == state.config.policy.root_email:
             raise OrganizationConflict("ORGANIZATION_ROOT_PROTECTED")
+        if action == "offboard_person" and person.email in state.supplied:
+            raise OrganizationConflict("PERSON_NOT_ABSENT")
         if action == "ignore" and (review is None or review["kind"] != "LOB_MAPPING_REVIEW"):
             raise OrganizationConflict("IGNORE_REQUIRES_LOB_REVIEW")
         config = (
@@ -744,7 +759,9 @@ class OrganizationWorkflows:
             values = dict(
                 directory_status="exempt" if action == "no_tenancy_required" else "offboarded",
                 setup_required=False,
-                removed_capture_at=state.head.source_captured_at if person.absence_review else None,
+                removed_capture_at=state.head.source_captured_at
+                if action == "offboard_person"
+                else None,
             )
             self._close_related(connection, state, (person.id,), action, at, include_lob=True)
         elif action == "reonboard":
@@ -1367,10 +1384,22 @@ class OrganizationWorkflows:
                 .values(pending_operation_id=key)
             )
         else:
+            # Association cleanup does not settle the independent employee absence decision.
             self._close_related(
-                connection, state, (person.id,), command.action, at, operation_id=key
+                connection,
+                state,
+                (person.id,),
+                command.action,
+                at,
+                operation_id=key,
+                include_absence=command.action
+                not in {"delete_tenancy", "remove_member", "transfer_owner"},
             )
-        if review and review["kind"] == "PERSON_ABSENCE_REVIEW":
+        if (
+            review
+            and review["kind"] == "PERSON_ABSENCE_REVIEW"
+            and command.action == "offboard_person"
+        ):
             config = self._decide(
                 state.config, state, review, person, command.action, principal.actor, at
             )

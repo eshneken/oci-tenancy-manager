@@ -13,6 +13,7 @@ import type {
 import { followLink } from "./navigation";
 
 type Action = OrganizationAction["action"];
+const destructiveActions = new Set<Action>(["offboard_person", "delete_tenancy", "remove_member", "transfer_owner", "merge"]);
 const labels: Record<Action, string> = {
   create_tenancy: "Create tenancy",
   import_tenancy: "Import tenancy",
@@ -30,6 +31,7 @@ const labels: Record<Action, string> = {
   cancel_simulation: "Cancel local simulation",
 };
 const guidance: Record<string, string> = {
+  DESTRUCTIVE_CONFIRMATION_REQUIRED: "Review the action and acknowledge its consequences before continuing.",
   SIMULATION_ALREADY_FINISHED:
     "This simulation has already finished or changed. Reload the preview before making another decision.",
   SHARED_COMPARTMENT_NAME_REQUIRED:
@@ -69,6 +71,7 @@ const guidance: Record<string, string> = {
     "These identities have conflicting organization overrides. Resolve those before merging.",
   ORGANIZATION_ROOT_PROTECTED:
     "The configured organization root cannot be removed from the managed directory.",
+  PERSON_NOT_ABSENT: "This employee is present in the current feed and cannot be offboarded. Reload the preview.",
 };
 
 // Invalidate every related read model after an application decision or durable operation acceptance.
@@ -139,6 +142,7 @@ export function PersonActions({
       }
     >
   >({});
+  const [consent, setConsent] = useState<string | null>(null);
   const [confirmEmpty, setConfirmEmpty] = useState(false);
   const [confirmManager, setConfirmManager] = useState(false);
   const [confirmShared, setConfirmShared] = useState(false);
@@ -183,8 +187,8 @@ export function PersonActions({
     return () => controller.current?.abort();
   }, []);
   useEffect(() => {
-    const failure = preview.error ?? selectedDetail.error;
-    if (failure instanceof ApiError && [401, 403].includes(failure.status))
+    if ([preview.error, selectedDetail.error].some(
+      failure => failure instanceof ApiError && [401, 403].includes(failure.status)))
       expired();
   }, [preview.error, selectedDetail.error, expired]);
   useEffect(() => {
@@ -228,6 +232,12 @@ export function PersonActions({
           action,
         ) && target?.tenancy_kind === "shared"),
   );
+  const destructive = action !== "" && destructiveActions.has(action);
+  // Consent is specific to the whole displayed review, not merely to a button or employee.
+  const consentContext = JSON.stringify({personId, reviewId, action, selectedTenancy, recipient,
+    partner, plan, context:data?.context, associations:data?.associations, previewAt:preview.dataUpdatedAt});
+  const acknowledged = consent === consentContext;
+  useEffect(() => { setConsent(null); }, [consentContext]);
   const provisioning = action === "create_tenancy" || action === "import_tenancy";
   const controls = action !== "" && Boolean(data?.actions.includes(action)) && (!provisioning || Boolean(data?.current_baseline));
 
@@ -260,6 +270,7 @@ export function PersonActions({
 
   // Re-fetch an expired preview instead of applying choices to a newer organization implicitly.
   async function reload() {
+    setConsent(null);
     setError("");
     setReceipt(null);
     await preview.refetch();
@@ -309,6 +320,7 @@ export function PersonActions({
       }));
       body.confirm_no_associations = confirmEmpty;
     }
+    if (destructive) body.confirm_destructive = acknowledged;
     body.confirm_manager = confirmManager;
     body.confirm_shared = confirmShared;
     return body;
@@ -316,7 +328,10 @@ export function PersonActions({
 
   // An accepted workflow is tracked elsewhere; only application-only receipts claim immediate completion.
   async function submit() {
-    if (!data || !controls) return;
+    if (!data || !controls || busy || preview.isError || preview.isFetching
+      || (destructive && !acknowledged)
+      || (managerWarning && !confirmManager) || (sharedWarning && !confirmShared)
+      || (action === "offboard_person" && data.associations.length === 0 && !confirmEmpty)) return;
     let body: OrganizationAction;
     try {
       body = command(data);
@@ -849,9 +864,11 @@ export function PersonActions({
                           </label>
                         )}
                         <p className="notice">
-                          The employee leaves the managed directory only after
-                          their last association has been removed. Kept
-                          associations remain mapped outside the organization.
+                          This explicitly offboards the employee. After the selected work
+                          completes, they leave the managed directory if no associations
+                          remain; kept associations stay mapped outside the organization.
+                          A later fresh feed containing their employee row can restore
+                          directory presence, but never deleted tenancies, accounts or access.
                           The tenancy owner reviews the departing user's resources
                           manually. Shared compartments and other members' resources
                           are retained.
@@ -958,6 +975,24 @@ export function PersonActions({
                         cleanup responsibilities.
                       </label>
                     )}
+                    {destructive && (
+                      <div className="alert destructive-confirmation">
+                        <p><strong>Review destructive action</strong></p>
+                        <p id="workflow-destructive-consequences">
+                          {action === "offboard_person" && <>Offboard {data.person.name} ({data.person.email}) using every association choice shown above. Kept associations remain tracked outside the organization.</>}
+                          {action === "delete_tenancy" && <>Initiate termination of {target?.tenancy_name ?? "the selected tenancy"} and its resources. Remove this tenancy association for {data.person.name} ({data.person.email}); employee directory status is unchanged.</>}
+                          {action === "remove_member" && <>Remove {data.person.name} ({data.person.email}) from {target?.tenancy_name ?? "the selected tenancy"}, including their user account and group access. Resources and compartments remain for manual cleanup. Employee directory status is unchanged.</>}
+                          {action === "transfer_owner" && <>Transfer {target?.tenancy_name ?? "the selected tenancy"} from {data.person.name} ({data.person.email}) to {data.transfer_recipients.find(p=>p.id===recipient)?.name ?? "the selected new owner"} ({data.transfer_recipients.find(p=>p.id===recipient)?.email ?? "choose a recipient"}). Apply the ownership and association changes reviewed above.</>}
+                          {action === "merge" && <>Merge {data.person.name} ({data.person.email}) with {data.merge_partners.find(p=>p.id===partner)?.name ?? "the selected identity"} ({data.merge_partners.find(p=>p.id===partner)?.email ?? "choose an identity"}). This is a one-way identity remap: the absent identity survives and keeps its tenancy associations.</>}
+                        </p>
+                        <label className="workflow-check">
+                          <input type="checkbox" required disabled={busy || preview.isFetching}
+                            aria-describedby="workflow-destructive-consequences" checked={acknowledged}
+                            onChange={event=>{setConsent(event.target.checked ? consentContext : null);setError("");}} />
+                          <span>I acknowledge the consequences of this action for the identified employee and tenancies.</span>
+                        </label>
+                      </div>
+                    )}
                     {error && (
                       <div className="alert" role="alert">
                         <p>{error}</p>
@@ -981,8 +1016,11 @@ export function PersonActions({
                         Cancel
                       </button>
                       <button
-                        className="button primary"
-                        disabled={busy || !controls || !validCreation}
+                        className={destructive ? "button danger" : "button primary"}
+                        disabled={busy || !controls || !validCreation || preview.isFetching
+                          || (destructive && !acknowledged)
+                          || (managerWarning && !confirmManager) || (sharedWarning && !confirmShared)
+                          || (action === "offboard_person" && data.associations.length === 0 && !confirmEmpty)}
                       >
                         {busy
                           ? "Saving…"

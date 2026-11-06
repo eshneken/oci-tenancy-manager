@@ -157,6 +157,8 @@ def service(state):
 # Preview commands carry exact context rather than trusting any browser-provided role or owner
 # label.
 def command(state, p, action, **fields):
+    if action in {"offboard_person", "delete_tenancy", "remove_member", "transfer_owner", "merge"}:
+        fields.setdefault("confirm_destructive", True)
     if action == "create_tenancy":
         fields.setdefault("home_region", "us-ashburn-1")
     return OrganizationAction(
@@ -466,10 +468,16 @@ def test_metadata_decision_transitions_and_guards(registry):
     )
     changed = connection.execute.call_args.args[0].compile().params
     assert changed["directory_status"] == "exempt" and not changed["setup_required"]
+    with pytest.raises(OrganizationConflict, match="PERSON_NOT_ABSENT"):
+        app._application_decision(
+            connection, s, command(s, p, "offboard_person"), p, None, actor, NOW
+        )
+    s.supplied.remove(p.email)
     with pytest.raises(OrganizationConflict, match="REVIEW_ALL"):
         app._application_decision(
             connection, s, command(s, p, "offboard_person"), p, None, actor, NOW
         )
+    s.supplied.add(p.email)
     root = person(s, "root@example.test")
     with pytest.raises(OrganizationConflict, match="ROOT_PROTECTED"):
         app._application_decision(
@@ -596,7 +604,10 @@ def test_worker_binding_publication_and_verified_deletion(registry):
         for call in connection.execute.call_args_list
         if getattr(call.args[0], "is_update", False)
     ]
-    assert any(values.get("directory_status") == "offboarded" for values in updates)
+    assert any(
+        values.get("directory_status") == "included" and values.get("setup_required")
+        for values in updates
+    )
     assert any(values.get("status") == "terminated" for values in updates)
     worker._finish(
         connection,
@@ -697,8 +708,7 @@ def list_result(rows):
     return result
 
 
-# The explicit absence-to-return rule differs from continuous-presence deletion and stable
-# exemptions.
+# Fresh explicit rows restore offboarded directory presence while preserving deliberate exemptions.
 def test_managed_directory_return_and_exemption_rules(registry):
     from otm.organization.reviews import directory_transitions
 
@@ -708,7 +718,8 @@ def test_managed_directory_return_and_exemption_rules(registry):
         directory_status="offboarded", removed_capture_at=NOW - timedelta(days=1)
     )
     connection.execute.return_value.mappings.return_value = list_result(s.controls.values())
-    changed = directory_transitions(connection, s.workspace, s.head, s.head, s.supplied)
+    current = s.head.model_copy(update={"source_captured_at": NOW + timedelta(seconds=1)})
+    changed = directory_transitions(connection, s.workspace, current, s.head, s.supplied)
     assert changed[p.id]["setup_required"] and changed[p.id]["directory_status"] == "included"
     s.controls[p.id].update(directory_status="exempt", removed_capture_at=None)
     connection = database()
@@ -1043,7 +1054,7 @@ def test_return_history_is_working_copy_and_preserves_predecessor(registry):
     )
     connection = database()
     connection.execute.return_value.mappings.return_value = list_result(
-        (dict(id=p.id, removed_capture_at=NOW),)
+        ({**s.controls[p.id], "directory_status": "offboarded", "removed_capture_at": NOW},)
     )
     settled = qualified_return_history(connection, s.workspace, prior, candidate, s.supplied)
     assert (
@@ -1057,7 +1068,9 @@ def test_return_history_is_working_copy_and_preserves_predecessor(registry):
             connection,
             s.workspace,
             prior,
-            candidate.model_copy(update={"absence_eligible": False}),
+            candidate.model_copy(
+                update={"envelope": candidate.envelope.model_copy(update={"captured_at": NOW})}
+            ),
             s.supplied,
         )
         is prior
@@ -1355,6 +1368,9 @@ def test_unmapped_preview_blocks_only_provisioning(registry):
     attach(s, p)
     assert "delete_tenancy" in person_workflow(s, p.id, mode="simulated").actions
     s.people[p.id] = s.people[p.id].model_copy(update={"absence_review": True})
+    assert "offboard_person" not in person_workflow(s, p.id, mode="simulated").actions
+    assert "mark_returned" in person_workflow(s, p.id, mode="simulated").actions
+    s.supplied.remove(p.email)
     assert "offboard_person" in person_workflow(s, p.id, mode="simulated").actions
     root = person(s, "root@example.test")
     assert not person_workflow(s, root.id, mode="simulated").mapping_required

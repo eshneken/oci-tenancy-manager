@@ -29,7 +29,7 @@ is in [the engineering chapters](../engineering-design/README.md).
 - [Organization Mapping implementation and operator guide](organization-mapping.md), including [root manager names](organization-mapping.md#root-manager-display-name)
 - [Organization directory and CSV intake](organization-screens.md)
 - [Production organization snapshot storage](organization-storage.md)
-- [Organization reviews and tenancy workflows](organization-workflows.md)
+- [Organization reviews and tenancy workflows](organization-workflows.md), including [fresh directory return and destructive consent](organization-workflows.md#destructive-consent-and-directory-return-correction--source-checkpoint) — correction qualification pending
 - [Guided onboarding responsibility takeover](responsibility.md)
 - [Submit and run a simulated inspection](simulation.md)
 - [Delete an individual or shared tenancy](tenancy-deletion.md)

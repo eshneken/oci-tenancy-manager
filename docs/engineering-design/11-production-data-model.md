@@ -2055,3 +2055,20 @@ exact-child deep link; heading focus follows terminal success or nonauthorizatio
 never 401/403. Inventory Config: and Users: labels/ARIA names are distinct, while detail configuration
 labels retain context. Relative hidden-description positioning preserves the actual 320-pixel body
 width without page-level clipping. Final summary qualification and the preserved-data main update pass.
+
+
+## Directory restoration and destructive consent — 6 November 2026
+
+The [implemented workflow reference](../reference/organization-workflows.md) uses existing
+org_person directory/setup/episode/removal-capture/pending fields and immutable revisions. Fresh
+applied full/partial employee rows map to canonical stable IDs; original anchor emails are not
+return keys after a merge. Only directory/onboarding state can return, never provider bindings,
+tenancies, memberships or credentials. Standalone association cleanup never offboards employees
+or resolves their absence work. Only explicit actually-absent employee offboarding changes that
+status. No table/column/migration is added.
+
+OrganizationAction adds the optional omitted-false confirm_destructive field; five destructive
+person commands require true only on new admission after exact authenticated replay lookup. This
+is a request field committed through the existing request digest, not a new database column.
+The separate TenancyDeletionCommand retains confirm_deletion. DeletionPerson.leaves_directory
+is retained as an always-false compatibility field; tenancy deletion cannot remove an employee.

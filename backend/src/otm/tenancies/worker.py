@@ -391,7 +391,9 @@ class OrganizationLifecycleWorker:
             raise LifecycleBlocked(
                 "PERSON_RETURNED" if intent.person_was_absent else "TARGET_CHANGED"
             )
-        if intent.person_was_absent and person.email in state.supplied:
+        if (
+            intent.person_was_absent or intent.action == "offboard_person"
+        ) and person.email in state.supplied:
             raise LifecycleBlocked("PERSON_RETURNED")
         if (
             any(a.action == "delete" for a in intent.associations)
@@ -651,21 +653,18 @@ class OrganizationLifecycleWorker:
                 tenancy_membership.c.status.in_(("active", "pending", "removing")),
             )
         ).first()
-        status = "included"
         person = state.people[intent.target.person_id]
-        if intent.action in {
-            "offboard_person",
-            "remove_member",
-            "delete_tenancy",
-            "transfer_owner",
-        }:
-            status = (
-                "offboarded"
-                if remaining is None
-                else "outside"
-                if intent.action == "offboard_person" or intent.person_was_absent
-                else "included"
-            )
+        control = state.controls[person.id]
+        status = control["directory_status"]
+        # Only explicit offboarding changes directory presence; association work never does.
+        if intent.action == "offboard_person":
+            status = "offboarded" if remaining is None else "outside"
+        needs_setup = (
+            remaining is None
+            and status == "included"
+            and person.email in state.supplied
+            and not control["setup_required"]
+        )
         connection.execute(
             update(org_person)
             .where(
@@ -676,8 +675,9 @@ class OrganizationLifecycleWorker:
                 directory_status=status,
                 pending_operation_id=None,
                 removed_capture_at=state.head.source_captured_at
-                if status == "offboarded" and intent.person_was_absent
-                else None,
+                if intent.action == "offboard_person"
+                else control["removed_capture_at"],
+                **({"setup_required": True, "setup_episode_id": uuid4()} if needs_setup else {}),
             )
         )
         for recipient_id in {

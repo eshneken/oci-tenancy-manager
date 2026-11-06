@@ -676,6 +676,22 @@ def test_installed_identity_binding_roles(runtime):
     worker = maintenance_engine(database_url(c.state, worker=True), None)
     try:
         with worker.connect() as connection:
+            for column in ("setup_required", "setup_episode_id"):
+                assert connection.scalar(
+                    text(
+                        "SELECT has_column_privilege(current_user,"
+                        "'public.org_person',:column,'UPDATE')"
+                    ),
+                    {"column": column},
+                )
+            for column in ("email", "workspace_id", "id"):
+                assert not connection.scalar(
+                    text(
+                        "SELECT has_column_privilege(current_user,"
+                        "'public.org_person',:column,'UPDATE')"
+                    ),
+                    {"column": column},
+                )
             assert connection.scalar(
                 text(
                     "SELECT has_table_privilege(current_user,"

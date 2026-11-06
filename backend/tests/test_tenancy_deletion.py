@@ -114,7 +114,8 @@ def test_publication_preserves_other_tenancies_and_records_each_person(registry)
         for call in connection.execute.call_args_list
         if getattr(call.args[0], "is_update", False)
     ]
-    assert any(v.get("directory_status") == "offboarded" for v in updates)
+    assert not any(v.get("directory_status") == "offboarded" for v in updates)
+    assert any(v.get("setup_required") for v in updates)
     assert any(v.get("directory_status") == "included" for v in updates)
     assert any(v.get("status") == "terminated" for v in updates)
     with pytest.raises(LifecycleBlocked):

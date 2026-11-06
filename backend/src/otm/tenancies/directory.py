@@ -574,7 +574,7 @@ def person_workflow(state, identifier, *, mode, review_id=None):
         ):
             actions = ["reonboard"]
         elif person.absence_review or control["directory_status"] == "outside":
-            actions = ["offboard_person"]
+            actions = [] if person.email in state.supplied else ["offboard_person"]
             if person.email in state.supplied:
                 actions.append("mark_returned")
             actions.append("merge")
