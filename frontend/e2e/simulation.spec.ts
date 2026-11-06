@@ -430,6 +430,24 @@ async function organizationFlows(page: Page) {
       await expect(page.getByText("Completed", { exact: true }).first()).toBeVisible();
       await page.goto(childUrl);
       await expect(users.getByText("Present", { exact: true })).toHaveCount(2);
+      // The consolidated inventory reuses these exact stored facts and deep-links with focus.
+      const childName=await page.getByRole("heading",{level:1}).textContent();
+      await page.getByRole("link",{name:"Tenancies",exact:true}).click();
+      const inventoryRow=page.getByRole("row").filter({has:page.getByRole("link",{name:childName!,exact:true})});
+      const summary=inventoryRow.getByRole("link",{name:`Users: 2/2 present for ${childName}`});
+      await expect(summary).toHaveAttribute("href",new URL(childUrl).pathname+"#required-users");
+      await expect(summary).toHaveAccessibleDescription(/Permissions are not checked/);
+      for(const width of [1280,768,390,320]){
+        await page.setViewportSize({width,height:900});
+        await page.getByRole("table").scrollIntoViewIfNeeded();
+        await page.screenshot({path:resolve(".local-dev/browser",`required-user-inventory-${action === "Create tenancy" ? "create" : "import"}-${width}.png`),fullPage:true});
+        const sizing=await page.evaluate(()=>({width:innerWidth,document:document.documentElement.scrollWidth,offenders:[...document.querySelectorAll("body *")].filter(e=>e.getBoundingClientRect().right>innerWidth&&!e.closest(".table-scroll")).slice(0,20).map(e=>({tag:e.tagName,class:e.className,right:e.getBoundingClientRect().right}))}));
+        expect(sizing.document,JSON.stringify(sizing)).toBeLessThanOrEqual(sizing.width);
+      }
+      await summary.click();
+      await expect(page).toHaveURL(new RegExp("#required-users$"));
+      await expect(users.getByRole("heading",{name:"Required users",exact:true})).toBeFocused();
+      await expect(users.getByText("Present", { exact: true })).toHaveCount(2);
       const disclosure = users.locator("details").first().locator("summary");
       await disclosure.focus(); await disclosure.press("Enter");
       await expect(users.locator("details").first()).toHaveAttribute("open", "");

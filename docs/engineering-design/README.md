@@ -63,3 +63,5 @@ feeds, screenshots and unsanitized reports are not distributed.
 Current-month financial implementation and deferred/live boundaries: [cost visibility](../reference/cost-visibility.md).
 
 Current manual user-presence source, fields and qualification boundary: [presence checks](../reference/user-presence-checks.md).
+
+Compact required-user inventory summary: [qualified field/state reference](../reference/required-users-summary.md), with the main preview updated and the parallel preview unchanged.

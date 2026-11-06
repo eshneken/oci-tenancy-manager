@@ -519,6 +519,9 @@ export type OwnerName = string | null;
 export type OwnerPersonId = string | null;
 export type ParentTenancyOcid = string;
 export type ProviderMode3 = "simulated";
+export type Checking = boolean;
+export type State11 =
+  "not_checked" | "present" | "missing" | "unavailable" | "stale";
 export type Status1 = string;
 export type TenancyOcid = string;
 export type VerifiedAt1 = string | null;
@@ -538,7 +541,7 @@ export type BootstrapUsername = string;
 export type CanAct = boolean;
 export type Key1 = string;
 export type Label1 = string;
-export type State11 = "pending" | "verified" | "needs_attention";
+export type State12 = "pending" | "verified" | "needs_attention";
 export type VerifiedAt2 = string | null;
 export type Checks = OnboardingCheck[];
 export type ActivationScimId = string | null;
@@ -568,7 +571,7 @@ export type PublicKey = string | null;
 export type RequestedHomeRegion = string | null;
 export type RequestedName = string | null;
 export type Revision2 = number;
-export type State12 = string;
+export type State13 = string;
 export type TenancyId19 = string;
 export type Action1 =
   | "create_tenancy"
@@ -612,7 +615,7 @@ export type TenancyKind = "individual" | "shared";
 export type AcceptedAt1 = string;
 export type OperationId10 = string | null;
 export type ProviderMode4 = "simulated" | "application";
-export type State13 =
+export type State14 =
   | "queued"
   | "succeeded"
   | "running"
@@ -761,7 +764,7 @@ export type OriginalState = string | null;
 export type ProposedVersionId2 = string | null;
 export type RevisionId = string | null;
 export type SnapshotId = string;
-export type State14 =
+export type State15 =
   "received" | "staged" | "published" | "rejected" | "superseded" | "duplicate";
 export type Page9 = number;
 export type PageSize8 = number;
@@ -791,7 +794,7 @@ export type OriginalState1 = string | null;
 export type ProposedVersionId3 = string | null;
 export type RevisionId1 = string | null;
 export type SnapshotId1 = string;
-export type State15 =
+export type State16 =
   "received" | "staged" | "published" | "rejected" | "superseded" | "duplicate";
 export type DisplayName = string;
 export type IconUrl = string | null;
@@ -838,7 +841,7 @@ export type ResponsibleAdministratorId = string | null;
 export type ResponsibleAdministratorName = string | null;
 export type ResultTenancyId = string | null;
 export type Stage = string;
-export type State16 =
+export type State17 =
   | "queued"
   | "running"
   | "waiting"
@@ -883,7 +886,7 @@ export type OriginalRecipient1 = string | null;
 export type Recipient1 = string | null;
 export type Redirected4 = boolean;
 export type SafeCode4 = string | null;
-export type State17 =
+export type State18 =
   | "pending"
   | "blocked"
   | "sending"
@@ -895,7 +898,7 @@ export type UpdatedAt2 = string;
 export type Notifications = NotificationSummary1[];
 export type AttemptNumber = number;
 export type SafeCode5 = string | null;
-export type State18 = "running" | "verified" | "needs_attention";
+export type State19 = "running" | "verified" | "needs_attention";
 export type StepKey = string;
 export type VerifiedAt3 = string | null;
 export type Steps = OperationStepView[];
@@ -904,7 +907,7 @@ export type Page14 = number;
 export type PageSize13 = 10 | 25 | 50 | 100;
 export type Query5 = string;
 export type Sort5 = "accepted_at" | "updated_at" | "state" | "stage";
-export type State19 =
+export type State20 =
   | ""
   | "queued"
   | "running"
@@ -915,7 +918,7 @@ export type State19 =
   | "failed";
 export type AcceptedAt3 = string;
 export type OperationId13 = string;
-export type State20 =
+export type State21 =
   | "queued"
   | "running"
   | "waiting"
@@ -1639,6 +1642,7 @@ export interface TenancyView {
   owner_person_id: OwnerPersonId;
   parent_tenancy_ocid: ParentTenancyOcid;
   provider_mode: ProviderMode3;
+  required_users?: RequiredUsersSummary;
   status: Status1;
   tenancy_ocid: TenancyOcid;
   verified_at: VerifiedAt1;
@@ -1664,6 +1668,12 @@ export interface CostView1 {
   period_start?: PeriodStart1;
   retrieved_at?: RetrievedAt1;
   state?: State10;
+}
+export interface RequiredUsersSummary {
+  automation?: UserPresenceView;
+  checking?: Checking;
+  recovery?: UserPresenceView;
+  state?: State11;
 }
 export interface OnboardingCommand {
   action: Action;
@@ -1697,7 +1707,7 @@ export interface OnboardingView {
   requested_home_region?: RequestedHomeRegion;
   requested_name?: RequestedName;
   revision: Revision2;
-  state: State12;
+  state: State13;
   submitted_handoff: OnboardingHandoff | null;
   suggested_handoff: OnboardingHandoff;
   tenancy_id: TenancyId19;
@@ -1705,7 +1715,7 @@ export interface OnboardingView {
 export interface OnboardingCheck {
   key: Key1;
   label: Label1;
-  state: State11;
+  state: State12;
   verified_at?: VerifiedAt2;
 }
 export interface OnboardingDiscovery {
@@ -1759,7 +1769,7 @@ export interface ActionReceipt {
   accepted_at: AcceptedAt1;
   operation_id: OperationId10;
   provider_mode: ProviderMode4;
-  state: State13;
+  state: State14;
 }
 export interface PersonWorkflow {
   actions: Actions;
@@ -1926,7 +1936,7 @@ export interface OrganizationOutcome {
   proposed_version_id?: ProposedVersionId2;
   revision_id?: RevisionId;
   snapshot_id: SnapshotId;
-  state: State14;
+  state: State15;
 }
 export interface Diagnostic {
   affected_email?: AffectedEmail;
@@ -1947,7 +1957,7 @@ export interface OrganizationOutcome1 {
   proposed_version_id?: ProposedVersionId3;
   revision_id?: RevisionId1;
   snapshot_id: SnapshotId1;
-  state: State15;
+  state: State16;
 }
 export interface BrandingView {
   display_name: DisplayName;
@@ -2009,7 +2019,7 @@ export interface OperationSummary {
   responsible_administrator_name?: ResponsibleAdministratorName;
   result_tenancy_id?: ResultTenancyId;
   stage: Stage;
-  state: State16;
+  state: State17;
   target_label?: TargetLabel;
   target_tenancy_ocid: TargetTenancyOcid;
   title?: Title;
@@ -2037,13 +2047,13 @@ export interface NotificationSummary1 {
   recipient: Recipient1;
   redirected: Redirected4;
   safe_code?: SafeCode4;
-  state: State17;
+  state: State18;
   updated_at: UpdatedAt2;
 }
 export interface OperationStepView {
   attempt_number: AttemptNumber;
   safe_code: SafeCode5;
-  state: State18;
+  state: State19;
   step_key: StepKey;
   verified_at: VerifiedAt3;
 }
@@ -2053,12 +2063,12 @@ export interface OperationQuery {
   page_size?: PageSize13;
   query?: Query5;
   sort?: Sort5;
-  state?: State19;
+  state?: State20;
 }
 export interface Acceptance {
   accepted_at: AcceptedAt3;
   operation_id: OperationId13;
-  state: State20;
+  state: State21;
 }
 export interface InspectionSubmission {
   client_request_key: ClientRequestKey9;

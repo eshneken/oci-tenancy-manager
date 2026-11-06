@@ -1480,3 +1480,10 @@ checked. Historical unbound records cannot check, errors never imply Missing, an
 changed results cannot imply current success. No daily scheduling, email, repair or live OCI
 qualification is included. Local test/review qualification and the main-preview upgrade pass with existing data preserved; the parallel preview is unchanged. [Final receipt](../history/manual-presence-checkpoint-2026-11-06.md). See the
 [manual local review](../how-to/required-users-runbook.md) and pending live manifest.
+
+## Required-user inventory summary — source checkpoint
+
+The [summary projection](../reference/required-users-summary.md) adds compact presence context in
+existing Tenancies Status cells, linking to each exact child's Required users section. It preserves
+per-account evidence and simulation/permission limits. No new column, filter, menu, table, provider
+check, scheduled action or repair is introduced. Local qualification and the preserved-data main update pass for this follow-up; the parallel preview is unchanged. [Final summary receipt](../history/required-users-summary-checkpoint-2026-11-06.md). Prior manual-check qualification retains its earlier scope.

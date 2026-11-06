@@ -126,3 +126,28 @@ class UserPresenceView(Contract):
     checked_at: UtcInstant | None = None
     stale: bool = False
     operation_id: UUID | None = None
+
+
+# A compact inventory projection describes existence only, never permissions or credential health.
+class RequiredUsersSummary(Contract):
+    state: Literal["not_checked", "present", "missing", "unavailable", "stale"] = "not_checked"
+    automation: UserPresenceView = Field(default_factory=UserPresenceView)
+    recovery: UserPresenceView = Field(default_factory=UserPresenceView)
+    checking: bool = False
+
+    # Positive summaries require dated per-subject source references, not a caller's label alone.
+    @model_validator(mode="after")
+    def qualified_labels(self):
+        pair = (self.automation, self.recovery)
+        fresh = tuple(
+            v
+            for v in pair
+            if not v.stale and v.checked_at is not None and v.operation_id is not None
+        )
+        if self.state == "present" and (
+            len(fresh) != 2 or any(v.state != "present" for v in fresh)
+        ):
+            raise ValueError("PRESENCE_SUMMARY_INVALID")
+        if self.state == "missing" and not any(v.state == "missing" for v in fresh):
+            raise ValueError("PRESENCE_SUMMARY_INVALID")
+        return self

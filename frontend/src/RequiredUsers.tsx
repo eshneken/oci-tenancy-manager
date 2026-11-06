@@ -13,6 +13,8 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
   tenancyId: string; expired: () => void; navigate: (path: string) => void;
 }) {
   const client = useQueryClient();
+  const heading=useRef<HTMLHeadingElement>(null);
+  const anchored=useRef(false);
   const keys = useRef(new Map<string,string>());
   // Keep private observations isolated by the originating child during navigation.
   const queryKey = (id:string) => ["tenancies", "required-users", id];
@@ -28,6 +30,7 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
       client.setQueryData<Awaited<ReturnType<typeof api.requiredUsers>>>(queryKey(variables.tenancyId),
         data => data ? {...data,pending_operation_id:receipt.operation_id} : data);
       void client.invalidateQueries({queryKey:queryKey(variables.tenancyId)});
+      void client.invalidateQueries({queryKey:["tenancies","list"]});
       void client.invalidateQueries({queryKey:["operations"]});
       void client.invalidateQueries({queryKey:["audit-history"]});
     },
@@ -45,6 +48,24 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
     if (authorizationLost) expired();
   }, [authorizationLost, expired]);
   const data = authorizationLost ? undefined : result.data;
+  // Stored result changes refresh inventory/history without fetching any provider from a GET.
+  useEffect(()=>{
+    if(!data)return;
+    void client.invalidateQueries({queryKey:["tenancies","list"]});
+    void client.invalidateQueries({queryKey:["tenancies","detail",tenancyId]});
+    void client.invalidateQueries({queryKey:["operations"]});
+    void client.invalidateQueries({queryKey:["audit-history"]});
+  },[result.dataUpdatedAt,Boolean(data),client,tenancyId]);
+  // The inventory deep link waits for the initial read to settle before moving keyboard focus.
+  useEffect(()=>{
+    if(authorizationLost || result.isPending || anchored.current || location.hash!=="#required-users")return;
+    const frame=requestAnimationFrame(()=>{
+      heading.current?.scrollIntoView?.({block:"start"});
+      heading.current?.focus();
+      anchored.current=true;
+    });
+    return ()=>cancelAnimationFrame(frame);
+  },[result.isPending,authorizationLost,tenancyId]);
   const ownMutation = mutation.variables?.tenancyId === tenancyId;
   const checking = Boolean(data?.pending_operation_id) || ownMutation && mutation.isPending;
   // Keep a command UUID after an uncertain response; retry must not enqueue a second operation.
@@ -53,9 +74,9 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
     keys.current.set(tenancyId,key);
     mutation.mutate({tenancyId,key});
   }
-  return <section className="operation-panel required-users" aria-labelledby="required-users-title" aria-busy={result.isFetching}>
+  return <section id="required-users" className="operation-panel required-users" aria-labelledby="required-users-title" aria-busy={result.isFetching}>
     <div className="required-users-heading">
-      <h2 id="required-users-title">Required users</h2>
+      <h2 ref={heading} tabIndex={-1} id="required-users-title">Required users</h2>
       <div className="required-users-actions">
       <button className="button primary" disabled={!data?.check_available || checking || result.isPending} onClick={checkNow}>
         {checking ? "Checking…" : ownMutation && mutation.isError ? "Retry check request" : "Check now"}

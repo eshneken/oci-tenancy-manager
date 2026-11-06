@@ -1,3 +1,4 @@
+import { RequiredUserSummary } from "./RequiredUserSummary";
 import { RequiredUsers } from "./RequiredUsers";
 import { CostCells, CostPanel, RefreshCosts } from "./FinancialCosts";
 import { configurationMessages, configurationMessageClass } from "./configurationStatus";
@@ -28,7 +29,10 @@ function ConfigurationCheckLinks({tenancy,navigate,detail=false}:{tenancy:Tenanc
   if(tenancy.status!=="active")return null;
   const messages=configurationMessages({state:tenancy.configuration_check_state??"not_checked",stale:tenancy.configuration_check_stale,confirmed:tenancy.configuration_confirmed_issue_count}).filter(message=>detail||message.kind!=="matching");
   const href="/configuration/drift/"+tenancy.id+"?returnTo="+encodeURIComponent(detail?"/tenancies/"+tenancy.id:"/tenancies");
-  return <span className="configuration-status-links">{messages.map(message=><a key={message.kind} className={"badge configuration-issue-link "+configurationMessageClass(message.kind)} href={href} aria-label={`${message.label} for ${tenancy.name}`} onClick={event=>followLink(event,href,navigate)}>{message.label}</a>)}</span>;
+  return <span className="configuration-status-links">{messages.map(message=>{
+    const label=detail?message.label:"Config: "+message.label.replace(/^Configuration drift/,"Drift");
+    return <a key={message.kind} className={"badge configuration-issue-link "+configurationMessageClass(message.kind)} href={href} aria-label={`${label} for ${tenancy.name}`} onClick={event=>followLink(event,href,navigate)}>{label}</a>;
+  })}</span>;
 }
 
 const overrideNames: Record<"policy" | "quota" | "budget", string> = { policy: "Policy statements", quota: "Quota statements", budget: "Monthly budget" };
@@ -113,7 +117,7 @@ export function Tenancies({
         : undefined,
     retry: false,
     refetchInterval: (value) =>
-      (value.state.data?.pending_count || value.state.data?.costs_pending_count) ? 2000 : false,
+      (value.state.data?.pending_count || value.state.data?.costs_pending_count || value.state.data?.items.some(row=>row.required_users?.checking)) ? 2000 : false,
   });
   const detail = useQuery({
     queryKey: ["tenancies", "detail", identifier],
@@ -365,6 +369,7 @@ export function Tenancies({
                             </td>
                             <td>
                               <TenancyStatus tenancy={row} />
+                              <RequiredUserSummary id={row.id} name={row.name} status={row.status} summary={row.required_users} navigate={navigate}/>
                               <ConfigurationCheckLinks tenancy={row} navigate={navigate}/>
                               <div className="tenancy-configuration">{row.baseline_version_id?<><a href={baselineHref(row.baseline_version_id,location.pathname)} onClick={event=>followLink(event,baselineHref(row.baseline_version_id!,location.pathname),navigate)}>Baseline v{row.baseline_version_number??"?"}</a>{data.latest_baseline_id===row.baseline_version_id?<span className={row.verified_baseline_version_id===row.baseline_version_id&&row.desired_configuration_id===row.last_verified_configuration_id?"baseline-latest":"muted"} title={row.verified_baseline_version_id===row.baseline_version_id&&row.desired_configuration_id===row.last_verified_configuration_id?"Latest baseline verified in simulation":"Latest baseline selected; verification pending"}>Latest</span>:data.latest_baseline_version_number&&<a href={"/tenancies/"+row.id} onClick={event=>followLink(event,"/tenancies/"+row.id,navigate)} aria-label={`Update ${row.name} to baseline v${data.latest_baseline_version_number}`}>↑ v{data.latest_baseline_version_number}</a>}</>:<span className="muted">No baseline assigned</span>}{!!row.override_categories?.length&&<a className="override-indicator" title={"Overrides: "+row.override_categories.join(", ")} href={"/tenancies/"+row.id+"?override=1"} onClick={event=>followLink(event,"/tenancies/"+row.id+"?override=1",navigate)}>Override</a>}</div>
                               {hasInventoryOperation(row) && (

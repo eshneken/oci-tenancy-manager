@@ -224,3 +224,28 @@ it("rejects a receipt without an operation reference",async()=>{
   expect(await screen.findByRole("alert")).toHaveTextContent("Unable to confirm");
   expect(screen.queryByText("Present",{exact:true})).not.toBeInTheDocument();c.client.clear();
 });
+
+// Inventory links land keyboard users on the requested facts after the async record load.
+it("focuses the required-users heading for its deep link and refreshes inventory caches",async()=>{
+  history.replaceState(null,"",`/tenancies/${id}#required-users`);
+  const c=mount();
+  const invalidate=vi.spyOn(c.client,"invalidateQueries");
+  await screen.findByText("otm-automation");
+  await waitFor(()=>expect(screen.getByRole("heading",{name:"Required users"})).toHaveFocus());
+  expect(invalidate).toHaveBeenCalledWith({queryKey:["tenancies","list"]});
+  expect(invalidate).toHaveBeenCalledWith({queryKey:["tenancies","detail",id]});
+  history.replaceState(null,"","/");
+  c.client.clear();
+});
+
+
+// An unavailable record read still lands on the requested section rather than stranding navigation.
+it("focuses an unavailable section without revealing retained identity facts",async()=>{
+  history.replaceState(null,"",`/tenancies/${id}#required-users`);
+  const c=mount(Promise.reject(new ApiError(503)));
+  await screen.findByText("Unable to load required user records. Try again.");
+  await waitFor(()=>expect(screen.getByRole("heading",{name:"Required users"})).toHaveFocus());
+  expect(screen.getByRole("region",{name:"Required users"})).toHaveAttribute("id","required-users");
+  expect(screen.queryByText("otm-automation")).not.toBeInTheDocument();
+  history.replaceState(null,"","/");c.client.clear();
+});

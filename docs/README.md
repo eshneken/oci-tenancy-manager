@@ -10,6 +10,7 @@ are not competing implementation instructions or proof of real OCI behavior.
 | Run the application | [Local HTTPS setup](reference/local-application.md) |
 | Manual required-user presence checks | [Current check fields, authority and ER](reference/user-presence-checks.md) |
 | Presence-only connection foundation | [Current fields, ER and qualification boundary](reference/user-presence-connections.md) |
+| Compact required-user inventory summary | [Fields and state rules](reference/required-users-summary.md) — [local qualification/main update](history/required-users-summary-checkpoint-2026-11-06.md) |
 | Review required user identities | [Screen and field map](reference/required-users-screen.md), [local runbook](how-to/required-users-runbook.md) |
 | Canonical domain/user identities and ER | [Binding field guide](reference/managed-object-bindings.md) |
 | Implemented fields, API behavior and limits | [Reference guides](reference/README.md) |

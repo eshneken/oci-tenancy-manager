@@ -34,10 +34,8 @@ pytestmark = pytest.mark.postgres
 __all__ = ["factors", "login_case", "organization_case", "workflow_case"]
 
 
-# Reuse one real onboarding setup per independent scenario, never fabricate an access connection.
-@pytest.fixture
-def presence_case(workflow_case):
-    c = workflow_case
+# Compose one real onboarding setup from an explicitly owned authorized workflow fixture.
+def make_presence(c):
     person = next(p for p in c.store.head(c.principal).people if p.email == "engineer@example.test")
     _, created = action(c, person.id, "create_tenancy")
     complete_setup(c, created.operation_id)
@@ -60,6 +58,12 @@ def presence_case(workflow_case):
     return SimpleNamespace(
         **{**vars(c), "child": child, "person": person, "service": service, "reader": worker}
     )
+
+
+# Each scenario receives a separate authorized workspace and authenticated producer capture.
+@pytest.fixture
+def presence_case(workflow_case):
+    return make_presence(workflow_case)
 
 
 # Current-state assertions go through the same read-only projection used by the browser.
@@ -124,7 +128,18 @@ def test_admission_read_publication_and_directory(presence_case):
     result = view(c)
     assert result.pending_operation_id is None and result.check_available
     assert [u.presence.state for u in result.users] == ["present", "present"]
-    assert c.workflow.tenancy_detail(c.principal, c.child.id) == before
+    after = c.workflow.tenancy_detail(c.principal, c.child.id)
+    assert after.tenancy.required_users.state == "present"
+    assert (
+        after.model_copy(
+            update={
+                "tenancy": after.tenancy.model_copy(
+                    update={"required_users": before.tenancy.required_users}
+                )
+            }
+        )
+        == before
+    )
     record = check_row(c, response.operation_id)
     c.reader.inspection_factory = Mock(side_effect=AssertionError("replay provider call"))
     c.reader.run(response.operation_id)
@@ -323,3 +338,61 @@ def test_termination_during_read(presence_case):
     assert not view(c).check_available and all(
         u.presence.state == "not_checked" for u in view(c).users
     )
+
+
+# The inventory and detailed cards share current facts, bounded SQL and exact workspace scope.
+def test_inventory_summary_parity_and_fixed_reads(presence_case, pg_engine, tmp_path, factors):
+    from test_local_auth_postgres import login_case as make_login
+    from test_organization_storage_postgres import organization_case as make_org
+    from test_organization_workflows_postgres import workflow_case as make_workflow
+
+    from otm.tenancies.presence_summary import summaries
+
+    c = presence_case
+    # A separately authorized workspace owns its own real child and complete provider evidence.
+    (tmp_path / "foreign").mkdir()
+    other_login = make_login.__wrapped__(pg_engine, tmp_path / "foreign", factors)
+    other_org = make_org.__wrapped__(other_login)
+    other_flow = make_workflow.__wrapped__(other_org)
+    other = make_presence(other_flow)
+    other_request = other.service.start(
+        other.principal, other.child.id, PresenceCheckRequest(client_request_key=uuid4())
+    )
+    other.reader.run(other_request.operation_id)
+    request = c.service.start(
+        c.principal, c.child.id, PresenceCheckRequest(client_request_key=uuid4())
+    )
+    assert c.workflow.tenancies(c.principal, TenancyQuery()).items[0].required_users.checking
+    c.reader.run(request.operation_id)
+    directory = c.workflow.tenancies(c.principal, TenancyQuery())
+    child = next(item for item in directory.items if item.id == c.child.id)
+    assert child.required_users.state == "present" and not child.required_users.checking
+    assert all(item.id != other.child.id for item in directory.items)
+    detailed = c.workflow.required_users(c.principal, c.child.id)
+    assert child.required_users.automation == detailed.users[0].presence
+    assert child.required_users.recovery == detailed.users[1].presence
+    assert (
+        c.workflow.tenancy_detail(c.principal, c.child.id).tenancy.required_users
+        == child.required_users
+    )
+    reads = []
+
+    # Count actual database SELECTs for this projection rather than mocking a claimed query budget.
+    def queried(connection, cursor, statement, parameters, context, many):
+        if statement.lstrip().upper().startswith("SELECT"):
+            reads.append(statement)
+
+    event.listen(c.engine, "before_cursor_execute", queried)
+    try:
+        with c.engine.connect() as connection:
+            row = (
+                connection.execute(select(tenancy).where(tenancy.c.id == c.child.id))
+                .mappings()
+                .one()
+            )
+            reads.clear()
+            current = summaries(c.service, connection, c.policy.workspace_id, (row,))
+            assert len(reads) == 4 and current[row["id"]] == child.required_users
+            assert summaries(c.service, connection, "foreign", ()) == {}
+    finally:
+        event.remove(c.engine, "before_cursor_execute", queried)

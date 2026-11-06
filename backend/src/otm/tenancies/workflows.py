@@ -183,6 +183,25 @@ class OrganizationWorkflows:
                         )
                     }
                 )
+            if self.presence_checks:
+                from otm.tenancies.presence_summary import summaries
+
+                users = summaries(
+                    self.presence_checks,
+                    connection,
+                    workspace,
+                    tuple(state.tenancies[item.id] for item in directory.items),
+                )
+                directory = directory.model_copy(
+                    update={
+                        "items": tuple(
+                            item.model_copy(
+                                update={"required_users": users.get(item.id, item.required_users)}
+                            )
+                            for item in directory.items
+                        )
+                    }
+                )
             return directory
 
     # Details retain removed membership/compartment cleanup evidence as well as active
@@ -212,6 +231,13 @@ class OrganizationWorkflows:
                 else None
             )
             view = tenancy_view(state, row)
+            if self.presence_checks:
+                from otm.tenancies.presence_summary import summaries
+
+                users = summaries(self.presence_checks, connection, workspace, (row,))
+                view = view.model_copy(
+                    update={"required_users": users.get(identifier, view.required_users)}
+                )
             if cost is not None:
                 view = view.model_copy(update={"costs": cost})
             return TenancyDetail(

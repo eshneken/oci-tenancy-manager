@@ -89,3 +89,20 @@ See the [manual local runbook](../how-to/required-users-runbook.md) and
 [pending real OCI manifest](../how-to/real-oci-test-manifest.md). Privilege, credential custody,
 readiness and repair remain separate future work; presence-only reads do not require fabricated
 assignment/profile tables.
+
+## Inventory summary — source checkpoint
+
+The new [Required users summary field map](required-users-summary.md) adds a derived
+TenancyView.required_users value to directory/detail responses and a compact link in the existing
+Tenancies Status cell. RequiredUsersSummary has four fields; its automation/recovery values reuse
+the four-field UserPresenceView. The 22-field directory above is unchanged. Shared context/evidence/
+freshness helpers keep summary and cards aligned; the title/accessible description retains each
+account's own result and UTC time, simulation and Permissions not checked. Deep linking focuses the
+Required users heading after terminal success or a nonauthorization read error such as 503; 401/403 does not focus or expose data. Current source adds no table, filter, provider call or job.
+Summary qualification and the main-preview update now pass; the parallel preview is unchanged. [Final summary receipt](../history/required-users-summary-checkpoint-2026-11-06.md). Earlier Check now qualification retains its original pipeline scope.
+
+The summary's positive-label guards require per-account timestamp/check references; a configured
+broken canonical connection is Unable to verify in inventory and a closed 503 in the expanded view,
+while genuinely unconfigured or validly changed contexts stay Not checked. Inventory configuration
+badges use Config: and account summaries use Users:; detail configuration labels retain section
+context. The final summary qualification and preserved-data main update pass.

@@ -360,6 +360,36 @@
       "title": "OrganizationContext",
       "type": "object"
     },
+    "RequiredUsersSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "automation": {
+          "$ref": "#/$defs/UserPresenceView"
+        },
+        "checking": {
+          "default": false,
+          "title": "Checking",
+          "type": "boolean"
+        },
+        "recovery": {
+          "$ref": "#/$defs/UserPresenceView"
+        },
+        "state": {
+          "default": "not_checked",
+          "enum": [
+            "not_checked",
+            "present",
+            "missing",
+            "unavailable",
+            "stale"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "title": "RequiredUsersSummary",
+      "type": "object"
+    },
     "TenancyView": {
       "additionalProperties": false,
       "properties": {
@@ -663,6 +693,9 @@
           "title": "Provider Mode",
           "type": "string"
         },
+        "required_users": {
+          "$ref": "#/$defs/RequiredUsersSummary"
+        },
         "status": {
           "title": "Status",
           "type": "string"
@@ -733,6 +766,55 @@
         "cleanup_count"
       ],
       "title": "TenancyView",
+      "type": "object"
+    },
+    "UserPresenceView": {
+      "additionalProperties": false,
+      "properties": {
+        "checked_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Checked At"
+        },
+        "operation_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Operation Id"
+        },
+        "stale": {
+          "default": false,
+          "title": "Stale",
+          "type": "boolean"
+        },
+        "state": {
+          "default": "not_checked",
+          "enum": [
+            "not_checked",
+            "present",
+            "missing",
+            "unknown"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "title": "UserPresenceView",
       "type": "object"
     }
   },

@@ -16,6 +16,7 @@ is in [the engineering chapters](../engineering-design/README.md).
 - [Baseline updates for existing tenancies](configuration-updates.md)
 - [Provider contracts and simulator layout](provider-layout.md)
 - [Required users: identities and manual simulated presence](required-users-screen.md)
+- [Required users summary in Tenancies Status](required-users-summary.md) — locally qualified, main preview updated
 - [Manual presence check API, storage and authority](user-presence-checks.md)
 - [Canonical managed identity bindings](managed-object-bindings.md)
 - [Required-user presence boundary: internal foundation](required-user-presence.md)

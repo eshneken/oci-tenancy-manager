@@ -42,9 +42,18 @@ def capture_snapshot(connection, workspace, child, policy):
             )
         ).mappings()
     )
+    return bound_snapshot(workspace, child, policy, current, rows)
+
+
+# Both single-child and batched views validate the same exact current records, never names.
+def bound_snapshot(workspace, child, policy, current, rows):
+    if policy is None or policy.workspace_id != workspace or not registered_child(child, policy):
+        return None
+    if child["status"] != "active" or child["operation_id"] or current is None:
+        return None
     keyed = {b["logical_key"]: b for b in rows}
     if len(keyed) != 3 or len(rows) != 3:
-        return None
+        raise ValueError("PRESENCE_RECORDS_UNAVAILABLE")
     domain = keyed["identity/domain"]
     automation = keyed["identity/user/automation"]
     if (
@@ -53,7 +62,7 @@ def capture_snapshot(connection, workspace, child, policy):
         or domain["kind"] != "identity_domain"
         or domain["ownership_mode"] != "observed_reference"
     ):
-        return None
+        raise ValueError("PRESENCE_RECORDS_UNAVAILABLE")
     subjects = []
     for purpose in ("automation", "recovery"):
         user = keyed["identity/user/" + purpose]
@@ -67,7 +76,7 @@ def capture_snapshot(connection, workspace, child, policy):
                 for b in (user, domain)
             )
         ):
-            return None
+            raise ValueError("PRESENCE_RECORDS_UNAVAILABLE")
         subjects.append(
             RequiredUserTarget(
                 workspace_id=workspace,

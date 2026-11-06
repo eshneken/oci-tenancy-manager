@@ -18,11 +18,14 @@ from otm.tenancies.presence_contracts import (
 
 
 # Join exact intent identity, revision and original bytes before returning any queued operation.
-def operation_rows(connection, workspace, identifier=None, tenancy_id=None, pending=False):
+def operation_rows(
+    connection, workspace, identifier=None, tenancy_id=None, pending=False, *, tenancy_ids=None
+):
     query = (
         select(
             operation,
             checks.c.context_hash.label("check_context_hash"),
+            checks.c.tenancy_id.label("presence_tenancy_id"),
             audit_event.c.data.label("intent_data"),
             audit_event.c.data_hash.label("intent_hash"),
         )
@@ -49,6 +52,8 @@ def operation_rows(connection, workspace, identifier=None, tenancy_id=None, pend
         query = query.where(operation.c.id == identifier)
     if tenancy_id is not None:
         query = query.where(checks.c.tenancy_id == tenancy_id)
+    if tenancy_ids is not None:
+        query = query.where(checks.c.tenancy_id.in_(tenancy_ids))
     if pending:
         query = query.where(operation.c.state.in_(("queued", "running")))
     return connection.execute(query.order_by(checks.c.acquisition_sequence.desc())).mappings().all()

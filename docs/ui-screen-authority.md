@@ -694,3 +694,11 @@ remains GET only. Independent Presence labels/times and View check links are sep
 registration and Permissions: Not checked. The simulation banner, historical-disabled reason,
 queued progress, uncertain-request retry, stale label and auth/cache boundaries are current source
 behavior. There is no live OCI health, repair, email or daily schedule. Local qualification and the main-preview upgrade pass; the parallel preview is unchanged. [Final receipt](history/manual-presence-checkpoint-2026-11-06.md). Current source and the [review runbook](how-to/required-users-runbook.md) define this slice.
+
+## Required users link in inventory Status — source checkpoint
+
+The [derived summary reference](reference/required-users-summary.md) governs the compact Users link
+inside the existing active-tenancy Status cell. It names the exact child's Required users fragment,
+focuses the actual section heading after terminal success/503 (never 401/403), retains each account's UTC state/time in title/accessible text
+and distinguishes simulation from permissions. Checking is secondary; fresh dated Missing, invalid positive provenance/unavailable, stale, Unknown/unavailable, both fresh dated Present and Not checked use the documented order. Configured corruption is not a clean default. Inventory Config: and Users: prefixes match visible/ARIA labels; detail configuration labels are unchanged. Container-relative hidden descriptions preserve body containment at 320 pixels. No new nav/column/filter
+or attention badge is added. Local qualification and the preserved-data main update pass; the parallel preview is unchanged. [Final summary receipt](history/required-users-summary-checkpoint-2026-11-06.md). Earlier qualified manual-check UI retains its original scope.

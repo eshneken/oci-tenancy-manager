@@ -156,3 +156,11 @@ incomplete evidence, not passes. Individual bounds, assertions, both 95% coverag
 required jobs remain unchanged. See the [test-lane policy](../engineering-test-plan.md#complementary-backend-test-lanes)
 and [dated validation/preservation receipt](../history/manual-presence-checkpoint-2026-11-06.md). The main preview was deliberately
 upgraded; no historical records were backfilled and the parallel preview was not changed.
+
+### Inventory summary follow-up — source checkpoint
+
+A later [derived Tenancies Status summary](required-users-summary.md) reuses the same exact context,
+immutable-evidence decoding and per-user age logic. Its four-field RequiredUsersSummary and single
+additive TenancyView.required_users field are read projections, not new check columns or operations.
+Active page IDs bound four additional workspace-scoped queries. Fresh confirmed Missing with its own date/check reference takes precedence; other unsupported positive labels are unavailable before stale/unknown/two-present/default evaluation. DTO and frontend guards prevent coarse label-only positives. Configured corrupt canonical records become an unavailable summary/closed detail 503; genuinely unconfigured or validly changed contexts remain Not checked. Stale facts cannot stay green, and pending checks retain dated results. No Check now
+admission/execution behavior, table, daily schedule, email or live OCI adapter changes. Local qualification and the main-preview update for this follow-up pass; the parallel preview is unchanged. [Final summary receipt](../history/required-users-summary-checkpoint-2026-11-06.md). The completed pipeline receipt above retains its original scope.

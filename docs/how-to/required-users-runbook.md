@@ -63,3 +63,24 @@ All real-provider cases remain Pending in the [OCI manifest](real-oci-test-manif
 The backend unit, frontend unit and all-postgres/native-browser lanes are independently required.
 Final results are 1,556 backend units, all 351 PostgreSQL/native-worker/browser cases and 446 frontend units, each lane passing independently. The complete integration run took 429.457 seconds within the approved 600-second aggregate budget. Earlier 420-second deadline-expired attempts remain invalid full results. Main-preview preservation is verified; the parallel preview is unchanged. This runbook does not authorize a reset or another upgrade. [Final receipt](../history/manual-presence-checkpoint-2026-11-06.md).
 [Separate lane ownership](../engineering-test-plan.md#complementary-backend-test-lanes).
+
+## Inventory summary source checkpoint
+
+The summary revision is qualified and installed in the main preview on port 8443; reload it once before review. Port 8444 is unchanged and may not show this follow-up. All 29 preexisting public tables were preserved exactly; no migration or data backfill was added. Preserve existing organization/tenancy data and do not reset. [Final summary receipt](../history/required-users-summary-checkpoint-2026-11-06.md).
+
+1. Open Tenancies. For an active child find Users: … within the existing Status cell, alongside
+   existing lifecycle/configuration facts. Inventory configuration badges use Config: (for example Config: Not checked or Config: Drift), while account summaries use Users:. No new column, filter or navigation item is expected.
+2. On an older unbound/unqualified child, expect Users: Not checked, not Missing. For a child with
+   a fresh successful simulated pair, expect Users: 2/2 present. The link's description contains
+   separate Automation/Recovery results and UTC times, simulation and Permissions not checked.
+3. Activate the exact child's Users link by keyboard or mouse. The child detail must open at
+   the actual Required users section and move focus to its heading after the read completes, including a closed 503 unavailable view. Unauthorized 401/403 must neither focus nor expose retained data. Confirm the same per-user facts in successful cards. Open-in-new-tab and a direct URL reload should reach that same child/section.
+4. On a fresh qualified simulated child, use Check now. Checking… is secondary to any retained dated
+   result. After completion, the detail and inventory agree without inventing a new check from GET.
+5. Verify existing search/sort/pagination controls remain unchanged. At desktop/tablet/mobile sizes,
+   the compact link stays within the Status cell and its accessible label matches the Users: prefix and correct child. Config: labels remain distinguishable. At 320 pixels, verify actual page/viewport containment, including the hidden description, without body-level overflow clipping.
+6. Mixed missing/unavailable/stale/corrupt-record cases use disposable automated fixtures; no product
+   simulator control or live mutation is added. Only fresh confirmed absence is labeled Missing.
+   Out-of-date positives must become Check out of date; permissions never become verified. A coarse positive missing its own date/check reference becomes Unable to verify. A configured connection with corrupt canonical references is unavailable, while genuine historical/unconfigured context remains Not checked. These injected failures are automated fixture cases, not live data-edit instructions.
+
+[All summary fields, precedence and query scope](../reference/required-users-summary.md).

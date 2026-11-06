@@ -86,3 +86,9 @@ children exist. The local [review runbook](required-users-runbook.md) exercises 
 Daily scheduled checks remain deferred to staging/Kubernetes. Their noninteractive machine
 admission/authorization must be qualified separately; an interactive admin session is not an
 implemented scheduler identity. No scheduled deployment or lifecycle email is claimed by this row.
+
+## Inventory presence-summary qualification
+
+| Case | Required live qualification | Status |
+| --- | --- | --- |
+| Shared summary/detail truth | After a real adapter is qualified, compare each inventory summary with the exact child's account observations and UTC times. Confirm fresh absence, stale/unknown facts and context changes never become a false positive; pending context stays dated. Navigation/GET must not acquire provider facts or imply privilege checks. Current source uses simulation only. | Pending |

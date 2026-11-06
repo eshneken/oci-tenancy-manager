@@ -26,3 +26,5 @@ Private original feeds, raw evidence, screenshots and machine-specific paths are
 - [Presence-only connection foundation](presence-connection-checkpoint-2026-11-06.md)
 
 - [Manual required-user presence checks: complete local qualification and preserved main preview](manual-presence-checkpoint-2026-11-06.md)
+
+- [Required users inventory summary: complete local qualification and preserved main update](required-users-summary-checkpoint-2026-11-06.md)

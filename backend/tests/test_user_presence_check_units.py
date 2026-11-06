@@ -388,6 +388,10 @@ def test_current_snapshot_resolution(fault):
     second = result(identities)
     second.mappings.return_value = identities
     c.connection.execute.side_effect = [first, second]
+    if fault in {"missing", "signer", "domain", "source"}:
+        with pytest.raises(ValueError, match="PRESENCE_RECORDS_UNAVAILABLE"):
+            capture_snapshot(c.connection, c.row["workspace_id"], child, policy)
+        return
     actual = capture_snapshot(c.connection, c.row["workspace_id"], child, policy)
     assert (actual is None) == (fault is not None)
     if actual is not None:

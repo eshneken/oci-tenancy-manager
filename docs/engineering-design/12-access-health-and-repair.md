@@ -399,3 +399,29 @@ profile/credential heads. Daily machine admission/authorization stays a staging/
 Local test/review qualification and the main-preview update pass; all 28 preexisting public tables are preserved and the parallel preview is unchanged. [Final receipt](../history/manual-presence-checkpoint-2026-11-06.md). The [local runbook](../how-to/required-users-runbook.md)
 describes the intended fresh create/import → Check now → View check review; the
 [real-provider manifest](../how-to/real-oci-test-manifest.md) remains Pending for actual OCI behavior.
+
+## Compact required-user inventory summary — source checkpoint
+
+The [summary field/behavior map](../reference/required-users-summary.md) defines one additive derived
+TenancyView.required_users field (38 TenancyView fields total), containing RequiredUsersSummary:
+state, automation, recovery and checking. The two subjects reuse UserPresenceView's state,
+checked_at, stale and operation_id. Existing Status cells link to the exact child's Required users
+section; no new column/filter/nav/attention count is introduced. The existing 22-field Required
+users directory is unchanged; nested tenancy contract exports are updated within the same 75-schema
+inventory. No migration/ER relationship or table is added; all 14 check columns remain unchanged.
+
+Summary queries use authenticated workspace and server-visible page IDs, with four added reads;
+shared snapshot/evidence/age helpers preserve detail equivalence. Fresh dated Missing wins; unsupported positive labels lacking per-account date/check references are unavailable; then stale, Unknown/unavailable, both fresh dated Present, otherwise Not checked. Backend DTO and frontend guards both enforce positive provenance. Configured canonical corruption is unavailable (detail 503), while genuinely unconfigured or validly replaced contexts remain Not checked. Pending is secondary and
+per-user UTC dates stay distinct. Corrupt evidence cannot silently become green or break unrelated
+rows. List/detail cache invalidation and pending polling remain read-only. Simulation/permissions
+limits stay explicit; no provider calls, jobs, daily scheduling, email, privileges or repair are added.
+
+This follow-up passes local qualification/reviews and the main-preview update with all 29 preexisting public tables preserved. The parallel preview remains unchanged. [Final summary receipt](../history/required-users-summary-checkpoint-2026-11-06.md). Prior manual-check receipts keep their original scope. The
+[runbook additions](../how-to/required-users-runbook.md#inventory-summary-source-checkpoint) describe
+intended local UI review; live provider qualification remains separately Pending.
+
+Current refinement keeps fields/storage unchanged. The real required-users section anchors the
+exact-child deep link; heading focus follows terminal success or nonauthorization failure (503),
+never 401/403. Inventory Config: and Users: labels/ARIA names are distinct, while detail configuration
+labels retain context. Relative hidden-description positioning preserves the actual 320-pixel body
+width without page-level clipping. Final summary qualification and the preserved-data main update pass.

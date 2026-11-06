@@ -1796,3 +1796,6 @@ dialog p {
 @media(max-width:700px) { .required-users-grid { grid-template-columns:minmax(0,1fr); } }
 
 .required-users-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.required-users .presence-missing{background:#fee2e2;color:#991b1b}@media(max-width:420px){.required-users-actions{width:100%}.required-users-actions>.button{flex:1 1 100%}}
+
+/* Keep the hidden accessible description inside the horizontally scrolling table. */
+.required-users-inventory{position:relative;display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:6px}.required-users-inventory-link{max-width:100%;white-space:normal;overflow-wrap:anywhere}.required-users-inventory .muted{font-size:12px}#required-users-title{scroll-margin-top:24px}

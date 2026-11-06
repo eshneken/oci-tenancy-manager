@@ -82,7 +82,6 @@ class PresenceChecks:
             .mappings()
             .one_or_none()
         )
-        views = {}
         if latest is not None:
             event = (
                 connection.execute(
@@ -96,16 +95,9 @@ class PresenceChecks:
                 .mappings()
                 .one()
             )
-            evidence = decode_result(latest, event["data"], event["data_hash"])
-            if digest == latest["context_hash"]:
-                now = self.store.clock()
-                for result in evidence.results:
-                    views[result.target.purpose] = UserPresenceView(
-                        state=result.state,
-                        checked_at=result.captured_at,
-                        operation_id=latest["operation_id"],
-                        stale=not result.captured_at <= now < result.captured_at + FRESH_FOR,
-                    )
+        views = presence_views(
+            snapshot, latest, event if latest is not None else None, self.store.clock()
+        )
         return directory.model_copy(
             update={
                 "check_available": reason is None,
@@ -255,3 +247,22 @@ def receipt(row):
         provider_mode="simulated",
         accepted_at=row["accepted_at"],
     )
+
+
+# Summary and detail share evidence validation, current-context matching and per-subject age rules.
+def presence_views(snapshot, latest, event, now):
+    if latest is None:
+        return {}
+    evidence = decode_result(latest, event["data"], event["data_hash"])
+    digest = canonical_hash(snapshot.model_dump(mode="json")) if snapshot else None
+    if digest != latest["context_hash"]:
+        return {}
+    return {
+        result.target.purpose: UserPresenceView(
+            state=result.state,
+            checked_at=result.captured_at,
+            operation_id=latest["operation_id"],
+            stale=not result.captured_at <= now < result.captured_at + FRESH_FOR,
+        )
+        for result in evidence.results
+    }

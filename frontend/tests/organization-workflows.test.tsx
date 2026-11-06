@@ -1110,13 +1110,13 @@ it.each([
  ["superseded",false,0,["Not checked"]],
 ] as const)("links independent configuration messages for %s stale=%s confirmed=%s",async(state,stale,confirmed,messages)=>{
  vi.spyOn(api,"tenancies").mockResolvedValue({...inventory,items:[{...tenant,configuration_issue_count:confirmed,configuration_confirmed_issue_count:confirmed,configuration_check_state:state,configuration_check_stale:stale}]});const navigate=vi.fn();mount(<Tenancies identifier={null} expired={vi.fn()} navigate={navigate}/>);
- for(const label of messages){const link=await screen.findByRole("link",{name:`${label} for ${tenant.name}`});expect(link).toHaveAttribute("href",`/configuration/drift/${id}?returnTo=%2Ftenancies`);expect(link).toHaveClass(label==="Not checked"?"configuration-unverified":label==="Checking"?"waiting":"review-open");await userEvent.click(link);}
+ for(const label of messages){const link=await screen.findByRole("link",{name:`Config: ${label.replace(/^Configuration drift/,"Drift")} for ${tenant.name}`});expect(link).toHaveAttribute("href",`/configuration/drift/${id}?returnTo=%2Ftenancies`);expect(link).toHaveClass(label==="Not checked"?"configuration-unverified":label==="Checking"?"waiting":"review-open");await userEvent.click(link);}
  expect(navigate).toHaveBeenCalled();expect(screen.queryByText(/configuration issues/)).toBeNull();
 });
 
 // Healthy or unchecked rows do not acquire a spurious exception indicator.
 it("keeps a fresh matching inventory free of configuration warnings",async()=>{
- vi.spyOn(api,"tenancies").mockResolvedValue({...inventory,items:[{...tenant,configuration_issue_count:0,configuration_confirmed_issue_count:0,configuration_check_state:"matching"}]});mount(<Tenancies identifier={null} expired={vi.fn()} navigate={vi.fn()}/>);await screen.findByText(tenant.name);expect(screen.queryByRole("link",{name:/^(Configuration drift|Not checked|Matching|Check out of date|Unable to verify|Checking).*for/})).toBeNull();
+ vi.spyOn(api,"tenancies").mockResolvedValue({...inventory,items:[{...tenant,configuration_issue_count:0,configuration_confirmed_issue_count:0,configuration_check_state:"matching"}]});mount(<Tenancies identifier={null} expired={vi.fn()} navigate={vi.fn()}/>);await screen.findByText(tenant.name);expect(screen.queryByRole("link",{name:/^Config:.*for/})).toBeNull();
 });
 
 it.each([false,true])("links tenancy check status and preserves its detail return, stale=%s",async(stale)=>{
@@ -1141,4 +1141,30 @@ it.each(["create_tenancy","import_tenancy"] as const)("shows effective contacts 
  expect(contacts).toHaveTextContent("Original contact: "+employee.email);expect(contacts).toHaveTextContent("Test delivery: capture@example.test");
  expect(screen.getByText(employee.email,{selector:"span"})).toBeVisible();expect(within(contacts).queryByRole("textbox")).toBeNull();
  if(action==="create_tenancy")expect(within(contacts).getByText("Activation / bootstrap email")).toBeVisible();else {expect(within(contacts).queryByText("Activation / bootstrap email")).toBeNull();expect(within(contacts).getByText("Bootstrap contact email")).toBeVisible();}
+});
+
+// A presence-only pending check refreshes inventory even when lifecycle and cost jobs are idle.
+it("refreshes stored required-user summaries while checking and stops when complete",async()=>{
+  const read=vi.spyOn(api,"tenancies").mockResolvedValueOnce({...inventory,items:[{...tenant,required_users:{state:"not_checked",checking:true}}]})
+    .mockResolvedValue({...inventory,items:[{...tenant,required_users:{state:"present",checking:false,
+      automation:{state:"present",checked_at:time,operation_id:op},recovery:{state:"present",checked_at:time,operation_id:op}}}]});
+  const c=mount(<Tenancies identifier={null} expired={vi.fn()} navigate={vi.fn()}/>);
+  await screen.findByText("Checking…");
+  await screen.findByRole("link",{name:`Users: 2/2 present for ${tenant.name}`},{timeout:3500});
+  expect(read).toHaveBeenCalledTimes(2);
+  expect(screen.queryByText("Checking…")).not.toBeInTheDocument();
+  c.unmount();
+});
+
+// Revoked directory access hides previously visible user facts while the session is cleared.
+it("hides a retained required-user summary after inventory authorization is lost",async()=>{
+  const read=vi.spyOn(api,"tenancies").mockResolvedValue({...inventory,items:[{...tenant,required_users:{state:"present",
+    automation:{state:"present",checked_at:time,operation_id:op},recovery:{state:"present",checked_at:time,operation_id:op}}}]});
+  const expired=vi.fn();mount(<Tenancies identifier={null} expired={expired} navigate={vi.fn()}/>);
+  await screen.findByRole("link",{name:`Users: 2/2 present for ${tenant.name}`});
+  read.mockRejectedValue(new ApiError(403));
+  await userEvent.click(screen.getByRole("button",{name:/^Refresh$/}));
+  await screen.findByText("Tenancies could not be loaded. Use Refresh to try again.");
+  expect(screen.queryByRole("link",{name:/Users: 2\/2 present/})).not.toBeInTheDocument();
+  expect(expired).toHaveBeenCalled();
 });

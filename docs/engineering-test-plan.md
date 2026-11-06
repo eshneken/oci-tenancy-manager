@@ -1080,3 +1080,21 @@ Source scope and all fields: [check reference](reference/user-presence-checks.md
 - Read-only behavior: no cloud mutation, credential disclosure, repair, notification or scheduler.
   Actual OCI credentials, SDK bounded I/O, exact-domain absence and propagation stay Pending in the
   [live manifest](how-to/real-oci-test-manifest.md). All required local lanes, independent reviews and main-preview preservation now pass; the parallel preview remains unchanged. [Final receipt](history/manual-presence-checkpoint-2026-11-06.md).
+
+## Required-user inventory summary — locally qualified
+
+The [complete field map](reference/required-users-summary.md) and
+[manual review](how-to/required-users-runbook.md#inventory-summary-source-checkpoint) define this
+source follow-up. Required cases:
+
+- Exact four-field summary and per-user four-field views, independent UTC times/provenance, safe
+  defaults and no changes to the existing 22-field directory or persisted check schema.
+- State matrix: fresh dated Missing first; unsupported positive with no date/check reference becomes unavailable; then stale, Unknown/unavailable, both fresh dated Present, otherwise Not checked. Cover mixed Present/Unknown/stale and both DTO/frontend positive guards; historical unconfigured identities remain Not checked and inactive rows hide the link.
+- List/detail equivalence using shared strict context/evidence/age logic; latest admission order,
+  changed valid context versus configured broken canonical domain/signer/source references, missing/corrupt audit evidence, invalid pending intent and no older green fallback. Configured corruption must be per-child unavailable in inventory and closed 503 in detail, not a clean default.
+- Four added queries for active visible page IDs only, every query workspace/ID-scoped; empty or
+  non-active input adds no queries. Use real SQL/scoping tests as well as isolated unit fixtures;
+  mocked query-count assertions do not prove database isolation or transaction behavior.
+- Native Users link targets the real required-users section on the exact child; focus follows terminal success or 503 but never 401/403, with no retained unauthorized data. Cover reload/new tab, per-account accessible descriptions/UTC, pending refreshes, Users:/Config: visible/ARIA consistency and unchanged detail configuration labels. Verify actual 320-pixel body containment, including hidden description positioning; keep existing paging/search/sort and all configuration-link assertions.
+- No GET provider call, new job, mutation, navigation badge, daily scan, email, credential or
+  privilege/repair claim. All required lanes/reviews and the main update pass: 1,587 backend units, 458 frontend units, all 352 integration/native/browser cases in 430.159 seconds; no failures/errors/skips/timeout. All 29 existing public tables are preserved and port 8444 is unchanged. [Final summary receipt](history/required-users-summary-checkpoint-2026-11-06.md).

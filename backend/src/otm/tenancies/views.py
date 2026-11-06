@@ -10,6 +10,7 @@ from otm.contracts import Contract, UtcInstant
 from otm.email_policy import EmailContacts
 from otm.financial.contracts import CostView
 from otm.tenancies.contracts import Action, OrganizationContext
+from otm.tenancies.presence_contracts import RequiredUsersSummary
 
 
 # Share bounded literal search and paging conventions across the two management directories.
@@ -77,6 +78,7 @@ class AssociationView(Contract):
 
 # A registered tenancy includes its accountable owner in the count and exposes pending work.
 class TenancyView(Contract):
+    required_users: RequiredUsersSummary = Field(default_factory=RequiredUsersSummary)
     costs: CostView = CostView()
     # Confirmed missing/different categories; freshness and read availability are separate.
     configuration_issue_count: int = 0
