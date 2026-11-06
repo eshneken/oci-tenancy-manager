@@ -35,3 +35,38 @@ This is local qualification, not hosted CI or permission to bypass protected mas
 remote push, saved-instance refresh, real recipient email or OCI mutation is part of this checkpoint.
 Real adapter qualification, access/recovery implementation and staging/Terraform/OKE deployment
 remain future milestones. Daily configuration drift scheduling remains deferred until staging.
+
+
+## All-category coverage follow-up — 6 November 2026
+
+The next local checkpoint closes the earlier automated budget/tag and non-default-override repair
+coverage gaps. Changes are confined to tests, synthetic fixtures and documentation; production
+code, settings, dependency locks, generated contracts and database schema are unchanged.
+
+- Unit and PostgreSQL each add 16 cases: four managed categories × Missing/Different × inherited/
+  override profile. The override profile authors policy/quota blocks and a $650 budget; tags inherit.
+  Exact authored values, unselected objects, desired/verified IDs, version counts, later-publication
+  pins and repeated native delivery are asserted independently of provider output.
+- A real PostgreSQL race uses two distinct simultaneous request keys from the same administrator;
+  one operation wins and the competing request is blocked. This is not multi-admin entitlement coverage.
+- The native browser journey now repairs policy/quota/budget/tags sequentially, checks expected
+  overrides and remaining unselected findings, verifies whole-dollar budget rendering and reloads.
+  Its mixed scenario has missing quota and different policy/budget/tag content, not every possible
+  browser fault/profile combination. Two UI units add budget/tag value and escaped-text assertions.
+
+| Local follow-up gate | Result |
+| --- | --- |
+| Full disposable PostgreSQL/native worker/HTTPS Playwright | 1,623 tests pass, zero failures/errors/skips, no timeout |
+| Backend unit-only complete 125-source inventory | 1,318 tests pass; 8,431/8,789 lines, 95.9267% |
+| Frontend unit-only complete 34-source inventory | 424 tests pass; 1,729/1,775 lines, 97.40% |
+| Focused new SQL/native browser run | 22 cases pass |
+| Documentation/inline/lint/generated/design contracts | Pass |
+| Independent documentation, security and responsive visual review | Pass after comment/prose fixes |
+| Publication, credential scanning, Bandit and Python advisories | Pass |
+| npm advisories | Blocked by registry TLS certificate verification, including trusted-system-CA retry; not counted as a passing audit |
+
+The unchanged dependency locks do not waive the npm audit. Retry it after connectivity is corrected
+before publishing/merging this milestone; TLS verification is not disabled. This local commit is
+not hosted CI or a protected-master release. No remote push/new PR, saved-instance refresh, live
+OCI action or cloud test was performed. All 13 [real-OCI manual cases](../how-to/configuration-drift-runbook.md#pending-real-oci-manual-validation)
+remain Pending; no local drift-injection product feature was added.

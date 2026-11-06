@@ -940,7 +940,9 @@ The [implemented flow and field map](reference/configuration-repair.md) requires
 | Partial write/readback failure | Prior findings retained; explicit retry independently rereads exact bindings; no duplicate accepted work |
 | New publication while queued | Original assigned baseline and overrides remain frozen |
 | Concurrent/pending old check and repeated worker delivery | Final-generation check wins; superseded reads cannot green; exactly one sealed successful repair check |
-| Real UI preview/confirm/reload at desktop/mobile | Existing protected HTTPS session, native worker and disposable PostgreSQL; no fake production endpoint |
+| All-category repair writes | Unit and SQL: 4 categories × Missing/Different × inherited/override profile; exact values, unchanged unselected objects and desired revisions |
+| Concurrent admission with independent request keys | Same administrator submits two simultaneous requests; one accepted, one blocked, no duplicate operation |
+| Real UI preview/confirm/reload at desktop/mobile | Existing protected HTTPS session, native worker and disposable PostgreSQL; sequential selected repairs of all four categories with accepted overrides; no fake production endpoint |
 
 Both unit-only 95% gates and independent documentation, security and responsive UI reviews remain
 required. A local simulator result does not qualify OCI writes or deploy daily drift scheduling.
@@ -953,4 +955,6 @@ available. The [pending manual checklist and current automated coverage](how-to/
 cover each managed category, selected-only repair, overrides/assigned baseline, authorization loss,
 partial/unknown effects, real object recreation/OCID rebinding and overlapping reads. All live cases
 remain Pending. No local drift-injection scaffolding or saved-instance mutation is requested.
-The 20-case unit comparison matrix is not a claim of all-category live or browser repair coverage.
+The 20-case unit comparison matrix remains distinct from the 16-case repair-write matrix and
+all-category browser journey. None is a claim of live OCI qualification. See the
+[all-category repair field/coverage note](reference/configuration-repair.md#all-category-repair-qualification--6-november-2026).

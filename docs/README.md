@@ -20,7 +20,7 @@ are not competing implementation instructions or proof of real OCI behavior.
 
 ## Source of truth
 Current configuration work includes [guarded selected-object repair](reference/configuration-repair.md)
-through the existing durable operation worker. Its [local checkpoint](history/configuration-repair-checkpoint-2026-11-06.md)
+through the existing durable operation worker, with [all-category/override regression coverage](reference/configuration-repair.md#all-category-repair-qualification--6-november-2026). Its [local checkpoint](history/configuration-repair-checkpoint-2026-11-06.md)
 records qualification and remaining deployment boundaries.
 
 

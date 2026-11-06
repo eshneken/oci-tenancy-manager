@@ -59,27 +59,45 @@ def configuration_browser(runtime, *, repair=False):
     prepared = SimpleNamespace(store=store, principal=c.principal, workflow=workflow, worker=worker)
     identifier = children(prepared, 1)[0]
     name = workflow.tenancy_detail(c.principal, identifier).tenancy.name
+    extra = {"OTM_E2E_TENANCY_NAME": name}
     if repair:
+        import json
         from uuid import uuid4
 
-        from test_configuration_drift_postgres import checks, scenario
+        from repair_examples import OVERRIDE_PAYLOADS, OVERRIDES
+        from test_configuration_drift_postgres import checks
+        from test_configuration_repairs_postgres import alter_managed_observation
+        from test_configuration_updates_postgres import updates
+        from test_tenancy_overrides_postgres import override_command
 
         from otm.configuration.drift_contracts import ConfigurationCheckRequest
 
         prepared = SimpleNamespace(
             **vars(prepared), engine=c.owner, policy=sandbox.policy, loader=loader, clock=clock
         )
-        scenario(prepared, identifier, "missing", "policy")
+        rollouts, apply_worker, _ = updates(prepared)
+        overridden = rollouts.start(
+            c.principal, override_command(prepared, rollouts, identifier, OVERRIDES)
+        )
+        apply_worker.run(overridden.operation_id)
+        assert rollouts.progress(c.principal, overridden.operation_id).state == "succeeded"
+        for category in ("policy", "quota", "budget", "tags"):
+            alter_managed_observation(
+                prepared, identifier, category, "missing" if category == "quota" else "different"
+            )
         service, checker = checks(prepared)
         accepted = service.start(
             c.principal,
             ConfigurationCheckRequest(client_request_key=uuid4(), tenancy_id=identifier),
         )
         checker.run(accepted.operation_id)
+        assert service.detail(c.principal, identifier).confirmed_issue_count == 4
+        # Expected values are authored synthetic fixtures, never copied from provider readback.
+        extra["OTM_E2E_REPAIR_EXPECTED"] = json.dumps(OVERRIDE_PAYLOADS)
     run_browser_runtime(
         c,
         "e2e/configuration-repair.spec.ts" if repair else "e2e/configuration-drift.spec.ts",
-        {"OTM_E2E_TENANCY_NAME": name},
+        extra,
     )
 
 

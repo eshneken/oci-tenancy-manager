@@ -68,3 +68,25 @@ covers preview/confirm, completion, reload and widths 1280/390/320. Ordinary loc
 manufacture drift through a new simulator UI; interactive cloud-drift qualification remains pending
 a controlled OCI tenancy. Existing [check runbook](../how-to/configuration-drift-runbook.md) still
 covers nonmutating checks.
+
+
+## All-category repair qualification — 6 November 2026
+
+The coverage follow-up changes tests and documentation only. There is no production-code, schema,
+settings, UI or saved-instance change and no additional product simulation control.
+
+| Layer | Added evidence |
+| --- | --- |
+| Unit repair writes | 16 cases: policy/quota/budget/tags × Missing/Different × inherited/override profile. Only the selected apply capability runs; exact authored payloads, complete independent readback and unchanged unselected state are asserted. |
+| PostgreSQL/native worker | The same 16-case matrix goes through real onboarding, accepted overrides, check acquisition, fresh preview, atomic admission and worker completion. A later publication cannot replace the assigned version; no desired revision is created; exact values/verification generation/replay are checked. |
+| Concurrent admission | Two simultaneous distinct request keys from the same administrator produce one accepted operation and one blocked competing request, through real SQL authorization/workspace locks. This is not a multi-administrator entitlement test. |
+| Native browser | One isolated installation accepts non-default policy/quota/budget overrides, then repairs each category individually. It verifies current/expected payloads, unchanged remaining findings, completion/reload and mobile layouts. The browser sample has missing quota plus different policy, budget and tag content. |
+| UI units | Budget preview renders 650 in whole units; tag preview renders defined values as escaped text. Both submit only selected-category references, never authored override content. |
+
+The override profile replaces both statement lists and sets a $650 monthly budget; tags always inherit
+the assigned baseline because V1 has no tag overrides. Shared fixture examples express independent
+authored expectations, not values copied from repair output. The tag simulator still represents one
+aggregate namespace/default bundle. These tests do not qualify all real OCI tag subobjects, service
+syntax, credentials, permissions, network failures or new identities after recreation. All
+[live manual cases](../how-to/configuration-drift-runbook.md#pending-real-oci-manual-validation)
+remain Pending. The earlier single-policy browser checkpoint remains dated history.

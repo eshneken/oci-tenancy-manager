@@ -22,7 +22,7 @@ function authenticatorCode() {
 }
 
 // Exercise this slice independently of unrelated baseline publication and offboarding browser setup.
-test("repair a confirmed managed object through HTTPS and the separate native worker", async ({page},testInfo) => {
+test("repair each managed category with assigned overrides through HTTPS and the native worker", async ({page},testInfo) => {
   const errors:string[]=[];
   page.on("pageerror", error=>errors.push(error.message));
   await page.goto("/login");
@@ -40,15 +40,33 @@ test("repair a confirmed managed object through HTTPS and the separate native wo
     await page.screenshot({path:testInfo.outputPath(`repair-selection-${width}.png`)});
     await page.getByRole("button",{name:"Cancel",exact:true}).click();
   }
-  await page.getByRole("button",{name:"Repair configuration",exact:true}).click();
-  await page.getByRole("button",{name:"Preview repair",exact:true}).click();
-  await expect(page.getByRole("heading",{name:"Confirm configuration repair"})).toBeVisible();
-  await expect(page.getByRole("heading",{name:"Confirm configuration repair"})).toBeFocused();
-  await page.screenshot({path:testInfo.outputPath("repair-confirmation-320.png")});
-  await page.getByRole("button",{name:"Repair selected objects",exact:true}).click();
+  const labels={policy:"Policy statements",quota:"Quota statements",budget:"Monthly budget",tags:"Tag defaults"} as const;
+  const expected=JSON.parse(process.env.OTM_E2E_REPAIR_EXPECTED!) as Record<keyof typeof labels,Record<string,unknown>>;
+  const repaired=new Set<string>();
+  for(const category of ["policy","quota","budget","tags"] as const){
+    await page.getByRole("button",{name:"Repair configuration",exact:true}).click();
+    const dialog=page.getByRole("dialog");
+    for(const checkbox of await dialog.getByRole("checkbox").all())await checkbox.uncheck();
+    await dialog.getByRole("checkbox",{name:new RegExp("^"+labels[category]+" ·")}).check();
+    await dialog.getByRole("button",{name:"Preview repair",exact:true}).click();
+    await expect(dialog.getByRole("heading",{name:"Confirm configuration repair"})).toBeVisible();
+    await expect(dialog.getByRole("heading",{name:"Confirm configuration repair"})).toBeFocused();
+    const intended=dialog.getByRole("heading",{name:"Expected after repair",exact:true}).locator("..").locator("pre");
+    await expect(intended).toBeVisible();
+    if(category==="policy"||category==="quota")expect(await intended.textContent()).toBe((expected[category].statements as string[]).join("\n"));
+    else {const actual=JSON.parse((await intended.textContent())!);expect(actual).toEqual({...expected[category],...(category==="budget"?{monthly_amount:"650"}:{})});}
+    await page.screenshot({path:testInfo.outputPath(`repair-confirmation-${category}-320.png`)});
+    await dialog.getByRole("button",{name:"Repair selected objects",exact:true}).click();
+    const matched=page.getByRole("heading",{name:labels[category],exact:true}).locator("..").getByText("Matching",{exact:true});
+    await expect(matched).toBeVisible();
+    repaired.add(category);
+    for(const other of ["policy","quota","budget","tags"] as const){
+      const row=page.getByRole("heading",{name:labels[other],exact:true}).locator("..");
+      await expect(row.getByText(repaired.has(other)?"Matching":other==="quota"?"Missing":"Different",{exact:true})).toBeVisible();
+    }
+  }
   await expect(page.getByText("Selected objects verified. Current check results are shown below.")).toBeVisible();
   await expect(page.getByRole("button",{name:"Repair configuration",exact:true})).toHaveCount(0);
-  await expect(page.getByRole("heading",{name:"Policy statements",exact:true}).locator("..").getByText("Matching",{exact:true})).toBeVisible();
   await page.reload();
   await expect(page.getByRole("button",{name:"Repair configuration",exact:true})).toHaveCount(0);
   expect(errors).toEqual([]);

@@ -57,3 +57,19 @@ it.each([{...summary,stale:true},{...summary,state:"unavailable" as const},{...s
 it("blocks a stale or nonready preview instead of presenting a confirm action",async()=>{
  const c=mount();c.read.mockResolvedValue({...preview,ready_count:0});const user=userEvent.setup();await user.click(screen.getByRole("button",{name:"Repair configuration"}));await user.click(screen.getByRole("button",{name:"Preview repair"}));await screen.findByRole("heading",{name:"Confirm configuration repair"});expect(screen.getByRole("button",{name:"Repair selected objects"})).toBeDisabled();expect(screen.getByRole("heading",{name:"Confirm configuration repair"})).toHaveFocus();expect(c.start).not.toHaveBeenCalled();
 });
+
+// Verify fresh budget/tag evidence, whole-dollar display and escaped text before selected-only admission.
+it.each(["budget","tags"] as const)("previews and submits %s values from fresh server evidence",async category=>{
+ const issue:ConfigurationCheckSummary["categories"][number]={...summary.categories[0],category};
+ const c=mount({...summary,categories:[issue],issue_count:1,confirmed_issue_count:1});
+ const expected=category==="budget"?{monthly_amount:"650.0000",currency:"USD",period:"MONTHLY"}:{namespace:"OTM",defaults:[{key:"Environment",value:"Test"}]};
+ const observed=category==="budget"?{monthly_amount:"25.0000",currency:"USD",period:"MONTHLY"}:{namespace:"OTM",defaults:[{key:"Environment",value:"Changed <script>unsafe()</script>"}]};
+ c.read.mockResolvedValue({...preview,repair_expected:{[category]:JSON.stringify(expected)},repair_observed:{[category]:JSON.stringify(observed)}});
+ const user=userEvent.setup();await user.click(screen.getByRole("button",{name:"Repair configuration"}));await user.click(screen.getByRole("button",{name:"Preview repair"}));
+ await screen.findByRole("heading",{name:"Confirm configuration repair"});
+ const intended=screen.getByRole("heading",{name:"Expected after repair"}).parentElement!.querySelector("pre")!;
+ expect(JSON.parse(intended.textContent!)).toEqual({...expected,...(category==="budget"?{monthly_amount:"650"}:{})});
+ expect(screen.getByRole("dialog").querySelector("script")).toBeNull();
+ await user.click(screen.getByRole("button",{name:"Repair selected objects"}));
+ expect(c.start.mock.calls[0][0]).toMatchObject({repair_categories:[category]});expect(c.start.mock.calls[0][0]).not.toHaveProperty("overrides");
+});

@@ -316,3 +316,98 @@ def test_repair_reservation_status(repair_case, state, expected):
     summary = check_summary(row, c.history, {}, c.policy, c.baseline, NOW)
     assert summary.state == expected and summary.confirmed_issue_count == 1
     assert not summary.can_check
+
+
+# Restore exact authored values for each category, drift state and override profile.
+@pytest.mark.parametrize("category", ["policy", "quota", "budget", "tags"])
+@pytest.mark.parametrize("state", ["missing", "different"])
+@pytest.mark.parametrize("overridden", [False, True], ids=["inherited", "overrides"])
+def test_repair_write_matrix(repair_case, category, state, overridden):
+    import json
+
+    from repair_examples import BASELINE_PAYLOADS, CHANGED_PAYLOADS, OVERRIDE_PAYLOADS, OVERRIDES
+
+    from otm.configuration.observation_contracts import ManagedObservation
+    from otm.configuration.override_contracts import (
+        OverrideValues,
+        TenancyConfiguration,
+        configuration_hash,
+        effective_content,
+    )
+    from otm.providers.configuration import desired_objects
+
+    c = repair_case
+    values = OVERRIDES if overridden else OverrideValues()
+    configuration = (
+        TenancyConfiguration(
+            **values.model_dump(),
+            id=uuid4(),
+            tenancy_id=c.row["id"],
+            baseline_version_id=c.baseline.id,
+            revision_number=1,
+            previous_id=None,
+            operation_id=uuid4(),
+            created_by="unit-operator",
+            created_at=NOW,
+            effective_hash=configuration_hash(c.baseline, values),
+        )
+        if overridden
+        else None
+    )
+    context = c.target.model_copy(
+        update={
+            "overrides": values,
+            "configuration_id": configuration.id if configuration else None,
+            "effective_hash": configuration_hash(c.baseline, values),
+        }
+    )
+    authored = c.baseline.model_copy(update={"content": effective_content(c.baseline, values)})
+    desired = desired_objects(context, authored)
+    original = {key: item.model_dump(mode="json") for key, item in desired.items()}
+    observed = (
+        None
+        if state == "missing"
+        else desired[category].model_copy(
+            update={
+                "payload": json.dumps(CHANGED_PAYLOADS[category]),
+                "payload_hash": canonical_hash(CHANGED_PAYLOADS[category]),
+            }
+        )
+    )
+    cloud = {
+        **original,
+        category: ManagedObservation(
+            binding=desired[category],
+            state="missing" if state == "missing" else "present",
+            observed=observed,
+            complete=True,
+        ).model_dump(mode="json"),
+    }
+    before = json.dumps(cloud, sort_keys=True)
+    row = {**c.row, "configuration_observation": cloud}
+    target = c.repair_target.model_copy(
+        update={
+            "configuration": configuration,
+            "source_configuration_id": context.configuration_id,
+            "overrides": values,
+            "repair_categories": (category,),
+            "repair_bindings": context.bindings,
+            "repair_context_hash": canonical_hash(context.model_dump(mode="json")),
+            "repair_observation_hash": canonical_hash(cloud),
+        }
+    )
+    with (
+        patch("otm.configuration.repairs.capture_target", return_value=context),
+        patch.object(c.facade, "apply", wraps=c.facade.apply) as apply,
+    ):
+        objects, failed, results = execute_repair(
+            c.connection, c.policy.workspace_id, row, target, c.baseline, c.facade
+        )
+    assert failed is None and all(item.state == "matching" and item.complete for item in results)
+    assert apply.call_count == 1 and apply.call_args.args[1].category == category
+    expected = (OVERRIDE_PAYLOADS if overridden else BASELINE_PAYLOADS)[category]
+    assert json.loads(objects[category]["payload"]) == expected
+    assert {key: value for key, value in objects.items() if key != category} == {
+        key: value for key, value in original.items() if key != category
+    }
+    assert json.dumps(cloud, sort_keys=True) == before

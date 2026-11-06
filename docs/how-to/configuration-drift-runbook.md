@@ -209,15 +209,23 @@ qualification. Daily scheduling is a separate staging/Kubernetes test, not enabl
 - **Repair units and PostgreSQL:** closed selected-category requests, fresh complete evidence,
   changed bindings/observations/context, selected-only mutation, failed pre-read/apply/readback/
   post-read, unchanged desired configuration, unselected quota drift retained after policy repair,
-  failed repair/retry, later publication, older pending check and expired-source rejection. Queued
+  failed repair/retry, later publication, older pending check and expired-source rejection. A separate
+  16-case repair matrix covers four categories × Missing/Different × inherited/override profiles in
+  both unit and PostgreSQL tests. The override profile authors policy, quota and a $650 budget together;
+  tags still inherit the baseline. Exact values, unchanged unselected objects and unchanged desired
+  revision IDs are asserted. A concurrent two-request PostgreSQL case admits only one repair. Queued
   repairs and failed reservations have distinct progress states.
 - **Native Playwright:** real protected HTTPS/API/native worker against disposable databases;
-  matching-check flow and one missing-policy repair through selection, preview, confirmation,
-  completion and reload, including desktop/mobile widths. It is not an end-to-end repair matrix
-  for every OCI object category or actual cloud faults.
+  matching-check flow plus sequential selected-only policy, quota, budget and tag repairs through
+  selection, preview, confirmation, completion and reload, including desktop/mobile widths. The
+  browser uses accepted non-default policy/quota/budget overrides, verifies exact expected values
+  and whole-dollar budget display, and confirms other findings persist. Its mixed scenario uses a
+  missing quota and different policy/budget/tag content; it is not every fault/category combination.
 
-Dedicated budget/tag repair mutation journeys and non-default override repair combinations are not
-yet covered end to end. The per-category comparison matrix must not be counted as those repair tests.
+Budget/tag mutation journeys and the non-default override profile now have dedicated automated
+coverage. This remains a simulator-backed pipeline: tags are one local bundle, not qualified
+namespace/key/default OCI enumeration. Real object recreation, new OCIDs, permissions, eventual
+consistency and live response handling remain Pending in the manual checklist above.
 
 Source: [comparison/history units](../../backend/tests/test_configuration_drift.py),
 [check SQL/worker cases](../../backend/tests/test_configuration_drift_postgres.py),

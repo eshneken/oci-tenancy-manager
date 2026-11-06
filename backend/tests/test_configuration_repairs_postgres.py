@@ -149,3 +149,167 @@ def test_repair_expired_check_cannot_preview(repair_case):
     c.principal = c.sessions.authenticate(issued.handle.get_secret_value())
     with pytest.raises(OrganizationConflict):
         command(c)
+
+
+# Change only the selected fake-cloud observation while retaining its exact owned binding.
+def alter_managed_observation(c, identifier, category, state):
+    import json
+
+    from repair_examples import CHANGED_PAYLOADS
+
+    from otm.configuration.observation_contracts import ManagedObservation
+    from otm.configuration.observations import decode_observation
+    from otm.operations.contracts import canonical_hash
+
+    with c.engine.begin() as connection:
+        row = connection.execute(select(tenancy).where(tenancy.c.id == identifier)).mappings().one()
+        objects = dict(row["configuration_observation"])
+        binding = decode_observation(objects[category]).binding
+        observed = (
+            None
+            if state == "missing"
+            else binding.model_copy(
+                update={
+                    "payload": json.dumps(CHANGED_PAYLOADS[category]),
+                    "payload_hash": canonical_hash(CHANGED_PAYLOADS[category]),
+                }
+            )
+        )
+        objects[category] = ManagedObservation(
+            binding=binding,
+            state="missing" if state == "missing" else "present",
+            observed=observed,
+            complete=True,
+        ).model_dump(mode="json")
+        connection.execute(
+            update(tenancy)
+            .where(tenancy.c.id == identifier)
+            .values(configuration_observation=objects)
+        )
+
+
+# Restore all four categories without new revisions or unrelated mutations.
+@pytest.mark.parametrize("category", ["policy", "quota", "budget", "tags"])
+@pytest.mark.parametrize("state", ["missing", "different"])
+@pytest.mark.parametrize("overridden", [False, True], ids=["inherited", "overrides"])
+def test_repair_category_and_override_matrix(workflow_case, category, state, overridden):
+    import json
+
+    from repair_examples import BASELINE_PAYLOADS, OVERRIDE_PAYLOADS, OVERRIDES
+    from test_tenancy_overrides_postgres import override_command
+
+    c = workflow_case
+    c.identifier = children(c, 1)[0]
+    c.repairs, c.repair_worker, facade = updates(c)
+    c.repairs.repair_facade = facade
+    if overridden:
+        receipt = c.repairs.start(
+            c.principal, override_command(c, c.repairs, c.identifier, OVERRIDES)
+        )
+        c.repair_worker.run(receipt.operation_id)
+        assert c.repairs.progress(c.principal, receipt.operation_id).state == "succeeded"
+    with c.engine.connect() as connection:
+        before = dict(
+            connection.execute(select(tenancy).where(tenancy.c.id == c.identifier)).mappings().one()
+        )
+        count = connection.scalar(
+            select(func.count())
+            .select_from(tenancy_configuration)
+            .where(
+                tenancy_configuration.c.workspace_id == c.policy.workspace_id,
+                tenancy_configuration.c.tenancy_id == c.identifier,
+            )
+        )
+    alter_managed_observation(c, c.identifier, category, state)
+    c.checks, checker = checks(c)
+    c.clock.return_value += timedelta(seconds=10)
+    check = c.checks.start(
+        c.principal, ConfigurationCheckRequest(client_request_key=uuid4(), tenancy_id=c.identifier)
+    )
+    checker.run(check.operation_id)
+    summary = c.checks.detail(c.principal, c.identifier)
+    assert summary.confirmed_issue_count == 1
+    assert next(item for item in summary.categories if item.category == category).state == state
+    preview = c.repairs.preview_repair(
+        c.principal, ConfigurationRepairRequest(tenancy_id=c.identifier, categories=(category,))
+    )
+    expected = (OVERRIDE_PAYLOADS if overridden else BASELINE_PAYLOADS)[category]
+    assert json.loads(preview.repair_expected[category]) == expected
+    assert (preview.repair_observed[category] is None) == (state == "missing")
+    request = command(c, (category,))
+    receipt = c.repairs.start(c.principal, request)
+    publish(c, "999")
+    c.clock.return_value += timedelta(seconds=1)
+    c.repair_worker.run(receipt.operation_id)
+    c.repair_worker.run(receipt.operation_id)
+    assert c.repairs.progress(c.principal, receipt.operation_id).state == "succeeded"
+    summary = c.checks.detail(c.principal, c.identifier)
+    assert summary.state == "matching" and summary.confirmed_issue_count == 0
+    with c.engine.connect() as connection:
+        after = (
+            connection.execute(select(tenancy).where(tenancy.c.id == c.identifier)).mappings().one()
+        )
+        assert json.loads(after["configuration_observation"][category]["payload"]) == expected
+        for key in (
+            "baseline_version_id",
+            "verified_baseline_version_id",
+            "desired_configuration_id",
+            "last_verified_configuration_id",
+        ):
+            assert after[key] == before[key]
+        assert after["configuration_verified_at"] > before["configuration_verified_at"]
+        assert after["revision"] == before["revision"] + 1 and after["operation_id"] is None
+        for key in ("policy", "quota", "budget", "tags"):
+            if key != category:
+                assert (
+                    after["configuration_observation"][key]
+                    == before["configuration_observation"][key]
+                )
+        assert (
+            connection.scalar(
+                select(func.count())
+                .select_from(tenancy_configuration)
+                .where(
+                    tenancy_configuration.c.workspace_id == c.policy.workspace_id,
+                    tenancy_configuration.c.tenancy_id == c.identifier,
+                )
+            )
+            == count
+        )
+        assert (
+            connection.scalar(
+                select(func.count())
+                .select_from(configuration_check)
+                .where(configuration_check.c.operation_id == receipt.operation_id)
+            )
+            == 1
+        )
+
+
+# Concurrent request identities cannot reserve or enqueue the same child twice.
+def test_concurrent_repair_admission_has_one_winner(repair_case):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Barrier
+
+    c = repair_case
+    request = command(c)
+    barrier = Barrier(2)
+
+    # Start both independent request identities together, through real auth/workspace transactions.
+    def submit():
+        barrier.wait(timeout=10)
+        try:
+            return c.repairs.start(
+                c.principal, request.model_copy(update={"client_request_key": uuid4()})
+            )
+        except OrganizationConflict as error:
+            return str(error)
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        outcomes = list(pool.map(lambda _: submit(), range(2)))
+    receipts = [outcome for outcome in outcomes if not isinstance(outcome, str)]
+    assert len(receipts) == 1
+    assert "CONFIGURATION_REPAIR_BLOCKED" in outcomes
+    c.repair_worker.run(receipts[0].operation_id)
+    assert c.repairs.progress(c.principal, receipts[0].operation_id).state == "succeeded"
+    assert c.checks.detail(c.principal, c.identifier).confirmed_issue_count == 1

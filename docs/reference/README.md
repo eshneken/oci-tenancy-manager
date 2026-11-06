@@ -11,7 +11,8 @@ is in [the engineering chapters](../engineering-design/README.md).
 - [Session verification and request authorization](authentication.md)
 - [Baseline authoring and publication history](baseline-authoring.md)
 - [Configuration drift: read-only on-demand checks](configuration-drift.md)
-- [Selected configuration repair](configuration-repair.md)
+- [Selected configuration repair](configuration-repair.md), including
+  [all-category/override qualification](configuration-repair.md#all-category-repair-qualification--6-november-2026)
 - [Baseline updates for existing tenancies](configuration-updates.md)
 - [Provider contracts and simulator layout](provider-layout.md)
 - [Internal tenancy inspection](inspection.md)
