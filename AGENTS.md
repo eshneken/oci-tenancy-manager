@@ -40,6 +40,8 @@ Follow [the UI/UX review policy](docs/ui-ux-review-policy.md) and the approved [
 Ask the reviewer to check the whole affected flow, shared components, both pages and responsive
 layouts. Fix material findings and re-verify before finishing UI work. Preserve the user's live
 data; use read-only inspection or an isolated workspace for mutating browser scenarios.
+Apply the button emphasis roles in DESIGN.md across all screens; the UI reviewer must flag
+inconsistent routine-action coloring before slice completion.
 Keep interface guidance, empty states and errors independent of any particular organization.
 Real employee names and configured LOB labels belong in data, not hardcoded instructional copy.
 

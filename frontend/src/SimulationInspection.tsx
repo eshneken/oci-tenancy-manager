@@ -127,7 +127,7 @@ export function SimulationInspection({
   return (
     <div className="simulation-control">
       <button
-        className="button primary"
+        className="button secondary"
         disabled={catalog.data.execution_paused || !catalog.data.targets.length}
         onClick={open}
       >

@@ -175,3 +175,28 @@ multiple buttons at desktop, tablet and 390/320px. Add geometry assertions for t
 text/control relationship and inspect fresh screenshots; a no-overflow check is insufficient.
 When rows stack, keep the reading order and spacing intentional. Recheck other uses of shared row
 styles so a local alignment fix does not shift unrelated labels, headings or footer actions.
+
+## Optional operator instructions — 7 November 2026
+
+Lengthy procedural help belongs in a native details/summary disclosure, closed by default. Use
+the shared operator-instructions styling: clear topic label, visible native marker, keyboard
+focus, at least 44px summary and bounded/wrapping content. Opening help is transient local UI
+state, not a saved preference or administrator acknowledgment. Keep instructions and links
+complete inside; do not remove useful guidance merely to reduce page height.
+
+Keep actual fields, action buttons, current failures, prerequisites, simulation/safety notices,
+destructive consequences, exact account-removal targets, consent and pending manual work visible.
+Do not collapse an obligation or a required warning as optional help. Apply the pattern to future
+long operator procedures and audit existing pages; brief field/CSV constraints can remain inline.
+Create/import share the collapsed OCI administrator checklist; existing first-time sign-in help,
+identity/source details and nested transfer references already use default-closed disclosures.
+
+## Button color consistency — 7 November 2026
+
+Audit every screen against [the action emphasis rules](../DESIGN.md#action-emphasis--7-november-2026).
+Routine refresh/check and section-level view/edit/manage/add-member launchers are white secondary.
+Main page create workflows and form/dialog submit/save/confirm/continue actions use cobalt primary.
+Destructive actions stay danger-styled; active tabs/navigation retain their selected-state treatment.
+Compare related controls together, including cost/user refresh and overrides/member management on
+tenancy details. Check enabled, busy, disabled and narrow-screen states; report role drift before
+a slice is complete. A queued background read does not justify stronger emphasis than another read.

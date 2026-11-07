@@ -78,7 +78,7 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
     <div className="required-users-heading">
       <h2 ref={heading} tabIndex={-1} id="required-users-title">Required users</h2>
       <div className="required-users-actions">
-      <button className="button primary" disabled={!data?.check_available || checking || result.isPending} aria-describedby={data && !data.check_available ? "required-users-unavailable" : undefined} onClick={checkNow}>
+      <button className="button secondary" disabled={!data?.check_available || checking || result.isPending} aria-describedby={data && !data.check_available ? "required-users-unavailable" : undefined} onClick={checkNow}>
         {checking ? "Refreshing user data…" : ownMutation && mutation.isError ? "Retry user refresh" : "Refresh user data"}
       </button>
       </div>

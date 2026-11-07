@@ -340,3 +340,13 @@ line; long identifiers may wrap when constrained by the viewport. Reserve checkm
 Prefer field-aligned placement; when neither inline edge fits, use a viewport-centered safe fallback
 below or above the field. State/category filters share a13rem minimum. Numeric controls remain compact.
 Validate open menus, not only the closed field, using the [cross-screen review gate](docs/ui-ux-review-policy.md).
+
+## Action emphasis — 7 November 2026
+
+Use white secondary buttons for routine on-page actions: refresh/recheck, view/edit/manage, and
+section launchers such as Add member or Manage overrides. Reserve cobalt primary for a main
+page create workflow and the main submit/save/confirm/continue action in a form or dialog.
+Destructive actions retain danger styling and existing confirmations. Selected tabs/navigation
+may use cobalt to communicate state; they are not action-priority exceptions. Do not style
+equivalent actions differently because one queues an asynchronous read. UI review must audit
+the whole affected screen and apply these roles consistently across future screens.

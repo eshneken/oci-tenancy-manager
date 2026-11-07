@@ -100,3 +100,7 @@ Normal-directory onboarding without provisioning: [Keep in organization without 
 Member management and provider refresh labels: [shared member entry](reference/organization-workflows.md#add-a-member-from-a-shared-tenancy), [required-user refresh](reference/required-users-screen.md#consistent-provider-refresh-terminology--7-november-2026).
 
 - [Shared-member entry and single provider refresh: final qualification and main preview](history/shared-members-refresh-checkpoint-2026-11-07.md)
+
+Compact create/import help: [Collapsed OCI operator checklist](reference/tenancy-onboarding.md#collapsed-oci-operator-checklist).
+
+- [Compact operator help and consistent action emphasis: qualification and main preview](history/compact-help-action-emphasis-checkpoint-2026-11-07.md)

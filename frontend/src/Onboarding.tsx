@@ -170,7 +170,7 @@ export function Onboarding({
       <p className="notice">
         <strong>Local simulation.</strong> No OCI activation email is sent, no key is issued
         and no OCI accounts are changed. The selected baseline is recorded;
-        this simulator does not apply OCI configuration.
+        this simulator does not apply OCI configuration. Use simulated handoff below; do not create real OCI users or keys.
       </p>
       <EmailContactSummary contacts={data.email_contacts} activation={data.origin==="create"}/>
       {data.can_act === false && (
@@ -205,86 +205,90 @@ export function Onboarding({
               </div>
             </dl>
           )}
-          <h3>OCI administrator checklist</h3>
-          <p className="muted">
-            For this local simulation, select “Use simulated handoff” below; do not
-            create real OCI users or keys. The checklist describes the OCI
-            handoff for the live integration.
-          </p>
-          <ol className="onboarding-instructions">
-            <li>
-              {data.origin === "create" ? (
-                <>
-                  <strong>Activate the requested child.</strong> Open the OCI
-                  email sent to the {data.email_contacts?"activation delivery address":"activation mailbox"} below. Follow its
-                  activation link, set your password and enroll MFA, then sign
-                  in to the child tenancy. The name and home region were
-                  supplied with this request; do not create another tenancy.{" "}
-                  <a href="https://docs.oracle.com/en-us/iaas/Content/General/organization/child-tenancy-create.htm" target="_blank" rel="noopener noreferrer">Oracle activation guide</a>.
-                </>
-              ) : (
-                <>
-                  <strong>Confirm the manual transfer is complete.</strong>{" "}
-                  In the configured parent, open Governance &amp; Administration
-                  → Organization Management → Tenancies and confirm this
-                  tenancy is listed as a child. A tenancy created under another
-                  parent needs transfer approval; an invited tenancy has a
-                  different removal procedure. Follow the applicable Oracle
-                  procedure before continuing.
-                  <details>
-                    <summary>Oracle transfer procedures</summary>
-                    <ul>
-                      <li><a href="https://docs.oracle.com/en-us/iaas/Content/General/organization/approve-createdchildtenancy-for-transfer.htm" target="_blank" rel="noopener noreferrer">Transfer a created child (approval uses the CLI)</a></li>
-                      <li><a href="https://docs.oracle.com/en-us/iaas/Content/General/organization/link-delete.htm" target="_blank" rel="noopener noreferrer">Remove an invited child from its previous organization</a></li>
-                      <li><a href="https://docs.oracle.com/en-us/iaas/Content/General/organization/sender-invitation-create.htm" target="_blank" rel="noopener noreferrer">Invite the tenancy from the new parent</a></li>
-                      <li><a href="https://docs.oracle.com/en-us/iaas/Content/General/organization/recipient-invitation-accept.htm" target="_blank" rel="noopener noreferrer">Accept the invitation in the child</a></li>
-                    </ul>
-                  </details>
-                </>
-              )}
-            </li>
-            <li>
-              <strong>{data.origin === "import" ? "Confirm the selected child tenancy." : "Copy the child tenancy OCID."}</strong> In the child's
-              profile menu, select Tenancy, then copy the OCID under Tenancy
-              Information. A work-request ID is not a tenancy OCID.{" "}
-              <a href="https://docs.oracle.com/en-us/iaas/Content/GSG/Tasks/contactingsupport_topic-Locating_Oracle_Cloud_Infrastructure_IDs.htm" target="_blank" rel="noopener noreferrer">Find the tenancy OCID</a>.
-              {data.origin === "create" && (
-                <> Also open the activation administrator's User settings and
-                  copy that user's OCID for the separate field below.</>
-              )}
-            </li>
-            <li>
-              <strong>Create the temporary bootstrap user in the child.</strong>{" "}
-              Open Identity &amp; Security → Domains → Default → Users → Create
-              user. Turn off Use the email address as the username, enter the
-              bootstrap username below, {data.email_contacts?.activation.effective_email ? <>complete the required name fields using your administrator details and use the recorded bootstrap contact <strong className="email-address">{data.email_contacts.activation.effective_email}</strong> for the email field</> : <>complete the required name/email fields using your administrator contact details</>}, and assign the
-              Administrators group. Copy the new user's OCID from its details.{" "}
-              <a href="https://docs.oracle.com/en-us/iaas/Content/GSG/Tasks/addingusers.htm" target="_blank" rel="noopener noreferrer">Create an administrator user</a>.
-            </li>
-            <li>
-              <strong>Grant identity-domain administration.</strong> In the
-              Default domain, open Administrators (or Security → Administrators),
-              find Identity domain administrator and add the bootstrap user.
-              Domain roles and the OCI Administrators group are separate grants.{" "}
-              <a href="https://docs.oracle.com/en-us/iaas/Content/Identity/users/assign-users-roles.htm" target="_blank" rel="noopener noreferrer">Assign the domain role</a>.
-            </li>
-            <li>
-              <strong>Attach the app-provided public key.</strong> Open the
-              bootstrap user's details → API keys → Add API Key. Choose Paste
-              a public key, paste the public PEM supplied by the app, and add
-              it. Do not generate a different key pair or upload a private key.{" "}
-              <a href="https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm" target="_blank" rel="noopener noreferrer">Upload an API public key</a>.{" "}
-              <strong>This simulator provides no usable key.</strong>
-            </li>
-            <li>
-              <strong>Return here and verify.</strong> Paste the matching OCIDs
-              below and select Verify handoff. For import, the tenancy OCID is
-              carried over from your original selection and cannot be edited here.
-              Keep the temporary accounts until
-              setup verifies replacement access and presents the cleanup review.
-              Do not paste passwords, MFA codes or private keys into this form.
-            </li>
-          </ol>
+          <details className="operator-instructions">
+            <summary>OCI administrator checklist</summary>
+            <div className="operator-instructions-body">
+              <p className="muted">
+                For this local simulation, select “Use simulated handoff” below; do not
+                create real OCI users or keys. The checklist describes the OCI
+                handoff for the live integration.
+              </p>
+              <ol className="onboarding-instructions">
+                <li>
+                  {data.origin === "create" ? (
+                    <>
+                      <strong>Activate the requested child.</strong> Open the OCI
+                      email sent to the {data.email_contacts?"activation delivery address":"activation mailbox"} below. Follow its
+                      activation link, set your password and enroll MFA, then sign
+                      in to the child tenancy. The name and home region were
+                      supplied with this request; do not create another tenancy.{" "}
+                      <a href="https://docs.oracle.com/en-us/iaas/Content/General/organization/child-tenancy-create.htm" target="_blank" rel="noopener noreferrer">Oracle activation guide</a>.
+                    </>
+                  ) : (
+                    <>
+                      <strong>Confirm the manual transfer is complete.</strong>{" "}
+                      In the configured parent, open Governance &amp; Administration
+                      → Organization Management → Tenancies and confirm this
+                      tenancy is listed as a child. A tenancy created under another
+                      parent needs transfer approval; an invited tenancy has a
+                      different removal procedure. Follow the applicable Oracle
+                      procedure before continuing.
+                      <details>
+                        <summary>Oracle transfer procedures</summary>
+                        <ul>
+                          <li><a href="https://docs.oracle.com/en-us/iaas/Content/General/organization/approve-createdchildtenancy-for-transfer.htm" target="_blank" rel="noopener noreferrer">Transfer a created child (approval uses the CLI)</a></li>
+                          <li><a href="https://docs.oracle.com/en-us/iaas/Content/General/organization/link-delete.htm" target="_blank" rel="noopener noreferrer">Remove an invited child from its previous organization</a></li>
+                          <li><a href="https://docs.oracle.com/en-us/iaas/Content/General/organization/sender-invitation-create.htm" target="_blank" rel="noopener noreferrer">Invite the tenancy from the new parent</a></li>
+                          <li><a href="https://docs.oracle.com/en-us/iaas/Content/General/organization/recipient-invitation-accept.htm" target="_blank" rel="noopener noreferrer">Accept the invitation in the child</a></li>
+                        </ul>
+                      </details>
+                    </>
+                  )}
+                </li>
+                <li>
+                  <strong>{data.origin === "import" ? "Confirm the selected child tenancy." : "Copy the child tenancy OCID."}</strong> In the child's
+                  profile menu, select Tenancy, then copy the OCID under Tenancy
+                  Information. A work-request ID is not a tenancy OCID.{" "}
+                  <a href="https://docs.oracle.com/en-us/iaas/Content/GSG/Tasks/contactingsupport_topic-Locating_Oracle_Cloud_Infrastructure_IDs.htm" target="_blank" rel="noopener noreferrer">Find the tenancy OCID</a>.
+                  {data.origin === "create" && (
+                    <> Also open the activation administrator's User settings and
+                      copy that user's OCID for the separate field below.</>
+                  )}
+                </li>
+                <li>
+                  <strong>Create the temporary bootstrap user in the child.</strong>{" "}
+                  Open Identity &amp; Security → Domains → Default → Users → Create
+                  user. Turn off Use the email address as the username, enter the
+                  bootstrap username below, {data.email_contacts?.activation.effective_email ? <>complete the required name fields using your administrator details and use the recorded bootstrap contact <strong className="email-address">{data.email_contacts.activation.effective_email}</strong> for the email field</> : <>complete the required name/email fields using your administrator contact details</>}, and assign the
+                  Administrators group. Copy the new user's OCID from its details.{" "}
+                  <a href="https://docs.oracle.com/en-us/iaas/Content/GSG/Tasks/addingusers.htm" target="_blank" rel="noopener noreferrer">Create an administrator user</a>.
+                </li>
+                <li>
+                  <strong>Grant identity-domain administration.</strong> In the
+                  Default domain, open Administrators (or Security → Administrators),
+                  find Identity domain administrator and add the bootstrap user.
+                  Domain roles and the OCI Administrators group are separate grants.{" "}
+                  <a href="https://docs.oracle.com/en-us/iaas/Content/Identity/users/assign-users-roles.htm" target="_blank" rel="noopener noreferrer">Assign the domain role</a>.
+                </li>
+                <li>
+                  <strong>Attach the app-provided public key.</strong> Open the
+                  bootstrap user's details → API keys → Add API Key. Choose Paste
+                  a public key, paste the public PEM supplied by the app, and add
+                  it. Do not generate a different key pair or upload a private key.{" "}
+                  <a href="https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm" target="_blank" rel="noopener noreferrer">Upload an API public key</a>.{" "}
+                  <strong>This simulator provides no usable key.</strong>
+                </li>
+                <li>
+                  <strong>Return here and verify.</strong> Paste the matching OCIDs
+                  below and select Verify handoff. For import, the tenancy OCID is
+                  carried over from your original selection and cannot be edited here.
+                  Keep the temporary accounts until
+                  setup verifies replacement access and presents the cleanup review.
+                  Do not paste passwords, MFA codes or private keys into this form.
+                </li>
+              </ol>
+            </div>
+          </details>
           <p className="muted">
             {data.origin === "create" && (
               <>

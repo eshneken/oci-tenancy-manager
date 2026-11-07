@@ -280,9 +280,20 @@ async function organizationFlows(page: Page) {
           panel.getByLabel("Tenancy OCID", { exact: true }),
         ).toBeEditable();
       }
-      await expect(
-        panel.getByRole("heading", { name: "OCI administrator checklist" }),
-      ).toBeVisible();
+      const checklist=panel.locator("details.operator-instructions");
+      const checklistToggle=checklist.locator(":scope > summary");
+      await expect(checklistToggle).toHaveText("OCI administrator checklist");
+      await expect(checklist).not.toHaveAttribute("open");
+      await expect(panel.getByText(/A work-request ID is not a tenancy OCID/)).not.toBeVisible();
+      await expect(panel.getByRole("button",{name:"Use simulated handoff",exact:true})).toBeVisible();
+      for(const width of [1280,390,320]) {
+        await page.setViewportSize({width,height:900});
+        expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+        await panel.screenshot({path:`.local-dev/browser/instructions-${action==="Create tenancy"?"create":"import"}-closed-${width}.png`});
+      }
+      await checklistToggle.focus();
+      await checklistToggle.press("Enter");
+      await expect(checklist).toHaveAttribute("open");
       await expect(
         panel.getByText(/A work-request ID is not a tenancy OCID/),
       ).toBeVisible();
@@ -320,6 +331,10 @@ async function organizationFlows(page: Page) {
         });
       }
       await page.setViewportSize({ width: 1280, height: 900 });
+      await checklistToggle.focus();
+      await checklistToggle.press("Space");
+      await expect(checklist).not.toHaveAttribute("open");
+      await expect(panel.getByLabel("Tenancy OCID",{exact:true})).toBeVisible();
       await panel
         .getByRole("button", { name: "Use simulated handoff" })
         .click();
@@ -418,6 +433,7 @@ async function organizationFlows(page: Page) {
       const childUrl = page.url();
       const check = users.getByRole("button", { name: "Refresh user data", exact: true });
       await expect(check).toBeEnabled();
+      await expect(check).toHaveClass(/secondary/);
       const accepted = page.waitForResponse(response =>
         response.request().method() === "POST" && response.url().endsWith("/required-users/check"));
       await check.click();
@@ -557,6 +573,7 @@ async function organizationFlows(page: Page) {
   await page.getByRole("link", { name: "Tenancies", exact: true }).click();
   await page.getByRole("link", { name: sharedName, exact: true }).click();
   const membersToolbar=page.locator(".tenancy-members-toolbar");
+  await expect(membersToolbar.getByRole("button",{name:"Add member",exact:true})).toHaveClass(/secondary/);
   for(const width of [1280,390,320]) {
     await page.setViewportSize({width,height:900});
     if(width===1280) {

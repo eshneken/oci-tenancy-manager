@@ -711,7 +711,7 @@ export function Organization({
               Close
             </button>
             <button
-              className="button primary"
+              className="button secondary"
               onClick={() => {
                 closeReset();
                 setNotice("");

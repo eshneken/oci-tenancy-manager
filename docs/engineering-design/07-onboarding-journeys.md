@@ -318,3 +318,12 @@ identifiers, while keeping the proposed canonical managed-object binding, access
 current-generation checks and full access-health model as future implementation. Capture evidence
 alone must not authorize repair, disclosure or live operations. Saved previews are not changed.
 Live qualification remains Pending in the [manual manifest](../how-to/real-oci-test-manifest.md).
+
+### Compact operator guidance
+
+Lengthy create/import handoff procedures are available under a default-closed OCI administrator
+checklist disclosure. Forms, targets, actions, critical notices and cleanup consent remain
+visible. Native summary keyboard behavior and shared help styling follow the
+[UI policy](../ui-ux-review-policy.md#optional-operator-instructions--7-november-2026);
+[the implemented guide](../reference/tenancy-onboarding.md#collapsed-oci-operator-checklist)
+defines the field-preservation and transient-state boundary. No persisted model changes.

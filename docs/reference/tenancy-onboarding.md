@@ -501,3 +501,16 @@ Not checked. Legacy unbound/unconfigured children cannot check. Simulation recon
 producer fixtures and does not verify live OCI. Assignments/profiles are deferred until separately
 needed for privileges/repair; no credential IDs are fabricated. Daily scheduling, emails, credential
 custody, readiness and repair remain outside this checkpoint. Local simulation qualification and the main-preview upgrade pass; the parallel preview is unchanged. [Final receipt](../history/manual-presence-checkpoint-2026-11-06.md).
+
+## Collapsed OCI operator checklist
+
+Create and import handoff screens show **OCI administrator checklist** in a default-closed
+expand/collapse panel. Activate the summary by mouse or Enter/Space to read the complete OCI
+procedure and its documentation links, then close it to return to the compact view. The same
+handoff inputs, requested/discovered child information, activation contact, bootstrap username
+and operation buttons stay visible while help is closed. Top simulation guidance explicitly
+says to use simulated handoff rather than creating real OCI users/keys.
+
+Disclosure does not submit a handoff, mutate an operation or satisfy cleanup consent. Current
+errors, exact temporary-account review and confirmations remain outside optional help. Open
+state is transient; a new mount starts closed and no database/API/ER field is added.

@@ -1254,6 +1254,6 @@ it.each([
  mount(<Tenancies identifier={id} expired={vi.fn()} navigate={vi.fn()}/>);
  await screen.findByText("Accountability & registration");
  const button=screen.queryByRole("button",{name:"Add member"});
- if(visible){expect(button).toBeVisible();if(disabled)expect(button).toBeDisabled();else expect(button).toBeEnabled();}
+ if(visible){expect(button).toBeVisible();expect(button).toHaveClass("secondary");if(disabled)expect(button).toBeDisabled();else expect(button).toBeEnabled();}
  else expect(button).toBeNull();
 });

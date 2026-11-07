@@ -587,7 +587,7 @@ export function Tenancies({
               <section className="table-panel">
                 <div className="table-toolbar tenancy-members-toolbar">
                   <h2>Current members</h2>
-                  {tenant.kind === "shared" && tenant.status === "active" && <button type="button" className="button primary" disabled={Boolean(tenant.has_pending_operation)} onClick={() => setAddingMember(true)}>Add member</button>}
+                  {tenant.kind === "shared" && tenant.status === "active" && <button type="button" className="button secondary" disabled={Boolean(tenant.has_pending_operation)} onClick={() => setAddingMember(true)}>Add member</button>}
                 </div>
                 <div
                   className="table-scroll"

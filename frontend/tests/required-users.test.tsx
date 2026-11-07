@@ -167,6 +167,7 @@ it("queues once and displays background completion",async()=>{
   const start=vi.spyOn(api,"checkRequiredUsers").mockImplementation(async()=>{server={...configured,pending_operation_id:checkId};return receipt;});
   const c=mount(configured);c.read.mockImplementation(()=>Promise.resolve(server));
   await screen.findByText("otm-automation");
+  expect(screen.getByRole("button",{name:"Refresh user data"})).toHaveClass("secondary");
   await userEvent.click(screen.getByRole("button",{name:"Refresh user data"}));
   await waitFor(()=>expect(screen.getByRole("button",{name:"Refreshing user data…"})).toBeDisabled());
   expect(start).toHaveBeenCalledTimes(1);

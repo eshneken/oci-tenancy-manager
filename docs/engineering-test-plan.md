@@ -1171,3 +1171,12 @@ There is one normal acquisition button per section, with no separate saved-recor
 Page-level refresh/background reads remain GET-only, with Retry loading users only on read failure.
 Capture the acquisition control at desktop and narrow widths. No new provider call, grant, table or OCI-specific qualification
 case is introduced; existing shared membership and presence live cases remain mandatory.
+
+## Optional operator disclosures
+
+Create/import instructions start closed; native summary Enter/Space and click toggle the complete
+checklist, including its documentation links. Collapsing does not submit any operation and leaves
+all handoff fields, simulated handoff button, errors and cleanup consent available. Cover both
+origins and closed/open 1280/390/320-pixel screenshots, page containment, summary focus and
+keyboard operation through the existing complete native onboarding/worker browser journey.
+No new backend state, API, schema or live provider qualification is introduced.
