@@ -19,6 +19,7 @@ Action = Literal[
     "remove_member",
     "transfer_owner",
     "no_tenancy_required",
+    "keep_without_tenancy",
     "ignore",
     "resolve",
     "merge",

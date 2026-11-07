@@ -426,6 +426,7 @@ def test_audit_http_authorization_and_errors(session_case):
         ("organization_configured", "mapping_apply"),
         ("organization_configured", None),
         ("organization_review_decided", "no_tenancy_required"),
+        ("organization_review_decided", "keep_without_tenancy"),
         ("organization_review_decided", "unrecognized"),
         ("organization_feed_received", None),
         ("organization_feed_rejected", None),

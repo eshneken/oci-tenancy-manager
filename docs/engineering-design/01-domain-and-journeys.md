@@ -515,3 +515,10 @@ confirm_destructive consent in addition to existing impact warnings. False is om
 request-hash compatibility; authenticated exact committed replay precedes the new-admission guard.
 Action/target/plan/preview changes reset the checkbox. Separate tenancy-level termination retains
 its existing confirm_deletion consent; leaves_directory is always false. This source correction adds the one public OrganizationAction field above, with no database schema/table change or new authority model. Qualification and preview upgrade remain pending.
+
+### Accept an employee without provisioning
+
+**Keep in organization without a tenancy** accepts the current onboarding episode while retaining
+the employee in the normal directory. It uses the existing setup_required flag, preserves episode
+history, and never exempts the employee or closes independent mapping/role work. Later provisioning
+remains available from the employee record. See the [implemented contract](../reference/organization-workflows.md#keep-in-organization-without-a-tenancy).

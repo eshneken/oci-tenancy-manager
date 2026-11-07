@@ -1231,3 +1231,16 @@ it.each(["transfer_owner","merge"] as const)("clears consent on %s recipient cha
   await userEvent.selectOptions(field,op);expect(ack).not.toBeChecked();
   await userEvent.selectOptions(field,other);expect(ack).not.toBeChecked();
 });
+
+// Keeping an employee closes onboarding without an exemption, cloud job or destructive consent.
+it("keeps an employee in the normal directory without provisioning",async()=>{
+ const c=dialog({...preview,actions:[...preview.actions,"keep_without_tenancy"]},"keep_without_tenancy");
+ c.submit.mockResolvedValue({operation_id:null,state:"succeeded",provider_mode:"application",accepted_at:time});
+ await screen.findByRole("button",{name:/^Keep in organization$/});
+ expect(screen.queryByRole("checkbox")).toBeNull();
+ await userEvent.click(screen.getByRole("button",{name:/^Keep in organization$/}));
+ await screen.findByText("Decision saved",{exact:true});
+ expect(c.submit).toHaveBeenCalledTimes(1);
+ expect(c.submit.mock.calls[0][0].action).toBe("keep_without_tenancy");
+ expect(screen.queryByRole("link",{name:"View operation"})).toBeNull();
+});

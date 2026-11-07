@@ -874,3 +874,25 @@ The restricted worker therefore receives UPDATE only on the existing setup_requi
 setup_episode_id columns in addition to its prior directory-control grants. It receives no
 new identity-key/email, table-wide UPDATE, administrator, credential or history-rewrite grant.
 The role installer applies these grants idempotently; no data migration/backfill is performed.
+
+## Keep in organization without a tenancy
+
+An administrator can accept a new employee into the normal Organization directory without
+provisioning anything. Select **Keep in organization without a tenancy** in the employee or
+onboarding-review dialog, then **Keep in organization**. This closes that onboarding episode
+immediately; it creates no operation, OCI resource, identity, credential or tenancy association.
+The employee remains visible with zero tenancies, just like an initial-census employee. Later,
+open their employee record to create/import a tenancy or add them to a shared tenancy.
+
+This differs from **No tenancy required**, which explicitly exempts the employee and excludes
+them from the normal managed directory until re-onboarded. Keeping an employee instead retains
+directory_status=included and clears only setup_required; setup_episode_id and immutable history
+remain. Repeated ordinary feeds and metadata changes do not reopen the accepted setup episode.
+A later genuine departure/return or verified association cleanup can create new work as usual.
+
+Admission requires a currently present actual employee row, an included profile, an active setup
+episode, no tenancy associations and no pending operation. Exempt/merged/absent profiles and
+stale previews cannot use this action. It is available without a cloud provider. Mapping/role
+repair and absence work remain independent: only TENANCY_SETUP_REVIEW is closed. Standard
+authentication, context, audited decision and exact request-replay guards remain in force.
+There are no new tables, columns or directory statuses; keep_without_tenancy extends the action enum.

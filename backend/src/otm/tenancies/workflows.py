@@ -672,6 +672,7 @@ class OrganizationWorkflows:
                 "ignore",
                 "resolve",
                 "no_tenancy_required",
+                "keep_without_tenancy",
                 "reonboard",
                 "mark_returned",
             } or (command.action == "offboard_person" and not links):
@@ -747,6 +748,22 @@ class OrganizationWorkflows:
             raise OrganizationConflict("PERSON_NOT_ABSENT")
         if action == "ignore" and (review is None or review["kind"] != "LOB_MAPPING_REVIEW"):
             raise OrganizationConflict("IGNORE_REQUIRES_LOB_REVIEW")
+        if action == "keep_without_tenancy":
+            # This accepts one setup episode, never an exemption, absence or nomination repair.
+            if (
+                links
+                or not state.eligible(person.id)
+                or not state.controls[person.id]["setup_required"]
+                or (review is not None and review["kind"] != "TENANCY_SETUP_REVIEW")
+            ):
+                raise OrganizationConflict("ORGANIZATION_ACTION_UNAVAILABLE")
+            connection.execute(
+                update(org_person)
+                .where(org_person.c.workspace_id == state.workspace, org_person.c.id == person.id)
+                .values(setup_required=False)
+            )
+            self._close_related(connection, state, (person.id,), action, at, include_absence=False)
+            return state.config
         config = (
             self._decide(state.config, state, review, person, action, actor, at)
             if review and review["kind"] != "TENANCY_SETUP_REVIEW"

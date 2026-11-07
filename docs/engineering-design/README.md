@@ -65,3 +65,5 @@ Current-month financial implementation and deferred/live boundaries: [cost visib
 Current manual user-presence source, fields and qualification boundary: [presence checks](../reference/user-presence-checks.md).
 
 Compact required-user inventory summary: [qualified field/state reference](../reference/required-users-summary.md), with the main preview updated and the parallel preview unchanged.
+
+Normal-directory onboarding without provisioning: [Keep in organization without a tenancy](../reference/organization-workflows.md#keep-in-organization-without-a-tenancy).

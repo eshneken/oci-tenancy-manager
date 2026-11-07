@@ -23,6 +23,7 @@ const labels: Record<Action, string> = {
   remove_member: "Remove shared member",
   transfer_owner: "Transfer tenancy ownership",
   no_tenancy_required: "No tenancy required",
+  keep_without_tenancy: "Keep in organization without a tenancy",
   ignore: "Ignore permanently",
   resolve: "Complete review",
   merge: "Merge employee identity",
@@ -927,6 +928,14 @@ export function PersonActions({
                         another review.
                       </p>
                     )}
+                    {action === "keep_without_tenancy" && (
+                      <p className="notice">
+                        Keep this employee in the organization with no tenancy and close
+                        this onboarding review. You can create or import a tenancy, or add
+                        this employee to a shared tenancy later from their employee record. Routine feed updates
+                        will not reopen this same onboarding review.
+                      </p>
+                    )}
                     {action === "no_tenancy_required" && (
                       <p className="notice">
                         Record that this employee needs no tenancy and close
@@ -1025,7 +1034,7 @@ export function PersonActions({
                         {busy
                           ? "Saving…"
                           : action
-                            ? labels[action]
+                            ? action === "keep_without_tenancy" ? "Keep in organization" : labels[action]
                             : "Continue"}
                       </button>
                     </div>

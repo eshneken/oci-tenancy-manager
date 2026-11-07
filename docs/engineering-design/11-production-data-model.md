@@ -2072,3 +2072,12 @@ person commands require true only on new admission after exact authenticated rep
 is a request field committed through the existing request digest, not a new database column.
 The separate TenancyDeletionCommand retains confirm_deletion. DeletionPerson.leaves_directory
 is retained as an always-false compatibility field; tenancy deletion cannot remove an employee.
+
+## Keep without tenancy — 7 November 2026
+
+The application-only keep_without_tenancy action extends the existing Action enum in the request,
+workflow choices and immutable audit evidence. It sets only org_person.setup_required=false,
+retains setup_episode_id and directory_status=included, and closes current setup recommendations
+with the existing status/resolution/resolved_at fields. Existing request digests, workspace
+revision and audit receipts capture the decision. No new entity, column, directory state or
+ER relationship is introduced. See the [workflow contract](../reference/organization-workflows.md#keep-in-organization-without-a-tenancy).

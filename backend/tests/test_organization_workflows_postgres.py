@@ -1046,3 +1046,64 @@ def test_operation_badge_requires_pending_subject_and_supported_action(workflow_
         )
     assert reads.directory(workspace, OperationQuery()).attention_count == 0
     assert reads.detail(workspace, receipt.operation_id) is not None
+
+
+# One explicit keep decision matches first-census unassigned people without creating an exemption.
+def test_keep_employee_without_tenancy_is_durable_and_provisionable(workflow_case):
+    c = workflow_case
+    new = Record(
+        source_record_id="keep",
+        full_name="Unassigned Engineer",
+        email="keep@example.test",
+        manager_email="one@example.test",
+    )
+    unmapped = Record(
+        source_record_id="keep-unmapped",
+        full_name="Unassigned Profile",
+        email="keep-unmapped@example.test",
+        manager_email="root@example.test",
+    )
+    rows = (*example_records(), new, unmapped)
+    feed(c, rows)
+    for address in (new.email, unmapped.email):
+        reviews = c.workflow.reviews(c.principal, ReviewQuery()).items
+        setup = next(r for r in reviews if r.email == address and r.kind == "TENANCY_SETUP_REVIEW")
+        independent = [
+            r.id
+            for r in reviews
+            if r.person_id == setup.person_id and r.kind != "TENANCY_SETUP_REVIEW"
+        ]
+        command, receipt = action(c, setup.person_id, "keep_without_tenancy", review_id=setup.id)
+        assert receipt.operation_id is None and receipt.provider_mode == "application"
+        assert c.workflow.act(c.principal, command) == receipt
+        preview = c.workflow.preview(c.principal, setup.person_id)
+        assert preview.directory_status == "included" and preview.associations == ()
+        current = c.workflow.reviews(c.principal, ReviewQuery()).items
+        assert not any(
+            r.person_id == setup.person_id and r.kind == "TENANCY_SETUP_REVIEW" for r in current
+        )
+        assert set(independent) <= {r.id for r in current}
+    renamed = new.model_copy(update={"full_name": "Updated Unassigned Engineer"})
+    rows = (*example_records(), renamed, unmapped)
+    feed(c, rows)
+    feed(c, rows)
+    assert not any(
+        r.kind == "TENANCY_SETUP_REVIEW"
+        for r in c.workflow.reviews(c.principal, ReviewQuery()).items
+    )
+    person = next(p for p in c.store.head(c.principal).people if p.email == new.email)
+    preview = c.workflow.preview(c.principal, person.id)
+    assert preview.person.name == renamed.full_name
+    assert {"create_tenancy", "import_tenancy", "join_shared"} <= set(preview.actions)
+    assert "keep_without_tenancy" not in preview.actions
+    with c.engine.connect() as connection:
+        from otm.storage.tables import org_person
+
+        control = (
+            connection.execute(select(org_person).where(org_person.c.id == person.id))
+            .mappings()
+            .one()
+        )
+        assert control["directory_status"] == "included" and not control["setup_required"]
+    _, accepted = action(c, person.id, "create_tenancy")
+    assert accepted.state == "queued"

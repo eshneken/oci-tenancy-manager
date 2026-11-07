@@ -792,6 +792,33 @@ async function organizationFlows(page: Page) {
     await expect(page.getByRole("button",{name:"New Employee",exact:true})).toBeVisible();
     await expect(page.getByRole("button",{name:"Leader One",exact:true})).toBeVisible();
   }
+  // Accept onboarding without exemption or provider work, then retain later provisioning choices.
+  const unassignedRows=[...joinedRows,"Unassigned Engineer,unassigned@example.test,one@example.test,one@example.test"];
+  await upload(unassignedRows);
+  await page.getByRole("link",{name:"Organization drift",exact:true}).click();
+  const unassignedReview=page.getByRole("row").filter({hasText:"unassigned@example.test"}).filter({has:page.getByText("New employee",{exact:true})});
+  await unassignedReview.getByRole("button",{name:"Review",exact:true}).click();
+  await modal.getByRole("combobox",{name:"Action",exact:true}).selectOption("keep_without_tenancy");
+  for(const width of [1280,390,320]) {
+    await page.setViewportSize({width,height:900});
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    await modal.screenshot({path:`.local-dev/browser/keep-without-tenancy-${width}.png`});
+  }
+  await page.setViewportSize({width:1280,height:900});
+  await expect(modal.getByRole("checkbox")).toHaveCount(0);
+  await modal.getByRole("button",{name:"Keep in organization",exact:true}).click();
+  await expect(modal.getByText("Decision saved",{exact:true})).toBeVisible();
+  await modal.getByRole("button",{name:"Done",exact:true}).click();
+  await upload(unassignedRows);
+  await page.getByRole("link",{name:"Organization drift",exact:true}).click();
+  await expect(unassignedReview).toHaveCount(0);
+  await page.getByRole("link",{name:"Organization",exact:true}).click();
+  await page.getByRole("button",{name:"Unassigned Engineer",exact:true}).click();
+  const later=modal.getByRole("combobox",{name:"Action",exact:true});
+  for(const value of ["create_tenancy","import_tenancy","join_shared"])
+    await expect(later.locator(`option[value="${value}"]`)).toHaveCount(1);
+  await modal.getByRole("button",{name:"Cancel",exact:true}).click();
+
 }
 
 // Inspect real native picker geometry and pointer/keyboard behavior inside the scrolling dialog.

@@ -1466,3 +1466,56 @@ def selected_recipe():
     version = draft_view(published_row(row(), principal()))
     with patch("otm.tenancies.workflows.current_baseline", return_value=version):
         yield version
+
+
+# Accept setup only while retaining the unassigned employee and independent reviews.
+def test_keep_without_tenancy_preserves_directory_and_independent_reviews(registry):
+    s, p = registry, person(registry)
+    app, connection = service(s), database()
+    s.controls[p.id].update(setup_required=True, setup_episode_id=uuid4())
+    setup = review(s, p)
+    assert "keep_without_tenancy" in person_workflow(s, p.id, mode="unavailable").actions
+    config = app._application_decision(
+        connection, s, command(s, p, "keep_without_tenancy"), p, setup, principal().actor, NOW
+    )
+    assert config is s.config
+    writes = [c.args[0] for c in connection.execute.call_args_list]
+    assert writes[0].compile().params["setup_required"] is False
+    assert "directory_status" not in writes[0].compile().params
+    assert "setup_episode_id" not in writes[0].compile().params
+    assert writes[1].compile().params["kind_1"] == ["TENANCY_SETUP_REVIEW"]
+    app.enqueuer.enqueue.assert_not_called()
+
+
+# An unavailable, associated, exempt or pending person cannot use a metadata decision as a bypass.
+@pytest.mark.parametrize(
+    "change", ["baseline", "absent", "pending", "exempt", "associated", "review"]
+)
+def test_keep_without_tenancy_guards(registry, change):
+    s, p = registry, person(registry)
+    app, connection = service(s), database()
+    s.controls[p.id]["setup_required"] = True
+    selected = review(s, p)
+    if change == "baseline":
+        s.controls[p.id]["setup_required"] = False
+    elif change == "absent":
+        s.supplied.remove(p.email)
+    elif change == "pending":
+        s.controls[p.id]["pending_operation_id"] = uuid4()
+    elif change == "exempt":
+        s.controls[p.id]["directory_status"] = "exempt"
+    elif change == "associated":
+        attach(s, p)
+    else:
+        selected = review(s, p, "LOB_MAPPING_REVIEW")
+    with pytest.raises(OrganizationConflict, match="ORGANIZATION_ACTION_UNAVAILABLE"):
+        app._application_decision(
+            connection,
+            s,
+            command(s, p, "keep_without_tenancy"),
+            p,
+            selected,
+            principal().actor,
+            NOW,
+        )
+    connection.execute.assert_not_called()

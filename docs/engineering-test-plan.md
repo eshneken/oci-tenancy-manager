@@ -1142,3 +1142,14 @@ require the following regression matrix, without weakening complete-census depar
 - Unit, disposable PostgreSQL and actual browser coverage must include all cross-surface directory/
   review/cache outcomes and consent UI/API negatives. Current notification parity work is preserved;
   new full validation and saved-preview qualification are not claimed yet.
+
+## Accept onboarding without a tenancy
+
+Required regression cases for keep_without_tenancy: ordinary and unmapped current employees remain
+included with zero associations; only setup review closes; replay is exact; repeated feeds and
+name changes do not reopen setup; later create/import/join remains available. Reject absent,
+exempt, merged, pending, associated and unrelated-review targets or stale context. Preserve
+independent mapping/role and future departure work. Cover admission and database persistence
+in unit/disposable PostgreSQL tests and the real dialog in HTTPS Playwright, including narrow
+viewports, no destructive checkbox, immediate decision receipt and repeat upload. No live OCI
+qualification is needed for this application-only decision.

@@ -32,3 +32,5 @@ Private original feeds, raw evidence, screenshots and machine-specific paths are
 - [Lifecycle notice parity source qualification](lifecycle-notice-parity-checkpoint-2026-11-06.md)
 
 - [Employee restoration and destructive-consent qualification](employee-restoration-consent-checkpoint-2026-11-06.md)
+
+- [Keep in organization without a tenancy: local qualification and preserved main preview](keep-without-tenancy-checkpoint-2026-11-07.md)

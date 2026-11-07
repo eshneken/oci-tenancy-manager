@@ -46,3 +46,5 @@ establish actual database fields; diagrams explain relationships rather than add
 Audit history includes strict cost-worker identity projection and shared directory/CSV validation; see [audit reference](audit-history.md).
 
 - [Simulated user-presence connections and full field map](user-presence-connections.md)
+
+Normal-directory onboarding without provisioning: [Keep in organization without a tenancy](organization-workflows.md#keep-in-organization-without-a-tenancy).

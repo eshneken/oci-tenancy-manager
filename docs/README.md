@@ -92,3 +92,7 @@ Root manager naming and paired settings controls are specified in the
 [implemented Organization Mapping guide](reference/organization-mapping.md#root-manager-display-name).
 
 Current directory-return and destructive-consent qualification: [6 November checkpoint](history/employee-restoration-consent-checkpoint-2026-11-06.md).
+
+Normal-directory onboarding without provisioning: [Keep in organization without a tenancy](reference/organization-workflows.md#keep-in-organization-without-a-tenancy).
+
+- [Keep in organization without a tenancy: local qualification and preserved main preview](history/keep-without-tenancy-checkpoint-2026-11-07.md)

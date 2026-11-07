@@ -392,6 +392,12 @@ appropriate owner/member relationship; a completed onboarding decision never lim
 one tenancy. **No tenancy required** is permitted only without active associations and hides the
 person from the managed directory while retaining source/reporting and history.
 
+Alternatively, **Keep in organization without a tenancy** accepts the current onboarding episode
+without an exemption or provisioning. The person remains normally visible with zero tenancies;
+ordinary feeds do not reopen the same setup review. Later create/import/shared-membership actions
+remain available from the employee record. Independent mapping, role and departure reviews are
+unaffected. See the [implemented contract](../reference/organization-workflows.md#keep-in-organization-without-a-tenancy).
+
 D21 A, accepted 20 October: adding a shared member provisions an explicitly selected access profile.
 Compartment-scoped access is the default; full tenancy administration is an explicit alternative.
 Owner full administration remains unchanged. Preview exact scope/dependencies, freeze the selected

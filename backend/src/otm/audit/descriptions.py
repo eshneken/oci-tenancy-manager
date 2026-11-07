@@ -10,6 +10,7 @@ ACTIONS = {
     "remove_member": "Requested shared membership removal",
     "transfer_owner": "Requested tenancy ownership transfer",
     "no_tenancy_required": "Marked no tenancy required",
+    "keep_without_tenancy": "Kept employee in organization without a tenancy",
     "ignore": "Ignored organization review",
     "resolve": "Completed organization review",
     "merge": "Merged employee identity",
