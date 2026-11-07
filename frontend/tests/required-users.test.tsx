@@ -72,14 +72,14 @@ it("keeps loading and refresh states honest", async () => {
   const c = mount(new Promise(resolve => { complete = resolve; }));
   expect(screen.getByRole("status")).toHaveTextContent("Loading required user records");
   expect(screen.queryByText("Not recorded")).not.toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Loading required users" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Refresh user data" })).toBeDisabled();
   complete(directory); await screen.findByText("otm-recovery");
   let refresh!: (value: RequiredUsersDirectory) => void;
   c.read.mockReturnValueOnce(new Promise(resolve => { refresh = resolve; }));
-  await userEvent.click(screen.getByRole("button", { name: "Refresh required users" }));
-  expect(screen.getByRole("button", { name: "Refreshing required users" })).toBeDisabled();
+  void c.client.invalidateQueries({queryKey:["tenancies","required-users",id]});
+  await waitFor(()=>expect(screen.getByRole("region",{name:"Required users"})).toHaveAttribute("aria-busy","true"));
   expect(screen.getByText("otm-recovery")).toBeVisible();
-  refresh(directory); await screen.findByRole("button", { name: "Refresh required users" }); c.client.clear();
+  refresh(directory); await waitFor(()=>expect(screen.getByRole("region",{name:"Required users"})).toHaveAttribute("aria-busy","false")); c.client.clear();
 });
 
 // A failed read offers retry and never synthesizes unregistered accounts from a network error.
@@ -88,10 +88,10 @@ it("distinguishes initial failure and a failed refresh of retained records", asy
   expect(await screen.findByRole("alert")).toHaveTextContent("Unable to load");
   expect(screen.queryByText("Not recorded")).not.toBeInTheDocument();
   c.read.mockResolvedValue(directory);
-  await userEvent.click(screen.getByRole("button", { name: "Refresh required users" }));
+  await userEvent.click(screen.getByRole("button", { name: "Retry loading users" }));
   await screen.findByText("otm-automation");
   c.read.mockRejectedValueOnce(new Error("private"));
-  await userEvent.click(screen.getByRole("button", { name: "Refresh required users" }));
+  await c.client.invalidateQueries({queryKey:["tenancies","required-users",id]});
   expect(await screen.findByRole("alert")).toHaveTextContent("Previously loaded records are shown");
   expect(screen.getByText("otm-automation")).toBeVisible();
   expect(screen.queryByText("private")).not.toBeInTheDocument(); c.client.clear();
@@ -117,7 +117,7 @@ it("isolates each tenancy's query cache", async () => {
 it("does not retain visible records after a denied refresh", async () => {
   const c = mount(); await screen.findByText("otm-automation");
   c.read.mockRejectedValueOnce(new ApiError(403));
-  await userEvent.click(screen.getByRole("button", { name: "Refresh required users" }));
+  await c.client.invalidateQueries({queryKey:["tenancies","required-users",id]});
   await waitFor(() => expect(c.expired).toHaveBeenCalled());
   expect(screen.queryByText("otm-automation")).not.toBeInTheDocument(); c.client.clear();
 });
@@ -138,7 +138,7 @@ it("shows independent current and failed account observations", async()=>{
   await userEvent.click(screen.getAllByRole("link",{name:"View check"})[0]);
   expect(c.navigate).toHaveBeenCalledWith("/operations/"+checkId);
   c.read.mockResolvedValue({...present,users:present.users.map(u=>({...u,presence:{...u.presence!,state:"unknown"}})) as RequiredUsersDirectory["users"]});
-  await userEvent.click(screen.getByRole("button",{name:"Refresh required users"}));
+  await c.client.invalidateQueries({queryKey:["tenancies","required-users",id]});
   await waitFor(()=>expect(screen.getAllByText("Unable to verify")).toHaveLength(2));
   expect(screen.queryByText("Present",{exact:true})).not.toBeInTheDocument();
   expect(screen.getAllByText("Last attempt (UTC)")).toHaveLength(2);c.client.clear();
@@ -157,7 +157,7 @@ it("neutralizes stale presence evidence",async()=>{
 it.each(["not_configured","tenancy_inactive","tenancy_busy","provider_unavailable"] as const)("explains %s",async reason=>{
   const c=mount({...directory,check_available:false,check_unavailable_reason:reason});
   await screen.findByText("otm-automation");
-  expect(screen.getByRole("button",{name:"Check now"})).toBeDisabled();
+  expect(screen.getByRole("button",{name:"Refresh user data"})).toBeDisabled();
   expect(screen.getByText(reason==="not_configured"?/Presence checks require a registered automation connection/:reason==="tenancy_inactive"?/active tenancies/:reason==="tenancy_busy"?/operation is in progress/:/provider is currently unavailable/)).toBeVisible();c.client.clear();
 });
 
@@ -167,16 +167,16 @@ it("queues once and displays background completion",async()=>{
   const start=vi.spyOn(api,"checkRequiredUsers").mockImplementation(async()=>{server={...configured,pending_operation_id:checkId};return receipt;});
   const c=mount(configured);c.read.mockImplementation(()=>Promise.resolve(server));
   await screen.findByText("otm-automation");
-  await userEvent.click(screen.getByRole("button",{name:"Check now"}));
-  await waitFor(()=>expect(screen.getByRole("button",{name:"Checking…"})).toBeDisabled());
+  await userEvent.click(screen.getByRole("button",{name:"Refresh user data"}));
+  await waitFor(()=>expect(screen.getByRole("button",{name:"Refreshing user data…"})).toBeDisabled());
   expect(start).toHaveBeenCalledTimes(1);
   expect(start.mock.calls[0][0]).toBe(id);
   const first=start.mock.calls[0][1].client_request_key;
   expect(first).toMatch(/^[0-9a-f-]{36}$/);
   server={...configured,pending_operation_id:null,users:configured.users.map(u=>({...u,presence:{state:"present",checked_at:"2026-11-06T12:00:00Z",stale:false,operation_id:checkId}})) as RequiredUsersDirectory["users"]};
   await waitFor(()=>expect(screen.getAllByText("Present",{exact:true})).toHaveLength(2),{timeout:3000});
-  expect(screen.getByRole("button",{name:"Check now"})).toBeEnabled();
-  await userEvent.click(screen.getByRole("button",{name:"Check now"}));
+  expect(screen.getByRole("button",{name:"Refresh user data"})).toBeEnabled();
+  await userEvent.click(screen.getByRole("button",{name:"Refresh user data"}));
   await waitFor(()=>expect(start).toHaveBeenCalledTimes(2));
   expect(start.mock.calls[1][1].client_request_key).not.toBe(first);c.client.clear();
 });
@@ -185,9 +185,9 @@ it("queues once and displays background completion",async()=>{
 it("retries an uncertain request with the original key",async()=>{
   const start=vi.spyOn(api,"checkRequiredUsers").mockRejectedValueOnce(new ApiError(503)).mockResolvedValue(receipt);
   const c=mount(configured);await screen.findByText("otm-automation");
-  await userEvent.click(screen.getByRole("button",{name:"Check now"}));
+  await userEvent.click(screen.getByRole("button",{name:"Refresh user data"}));
   expect(await screen.findByRole("alert")).toHaveTextContent("Unable to confirm");
-  await userEvent.click(screen.getByRole("button",{name:"Retry check request"}));
+  await userEvent.click(screen.getByRole("button",{name:"Retry user refresh"}));
   await waitFor(()=>expect(start).toHaveBeenCalledTimes(2));
   expect(start.mock.calls[1][1]).toEqual(start.mock.calls[0][1]);c.client.clear();
 });
@@ -196,7 +196,7 @@ it("retries an uncertain request with the original key",async()=>{
 it.each([401,403])("hides cached data after denied check %s",async status=>{
   vi.spyOn(api,"checkRequiredUsers").mockRejectedValue(new ApiError(status));
   const c=mount(configured);await screen.findByText("otm-automation");
-  await userEvent.click(screen.getByRole("button",{name:"Check now"}));
+  await userEvent.click(screen.getByRole("button",{name:"Refresh user data"}));
   await waitFor(()=>expect(c.expired).toHaveBeenCalled());
   expect(screen.queryByText("otm-automation")).not.toBeInTheDocument();c.client.clear();
 });
@@ -206,13 +206,13 @@ it("does not apply a late command receipt to another tenancy",async()=>{
   let resolve!:(value:typeof receipt)=>void;
   vi.spyOn(api,"checkRequiredUsers").mockReturnValue(new Promise(done=>{resolve=done;}));
   const c=mount(configured);await screen.findByText("otm-automation");
-  await userEvent.click(screen.getByRole("button",{name:"Check now"}));
+  await userEvent.click(screen.getByRole("button",{name:"Refresh user data"}));
   const other="22222222-2222-4222-8222-222222222222";
   c.read.mockResolvedValue({...directory,tenancy_id:other,users:directory.users.map(u=>({...u,identity:{...u.identity!,user_name:"other-"+u.purpose}})) as RequiredUsersDirectory["users"]});
   c.rerender(<QueryClientProvider client={c.client}><RequiredUsers tenancyId={other} expired={c.expired} navigate={c.navigate}/></QueryClientProvider>);
   await screen.findByText("other-automation");resolve(receipt);
   await waitFor(()=>expect(c.client.getQueryData<RequiredUsersDirectory>(["tenancies","required-users",id])?.pending_operation_id).toBe(checkId));
-  expect(screen.queryByRole("button",{name:"Checking…"})).not.toBeInTheDocument();
+  expect(screen.queryByRole("button",{name:"Refreshing user data…"})).not.toBeInTheDocument();
   expect(screen.getByText("other-automation")).toBeVisible();c.client.clear();
 });
 
@@ -220,7 +220,7 @@ it("does not apply a late command receipt to another tenancy",async()=>{
 it("rejects a receipt without an operation reference",async()=>{
   vi.spyOn(api,"checkRequiredUsers").mockResolvedValue({...receipt,operation_id:null});
   const c=mount(configured);await screen.findByText("otm-automation");
-  await userEvent.click(screen.getByRole("button",{name:"Check now"}));
+  await userEvent.click(screen.getByRole("button",{name:"Refresh user data"}));
   expect(await screen.findByRole("alert")).toHaveTextContent("Unable to confirm");
   expect(screen.queryByText("Present",{exact:true})).not.toBeInTheDocument();c.client.clear();
 });
@@ -251,19 +251,18 @@ it("focuses an unavailable section without revealing retained identity facts",as
 });
 
 
-// Refresh never enrolls a legacy tenancy or starts a job; qualified facts alone enable Check now.
-it("explains unavailable checks and distinguishes Refresh from enrollment",async()=>{
+// Unqualified accounts cannot force refresh; stored facts are revalidated without another UI action.
+it("explains unavailable refresh and exposes no duplicate saved-record action",async()=>{
   const check=vi.spyOn(api,"checkRequiredUsers");
   const c=mount({...directory,check_available:false,check_unavailable_reason:"not_configured"});
   await screen.findByText(/Presence checks require a registered automation connection/);
-  const action=screen.getByRole("button",{name:"Check now"});
+  const action=screen.getByRole("button",{name:"Refresh user data"});
   expect(action).toBeDisabled();
   expect(action).toHaveAccessibleDescription(/Existing tenancies are not enrolled automatically/);
   expect(screen.getByText(/For local testing, complete setup/)).toBeVisible();
-  const refresh=screen.getByRole("button",{name:"Refresh required users"});
-  expect(refresh).toHaveTextContent(/^Refresh$/);
+  expect(screen.queryByRole("button",{name:"Refresh required users"})).toBeNull();
   c.read.mockResolvedValue({...directory,check_available:true,check_unavailable_reason:null});
-  await userEvent.click(refresh);
+  await c.client.invalidateQueries({queryKey:["tenancies","required-users",id]});
   await waitFor(()=>expect(action).toBeEnabled());
   expect(action).not.toHaveAttribute("aria-describedby");
   expect(screen.queryByText(/Existing tenancies are not enrolled automatically/)).not.toBeInTheDocument();

@@ -48,3 +48,5 @@ Audit history includes strict cost-worker identity projection and shared directo
 - [Simulated user-presence connections and full field map](user-presence-connections.md)
 
 Normal-directory onboarding without provisioning: [Keep in organization without a tenancy](organization-workflows.md#keep-in-organization-without-a-tenancy).
+
+Shared-tenancy [Add member](organization-workflows.md#add-a-member-from-a-shared-tenancy) and [provider refresh terminology](required-users-screen.md#consistent-provider-refresh-terminology--7-november-2026).

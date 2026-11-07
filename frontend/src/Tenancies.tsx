@@ -1,3 +1,4 @@
+import { AddSharedMember } from "./AddSharedMember";
 import { RequiredUserSummary } from "./RequiredUserSummary";
 import { RequiredUsers } from "./RequiredUsers";
 import { CostCells, CostPanel, RefreshCosts } from "./FinancialCosts";
@@ -85,6 +86,7 @@ export function Tenancies({
   expired: () => void;
   navigate: (path: string) => void;
 }) {
+  const [addingMember, setAddingMember] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [query, setQuery] = useState<TenancyQuery>({
     shared_only: false,
@@ -101,6 +103,7 @@ export function Tenancies({
   } | null>(null);
   // Browser Back or a different detail cannot reopen a deletion/person dialog for another target.
   useEffect(() => {
+    setAddingMember(false);
     setDeleting(null);
     setSelected(null);
   }, [identifier]);
@@ -582,8 +585,9 @@ export function Tenancies({
               )}
               {tenant.status==="active"&&<ConfigurationRollout key={tenant.id} tenancyId={tenant.id} selectedId={tenant.baseline_version_id} initialOperationId={detail.data.configuration_operation_id??undefined} expired={expired} navigate={navigate}/>}
               <section className="table-panel">
-                <div className="table-toolbar">
+                <div className="table-toolbar tenancy-members-toolbar">
                   <h2>Current members</h2>
+                  {tenant.kind === "shared" && tenant.status === "active" && <button type="button" className="button primary" disabled={Boolean(tenant.has_pending_operation)} onClick={() => setAddingMember(true)}>Add member</button>}
                 </div>
                 <div
                   className="table-scroll"
@@ -661,6 +665,12 @@ export function Tenancies({
           navigate={navigate}
           onClose={() => setDeleting(null)}
         />
+      )}
+      {addingMember && tenant?.kind === "shared" && tenant.status === "active" && detail.data && (
+        <AddSharedMember tenancyName={tenant.name}
+          memberIds={detail.data.memberships.filter(link => ["active","pending","removing"].includes(link.status)).map(link => link.person_id)}
+          expired={expired} onClose={() => setAddingMember(false)}
+          onChoose={person => {setAddingMember(false);setSelected({person,action:"join_shared",tenancy:tenant.id});}}/>
       )}
       {selected && (
         <PersonActions

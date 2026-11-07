@@ -26,3 +26,5 @@ Workflow definitions are repository artifacts; hosted runs, branch protection an
 qualification must be verified separately. This guide does not authorize cloud deployment.
 
 - [Manual review: current-month cost visibility](test-cost-visibility.md)
+
+The [required-user runbook](required-users-runbook.md) now uses one Refresh user data action for provider acquisition, with automatic progress updates.

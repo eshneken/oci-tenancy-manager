@@ -354,7 +354,7 @@ receipt; it cannot be used as proof that they were inspected or deleted.
 
 ### ReviewQuery
 
-Six independent category/search/sort/direction/page controls; search at most128characters and page
+Six independent category/search/sort/direction/page controls; search at most 128characters and page
 size10/25/50. category accepts actionable (default), informational or history. Informational is a
 query selection spanning stored change records and open informational warnings, not a new persisted
 category or synonym for all history. The Actionable tab uses actionable; Informational & history uses
@@ -452,7 +452,7 @@ current list; browser-supplied option lists are never trusted. No selected/defau
 
 ### TenancyQuery
 
-Literal directory search/sort/direction/paging, at most128characters and page size10/25/50.
+Literal directory search/sort/direction/paging, at most 128characters and page size10/25/50.
 The visible Shared tenancies only checkbox maps to `shared_only` (defaultfalse), applied to registered
 `kind=shared` before paging and combined with search/sort. Toggling restarts page one, preserving
 search/sort. Inventory cards still count all current tenancies, independent of this shortcut.
@@ -896,3 +896,14 @@ stale previews cannot use this action. It is available without a cloud provider.
 repair and absence work remain independent: only TENANCY_SETUP_REVIEW is closed. Standard
 authentication, context, audited decision and exact request-replay guards remain in force.
 There are no new tables, columns or directory statuses; keep_without_tenancy extends the action enum.
+
+## Add a member from a shared tenancy
+
+On an active shared tenancy, **Current members → Add member** searches the existing Organization
+directory by name or email (at least two characters, at most 128). Up to 25 directory matches load
+before excluding current/pending/removing members and absent, excluded or pending profiles; refine
+the search if needed. **Continue** opens the existing employee action preview with **Add to shared
+tenancy** and this tenancy preselected. Choose create-under-parent or an existing compartment,
+then submit the normal asynchronous workflow. The chooser does not mutate employees or grant
+access. The server's fresh preview/admission guards remain authoritative. Individual/inactive
+tenancies do not expose this shortcut; known pending tenancy work disables it.

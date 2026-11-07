@@ -2,7 +2,7 @@
 
 Local simulation qualified; main preview upgraded with existing data preserved; parallel test preview unchanged. [Final local receipt](../history/manual-presence-checkpoint-2026-11-06.md). Real OCI remains unqualified.
 
-Tenancies → a registered child → **Required users** now supports **Check now**. The worker reads
+Tenancies → a registered child → **Required users** now supports **Refresh user data**. The worker reads
 both exact bound subjects independently through an explicitly selected simulator. Present means
 existence in that simulator's qualified fixture, not live OCI existence, usable signing credentials,
 administrative privileges, console access, MFA or recovery readiness. **Permissions: Not checked**
@@ -135,8 +135,8 @@ Each account becomes stale at exactly 24 hours after its own captured_at, or if 
 in the future relative to server UTC. The UI replaces its primary label with **Check out of date**
 and displays the last result separately. Only a fresh check can restore a current Present/Missing
 label. This freshness threshold is currently code-owned, not a new application setting. The UI polls
-GET once per second only while pending_operation_id exists; Refresh itself remains a GET.
-An uncertain Check now response retains its request key while this component is mounted. Retrying
+GET once per second only while pending_operation_id exists; the single Refresh user data action starts acquisition, while page-level Refresh only reloads stored results.
+An uncertain Refresh user data response retains its request key while this component is mounted. Retrying
 uses that key; navigation/reload may discard this local memory, so inspect pending Operations first.
 Server-side committed replay remains durable when a known key is reused.
 
@@ -162,5 +162,5 @@ upgraded; no historical records were backfilled and the parallel preview was not
 A later [derived Tenancies Status summary](required-users-summary.md) reuses the same exact context,
 immutable-evidence decoding and per-user age logic. Its four-field RequiredUsersSummary and single
 additive TenancyView.required_users field are read projections, not new check columns or operations.
-Active page IDs bound four additional workspace-scoped queries. Fresh confirmed Missing with its own date/check reference takes precedence; other unsupported positive labels are unavailable before stale/unknown/two-present/default evaluation. DTO and frontend guards prevent coarse label-only positives. Configured corrupt canonical records become an unavailable summary/closed detail 503; genuinely unconfigured or validly changed contexts remain Not checked. Stale facts cannot stay green, and pending checks retain dated results. No Check now
+Active page IDs bound four additional workspace-scoped queries. Fresh confirmed Missing with its own date/check reference takes precedence; other unsupported positive labels are unavailable before stale/unknown/two-present/default evaluation. DTO and frontend guards prevent coarse label-only positives. Configured corrupt canonical records become an unavailable summary/closed detail 503; genuinely unconfigured or validly changed contexts remain Not checked. Stale facts cannot stay green, and pending checks retain dated results. No Refresh user data
 admission/execution behavior, table, daily schedule, email or live OCI adapter changes. Local qualification and the main-preview update for this follow-up pass; the parallel preview is unchanged. [Final summary receipt](../history/required-users-summary-checkpoint-2026-11-06.md). The completed pipeline receipt above retains its original scope.

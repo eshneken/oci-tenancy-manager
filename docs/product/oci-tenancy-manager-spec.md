@@ -398,6 +398,10 @@ ordinary feeds do not reopen the same setup review. Later create/import/shared-m
 remain available from the employee record. Independent mapping, role and departure reviews are
 unaffected. See the [implemented contract](../reference/organization-workflows.md#keep-in-organization-without-a-tenancy).
 
+Administrators can also start **Add member** from an active shared tenancy's Current members
+section. An employee picker opens the existing add-to-shared-tenancy preview with that child
+preselected; the same compartment/access admission checks and asynchronous workflow apply.
+
 D21 A, accepted 20 October: adding a shared member provisions an explicitly selected access profile.
 Compartment-scoped access is the default; full tenancy administration is an explicit alternative.
 Owner full administration remains unchanged. Preview exact scope/dependencies, freeze the selected

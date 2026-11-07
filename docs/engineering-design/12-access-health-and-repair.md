@@ -25,7 +25,7 @@ provider permission qualification remain open; selecting composition does not qu
 2. Read stored current observations for each required assignment. No SDK request occurs per table row.
    Show observation time, coverage and explicit unverified/stale status. Owner access and first sign-in
    are distinct from the two required operational users; the audit user remains V2.
-3. **Check now** accepts one scoped observation operation under C2, returning its operation ID.
+3. **Refresh user data** accepts one scoped observation operation under C2, returning its operation ID.
    This does not mutate identities or erase current findings while a new acquisition is running.
    Daily scheduled checks and manual requests use separate logical occurrence IDs; delivery retries
    reuse the same one. One operation may acquire two check records, each with exactly one assignment/
@@ -161,7 +161,7 @@ labels, not proposed UUID values. The walkthrough does not contain real provider
 | Daily schedule / last check | `org_workspace.runtime_policy.access_checks.schedule` (daily), `.freshness_policy_version` plus scoped check timestamps/occurrence; no fabricated per-row success |
 | Repair visibility and blocked guidance | Current issue, sufficient fresh exact-profile capability evidence, supported kind, entitlement/lifecycle/assignment guards |
 | Repair preview target/steps/scope | Captured `action_preview` typed payload → immutable accepted operation/step intent; selected current issue/binding/assignment/generations |
-| Check now / local feedback | Production accepted observation operation ID; walkthrough-only acknowledgment is transient and never advances a check head |
+| Refresh user data / local feedback | Production accepted observation operation ID; walkthrough-only acknowledgment is transient and never advances a check head |
 | Sample condition dropdown | Transient demonstration routing only, not a production database field or editable evidence |
 | Runbook guidance | `org_workspace.runtime_policy.recovery.runbook_reference` + profile version; approved nonsecret artifact reference, no secret URL or activation link |
 | Issue dates, resolution / operation progress | Shared issue episode + scoped evidence; current operation/steps queried independently, not copied into organization review |
@@ -380,7 +380,7 @@ future permission/repair requirements are not waived.
 ## Manual required-user presence checks — 6 November 2026 source checkpoint
 
 The [implemented check reference](../reference/user-presence-checks.md) now connects exact identities
-and one selected simulated automation connection to authenticated manual Check now. Migration 0025
+and one selected simulated automation connection to authenticated manual Refresh user data. Migration 0025
 adds the 14-column otm_user_presence_check table (25 actual application tables), immutable context,
 database admission sequence, attempt fences and sealed per-subject results. Existing operations,
 steps, audit and native queue are reused; the operation/task kind is required_user_check and native
@@ -397,7 +397,7 @@ email, privilege repair or password action is added. Presence-only requires no f
 profile/credential heads. Daily machine admission/authorization stays a staging/Kubernetes task.
 
 Local test/review qualification and the main-preview update pass; all 28 preexisting public tables are preserved and the parallel preview is unchanged. [Final receipt](../history/manual-presence-checkpoint-2026-11-06.md). The [local runbook](../how-to/required-users-runbook.md)
-describes the intended fresh create/import → Check now → View check review; the
+describes the intended fresh create/import → Refresh user data → View check review; the
 [real-provider manifest](../how-to/real-oci-test-manifest.md) remains Pending for actual OCI behavior.
 
 ## Compact required-user inventory summary — source checkpoint

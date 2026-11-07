@@ -1153,3 +1153,21 @@ independent mapping/role and future departure work. Cover admission and database
 in unit/disposable PostgreSQL tests and the real dialog in HTTPS Playwright, including narrow
 viewports, no destructive checkbox, immediate decision receipt and repeat upload. No live OCI
 qualification is needed for this application-only decision.
+
+## Shared-tenancy member entry and user-data refresh
+
+Required UI coverage: Add member is visible only for active shared tenancies and disabled for known
+pending work; search requires at least two characters, bounded query/25-result page, and filters
+existing/absent/excluded/pending candidates. No valid selected employee means no continuation,
+including script submission. Search changes clear selection; cancel/Escape releases the modal
+without mutation. Authorization failure hides choices, expires the session, and cannot advance.
+A native HTTPS case selects an employee from the tenancy detail, verifies the exact preselected
+child, and completes the existing membership workflow. Toolbar centering and picker width are
+checked at desktop and 320/390-pixel widths.
+
+Required-user acquisition is now labeled Refresh user data; tests still exercise the same queued
+check endpoint, eligibility, pending/polling, exact-key retry and dated presence publication.
+There is one normal acquisition button per section, with no separate saved-record user refresh.
+Page-level refresh/background reads remain GET-only, with Retry loading users only on read failure.
+Capture the acquisition control at desktop and narrow widths. No new provider call, grant, table or OCI-specific qualification
+case is introduced; existing shared membership and presence live cases remain mandatory.

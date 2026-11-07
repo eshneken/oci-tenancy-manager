@@ -1244,3 +1244,16 @@ it("keeps an employee in the normal directory without provisioning",async()=>{
  expect(c.submit.mock.calls[0][0].action).toBe("keep_without_tenancy");
  expect(screen.queryByRole("link",{name:"View operation"})).toBeNull();
 });
+
+// The tenancy shortcut is available only on active shared tenancies, with busy work protected.
+it.each([
+ ["shared","active",false,true,false], ["shared","active",true,true,true],
+ ["individual","active",false,false,false], ["shared","terminated",false,false,false],
+] as const)("gates the add-member shortcut for %s/%s busy=%s",async(kind,status,busy,visible,disabled)=>{
+ vi.spyOn(api,"tenancy").mockResolvedValue({...detail,tenancy:{...tenant,kind,status,has_pending_operation:busy}});
+ mount(<Tenancies identifier={id} expired={vi.fn()} navigate={vi.fn()}/>);
+ await screen.findByText("Accountability & registration");
+ const button=screen.queryByRole("button",{name:"Add member"});
+ if(visible){expect(button).toBeVisible();if(disabled)expect(button).toBeDisabled();else expect(button).toBeEnabled();}
+ else expect(button).toBeNull();
+});

@@ -67,3 +67,5 @@ Current manual user-presence source, fields and qualification boundary: [presenc
 Compact required-user inventory summary: [qualified field/state reference](../reference/required-users-summary.md), with the main preview updated and the parallel preview unchanged.
 
 Normal-directory onboarding without provisioning: [Keep in organization without a tenancy](../reference/organization-workflows.md#keep-in-organization-without-a-tenancy).
+
+Current member entry and user-data refresh follow the [workflow reference](../reference/organization-workflows.md#add-a-member-from-a-shared-tenancy) and [presence screen guide](../reference/required-users-screen.md).

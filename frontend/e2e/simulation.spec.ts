@@ -139,6 +139,7 @@ test("submit simulated success and access failure through a real separate worker
 
 // Exercise the actual organization UI, restricted API role and native lifecycle worker with synthetic feeds.
 async function organizationFlows(page: Page) {
+  let userRefreshCaptured=false;
   page.setDefaultTimeout(10_000);
   const rows = [
     "Root,root@example.test,,",
@@ -412,12 +413,10 @@ async function organizationFlows(page: Page) {
       await expect(users.getByText("Recorded", { exact: true })).toHaveCount(2);
       await expect(users.getByText("Not checked", { exact: true })).toHaveCount(4);
       await expect(users.getByText("otm-automation", { exact: true })).toBeVisible();
-      const refresh = users.getByRole("button", { name: "Refresh required users", exact: true });
-      await refresh.click();
-      await expect(refresh).toBeEnabled();
+      await expect(users.getByRole("button", { name: "Refresh required users", exact: true })).toHaveCount(0);
       // Real HTTPS admission and the native worker publish independent fixture observations.
       const childUrl = page.url();
-      const check = users.getByRole("button", { name: "Check now", exact: true });
+      const check = users.getByRole("button", { name: "Refresh user data", exact: true });
       await expect(check).toBeEnabled();
       const accepted = page.waitForResponse(response =>
         response.request().method() === "POST" && response.url().endsWith("/required-users/check"));
@@ -429,6 +428,16 @@ async function organizationFlows(page: Page) {
       await expect(users.getByText("Not checked", { exact: true })).toHaveCount(2);
       await expect(users.getByText("Checked (UTC)", { exact: true })).toHaveCount(2);
       await expect(users.getByRole("link", { name: "View check", exact: true })).toHaveCount(2);
+      if(!userRefreshCaptured) {
+        await expect(check).toBeEnabled();
+        for(const width of [1280,390,320]) {
+          await page.setViewportSize({width,height:900});
+          expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+          await users.screenshot({path:`.local-dev/browser/user-refresh-controls-${width}.png`});
+        }
+        await page.setViewportSize({width:1280,height:900});
+        userRefreshCaptured=true;
+      }
       await users.getByRole("link", { name: "View check", exact: true }).first().click();
       await expect(page).toHaveURL(new RegExp("/operations/" + checkId + "$"));
       await expect(page.getByRole("heading", { level: 1 })).toHaveText("Check required users");
@@ -545,11 +554,32 @@ async function organizationFlows(page: Page) {
   await expect(
     page.getByText("No actionable organization drift", { exact: true }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Organization", exact: true }).click();
-  await page.getByRole("button", { name: "New Employee", exact: true }).click();
-  await modal
-    .getByRole("combobox", { name: "Action", exact: true })
-    .selectOption("join_shared");
+  await page.getByRole("link", { name: "Tenancies", exact: true }).click();
+  await page.getByRole("link", { name: sharedName, exact: true }).click();
+  const membersToolbar=page.locator(".tenancy-members-toolbar");
+  for(const width of [1280,390,320]) {
+    await page.setViewportSize({width,height:900});
+    if(width===1280) {
+      const titleBox=await membersToolbar.getByRole("heading").boundingBox();
+      const actionBox=await membersToolbar.getByRole("button",{name:"Add member",exact:true}).boundingBox();
+      expect(Math.abs(titleBox!.y+titleBox!.height/2-actionBox!.y-actionBox!.height/2)).toBeLessThanOrEqual(1);
+    }
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    await membersToolbar.screenshot({path:`.local-dev/browser/shared-members-toolbar-${width}.png`});
+  }
+  await page.setViewportSize({width:1280,height:900});
+  await page.getByRole("button", { name: "Add member", exact: true }).click();
+  await modal.getByLabel("Find employee",{exact:true}).fill("new@example.test");
+  await modal.getByRole("combobox",{name:"Employee",exact:true}).selectOption({label:"New Employee · new@example.test"});
+  for(const width of [1280,390,320]) {
+    await page.setViewportSize({width,height:900});
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    await modal.screenshot({path:`.local-dev/browser/add-shared-member-${width}.png`});
+  }
+  await page.setViewportSize({width:1280,height:900});
+  await modal.getByRole("button",{name:"Continue",exact:true}).click();
+  await expect(modal.getByRole("combobox",{name:"Action",exact:true})).toHaveValue("join_shared");
+  await expect(modal.getByRole("combobox",{name:"Shared tenancy",exact:true}).locator("option:checked")).toHaveText(sharedName + " · owner Leader One");
   await modal
     .getByRole("combobox", { name: "Shared tenancy", exact: true })
     .selectOption({ label: sharedName + " · owner Leader One" });

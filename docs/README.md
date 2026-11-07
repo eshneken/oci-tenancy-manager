@@ -96,3 +96,7 @@ Current directory-return and destructive-consent qualification: [6 November chec
 Normal-directory onboarding without provisioning: [Keep in organization without a tenancy](reference/organization-workflows.md#keep-in-organization-without-a-tenancy).
 
 - [Keep in organization without a tenancy: local qualification and preserved main preview](history/keep-without-tenancy-checkpoint-2026-11-07.md)
+
+Member management and provider refresh labels: [shared member entry](reference/organization-workflows.md#add-a-member-from-a-shared-tenancy), [required-user refresh](reference/required-users-screen.md#consistent-provider-refresh-terminology--7-november-2026).
+
+- [Shared-member entry and single provider refresh: final qualification and main preview](history/shared-members-refresh-checkpoint-2026-11-07.md)

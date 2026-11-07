@@ -34,3 +34,5 @@ Private original feeds, raw evidence, screenshots and machine-specific paths are
 - [Employee restoration and destructive-consent qualification](employee-restoration-consent-checkpoint-2026-11-06.md)
 
 - [Keep in organization without a tenancy: local qualification and preserved main preview](keep-without-tenancy-checkpoint-2026-11-07.md)
+
+- [Shared-member entry and single provider refresh: final qualification and main preview](shared-members-refresh-checkpoint-2026-11-07.md)

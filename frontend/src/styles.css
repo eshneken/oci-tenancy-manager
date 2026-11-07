@@ -509,6 +509,12 @@ input {
   gap: 18px;
   padding: 20px;
 }
+.tenancy-members-toolbar {
+  align-items: center;
+}
+.tenancy-members-toolbar h2 {
+  margin: 0;
+}
 .search-field {
   min-width: 0;
   max-width: 350px;

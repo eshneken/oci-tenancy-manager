@@ -5,7 +5,7 @@ The section has two independent cards, **Automation user** and **Recovery user**
 and presence are separate. Recorded/Not recorded/Retired record describe stored mappings; they do
 not establish cloud existence or credentials. Retired record does not assert OCI account deletion.
 
-**Check now** now admits an asynchronous presence-only operation when a qualified current simulated
+**Refresh user data** now admits an asynchronous presence-only operation when a qualified current simulated
 connection and both exact bound users exist. It does not check administrative permissions, console
 access, MFA or recovery readiness. **Permissions: Not checked** remains on both cards. The banner
 explicitly identifies local simulated fixture data; Present must never be described as live OCI
@@ -57,18 +57,19 @@ not access-assignment, credential or privilege heads. No read backfills historic
 
 ## Behavior, progress and error boundaries
 
-- Check now is disabled with an explanation for pending/inactive/busy/unqualified tenancies or an
+- Refresh user data is disabled with an explanation for pending/inactive/busy/unqualified tenancies or an
   unavailable selected provider. A historical identity alone cannot enable acquisition.
-- A pending receipt shows Checking… and polls records once per second. Previous results remain
+- A pending receipt shows Refreshing user data… and polls records once per second. Previous results remain
   dated; an accepted operation is not completion. On completion the per-account outcomes and times
   refresh, with View check linking to the actual operation. Operations success means bounded
   outcomes were recorded, even when an outcome is Missing or Unable to verify.
-- Refresh is another GET only and cannot create a check/job. The main detail Refresh also
-  invalidates these records. Failed ordinary refreshes explicitly label retained data; initial
+- There is one normal refresh action in this section: Refresh user data requests acquisition.
+  Page-level Refresh reloads stored records without creating a job. Failed background reads
+  explicitly label retained data and offer Retry loading users; initial
   loading/failure is distinct from a successful Not recorded result. 401/403 hides retained facts
   immediately while the app expires the session.
-- A failed/uncertain Check now request retains its UUID while this component is mounted, allowing
-  Retry check request with the same logical request. After navigation/reload, inspect Operations
+- A failed/uncertain Refresh user data request retains its UUID while this component is mounted, allowing
+  Retry user refresh with the same logical request. After navigation/reload, inspect Operations
   before issuing another request; no reload-durable browser key cache is claimed.
 - The private query key includes the child UUID. Switching children cannot borrow another child's
   data; logout clears private cache. No navigation attention badge is added for diagnostic reads.
@@ -99,7 +100,7 @@ the four-field UserPresenceView. The 22-field directory above is unchanged. Shar
 freshness helpers keep summary and cards aligned; the title/accessible description retains each
 account's own result and UTC time, simulation and Permissions not checked. Deep linking focuses the
 Required users heading after terminal success or a nonauthorization read error such as 503; 401/403 does not focus or expose data. Current source adds no table, filter, provider call or job.
-Summary qualification and the main-preview update now pass; the parallel preview is unchanged. [Final summary receipt](../history/required-users-summary-checkpoint-2026-11-06.md). Earlier Check now qualification retains its original pipeline scope.
+Summary qualification and the main-preview update now pass; the parallel preview is unchanged. [Final summary receipt](../history/required-users-summary-checkpoint-2026-11-06.md). Earlier Refresh user data qualification retains its original pipeline scope.
 
 The summary's positive-label guards require per-account timestamp/check references; a configured
 broken canonical connection is Unable to verify in inventory and a closed 503 in the expanded view,
@@ -108,14 +109,24 @@ badges use Config: and account summaries use Users:; detail configuration labels
 context. The final summary qualification and preserved-data main update pass.
 
 
-## Unavailable Check now and Refresh labels
+## Unavailable Refresh user data
 
-Check now requires both recorded exact identities and a qualified automation connection from the
+Refresh user data requires both recorded exact identities and a qualified automation connection from the
 current create/import setup flow. Older registered tenancies are not enrolled automatically; merely
 having a tenancy record or reloading it cannot create that authority. The disabled button describes
 its visible prerequisite notice for assistive technology. Local testing can use a newly created or
 imported simulated tenancy after setup completes. Do not backfill or reinterpret older audit events.
 
-The secondary control is visibly **Refresh**, matching Configuration, with accessible name
-**Refresh required users** to distinguish it from the page-level Refresh. It reloads stored facts
-only, never admits a presence check or enrolls a tenancy. Busy labels are Loading…/Refreshing….
+There is no second saved-record refresh button in Required users. Initial display and pending
+polling read stored facts automatically; page-level Refresh also reloads them. A record-loading
+error offers **Retry loading users**, a read retry rather than a second normal acquisition action.
+
+## Consistent provider refresh terminology — 7 November 2026
+
+**Refresh user data** (formerly Check now) starts the existing asynchronous presence-only read,
+just as **Refresh costs** requests a fresh budget read. Local development still uses the simulator.
+**Refreshing user data…** indicates work in progress; **Retry user refresh** retains the same
+request key after an uncertain response. No API, operation, eligibility or identity guard changes.
+The sole normal action mirrors Refresh costs. Automatic pending polling updates the display;
+there is no separate saved-record refresh button. No user repair, enrollment or privilege
+verification is implied. Inventory's compact Checking… indicator remains a status, not an action.

@@ -118,7 +118,7 @@ paths, failed termination, direct forged inserts during a valid pending capture,
 immutability, scoped foreign keys and installed API/worker privileges. Existing native HTTPS browser
 flows remain regression gates; this checkpoint adds no UI controls.
 
-The connection foundation itself added no manual screen controls. The later [manual check pipeline](user-presence-checks.md) now implements scoped acquisition and result publication through the existing worker, Check now and per-user Present/Missing/Unable to verify display. Its local qualification and main-preview installation now pass; the parallel preview remains unchanged. Actual live connection/signing qualification remains Pending in the [real OCI manifest](../how-to/real-oci-test-manifest.md).
+The connection foundation itself added no manual screen controls. The later [manual check pipeline](user-presence-checks.md) now implements scoped acquisition and result publication through the existing worker, Refresh user data and per-user Present/Missing/Unable to verify display. Its local qualification and main-preview installation now pass; the parallel preview remains unchanged. Actual live connection/signing qualification remains Pending in the [real OCI manifest](../how-to/real-oci-test-manifest.md).
 
 
 For an optional database review after the updated revision is installed, complete a new simulated
@@ -144,7 +144,7 @@ There is still no Check now action or independent observation timestamp in this 
 ## Manual presence checks — 6 November 2026 source checkpoint
 
 The [manual check implementation](user-presence-checks.md) now connects the selected simulated
-connection and exact bound automation/recovery identities to explicit authenticated Check now,
+connection and exact bound automation/recovery identities to explicit authenticated Refresh user data,
 existing native operations/worker/audit and independent dated presence results. This supersedes
 no-check/no-result/no-UI statements from the preceding foundation only for this presence-only path.
 The [screen map](required-users-screen.md) has 22 effective display fields; Permissions remains

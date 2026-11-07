@@ -522,3 +522,10 @@ its existing confirm_deletion consent; leaves_directory is always false. This so
 the employee in the normal directory. It uses the existing setup_required flag, preserves episode
 history, and never exempts the employee or closes independent mapping/role work. Later provisioning
 remains available from the employee record. See the [implemented contract](../reference/organization-workflows.md#keep-in-organization-without-a-tenancy).
+
+### Shared-tenancy member entry point
+
+Current members on an active shared tenancy provides **Add member**, an employee-directory picker
+that continues into the existing fresh shared-membership preview with this tenancy preselected.
+There is no second admission service, workflow or persisted picker state. See the
+[implemented entry point](../reference/organization-workflows.md#add-a-member-from-a-shared-tenancy).

@@ -2081,3 +2081,12 @@ retains setup_episode_id and directory_status=included, and closes current setup
 with the existing status/resolution/resolved_at fields. Existing request digests, workspace
 revision and audit receipts capture the decision. No new entity, column, directory state or
 ER relationship is introduced. See the [workflow contract](../reference/organization-workflows.md#keep-in-organization-without-a-tenancy).
+
+### Shared-member entry and refresh labels — 7 November 2026
+
+The tenancy Add member chooser reuses OrganizationQuery.query/page/page_size and EmployeeView
+id/full_name/email/directory_status/absence_review/pending_operation_id. Current members come
+from existing TenancyDetail.memberships. Its selected stable person ID and displayed tenancy ID
+initialize the existing PersonActions join_shared command; search/selection/modal state is transient.
+Refresh user data only renames the required-user acquisition button; existing request keys,
+operation IDs and presence observations remain unchanged. No persisted fields or ER changes.
