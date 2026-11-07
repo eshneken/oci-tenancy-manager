@@ -8,3 +8,6 @@ The specification includes accepting onboarding while keeping an employee in the
 without provisioning; this differs from a no-tenancy exemption.
 
 Shared tenancy membership can also start directly from the tenancy's Current members section.
+
+Ownership transfers explicitly distinguish shared-only identity retention from verified former-user
+removal; neither changes directory presence without explicit employee offboarding.

@@ -1008,6 +1008,22 @@
           "default": null,
           "title": "Compartment Ocid"
         },
+        "former_owner_disposition": {
+          "anyOf": [
+            {
+              "enum": [
+                "keep_member",
+                "remove"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Former Owner Disposition"
+        },
         "id": {
           "format": "uuid",
           "title": "Id",

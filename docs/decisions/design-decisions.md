@@ -1065,3 +1065,20 @@ No assignment/profile tables are needed for this presence-only subset. Simulatio
 are explicit and not live OCI verification; current authority/attempt/context and per-subject time
 checks remain mandatory. Daily scheduler/notifications/privilege repair remain later work, with
 local qualification and the main-preview upgrade complete; the parallel preview is unchanged. [Final receipt](../history/manual-presence-checkpoint-2026-11-06.md).
+
+## 7 November 2026 — explicit former-owner disposition clarification
+
+The administrator chooses Keep as a member or Remove from tenancy on standalone transfer.
+The user confirmed Keep is available only for shared tenancies. Keep preserves the former
+owner's identity, bindings, groups and permissions, including any admin access; it changes OTM
+accountability and tracked role. It supersedes the earlier retained D21-profile/downgrade wording.
+Remove authorizes exact personal-user/group removal in the existing queued transfer operation,
+with explicit destructive consent and verified effects. New offboarding transfers default to
+Remove; shared retention remains an outside-directory obligation after offboarding. Historical
+omitted choices keep their original meaning and never gain new deletion effects.
+
+V1 publishes the ownership/association result after replacement and requested removal verification;
+uncertain removal keeps the current OTM owner and pending scope rather than claiming completion.
+The default-closed manual cleanup panel explains resources/shared scopes, empty dedicated
+compartments and additional manually created identities; this work is not automated.
+[Current flow and field map](../reference/organization-workflows.md#explicit-former-owner-disposition--7-november-2026).

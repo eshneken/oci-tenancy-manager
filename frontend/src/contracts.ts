@@ -596,6 +596,7 @@ export type ConfirmManager1 = boolean;
 export type ConfirmNoAssociations = boolean;
 export type ConfirmShared1 = boolean;
 export type ExistingCompartmentOcid = string | null;
+export type FormerOwnerDisposition = ("keep_member" | "remove") | null;
 export type HomeRegion2 = string | null;
 export type ImportOcid = string | null;
 export type Name6 = string | null;
@@ -605,6 +606,7 @@ export type PartnerPersonId = string | null;
 export type PersonId2 = string;
 export type Action2 = "delete" | "transfer" | "remove" | "keep";
 export type AssociationId = string;
+export type FormerOwnerDisposition1 = ("keep_member" | "remove") | null;
 export type RecipientPersonId = string | null;
 /**
  * @maxItems 100
@@ -655,6 +657,7 @@ export type TenancyId21 = string;
 export type TenancyKind1 = "individual" | "shared";
 export type TenancyName4 = string;
 export type TenancyStatus1 = string;
+export type UserOcid1 = string | null;
 export type Associations = AssociationView[];
 export type Identifier = string;
 export type Name7 = string;
@@ -1751,6 +1754,7 @@ export interface OrganizationAction {
   confirm_shared?: ConfirmShared1;
   context: OrganizationContext;
   existing_compartment_ocid?: ExistingCompartmentOcid;
+  former_owner_disposition?: FormerOwnerDisposition;
   home_region?: HomeRegion2;
   import_ocid?: ImportOcid;
   name?: Name6;
@@ -1767,6 +1771,7 @@ export interface OrganizationAction {
 export interface AssociationChoice {
   action: Action2;
   association_id: AssociationId;
+  former_owner_disposition?: FormerOwnerDisposition1;
   recipient_person_id?: RecipientPersonId;
 }
 export interface ActionReceipt {
@@ -1808,6 +1813,7 @@ export interface AssociationView {
   tenancy_kind: TenancyKind1;
   tenancy_name: TenancyName4;
   tenancy_status: TenancyStatus1;
+  user_ocid?: UserOcid1;
 }
 export interface CreationRegion {
   identifier: Identifier;

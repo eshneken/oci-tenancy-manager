@@ -72,6 +72,7 @@ class AssociationView(Contract):
     compartment_ocid: str | None
     compartment_name: str | None
     cleanup_required: bool
+    user_ocid: str | None = None
     operation_id: UUID | None
     actions: tuple[Literal["delete", "transfer", "remove", "keep"], ...]
 

@@ -418,7 +418,9 @@ failure; no automatic compartment deletion compensates for failed setup or follo
 
 Ownership transfer establishes and verifies replacement administration before publishing the new
 accountable owner. D22 A, accepted 20 October, requires an explicit choice for the previous owner:
-Remove access or Remain a member with a selected D21 profile. Offboarding defaults to Remove. A
+Remove from tenancy or Keep as a member (shared only). The 7 November clarification preserves
+existing identities and all permissions for Keep rather than applying a different D21 profile.
+Offboarding defaults to Remove at new admission. A
 transfer must not silently retain or revoke their access. Partial access cleanup remains visible and prevents
 prematurely completing their offboarding. No resources or other members are deleted by transfer.
 
@@ -790,7 +792,7 @@ These are proposed release acceptance tests. They do not assert existing functio
 | AC52 | Offboarding previews and validates one action for every current active association. Shared member removal cannot delete the tenancy; shared-owner exit requires transfer unless retained; individual deletion cannot silently discard other active members. Unknown/unregistered/wrong-workspace targets are rejected. |
 | AC53 | Tenancy deletion, member removal and owner transfer never remove employees from the managed directory or settle independent absence reviews, even for absent zero-link people. Only explicitly confirmed offboarding of an actually absent employee changes directory presence after required work succeeds; source/reporting identity and history remain. Zero-link offboarding additionally requires confirmation. |
 | AC54 | A newer fresh applied feed containing an offboarded employee's actual row (full or partial) restores stable directory identity and one onboarding episode as needed, without an intervening absence or restoring infrastructure/access. References, stale/replayed/staged/rejected/config-only input do not restore. Exemptions, merged-away identities and pending operations remain protected; retained outside people require explicit Mark returned. Repeated feeds do not duplicate setup. |
-| AC55 | The explicitly selected onboarding/offboarding review closes on durable operation acceptance; standalone association cleanup preserves independent absence. Retirement waits for verified execution. Five destructive person actions require context-bound unchecked UI consent and server enforcement for new admissions; authenticated historical replay remains compatible. Simulated completion is labeled and calls no OCI service. |
+| AC55 | The explicitly selected onboarding/offboarding review closes on durable operation acceptance; standalone association cleanup preserves independent absence. Retirement waits for verified execution. Destructive person actions require context-bound unchecked UI consent and server enforcement for new admissions; standalone transfer with validated keep_member is a neutral confirmation while offboarding always retains destructive consent; authenticated historical replay remains compatible. Simulated completion is labeled and calls no OCI service. |
 | AC56 | Registry changes, directory state, review closure and audit are atomic and context-bound. Stale/incomplete plans or publication failures leave all unchanged. Legacy simulation bootstrap never invents ownership or guesses an ambiguous deletion; explicit owner assignment repairs ownerless shared tenancies. |
 | AC57 | Configuration opens on immutable baseline history; viewing old versions changes no default, assignment or bulk target. Overrides start from Configuration and tenancy inventory/details against the assigned version. Tenancy alerts link to exact issues or a filtered multi-issue list with stable deep links. Organization → Organization drift contains organization reviews; confirmed configuration-drift navigation excludes healthy/unverifiable observations, version age and pending baseline reviews. Repair queueing cannot clear drift without verification. D31 all-conflict review gating remains enforced. |
 | AC58 | D35 applies one bound OTM policy containing the authored baseline/override block plus visible read-only required statements. Clearing/editing authored content cannot remove required owner/automation/recovery/member obligations. Pin the generated manifest, contributor/profile/template/render versions and binding context; render reproducibly with source provenance. Access-driven root-policy changes create a local configuration revision without publishing a baseline; full drift compares the captured combined list. Stale reviews/unknown writes block unsafe dispatch, and removing one contributor preserves shared requirements. Provider grammar/roles/MFA still require qualification. |
@@ -1506,3 +1508,17 @@ The [summary projection](../reference/required-users-summary.md) adds compact pr
 existing Tenancies Status cells, linking to each exact child's Required users section. It preserves
 per-account evidence and simulation/permission limits. No new column, filter, menu, table, provider
 check, scheduled action or repair is introduced. Local qualification and the preserved-data main update pass for this follow-up; the parallel preview is unchanged. [Final summary receipt](../history/required-users-summary-checkpoint-2026-11-06.md). Prior manual-check qualification retains its earlier scope.
+
+## Ownership transfer clarification — 7 November 2026
+
+A standalone transfer explicitly selects Keep as a member or Remove from tenancy. Keep is shared-only
+and preserves the former owner's identity, mappings and all existing permissions; it changes tracked
+accountability without a privilege downgrade. Remove uses the transfer operation to verify deletion
+of the exact recorded personal user/groups after replacement access is established. Individual
+transfers support removal only. Offboarding defaults to removal but can retain shared membership;
+retained obligations stay tracked. No transfer automatically removes an employee from Organization.
+
+Manual resource, dedicated-empty-compartment and additional-account cleanup is explained in a
+default-closed panel and remains the administrator/current owner's responsibility. Actual warnings,
+identity targets and required acknowledgments remain visible. Failed cleanup cannot claim verified
+removal. See the [implemented flow](../reference/organization-workflows.md#explicit-former-owner-disposition--7-november-2026).

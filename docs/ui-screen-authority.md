@@ -707,8 +707,9 @@ or attention badge is added. Local qualification and the preserved-data main upd
 ## Employee restoration and destructive consent — 6 November 2026
 
 Current React PersonActions is authoritative for the five destructive person actions: employee
-offboarding, tenancy termination, shared-member removal, ownership transfer and identity merge.
-Each shows named targets and consequences, an initially unchecked acknowledgment and a danger
+offboarding, tenancy termination, shared-member removal, ownership transfer with removal, and
+identity merge. The 7 November standalone shared transfer/keep_member path instead uses neutral
+confirmation while explicitly preserving existing permissions. Destructive choices show named targets and consequences, an initially unchecked acknowledgment and a danger
 submit control. Action/person/target/recipient/plan/preview changes clear consent; the browser
 and server enforce it independently. Existing manager/shared/empty-association warnings remain.
 The [workflow reference](reference/organization-workflows.md) maps the new request flag and
@@ -721,3 +722,13 @@ rows can later restore directory/onboarding, never deleted infrastructure or acc
 checkbox/control frames at 1280/390/320 are locally visually approved. Complete local runtime
 qualification and the preserved-data main-preview upgrade pass; the parallel preview is unchanged.
 See the [final receipt](history/employee-restoration-consent-checkpoint-2026-11-06.md).
+
+## Explicit former-owner choice — 7 November 2026
+
+Current PersonActions and Tenancies screens are authoritative for explicit Keep/Remove. Keep is
+shared-only, preserving all old identity/access bindings and tracking the former owner as a member.
+Remove displays the exact bound identity outside optional help and requires destructive consent.
+The offboarding variant has the same missing-ID guard and retains its overall destructive consent.
+Manual cleanup instructions use a default-closed panel; affected people and known/unknown scope
+remain visible after removal. This supersedes older retained-profile/demotion walkthrough choices.
+See [the current flow and field map](reference/organization-workflows.md#explicit-former-owner-disposition--7-november-2026).

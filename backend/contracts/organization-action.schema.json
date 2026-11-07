@@ -18,6 +18,22 @@
           "title": "Association Id",
           "type": "string"
         },
+        "former_owner_disposition": {
+          "anyOf": [
+            {
+              "enum": [
+                "keep_member",
+                "remove"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Former Owner Disposition"
+        },
         "recipient_person_id": {
           "anyOf": [
             {
@@ -151,6 +167,22 @@
       ],
       "default": null,
       "title": "Existing Compartment Ocid"
+    },
+    "former_owner_disposition": {
+      "anyOf": [
+        {
+          "enum": [
+            "keep_member",
+            "remove"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Former Owner Disposition"
     },
     "home_region": {
       "anyOf": [

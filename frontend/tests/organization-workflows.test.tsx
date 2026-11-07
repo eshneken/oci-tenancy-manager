@@ -67,6 +67,7 @@ const association: AssociationView = {
   compartment_ocid: "ocid1.compartment.oc1..otmsimchild",
   compartment_name: "Employee sandbox",
   cleanup_required: false,
+  user_ocid: "ocid1.user.oc1..otmsimpersonal",
   operation_id: null,
   actions: ["transfer", "keep"],
 };
@@ -405,6 +406,7 @@ describe("Organization action dialogs", () => {
             association_id: id,
             action: "transfer",
             recipient_person_id: other,
+            former_owner_disposition: "remove",
           },
           {
             association_id: other,
@@ -445,6 +447,7 @@ describe("Organization action dialogs", () => {
           screen.getByLabelText("New owner"),
           other,
         );
+      if(action === "transfer_owner") await userEvent.selectOptions(screen.getByLabelText("Former owner"),"remove");
       await userEvent.click(
         screen.getByLabelText(/I reviewed the shared tenancy impact/),
       );
@@ -1180,7 +1183,7 @@ it.each(["offboard_person", "delete_tenancy", "remove_member", "transfer_owner",
     const control=await screen.findByLabelText("Action");
     if(action==="offboard_person")await userEvent.click(screen.getByLabelText(/I verified that no tenancy associations/));
     if(["delete_tenancy","remove_member","transfer_owner"].includes(action))await userEvent.selectOptions(screen.getByLabelText("Tenancy"),id);
-    if(action==="transfer_owner")await userEvent.selectOptions(screen.getByLabelText("New owner"),other);
+    if(action==="transfer_owner"){await userEvent.selectOptions(screen.getByLabelText("New owner"),other);await userEvent.selectOptions(screen.getByLabelText("Former owner"),"remove");}
     if(action==="merge")await userEvent.selectOptions(screen.getByLabelText("Matching identity"),other);
     const ack=screen.getByLabelText(/I acknowledge the consequences/);expect(ack).not.toBeChecked();
     const button=control.closest("form")!.querySelector<HTMLButtonElement>('button.danger')!;
@@ -1227,6 +1230,7 @@ it.each(["transfer_owner","merge"] as const)("clears consent on %s recipient cha
   if(action==="transfer_owner")await userEvent.selectOptions(screen.getByLabelText("Tenancy"),id);
   const field=screen.getByLabelText(action==="merge"?"Matching identity":"New owner");
   await userEvent.selectOptions(field,other);
+  if(action==="transfer_owner")await userEvent.selectOptions(screen.getByLabelText("Former owner"),"remove");
   const ack=screen.getByLabelText(/I acknowledge the consequences/);await userEvent.click(ack);
   await userEvent.selectOptions(field,op);expect(ack).not.toBeChecked();
   await userEvent.selectOptions(field,other);expect(ack).not.toBeChecked();
@@ -1256,4 +1260,67 @@ it.each([
  const button=screen.queryByRole("button",{name:"Add member"});
  if(visible){expect(button).toBeVisible();expect(button).toHaveClass("secondary");if(disabled)expect(button).toBeDisabled();else expect(button).toBeEnabled();}
  else expect(button).toBeNull();
+});
+
+// Retaining an owner is an explicit, neutral mapping choice, never silent privilege reduction.
+it("keeps the former owner's identity without destructive consent",async()=>{
+ const c=dialog({...preview,actions:["transfer_owner"],associations:[{...association,actions:["transfer","keep"]}]},"transfer_owner");
+ await userEvent.selectOptions(await screen.findByLabelText("Tenancy"),id);
+ await userEvent.selectOptions(screen.getByLabelText("New owner"),other);
+ expect(screen.getByLabelText("Former owner")).toHaveValue("");
+ fireEvent.submit(screen.getByLabelText("Action").closest("form")!);expect(c.submit).not.toHaveBeenCalled();
+ await userEvent.selectOptions(screen.getByLabelText("Former owner"),"keep_member");
+ expect(screen.getByText(/including any administrator access/)).toBeVisible();
+ expect(screen.queryByText("Review destructive action")).toBeNull();
+ expect(screen.queryByLabelText(/I acknowledge the consequences/)).toBeNull();
+ await userEvent.click(screen.getByLabelText(/I reviewed the ownership change and retained access/));
+ const submit=screen.getByRole("button",{name:"Transfer tenancy ownership"});expect(submit).toHaveClass("primary");
+ await userEvent.click(submit);await screen.findByText("Operation accepted");
+ expect(c.submit.mock.calls[0][0]).toMatchObject({action:"transfer_owner",former_owner_disposition:"keep_member",recipient_person_id:other});
+ expect(c.submit.mock.calls[0][0].confirm_destructive).toBeUndefined();
+});
+
+// Changing retention/removal invalidates both target-specific and destructive acknowledgments.
+it("reviews explicit identity removal and makes cleanup instructions optional",async()=>{
+ const c=dialog({...preview,actions:["transfer_owner"],associations:[{...association,actions:["transfer","keep"]}]},"transfer_owner");
+ await userEvent.selectOptions(await screen.findByLabelText("Tenancy"),id);
+ await userEvent.selectOptions(screen.getByLabelText("New owner"),other);
+ const choice=screen.getByLabelText("Former owner");await userEvent.selectOptions(choice,"remove");
+ expect(screen.getByText(/Confirm former-owner access removal/)).toBeVisible();
+ const summary=screen.getByText("Manual cleanup responsibilities",{selector:"summary"});
+ expect(summary.closest("details")).not.toHaveAttribute("open");
+ await userEvent.click(summary);expect(screen.getByText(/If a dedicated compartment was created/)).toBeVisible();
+ expect(screen.getByText(/Review additional users, API keys/)).toBeVisible();
+ await userEvent.click(screen.getByLabelText(/I reviewed the shared tenancy impact/));
+ await userEvent.click(screen.getByLabelText(/I acknowledge the consequences/));
+ await userEvent.selectOptions(choice,"keep_member");
+ await userEvent.selectOptions(choice,"remove");
+ expect(screen.getByLabelText(/I acknowledge the consequences/)).not.toBeChecked();
+ expect(screen.getByLabelText(/I reviewed the shared tenancy impact/)).not.toBeChecked();
+ fireEvent.submit(screen.getByLabelText("Action").closest("form")!);expect(c.submit).not.toHaveBeenCalled();
+});
+
+// The offboarding variant also fails closed when its exact outgoing identity is unavailable.
+it("blocks offboard-transfer removal without a bound identity",async()=>{
+ const c=dialog({...preview,source_present:false,actions:["offboard_person"],associations:[{...association,user_ocid:null,actions:["transfer","keep"]}]},"offboard_person");
+ await userEvent.selectOptions(await screen.findByLabelText("Action for "+tenant.name),"transfer");
+ await userEvent.selectOptions(screen.getByLabelText("New owner for "+tenant.name),other);
+ expect(screen.getByText(/Not recorded — automated removal is unavailable/)).toBeVisible();
+ await userEvent.click(screen.getByLabelText(/I reviewed the shared tenancy impact/));
+ await userEvent.click(screen.getByLabelText(/I acknowledge the consequences/));
+ expect(screen.getByRole("button",{name:"Offboard employee"})).toBeDisabled();
+ fireEvent.submit(screen.getByLabelText("Action").closest("form")!);expect(c.submit).not.toHaveBeenCalled();
+ await userEvent.selectOptions(screen.getByLabelText("Former owner for "+tenant.name),"keep_member");
+ expect(screen.getByText(/including any administrator access/)).toBeVisible();
+ expect(screen.getByText("Review destructive action")).toBeVisible();
+});
+
+// Individual-tenancy removal has the same resource/account cleanup explanation as shared removal.
+it("shows cleanup responsibilities for individual owner transfer",async()=>{
+ dialog({...preview,actions:["transfer_owner"],associations:[{...association,tenancy_kind:"individual",actions:["transfer","keep"]}]},"transfer_owner");
+ await userEvent.selectOptions(await screen.findByLabelText("Tenancy"),id);
+ await userEvent.selectOptions(screen.getByLabelText("New owner"),other);
+ expect(screen.queryByRole("option",{name:/Keep as a member/})).toBeNull();
+ await userEvent.selectOptions(screen.getByLabelText("Former owner"),"remove");
+ expect(screen.getByText("Manual cleanup responsibilities",{selector:"summary"})).toBeVisible();
 });

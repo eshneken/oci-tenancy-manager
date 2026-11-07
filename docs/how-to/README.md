@@ -28,3 +28,6 @@ qualification must be verified separately. This guide does not authorize cloud d
 - [Manual review: current-month cost visibility](test-cost-visibility.md)
 
 The [required-user runbook](required-users-runbook.md) now uses one Refresh user data action for provider acquisition, with automatic progress updates.
+
+The [live OCI manifest](real-oci-test-manifest.md#pending-explicit-owner-retention-and-identity-removal)
+includes replacement verification, identity retention/removal and manual resource-cleanup qualification.

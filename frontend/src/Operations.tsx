@@ -664,7 +664,7 @@ function OperationDetail({
                         <h3>
                           {step.step_key.startsWith("required_users:") ? "Read required-user presence" : step.step_key.startsWith("cost:") ? "Read current month costs" : step.step_key.startsWith("configuration_check:") ? "Check assigned managed configuration" : step.step_key === "inspect_target"
                             ? "Inspect target"
-                            : step.step_key.startsWith("remove_member_groups:") ? "Remove shared user group memberships" : step.step_key.startsWith("delete_member_user:") ? "Delete shared tenancy user" : step.step_key === "apply_lifecycle"
+                            : step.step_key.startsWith("remove_member_groups:") ? "Remove user group memberships" : step.step_key.startsWith("delete_member_user:") ? "Delete tenancy user" : step.step_key === "apply_lifecycle"
                               ? "Apply simulated lifecycle"
                               : stageLabel(step.step_key)}
                         </h3>

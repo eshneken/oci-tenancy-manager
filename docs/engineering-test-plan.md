@@ -1133,12 +1133,13 @@ require the following regression matrix, without weakening complete-census depar
   cleanup can set existing setup flags, without automatic provisioning or absence settlement.
 - Only explicit offboard_person for an actually absent eligible employee changes offboarding state;
   current actual-row presence hides/refuses it. Root, kept-obligation and pending-work guards remain.
-- New admissions for exactly offboard_person/delete_tenancy/remove_member/transfer_owner/merge need
-  confirm_destructive=true. Missing/false consent produces no mutation/queue/audit transition. False
+- New destructive admissions offboard_person/delete_tenancy/remove_member/transfer_owner-remove/merge
+  need confirm_destructive=true. Standalone validated transfer/keep_member is neutral; offboarding
+  always retains destructive consent. Missing/false consent produces no mutation/queue/audit transition. False
   omission preserves old canonical hashes and current-authenticated exact committed replay precedes
   the new guard; changed requests still conflict. Consent resets on action/target/plan/preview changes.
 - Separate TenancyDeletionCommand keeps its seven fields/confirm_deletion; DeletionPerson's seven
-  fields retain leaves_directory, always false. OrganizationAction has 21 fields; no storage change.
+  fields retain leaves_directory, always false. OrganizationAction has 22 fields after the explicit former-owner choice; no storage change.
 - Unit, disposable PostgreSQL and actual browser coverage must include all cross-surface directory/
   review/cache outcomes and consent UI/API negatives. Current notification parity work is preserved;
   new full validation and saved-preview qualification are not claimed yet.
@@ -1180,3 +1181,21 @@ all handoff fields, simulated handoff button, errors and cleanup consent availab
 origins and closed/open 1280/390/320-pixel screenshots, page containment, summary focus and
 keyboard operation through the existing complete native onboarding/worker browser journey.
 No new backend state, API, schema or live provider qualification is introduced.
+
+## Explicit former-owner disposition regression matrix
+
+| Scenario | Required evidence |
+| --- | --- |
+| Shared Keep | Old row, user and compartment IDs preserved; role member, no group/user write, existing admin rights not implied reduced. Recipient existing identity reused, exactly one current owner. |
+| Shared/individual Remove | Explicit consent, exact recorded nonprotected personal identity, independent group/user deletion readback and operation steps before retirement. Resources/compartments/additional accounts remain manual. |
+| Missing/invalid choice | New standalone request fails without explicit disposition; other actions cannot use keep to bypass consent; individual Keep rejected. |
+| Absent offboard transfer | New omitted choice freezes Remove; explicit shared Keep retains outside-directory obligation, Remove can complete offboarding. Overall destructive consent remains required. |
+| Replay/concurrency | Exact replay has same receipt and no duplicate writes; reused key with changed choice conflicts; stale preview fails. Historical omitted-None bytes/legacy frozen behavior preserved. |
+| Failure/protection | Protected/reused/unknown identities fail closed; aliased replacement is rejected before removal; changed recipient identity cannot redirect the job. Partial provider effects remain unknown/pending with no false success. |
+| UI admission | No default standalone choice, no-ID removal disabled in standalone/offboard variants; unchecked/Enter/programmatic submit/direct API cannot bypass relevant consent. Choice/target/recipient/plan changes reset acknowledgments. |
+| Cleanup help | Closed by default, opens with keyboard, all responsibilities present, critical identity/consequences remain visible; post-removal person/unknown scope stays visible. Responsive 1280/390/320 controls remain reachable. |
+
+Unit tests cover guards/serialization/readback/UI branches; disposable PostgreSQL verifies actual
+publication/replay/failure; HTTPS Playwright exercises both keep directions, existing identity
+preservation and explicit removal through real application roles and the native worker. Required
+unit-only 95% per-tier gates and the approved integration timeout are unchanged.

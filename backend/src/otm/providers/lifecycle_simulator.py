@@ -128,7 +128,7 @@ class SimulatedLifecycleFacade:
     # Simulated readback is exact-account scoped and never deletes a compartment or its resources.
     def remove_member_access(self, intent, association):
         if (
-            association.action != "remove"
+            not association.removes_identity
             or not association.user_ocid
             or not association.user_ocid.startswith("ocid1.user.oc1..otmsim")
             or association.tenancy_ocid == self.policy.parent_tenancy_ocid
@@ -228,11 +228,20 @@ class SimulatedLifecycleFacade:
                     parent_compartment_ocid=intent.parent_compartment_ocid,
                 )
             )
+        # Establish and validate replacement identity before deleting any outgoing owner.
+        by_association = {binding.association_id: binding for binding in bindings}
+        for item in intent.associations:
+            if item.action == "transfer":
+                replacement = by_association[item.new_association_id]
+                if replacement.user_ocid == item.user_ocid or not replacement.user_ocid.startswith(
+                    "ocid1.user.oc1..otmsim"
+                ):
+                    raise LifecycleBlocked("TARGET_CHANGED")
         return LifecycleCompletion(
             bindings=tuple(bindings),
             removals=tuple(
                 self.remove_member_access(intent, item)
                 for item in intent.associations
-                if item.action == "remove"
+                if item.removes_identity
             ),
         )

@@ -656,7 +656,11 @@ class OrganizationWorkflows:
             if command.action not in preview.actions:
                 raise OrganizationConflict("ORGANIZATION_ACTION_UNAVAILABLE")
             # Accepted retries return above; every new destructive admission needs explicit consent.
-            if command.action in DESTRUCTIVE_ACTIONS and not command.confirm_destructive:
+            destructive = command.action in DESTRUCTIVE_ACTIONS and not (
+                command.action == "transfer_owner"
+                and command.former_owner_disposition == "keep_member"
+            )
+            if destructive and not command.confirm_destructive:
                 raise OrganizationConflict("DESTRUCTIVE_CONFIRMATION_REQUIRED")
             person = state.people[command.person_id]
             review = next((r for r in state.reviews if r["id"] == command.review_id), None)
@@ -1016,6 +1020,7 @@ class OrganizationWorkflows:
                     association_id=link["id"],
                     action=action,
                     recipient_person_id=command.recipient_person_id,
+                    former_owner_disposition=command.former_owner_disposition,
                 ),
             )
         frozen = []
@@ -1042,6 +1047,22 @@ class OrganizationWorkflows:
                 or not state.eligible(choice.recipient_person_id)
             ):
                 raise OrganizationConflict("CURRENT_TRANSFER_RECIPIENT_REQUIRED")
+            disposition = choice.former_owner_disposition
+            if choice.action == "transfer":
+                if command.action == "offboard_person" and disposition is None:
+                    disposition = "remove"
+                if disposition is None:
+                    raise OrganizationConflict("FORMER_OWNER_DISPOSITION_REQUIRED")
+                if disposition == "keep_member" and row["kind"] != "shared":
+                    raise OrganizationConflict("RETAIN_MEMBER_REQUIRES_SHARED_TENANCY")
+                if disposition == "remove" and (
+                    not link["user_ocid"]
+                    or any(
+                        other["id"] != link["id"] and other["user_ocid"] == link["user_ocid"]
+                        for other in state.associations(tenant=row["id"])
+                    )
+                ):
+                    raise OrganizationConflict("EXACT_PERSONAL_IDENTITY_REQUIRED")
             if choice.action == "delete" and person.known_manager and not command.confirm_manager:
                 raise OrganizationConflict("MANAGER_CONFIRMATION_REQUIRED")
             if row["kind"] == "shared" and choice.action != "keep" and not command.confirm_shared:
@@ -1061,6 +1082,7 @@ class OrganizationWorkflows:
                     tenancy_revision=row["revision"],
                     role=link["role"],
                     action=choice.action,
+                    former_owner_disposition=disposition,
                     tenancy_ocid=row["tenancy_ocid"],
                     parent_tenancy_ocid=row["parent_tenancy_ocid"],
                     recipient_person_id=choice.recipient_person_id,

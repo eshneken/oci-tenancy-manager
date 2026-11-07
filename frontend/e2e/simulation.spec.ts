@@ -1,3 +1,4 @@
+import {keepOwnershipRoundTrip,removeFormerOwner} from "./ownership-transfer";
 import {tenancyOverrides} from "./tenancy-overrides";
 import {existingCompartmentMembership} from "./shared-membership";
 import {configurationUpdates} from "./configuration-updates";
@@ -641,6 +642,7 @@ async function organizationFlows(page: Page) {
     });
   }
   await page.setViewportSize({ width: 1280, height: 900 });
+  await keepOwnershipRoundTrip(page,sharedName);
   await configurationUpdates(page,sharedName);latestVersion=3;
   latestVersion=await tenancyOverrides(page,sharedName);
   await existingCompartmentMembership(page,sharedName);
@@ -865,6 +867,12 @@ async function organizationFlows(page: Page) {
   for(const value of ["create_tenancy","import_tenancy","join_shared"])
     await expect(later.locator(`option[value="${value}"]`)).toHaveCount(1);
   await modal.getByRole("button",{name:"Cancel",exact:true}).click();
+  // A separate fresh shared tenancy exercises removal without changing preceding fixture flows.
+  await page.getByRole("button",{name:"Unassigned Engineer",exact:true}).click();
+  await modal.getByRole("combobox",{name:"Action",exact:true}).selectOption("create_tenancy");
+  await modal.getByRole("combobox",{name:"Tenancy type",exact:true}).selectOption("shared");
+  await finish("Create tenancy");
+  await removeFormerOwner(page);
 
 }
 

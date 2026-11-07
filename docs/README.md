@@ -24,6 +24,7 @@ are not competing implementation instructions or proof of real OCI behavior.
 | Pending real-OCI drift and repair validation | [Manual checklist and automated coverage](how-to/configuration-drift-runbook.md#pending-real-oci-manual-validation) |
 | Required quality/security conventions | [Testing](engineering-test-plan.md), [security](security-review-policy.md), [code documentation](code-documentation-policy.md), [UI review](ui-ux-review-policy.md) |
 | Visual and interaction authority | [UI baseline](../DESIGN.md), [screen authority](ui-screen-authority.md) |
+| Former-owner retention/removal qualification | [Current workflow](reference/organization-workflows.md), [dated receipt](history/ownership-disposition-checkpoint-2026-11-07.md) |
 | Prior checkpoints | [Dated history](history/README.md) |
 
 ## Source of truth
@@ -104,3 +105,5 @@ Member management and provider refresh labels: [shared member entry](reference/o
 Compact create/import help: [Collapsed OCI operator checklist](reference/tenancy-onboarding.md#collapsed-oci-operator-checklist).
 
 - [Compact operator help and consistent action emphasis: qualification and main preview](history/compact-help-action-emphasis-checkpoint-2026-11-07.md)
+
+Owner retention, verified identity removal and manual cleanup: [explicit former-owner disposition](reference/organization-workflows.md#explicit-former-owner-disposition--7-november-2026).

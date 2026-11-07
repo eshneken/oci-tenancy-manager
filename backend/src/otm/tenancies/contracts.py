@@ -54,12 +54,18 @@ class AssociationChoice(Contract):
     association_id: UUID
     action: Literal["delete", "transfer", "remove", "keep"]
     recipient_person_id: UUID | None = None
+    # Omit absent historical choices so committed request/intent hashes remain unchanged.
+    former_owner_disposition: Literal["keep_member", "remove"] | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
 
     # A transfer is explicit and never inferred from the reporting chain or tenancy name.
     @model_validator(mode="after")
     def transfer_target(self):
         if (self.action == "transfer") != (self.recipient_person_id is not None):
             raise ValueError("TRANSFER_RECIPIENT_REQUIRED")
+        if self.action != "transfer" and self.former_owner_disposition is not None:
+            raise ValueError("FORMER_OWNER_DISPOSITION_REQUIRES_TRANSFER")
         return self
 
 
@@ -96,6 +102,18 @@ class OrganizationAction(Contract):
         return self
 
     recipient_person_id: UUID | None = None
+    # A new standalone transfer must choose explicitly; absence is retained only for old replay.
+    former_owner_disposition: Literal["keep_member", "remove"] | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
+
+    # A transfer choice cannot silently alter unrelated person actions.
+    @model_validator(mode="after")
+    def owner_disposition_scope(self):
+        if self.action != "transfer_owner" and self.former_owner_disposition is not None:
+            raise ValueError("FORMER_OWNER_DISPOSITION_REQUIRES_TRANSFER")
+        return self
+
     partner_person_id: UUID | None = None
     plan: Annotated[tuple[AssociationChoice, ...], Field(max_length=100)] = ()
     # Omitted false preserves pre-consent request hashes for exact historical replay.
@@ -115,6 +133,10 @@ class FrozenAssociation(Contract):
     tenancy_revision: Annotated[int, Field(ge=1)]
     role: Literal["owner", "member"]
     action: Literal["delete", "transfer", "remove", "keep"]
+    # None preserves the behavior of already-accepted legacy transfers; never default at dispatch.
+    former_owner_disposition: Literal["keep_member", "remove"] | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
     tenancy_ocid: TenancyOcid
     parent_tenancy_ocid: TenancyOcid
     recipient_person_id: UUID | None = None
@@ -125,6 +147,13 @@ class FrozenAssociation(Contract):
     recipient_parent_compartment_ocid: str | None = None
     user_ocid: str | None = None
     compartment_ocid: str | None = None
+
+    # Removal is exact and explicit; a legacy transfer never acquires new destructive effects.
+    @property
+    def removes_identity(self):
+        return self.action == "remove" or (
+            self.action == "transfer" and self.former_owner_disposition == "remove"
+        )
 
 
 # A generic display target supports person-wide operations without inventing a tenancy OCID.

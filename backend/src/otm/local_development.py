@@ -390,8 +390,9 @@ def setup_database(root: Path, state: LocalState, project: Path) -> LocalState:
                 "tenancy TO otm_local_worker"
             )
             connection.exec_driver_sql(
-                "GRANT UPDATE(status,user_ocid,compartment_ocid,operation_id,updated_at,revision,"
-                "cleanup_required) ON public.otm_tenancy_membership TO otm_local_worker"
+                # Verified ownership transfer may retain the exact identity as a member.
+                "GRANT UPDATE(status,role,user_ocid,compartment_ocid,operation_id,updated_at,"
+                "revision,cleanup_required) ON public.otm_tenancy_membership TO otm_local_worker"
             )
             connection.exec_driver_sql(
                 "GRANT SELECT,INSERT ON "

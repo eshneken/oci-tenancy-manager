@@ -38,3 +38,5 @@ Private original feeds, raw evidence, screenshots and machine-specific paths are
 - [Shared-member entry and single provider refresh: final qualification and main preview](shared-members-refresh-checkpoint-2026-11-07.md)
 
 - [Compact operator help and consistent action emphasis: qualification and main preview](compact-help-action-emphasis-checkpoint-2026-11-07.md)
+
+- [Explicit former-owner disposition: full qualification and preserved main preview](ownership-disposition-checkpoint-2026-11-07.md)

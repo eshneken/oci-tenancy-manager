@@ -141,33 +141,39 @@ a qualified service/permission matrix or proof that all effective access is capt
 
 A transfer changes accountability and separately executes reviewed OCI access changes. The new
 owner must receive full administration; a scoped shared-member profile is not enough for ownership.
-D22 A is accepted: explicitly select Remove access or Remain a member with a D21 profile.
-Offboarding defaults to Remove; standalone transfer requires an explicit disposition.
+D22 is clarified on 7 November 2026: explicitly select Remove from tenancy or Keep as a member.
+Keep is available only for shared tenancies and preserves the former owner's exact user identity,
+compartment bindings, groups and existing permissions, including any administrator rights; it changes
+accountability and the tracked role only. It does not apply a restricted D21 profile. Remove deletes
+the exact recorded personal user and group memberships, with independent readback. Offboarding
+transfers default to Remove at new admission; standalone transfer requires an explicit choice.
 
 | Stage | Administrator view/action | State and failure rule |
 |---|---|---|
 | Preview | Select tenancy and replacement owner; show old/new owner, members, organization/LOB/designee changes and exact access effects | Current context, eligibility and actual child/access checked. D22 A requires explicit old-owner disposition; offboarding defaults to Remove |
 | Accept | Confirm transfer with frozen target, owner IDs, current association revision and selected access intent | Operation/job/audit and pending transitions commit together; a stale ownership revision requires a refreshed preview |
 | Establish replacement | Create/adopt only reviewed bindings, grant required full administration and verify | Current accountable owner remains until replacement grants are verified; failure preserves existing administration and does not claim transfer success |
-| Publish accountability | Atomically replace the current owner; promote an existing member without duplicate current links; derive LOB/recipients from the new owner | At most one current accountable owner. Preserve tenancy OCID/origin, other members, baseline/overlays, resources and immutable history |
-| Apply old-owner disposition | Remove the specific managed owner grant or establish the selected retained-member profile, according to D22 | Old relationship remains an outstanding transition/cleanup obligation rather than a second current owner. No early completed offboarding |
+| Apply old-owner disposition | Keep the existing identity/grants unchanged as a tracked member, or remove the exact reviewed personal user and group memberships, according to the frozen disposition | Old relationship remains an outstanding transition/cleanup obligation rather than a second current owner. No early completed offboarding |
+| Publish accountability | After replacement and any requested removal are verified, atomically replace the owner and publish the retained/removed former relationship | At most one current owner, no duplicate current memberships; preserve tenancy/other-member/configuration/resource/history identity |
 | Verify final result | Show new owner, final prior-owner relationship, grants changed, residual access and remaining cleanup | Only verified scoped effects become complete. Unknown provider writes reconcile before retry; partial failure remains in Operations |
 
-Do not revoke old administration before replacement access is verified. Publishing new accountability
-need not falsely imply the old owner's access is already gone. If old-access cleanup fails, show
-Ownership transferred / Access cleanup requires attention, retain the outstanding association effect,
-and keep that person's offboarding incomplete. Retry only the unfinished scope; do not repeat owner
-promotion or create another tenancy. Exact storage transitions/API labels remain C2/data-model work.
+Do not revoke old administration before replacement access is verified. V1 uses the existing
+transfer operation as one publication gate: requested removal must also verify before the registry
+changes owner. If cleanup fails or its effects are uncertain, keep current OTM ownership and pending
+participants, report Needs attention and unknown effects, and do not claim transfer/removal complete.
+Replacement access may already exist in the provider during this unresolved state. Live adapters
+must reconcile before another write and must not recreate users or repeat completed scope blindly.
 
 A standalone ownership transfer and a person-level offboarding plan use the same underlying transfer
 contract, with different explicit context/defaults under D22. No additional approver, mandatory Reason
 or owner-confirmation flow is introduced. D20 means the new owner's first login does not block transfer
 once mandatory owner grants/MFA enforcement and independent administration/recovery are verified.
 
-The previous owner's OCI identity may also support retained obligations or out-of-tool grants.
-Removing an OTM grant must not delete that identity indiscriminately. Surface known unmanaged access,
-unsupported verification and manual cleanup honestly; never label a single group change as universal
-revocation. Removing resources/compartments, reparenting, or moving resource billing scope is not an
+The previous owner's identity must be a distinct recorded personal identity before Remove can be
+admitted. Reject reused participant identities and protect canonical automation/recovery identities
+before provider effects. Remove explicitly authorizes only this exact user and its group memberships;
+additional accounts and credentials created by the person need manual review. Surface unsupported
+verification and remaining cleanup honestly; never label a group change alone as verified user deletion. Removing resources/compartments, reparenting, or moving resource billing scope is not an
 implicit part of transferring accountability. Existing baselines do not change just because the new
 owner has another LOB; D1/D9 explicit configuration assignment/rollout rules still apply.
 
@@ -177,34 +183,31 @@ or supersede the old member link within the ownership publication rather than co
 twice. Keep external identity/grant history when changing their association role.
 
 ```mermaid
-flowchart LR
-  P[Preview new owner and previous-owner disposition] --> A[Durable transfer acceptance]
-  A --> G[Establish and verify replacement administration]
-  G --> O[Publish one new accountable owner]
-  O --> D[Apply explicit previous-owner disposition: D22 A]
-  D --> V[Verify scoped result and complete]
-  G --> F[Failure: keep current owner]
-  D --> R[Partial cleanup: new owner visible; offboarding remains open]
-  R --> D
+flowchart TD
+  P[Preview replacement and explicit former-owner choice] --> A[Durable operation acceptance]
+  A --> G[Establish and verify replacement access]
+  G --> D{Former-owner choice}
+  D -->|Keep member| K[Preserve existing identity and permissions]
+  D -->|Remove| R[Remove exact groups/user and verify]
+  K --> O[Atomically publish owner and membership result]
+  R --> O
+  G --> F[Failure: current OTM owner and pending scope retained]
+  R --> F
 ```
 
-### Previous-owner disposition: D22 accepted
+### Previous-owner disposition: D22 clarified 7 November 2026
 
-| Selected result | Required access changes | Organizational result after verification |
+| Selected result | Identity/access effects | Organizational result after verification |
 |---|---|---|
-| Remove access | Retire the explicitly managed owner grants; delete the bound personal identity only if owned, no longer required and safely qualified; surface other access/manual work | Previous ownership/retirement obligation ends after verified required cleanup; no replacement member association |
-| Remain a compartment-scoped member | Establish/verify selected member scope, then retire broad managed owner grants; expose additional grants preventing a verified downgrade | One active scoped-member association, not a second owner; offboarding retains that explicit relationship |
-| Remain an administrator member | Preserve or establish the reviewed full-administrator grants under the member assignment; reconcile old binding retirement without removing still-required grants | One active administrator-member association, distinct from accountable ownership |
+| Remove from tenancy | Establish/verify replacement access, remove exact former personal user's groups and user, independently read back removal; preserve resources/compartments/additional accounts | Retire former ownership link only after verified removal; manual cleanup remains visible even if scope is unknown |
+| Keep as a member (shared only) | Preserve existing personal identity, group memberships, permissions (including administrator access) and compartment bindings; no profile downgrade | Keep the same former association as active member with unchanged identity IDs; one new accountable owner |
 
-Use the selected existing or newly established grant binding without blindly removing a group
-membership that is also the required retained-member access. Promotion/demotion changes association
-role and grant provenance, not merely the label of an unmanaged identity. Transfer history records
-before/after role, profile, targets and verified outcomes. Repeated jobs must not duplicate grants.
-
-If another association/known obligation needs the identity, preserve it and change only the reviewed
-grant. If inspection cannot establish safe identity retirement, require manual resolution; do not
-make an unregistered account disposable because its email matches the former owner. Required OTM
-recovery/automation identities are never candidates for former-owner cleanup.
+New standalone requests choose explicitly; new offboarding transfers default to Remove. Retaining
+membership is a tracked obligation when an absent person is offboarded. Removing the exact bound
+personal identity is forbidden if another association needs it or it is a protected automation/
+recovery identity; require manual resolution rather than guessing by email. Transfer history records
+frozen disposition, targets and verified outcomes. Replayed legacy intents with no disposition retain
+their earlier mapping-only behavior and never gain implicit user-deletion effects.
 
 ### Shared-member profile contract: D21 accepted
 
@@ -510,8 +513,9 @@ partial), not references/replay/staging/config-only work. It retains the stable 
 opens one setup episode when needed; no pending/exempt/merged resurrection, blanket role closure,
 old association/user/tenancy recreation or automatic provisioning is implied.
 
-New person actions offboard_person/delete_tenancy/remove_member/transfer_owner/merge require explicit
-confirm_destructive consent in addition to existing impact warnings. False is omitted for historical
+New destructive person actions require explicit confirm_destructive consent in addition to impact
+warnings. Standalone transfer_owner with validated keep_member is exempt from destructive consent;
+transfer/remove and all offboard/delete/member-remove/merge admissions retain it. False is omitted for historical
 request-hash compatibility; authenticated exact committed replay precedes the new-admission guard.
 Action/target/plan/preview changes reset the checkbox. Separate tenancy-level termination retains
 its existing confirm_deletion consent; leaves_directory is always false. This source correction adds the one public OrganizationAction field above, with no database schema/table change or new authority model. Qualification and preview upgrade remain pending.

@@ -92,3 +92,24 @@ implemented scheduler identity. No scheduled deployment or lifecycle email is cl
 | Case | Required live qualification | Status |
 | --- | --- | --- |
 | Shared summary/detail truth | After a real adapter is qualified, compare each inventory summary with the exact child's account observations and UTC times. Confirm fresh absence, stale/unknown facts and context changes never become a false positive; pending context stays dated. Navigation/GET must not acquire provider facts or imply privilege checks. Current source uses simulation only. | Pending |
+
+## Pending: explicit owner retention and identity removal
+
+Prerequisites: qualified real lifecycle facade, controlled disposable child/identity domain and
+recorded distinct personal/replacement/automation/recovery identities. Never use employee production
+accounts for destructive qualification. These cases remain Pending; simulator results do not close them.
+
+1. Transfer shared ownership to an existing member with Keep. Verify the old user OCID, enabled state,
+   groups, permissions, credentials and compartment scope remain unchanged; verify replacement full
+   administration before success, with one accountable owner and both tracked members.
+2. Transfer with Remove. Independently verify replacement administration first, then exact former
+   user's group/user deletion and loss of that identity's access. Automation/recovery and other
+   members must remain intact; no fallback credentials or guessed identity is allowed.
+3. Confirm all resources, compartments and additional accounts remain; follow the displayed manual
+   responsibilities, deleting only an empty dedicated compartment after owner review.
+4. Exercise missing/reused/protected identities, changed recipient bindings and partial group/user
+   failures. No premature relationship retirement or false success; uncertain effects retain pending
+   scope and require reconciliation before any further write. Test qualified retry semantics.
+5. Repeat for individual transfer (Remove only) and absent-owner offboarding, including shared Keep
+   retaining an outside-directory obligation. Confirm live API permission/readback behavior and
+   request replay do not duplicate provisioning or removal.

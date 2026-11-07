@@ -79,6 +79,8 @@ def action(c, person, action_name, *, review_id=None, **fields):
         "merge",
     }:
         fields.setdefault("confirm_destructive", True)
+    if action_name == "transfer_owner":
+        fields.setdefault("former_owner_disposition", "remove")
     if action_name == "create_tenancy":
         fields.setdefault("name", "sandbox" + uuid4().hex[:12])
         fields.setdefault("home_region", "us-ashburn-1")

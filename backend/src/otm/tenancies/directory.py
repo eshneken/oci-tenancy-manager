@@ -332,6 +332,7 @@ def association_view(state, link):
         compartment_ocid=link["compartment_ocid"],
         compartment_name=link["compartment_name"],
         cleanup_required=link["cleanup_required"],
+        user_ocid=link["user_ocid"],
         operation_id=link["operation_id"],
         actions=actions,
     )

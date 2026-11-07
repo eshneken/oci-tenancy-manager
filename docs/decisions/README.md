@@ -5,3 +5,6 @@
 
 Later explicit refinements in [the current chapters](../engineering-design/README.md) supersede
 earlier alternatives. Accepted design does not imply live OCI or deployment qualification.
+
+The [design decision log](design-decisions.md#7-november-2026--explicit-former-owner-disposition-clarification)
+records the shared-only Keep/removal clarification and preservation of existing privileges.

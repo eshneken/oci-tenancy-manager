@@ -52,3 +52,5 @@ Normal-directory onboarding without provisioning: [Keep in organization without 
 Shared-tenancy [Add member](organization-workflows.md#add-a-member-from-a-shared-tenancy) and [provider refresh terminology](required-users-screen.md#consistent-provider-refresh-terminology--7-november-2026).
 
 Compact create/import help: [Collapsed OCI operator checklist](tenancy-onboarding.md#collapsed-oci-operator-checklist).
+
+Owner retention, verified identity removal and manual cleanup: [explicit former-owner disposition](organization-workflows.md#explicit-former-owner-disposition--7-november-2026).

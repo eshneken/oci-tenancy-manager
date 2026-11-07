@@ -72,10 +72,11 @@ class OnboardingUsers(Contract):
 
 # The application depends on closed capabilities instead of SDK clients or credential material.
 class LifecycleFacade(Protocol):
-    # Execute/read-back the exact frozen target; replaying an intent must retain target identity.
+    # Execute/read-back exact frozen targets. Transfers establish/verify replacement access before
+    # any explicit former-owner removal; keep_member never changes that person's identity/grants.
     def apply(self, intent: OrganizationIntent) -> LifecycleCompletion: ...
 
-    # Remove group memberships and delete the exact user, then independently verify absence.
+    # Remove the exact departing member/owner's group memberships and user, verifying absence.
     def remove_member_access(self, intent, association) -> MemberRemoval: ...
 
     # Return setup handoff metadata; usable credentials require the qualified implementation.

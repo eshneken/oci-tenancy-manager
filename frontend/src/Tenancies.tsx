@@ -1,3 +1,4 @@
+import { CleanupResponsibilities } from "./CleanupResponsibilities";
 import { AddSharedMember } from "./AddSharedMember";
 import { RequiredUserSummary } from "./RequiredUserSummary";
 import { RequiredUsers } from "./RequiredUsers";
@@ -634,18 +635,20 @@ export function Tenancies({
                 <section className="operation-panel">
                   <h2>Manual cleanup guidance</h2>
                   <p>
-                    Ask the current owner,{" "}
-                    {tenant.owner_name ?? "the assigned tenancy owner"}, to
-                    clean these employee compartments. The tool removes
-                    user/group access and preserves compartments and resources.
-                    Cleanup completion is handled outside this screen.
+                    Coordinate manual cleanup with the current owner,{" "}
+                    {tenant.owner_name ?? "the assigned tenancy owner"}. Review
+                    the former members and scopes below. The tool removes recorded
+                    user/group access; resources, compartments and additional accounts
+                    remain. Cleanup completion is handled outside this screen.
                   </p>
+                  <CleanupResponsibilities/>
                   <ul>
                     {detail.data.memberships
                       .filter((a) => a.cleanup_required)
                       .map((a) => (
                         <li key={a.id}>
-                          {a.compartment_name ?? "Employee compartment"}{" "}
+                          <strong>{detail.data!.people.find(p=>p.id===a.person_id)?.name ?? "Former member"}</strong>{" · "}
+                          {a.compartment_name ?? "Scope not recorded — review with the tenancy owner"}{" "}
                           <span className="technical-id">
                             {a.compartment_ocid}
                           </span>
@@ -720,7 +723,7 @@ function MembershipRow({
       <td className="tenancy-member-role">{link.role}</td>
       <td>
         {link.compartment_name ??
-          (link.role === "owner" ? "Accountable owner" : "—")}
+          (link.role === "owner" ? "Accountable owner" : "Existing access — scope not recorded")}
         <span className="technical-id cell-secondary">
           {link.compartment_ocid}
         </span>

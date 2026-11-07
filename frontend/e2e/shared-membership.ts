@@ -52,13 +52,15 @@ export async function existingCompartmentMembership(page:Page,sharedName:string)
  await modal.getByRole("combobox",{name:"Tenancy",exact:true}).selectOption("");
  await expect(destructiveConsent).not.toBeChecked();
  await modal.getByRole("combobox",{name:"Tenancy",exact:true}).selectOption(selectedTenancy);
- await expect(removal).toBeDisabled();await destructiveConsent.check();
+ await expect(removal).toBeDisabled();
+ await modal.getByRole("checkbox",{name:/I reviewed the shared tenancy impact/}).check();
+ await destructiveConsent.check();
  await capture(page,"destructive-member-confirmation");
  await modal.getByRole("button",{name:"Remove shared member",exact:true}).click();
  await modal.getByRole("link",{name:"View operation",exact:true}).click();
  await expect(page.getByText("Succeeded",{exact:true})).toBeVisible({timeout:20000});
- await expect(page.getByRole("heading",{name:"Remove shared user group memberships",exact:true})).toBeVisible();
- await expect(page.getByRole("heading",{name:"Delete shared tenancy user",exact:true})).toBeVisible();
+ await expect(page.getByRole("heading",{name:"Remove user group memberships",exact:true})).toBeVisible();
+ await expect(page.getByRole("heading",{name:"Delete tenancy user",exact:true})).toBeVisible();
  await capture(page,"shared-user-removal-evidence");
  await page.getByRole("link",{name:"Tenancies",exact:true}).click();
  const row=page.getByRole("row").filter({has:page.getByRole("link",{name:sharedName,exact:true})});

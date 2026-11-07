@@ -96,6 +96,18 @@
         "tenancy_status": {
           "title": "Tenancy Status",
           "type": "string"
+        },
+        "user_ocid": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "User Ocid"
         }
       },
       "required": [

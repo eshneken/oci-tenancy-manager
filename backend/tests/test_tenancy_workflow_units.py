@@ -159,6 +159,8 @@ def service(state):
 def command(state, p, action, **fields):
     if action in {"offboard_person", "delete_tenancy", "remove_member", "transfer_owner", "merge"}:
         fields.setdefault("confirm_destructive", True)
+    if action == "transfer_owner":
+        fields.setdefault("former_owner_disposition", "remove")
     if action == "create_tenancy":
         fields.setdefault("home_region", "us-ashburn-1")
     return OrganizationAction(

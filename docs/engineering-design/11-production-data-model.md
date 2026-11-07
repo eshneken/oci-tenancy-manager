@@ -2068,7 +2068,8 @@ or resolves their absence work. Only explicit actually-absent employee offboardi
 status. No table/column/migration is added.
 
 OrganizationAction adds the optional omitted-false confirm_destructive field; five destructive
-person commands require true only on new admission after exact authenticated replay lookup. This
+person commands require true only on new admission after exact authenticated replay lookup,
+except the 7 November standalone transfer_owner/keep_member neutral path. This
 is a request field committed through the existing request digest, not a new database column.
 The separate TenancyDeletionCommand retains confirm_deletion. DeletionPerson.leaves_directory
 is retained as an always-false compatibility field; tenancy deletion cannot remove an employee.
@@ -2090,3 +2091,25 @@ from existing TenancyDetail.memberships. Its selected stable person ID and displ
 initialize the existing PersonActions join_shared command; search/selection/modal state is transient.
 Refresh user data only renames the required-user acquisition button; existing request keys,
 operation IDs and presence observations remain unchanged. No persisted fields or ER changes.
+
+## Explicit ownership retention/removal — 7 November 2026
+
+No physical entity or column changes. Implemented DTO counts now are OrganizationAction 22,
+AssociationChoice 4, FrozenAssociation 18 and AssociationView 14. Generated schemas/bindings remain
+the source of exact shape. The additive fields map as follows:
+
+| Field | Representation and authority |
+| --- | --- |
+| OrganizationAction.former_owner_disposition | Optional omitted-None keep_member/remove, required for new standalone transfer; hashed with the existing request and frozen into intent. |
+| AssociationChoice.former_owner_disposition | Optional omitted-None per-transfer choice; new offboard admission freezes remove when omitted. Other action types reject the field. |
+| FrozenAssociation.former_owner_disposition | Immutable intent JSON, not a column. Legacy None retains original behavior at dispatch. |
+| FrozenAssociation.removes_identity | Pure nonserialized property selecting member removal or explicit transfer/remove; never a client-controlled persisted flag. |
+| AssociationView.user_ocid | Existing otm_tenancy_membership.user_ocid read projection for review; not an editable target. |
+| Kept former relationship | Existing membership role becomes member with same row/user/compartment IDs; status active, no identity/group/permission mutation. |
+| Removal completion | Existing status removed and cleanup_required=true, even with no recorded compartment. Existing operation steps/evidence contain exact verified removal receipts. |
+| Failed identity write | Existing operation.effect_knowledge stays unknown and pending participants remain reserved until safe resolution. |
+
+No new ownership/access profile table is needed. Existing canonical managed-user bindings protect
+automation/recovery identities from removal. The worker gets UPDATE(role) on memberships alongside
+its existing column grants; membership/person/workspace identity and audit history remain protected.
+See the [current workflow contract](../reference/organization-workflows.md#explicit-former-owner-disposition--7-november-2026).

@@ -159,6 +159,9 @@ class OrganizationLifecycleWorker:
                         raise LifecycleBlocked("EMAIL_ROUTING_CHANGED") from None
                 state = registry_state(connection, self.workspace)
                 self._validate(state, intent, identifier)
+                from otm.tenancies.membership_access import validate_removal_targets
+
+                validate_removal_targets(connection, self.workspace, intent)
                 if intent.baseline is not None:
                     from otm.configuration.service import published_baseline
 
@@ -175,7 +178,21 @@ class OrganizationLifecycleWorker:
                     if not advance(connection, row, intent, self.facade, at):
                         self._stage_email(connection, identifier, at)
                         return
-                completion = self.facade.apply(intent)
+                if any(item.removes_identity for item in intent.associations):
+                    # An attempted identity write stays uncertain until independent readback passes.
+                    connection.execute(
+                        update(operation)
+                        .where(
+                            operation.c.id == identifier, operation.c.workspace_id == self.workspace
+                        )
+                        .values(effect_knowledge="unknown")
+                    )
+                try:
+                    completion = self.facade.apply(intent)
+                except LifecycleBlocked:
+                    raise
+                except Exception:
+                    raise LifecycleBlocked("LIFECYCLE_UNAVAILABLE") from None
                 self._publish(connection, state, intent, completion, identifier, at)
                 code, status = "SIMULATED_LIFECYCLE_VERIFIED", "succeeded"
             except LifecycleBlocked as failure:
@@ -356,6 +373,13 @@ class OrganizationLifecycleWorker:
                 or frozen.actor.key != row["initiating_actor_subject"]
             ):
                 raise ValueError("INVALID_ORGANIZATION_INTENT_SCOPE")
+            if any(item.removes_identity for item in frozen.intent.associations):
+                # A rolled-back publish cannot prove that an external identity write did not occur.
+                connection.execute(
+                    update(operation)
+                    .where(operation.c.id == identifier, operation.c.workspace_id == self.workspace)
+                    .values(effect_knowledge="unknown")
+                )
             self._finish(
                 connection,
                 row,
@@ -445,8 +469,8 @@ class OrganizationLifecycleWorker:
                 or len(state.associations(tenant=row["id"])) != 1
             ):
                 raise LifecycleBlocked("TARGET_CHANGED")
-            if item.action == "remove" and (
-                item.role != "member"
+            if item.removes_identity and (
+                (item.action == "remove" and item.role != "member")
                 or not item.user_ocid
                 or any(
                     other["id"] != item.id and other["user_ocid"] == item.user_ocid
@@ -456,6 +480,20 @@ class OrganizationLifecycleWorker:
                 # An inconsistent reused identity must not remove another member's access.
                 raise LifecycleBlocked("TARGET_CHANGED")
             if item.action == "transfer":
+                if item.former_owner_disposition == "keep_member" and row["kind"] != "shared":
+                    raise LifecycleBlocked("TARGET_CHANGED")
+                recipient_links = state.associations(
+                    person=item.recipient_person_id, tenant=item.tenancy_id
+                )
+                recipient_link = next(iter(recipient_links), None)
+                if item.recipient_user_ocid is not None and (
+                    recipient_link is None
+                    or recipient_link["user_ocid"] != item.recipient_user_ocid
+                    or recipient_link["compartment_ocid"] != item.recipient_compartment_ocid
+                    or recipient_link["parent_compartment_ocid"]
+                    != item.recipient_parent_compartment_ocid
+                ):
+                    raise LifecycleBlocked("TARGET_CHANGED")
                 recipient = state.people.get(item.recipient_person_id)
                 recipient_control = state.controls.get(item.recipient_person_id)
                 if (
@@ -570,6 +608,11 @@ class OrganizationLifecycleWorker:
             link = next(a for a in state.links if a["id"] == item.id)
             if item.action == "transfer":
                 binding = bindings[item.new_association_id]
+                if (
+                    item.recipient_user_ocid is not None
+                    and binding.user_ocid != item.recipient_user_ocid
+                ) or binding.user_ocid == item.user_ocid:
+                    raise LifecycleBlocked("TARGET_CHANGED")
                 for recipient_link in state.associations(
                     person=item.recipient_person_id, tenant=item.tenancy_id
                 ):
@@ -593,9 +636,15 @@ class OrganizationLifecycleWorker:
                         tenancy_membership.c.id == item.id,
                     )
                     .values(
-                        status="removed",
+                        status="active"
+                        if item.former_owner_disposition == "keep_member"
+                        else "removed",
+                        role="member"
+                        if item.former_owner_disposition == "keep_member"
+                        else "owner",
                         operation_id=None,
-                        cleanup_required=bool(item.compartment_ocid),
+                        cleanup_required=item.former_owner_disposition == "remove"
+                        or (item.former_owner_disposition is None and bool(item.compartment_ocid)),
                         updated_at=at,
                         revision=link["revision"] + 1,
                     )
@@ -626,7 +675,7 @@ class OrganizationLifecycleWorker:
                     .values(
                         status="removed",
                         operation_id=None,
-                        cleanup_required=item.action == "remove" and bool(item.compartment_ocid),
+                        cleanup_required=item.action == "remove",
                         updated_at=at,
                         revision=link["revision"] + 1,
                     )

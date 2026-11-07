@@ -303,21 +303,21 @@ Exact org applied/proposed heads, trusted configuration and registry fence from 
 
 One selected existing obligation/action and explicit transfer recipient.
 
-`association_id`, `action`, `recipient_person_id`.
+`association_id`, `action`, `recipient_person_id`, `former_owner_disposition` (four fields).
 
 ### OrganizationAction
 
 Request identity + exact context/person/review/tenancy/operation IDs; bounded new/import/shared-compartment inputs; complete association plan and explicit warnings. No actor/workspace/SDK fields.
 
-`client_request_key`, `context`, `action`, `person_id`, `review_id`, `tenancy_id`, `operation_id`, `name`, `tenancy_kind`, `home_region`, `import_ocid`, `parent_compartment_ocid`, `compartment_name`, `existing_compartment_ocid`, `recipient_person_id`, `partner_person_id`, `plan`, `confirm_destructive`, `confirm_no_associations`, `confirm_manager`, `confirm_shared`.
+`client_request_key`, `context`, `action`, `person_id`, `review_id`, `tenancy_id`, `operation_id`, `name`, `tenancy_kind`, `home_region`, `import_ocid`, `parent_compartment_ocid`, `compartment_name`, `existing_compartment_ocid`, `recipient_person_id`, `former_owner_disposition`, `partner_person_id`, `plan`, `confirm_destructive`, `confirm_no_associations`, `confirm_manager`, `confirm_shared`.
 
-OrganizationAction has 21 fields. confirm_destructive defaults false and is omitted when false to preserve historical hashes; new admissions for the five destructive actions require true. It is an acknowledgment, not a provider privilege or new stored column.
+OrganizationAction has 22 fields. confirm_destructive defaults false and is omitted when false to preserve historical hashes; new destructive admissions require true, except standalone transfer_owner with validated keep_member. Transfer/remove and all offboard/delete/member-remove/merge actions retain destructive consent. It is an acknowledgment, not a provider privilege or new stored column.
 
 ### FrozenAssociation
 
 Server-captured registered target/role/revision, personal user/compartment and transfer bindings; immutable intent, not browser authority.
 
-`person_id`, `person_was_manager`, `id`, `tenancy_id`, `tenancy_revision`, `role`, `action`, `tenancy_ocid`, `parent_tenancy_ocid`, `recipient_person_id`, `new_association_id`, `recipient_user_ocid`, `recipient_compartment_ocid`, `recipient_compartment_name`, `recipient_parent_compartment_ocid`, `user_ocid`, `compartment_ocid`.
+`person_id`, `person_was_manager`, `id`, `tenancy_id`, `tenancy_revision`, `role`, `action`, `former_owner_disposition`, `tenancy_ocid`, `parent_tenancy_ocid`, `recipient_person_id`, `new_association_id`, `recipient_user_ocid`, `recipient_compartment_ocid`, `recipient_compartment_name`, `recipient_parent_compartment_ocid`, `user_ocid`, `compartment_ocid`.
 
 ### LifecycleTarget
 
@@ -399,7 +399,7 @@ Stable person identity with current version name/email or historical original-an
 
 Existing membership/tenancy fields, pending operation, cleanup context and server-calculated allowed choices.
 
-`id`, `person_id`, `tenancy_id`, `tenancy_name`, `tenancy_kind`, `tenancy_status`, `role`, `status`, `compartment_ocid`, `compartment_name`, `cleanup_required`, `operation_id`, `actions`.
+`id`, `person_id`, `tenancy_id`, `tenancy_name`, `tenancy_kind`, `tenancy_status`, `role`, `status`, `compartment_ocid`, `compartment_name`, `cleanup_required`, `user_ocid`, `operation_id`, `actions` (14 fields).
 
 ### TenancyView
 
@@ -851,7 +851,8 @@ The parallel preview remains unchanged; see the [final receipt](../history/emplo
 There is no table/column migration and no automatic infrastructure restoration.
 
 New POST /api/organization/actions admissions require confirm_destructive=true for exactly:
-offboard_person, delete_tenancy, remove_member, transfer_owner and merge. False is the default and
+offboard_person, delete_tenancy, remove_member, transfer_owner/remove and merge. The 7 November
+validated transfer_owner/keep_member path uses neutral confirmation instead. False is the default and
 is excluded from canonical serialization, preserving pre-consent request hashes. An authenticated
 exact committed replay returns its original receipt before the new consent guard; this does not
 permit a new unconfirmed operation or bypass current session/grant authority. Missing consent on a
@@ -907,3 +908,66 @@ tenancy** and this tenancy preselected. Choose create-under-parent or an existin
 then submit the normal asynchronous workflow. The chooser does not mutate employees or grant
 access. The server's fresh preview/admission guards remain authoritative. Individual/inactive
 tenancies do not expose this shortcut; known pending tenancy work disables it.
+
+## Explicit former-owner disposition — 7 November 2026
+
+Standalone transfer requires a new owner and an explicit former-owner choice; no choice is preselected.
+**Keep as a member** is shared-only, retains the same old association UUID and user/compartment IDs,
+and changes its role to member. Existing group memberships and permissions, including admin rights,
+remain unchanged. The replacement's existing bound identity is reused when present. This is a neutral
+accountability confirmation; it does not require destructive consent. Shared-impact confirmation
+still applies. An eligible replacement without an existing membership follows normal replacement
+identity establishment; retaining the former owner does not remove or reconfigure their identity.
+
+**Remove from tenancy** is available for shared and individual transfers. The existing queued transfer
+operation freezes exact owner/recipient/child/user bindings. Its provider establishes/verifies the
+replacement before removal; group membership retirement and exact user deletion require independent
+matching readback before registry publication. Existing operation steps remove_member_groups and
+delete_member_user expose the effects as Remove user group memberships and Delete tenancy user.
+There is no second coordinator or child-operation table. A completed removal retires the old link
+and keeps manual cleanup flagged even when compartment scope is not recorded.
+
+New removal admissions require confirm_destructive=true; offboard/delete/member-remove/merge
+requirements remain intact. Keep exemption is derived only from transfer_owner plus validated
+keep_member. Offboarding remains destructive; per-transfer choices default to remove at new admission
+and may retain a member only in a shared tenancy. An absent employee with a retained association
+remains outside and tracked; complete removal can finish explicit offboarding. Standalone transfer
+never removes an employee from the directory. Source-present last-association removal can produce
+a new onboarding episode; no terminated access is automatically recreated.
+
+Missing/reused personal identities, protected canonical automation/recovery bindings and changed
+recipient IDs are blocked before writes. Failed or uncertain removal retains pending obligations;
+attempted identity writes stay effect_knowledge=unknown until verified. The simulator qualifies only
+local behavior, not actual OCI permissions or deletion ordering. Real-provider qualification remains
+in the manual manifest. Every OCI operation remains behind the lifecycle facade.
+
+### Compatibility and storage
+
+OrganizationAction.former_owner_disposition, AssociationChoice.former_owner_disposition and
+FrozenAssociation.former_owner_disposition are optional keep_member/remove values with omitted-None
+serialization. Historical request/intent bytes and exact authenticated replays remain compatible.
+Dispatch never turns an absent legacy frozen choice into removal: accepted legacy transfers retain
+their original mapping behavior. Only new offboard admissions apply their remove default.
+
+AssociationView.user_ocid is a read-only projection of the existing membership column, displayed
+outside optional help for exact removal review. UI clients never supply a user OCID as authority.
+Existing role/status/revision, user/compartment IDs, cleanup_required, immutable intent/outcome
+evidence and removal-step records support this flow. The worker's scoped membership UPDATE grant
+adds role; no table/column/migration or broad privilege is added.
+
+FORMER_OWNER_DISPOSITION_REQUIRED, RETAIN_MEMBER_REQUIRES_SHARED_TENANCY and
+EXACT_PERSONAL_IDENTITY_REQUIRED are bounded admission errors. Old absent fields are replayable but
+do not authorize new unreviewed transfers. Choice, target, recipient, plan and preview changes reset
+shared and destructive acknowledgments in the UI, with independent server admission checks.
+
+### Manual cleanup responsibilities
+
+An expandable default-closed panel lists review of the person's resources in assigned/shared
+compartments, preservation/transfer of needed work, manual deletion of an empty dedicated compartment
+only, and review/removal/transfer of additional manually created accounts and credentials. Preserve
+other members' resources and shared/system/service/recovery identities. OTM removes only the recorded
+personal identity/groups and neither deletes these other objects nor verifies manual cleanup.
+
+Critical consequences, the exact recorded identity and checkbox remain visible outside help.
+After removal, tenancy details retain the affected person's name and known compartment or explicit
+Scope not recorded, plus the same instructions. The guide applies to individual owner removal too.
