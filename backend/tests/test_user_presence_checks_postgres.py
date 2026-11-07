@@ -396,3 +396,100 @@ def test_inventory_summary_parity_and_fixed_reads(presence_case, pg_engine, tmp_
             assert summaries(c.service, connection, "foreign", ()) == {}
     finally:
         event.remove(c.engine, "before_cursor_execute", queried)
+
+
+# Real membership work preserves saved reads across service reconstruction and registry edits.
+def test_saved_reads_survive_shared_membership(workflow_case):
+    from test_baseline_pinning_postgres import publish
+    from test_financial_postgres import costs, request
+
+    c = workflow_case
+    publish(c)
+    people = {p.email: p for p in c.store.head(c.principal).people}
+    _, created = action(c, people["one@example.test"].id, "create_tenancy", tenancy_kind="shared")
+    complete_setup(c, created.operation_id)
+    child = c.workflow.onboarding(c.principal, created.operation_id).tenancy_id
+    service = PresenceChecks(
+        c.store,
+        policy=c.workflow.policy,
+        policy_loader=c.loader,
+        enqueuer=InspectionEnqueuer(workspace_queue(c.policy.workspace_id), task=PRESENCE_TASK),
+    )
+    reader = UserPresenceWorker(
+        c.engine,
+        c.policy.workspace_id,
+        c.clock,
+        c.loader,
+        c.workflow.policy,
+        simulated_presence_inspection,
+    )
+    c.workflow.presence_checks = service
+    financial, collector, facade = costs(c)
+    checked = service.start(c.principal, child, PresenceCheckRequest(client_request_key=uuid4()))
+    reader.run(checked.operation_id)
+    collected = financial.start(c.principal, request(child))
+    collector.run(collected.operation_ids[0])
+    before_users = c.workflow.required_users(c.principal, child)
+    before_cost = c.workflow.tenancy_detail(c.principal, child).tenancy.costs
+    assert before_cost.state == "current"
+    assert all(u.presence.state == "present" for u in before_users.users)
+    parent = c.workflow.tenancy_detail(c.principal, child).compartment_parents[0].ocid
+    _, joined = action(
+        c,
+        people["engineer@example.test"].id,
+        "join_shared",
+        tenancy_id=child,
+        parent_compartment_ocid=parent,
+        compartment_name="member",
+    )
+    c.worker.run(joined.operation_id)
+    after_users = c.workflow.required_users(c.principal, child)
+    after_cost = c.workflow.tenancy_detail(c.principal, child).tenancy.costs
+    assert [u.presence for u in after_users.users] == [u.presence for u in before_users.users]
+    assert after_cost == before_cost
+    inventory = c.workflow.tenancies(c.principal, TenancyQuery()).items[0]
+    assert inventory.costs == before_cost
+    assert inventory.required_users.state == "present"
+
+    # Projection compatibility ignores only registry revision, not billing identity or authority.
+    from otm.financial.context import source_context
+    from otm.financial.records import current_records
+
+    with c.engine.connect() as connection:
+        current = connection.execute(select(tenancy).where(tenancy.c.id == child)).mappings().one()
+        source = source_context(current, c.workflow.policy, financial.profile)
+        for field in (
+            "tenancy_id",
+            "tenancy_ocid",
+            "parent",
+            "organization",
+            "baseline_id",
+            "configuration_id",
+            "policy_revision",
+            "access_binding_id",
+            "budget_ocid",
+            "profile",
+        ):
+            changed = {
+                **source,
+                field: {**source["profile"], "retry_delays_seconds": [1]}
+                if field == "profile"
+                else "changed",
+            }
+            assert current_records(connection, c.policy.workspace_id, {child: changed}) == ({}, {})
+        assert current_records(connection, "foreign-workspace", {child: source}) == ({}, {})
+        # Reconstructed services cannot depend on in-memory caches or fetch the provider.
+        facade.read_managed_budget = Mock(
+            side_effect=AssertionError("Projection must not fetch provider")
+        )
+        costs(c, facade=facade)
+        c.workflow.presence_checks = PresenceChecks(
+            c.store,
+            policy=c.workflow.policy,
+            policy_loader=c.loader,
+            enqueuer=InspectionEnqueuer(workspace_queue(c.policy.workspace_id), task=PRESENCE_TASK),
+        )
+        assert c.workflow.tenancy_detail(c.principal, child).tenancy.costs == before_cost
+        assert [u.presence for u in c.workflow.required_users(c.principal, child).users] == [
+            u.presence for u in before_users.users
+        ]

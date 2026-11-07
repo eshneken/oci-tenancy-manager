@@ -60,8 +60,8 @@ class CostCollections:
         for row in rows:
             context = source_context(row, policy, self.profile)
             if context is not None:
-                sources[row["id"]] = canonical_hash(context)
-        observations, heads = current_records(connection, workspace, set(sources.values()))
+                sources[row["id"]] = context
+        observations, heads = current_records(connection, workspace, sources)
         now = self.store.clock()
         views = {}
         for row in rows:

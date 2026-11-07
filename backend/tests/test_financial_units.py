@@ -11,7 +11,7 @@ from test_configuration_drift import drift_case, update_case
 from test_financial_values import NOW, example
 
 from otm.configuration.rollout_contracts import ConfigurationOperationTarget
-from otm.financial.context import failure_source, target_source
+from otm.financial.context import failure_source, source_context, target_source
 from otm.financial.contracts import (
     CostIntent,
     CostPolicy,
@@ -155,7 +155,9 @@ def test_stored_integrity_and_query_selection(cost_case):
         Mock(mappings=Mock(return_value=Mock(all=Mock(return_value=[row])))),
     ]
     facts, heads = current_records(
-        c.connection, c.policy.workspace_id, {c.collection["source_hash"]}
+        c.connection,
+        c.policy.workspace_id,
+        {c.row["id"]: source_context(c.row, c.policy, c.profile)},
     )
     assert facts[row["tenancy_id"]][1] == snapshot and heads[row["tenancy_id"]] == c.collection
 

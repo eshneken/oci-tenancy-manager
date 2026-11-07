@@ -1199,3 +1199,16 @@ Unit tests cover guards/serialization/readback/UI branches; disposable PostgreSQ
 publication/replay/failure; HTTPS Playwright exercises both keep directions, existing identity
 preservation and explicit removal through real application roles and the native worker. Required
 unit-only 95% per-tier gates and the approved integration timeout are unchanged.
+
+
+## Persisted read compatibility regression — 7 November 2026
+
+Membership-only registry revisions must preserve stored costs and exact required-user results,
+including original timestamps, across detail/list navigation, browser reloads and reconstructed
+services. Unit tests distinguish harmless name/revision edits from changed domain/user/SCIM/binding
+generation/connection/policy facts. Disposable PostgreSQL exercises a real shared-member join,
+unchanged list/detail observations and rejection of foreign scope or changed billing identities,
+configuration lineage, authority and full profile arrays. Native Playwright refreshes both sources
+once, navigates/reloads, adds/removes a member and verifies list/detail facts with zero additional
+acquisition POSTs. Existing delayed-publication, unavailable/pending, corruption and age tests must
+continue passing: read compatibility does not relax execution revision fences or evidence validation.

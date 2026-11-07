@@ -45,8 +45,11 @@ Before acquisition and again before publication, the worker verifies the initiat
 active grant and exact authorization revision/actor, current child lifecycle/revision and absence of
 conflicting lifecycle work, canonical identities/generations/domain, active connection/revision and
 unchanged unpaused provider policy. A changed context yields superseded evidence containing only
-Unknown observations; it cannot certify current presence. The reader also requires the stored
-context hash to match its freshly resolved context before presenting per-user results.
+Unknown observations; it cannot certify current presence. The reader also requires the original
+stored hash and exact current identity/connection context before presenting per-user results.
+Read-only compatibility excludes only the tenancy display name and registry revision; execution
+checks still require the full captured snapshot. Membership changes cannot erase an otherwise
+compatible dated result.
 
 The local adapter authenticates the producer's immutable onboarding capture hash, scope and typed
 verified outcome, then restores independent domain/user fixtures from those retained producer facts.
@@ -164,3 +167,16 @@ immutable-evidence decoding and per-user age logic. Its four-field RequiredUsers
 additive TenancyView.required_users field are read projections, not new check columns or operations.
 Active page IDs bound four additional workspace-scoped queries. Fresh confirmed Missing with its own date/check reference takes precedence; other unsupported positive labels are unavailable before stale/unknown/two-present/default evaluation. DTO and frontend guards prevent coarse label-only positives. Configured corrupt canonical records become an unavailable summary/closed detail 503; genuinely unconfigured or validly changed contexts remain Not checked. Stale facts cannot stay green, and pending checks retain dated results. No Refresh user data
 admission/execution behavior, table, daily schedule, email or live OCI adapter changes. Local qualification and the main-preview update for this follow-up pass; the parallel preview is unchanged. [Final summary receipt](../history/required-users-summary-checkpoint-2026-11-06.md). The completed pipeline receipt above retains its original scope.
+
+
+## Retained results after membership changes — 7 November 2026
+
+Results are durable database observations, not browser-session state. Navigation and page reloads
+read the latest sealed check; they never invoke the provider. Adding/removing a member or changing
+ownership updates registry revisions without discarding observations for unchanged required users.
+Read compatibility ignores only `PresenceSnapshot.tenancy_name` and `tenancy_revision`. Exact
+workspace/child/parent/organization, user/domain/SCIM bindings and generations, connection ID/revision
+and policy hash still match. The original stored context/hash and audit evidence remain immutable
+and validated; admission and worker publication retain full revision fences. Inactive/unbound/busy
+contexts remain unavailable to this projection. Original capture timestamps determine staleness;
+viewing a page cannot renew them. A newer unavailable result never borrows an older positive result.

@@ -3,6 +3,31 @@ import {resolve} from "node:path";
 
 // Exercise existing-compartment assignment and explicit identity retirement through real UI/API/jobs.
 export async function existingCompartmentMembership(page:Page,sharedName:string){
+ await page.getByRole("link",{name:"Tenancies",exact:true}).click();
+ await page.getByRole("link",{name:sharedName,exact:true}).click();
+ const childPath=new URL(page.url()).pathname;
+ const users=page.getByRole("region",{name:"Required users",exact:true});
+ const userResponse=page.waitForResponse(response=>response.request().method()==="POST"&&response.url().endsWith("/required-users/check"));
+ await users.getByRole("button",{name:"Refresh user data",exact:true}).click();
+ const userCheck=(await(await userResponse).json()).operation_id;
+ await expect(users.getByRole("link",{name:"View check",exact:true}).first()).toHaveAttribute("href","/operations/"+userCheck,{timeout:20000});
+ await expect(users.getByText("Present",{exact:true})).toHaveCount(2,{timeout:20000});
+ const costResponse=page.waitForResponse(response=>response.request().method()==="POST"&&response.url().endsWith("/api/costs/refresh"));
+ await page.getByRole("button",{name:"Refresh costs",exact:true}).click();
+ const costCheck=(await(await costResponse).json()).operation_ids[0];
+ await expect.poll(async()=>{const facts=await savedReadFacts(page,childPath);return facts.costs.operation_id===costCheck&&!facts.costs.pending;}).toBe(true);
+ await expect(page.getByRole("region",{name:"Current month costs",exact:true}).getByLabel(/actual: \$/)).toBeVisible({timeout:20000});
+ const saved=await savedReadFacts(page,childPath);
+ expect(saved.costs.retrieved_at).toBeTruthy();
+ const acquisitions:string[]=[];
+ const trackReads=(request:import("@playwright/test").Request)=>{
+  if(request.method()==="POST"&&(request.url().endsWith("/required-users/check")||request.url().endsWith("/api/costs/refresh")))acquisitions.push(request.url());
+ };
+ page.on("request",trackReads);
+ // Both a full browser reload and normal navigation must use persisted facts, never provider POSTs.
+ await page.reload();
+ await expect(users.getByText("Present",{exact:true})).toHaveCount(2);
+ expect(await savedReadFacts(page,childPath)).toEqual(saved);
  await page.getByRole("link",{name:"Organization",exact:true}).click();
  await page.getByRole("button",{name:"Leader Two",exact:true}).click();
  const modal=page.getByRole("dialog");
@@ -29,6 +54,7 @@ export async function existingCompartmentMembership(page:Page,sharedName:string)
  expect(command.parent_compartment_ocid).toBeUndefined();expect(command.compartment_name).toBeUndefined();
  await modal.getByRole("link",{name:"View operation",exact:true}).click();
  await expect(page.getByText("Succeeded",{exact:true})).toBeVisible({timeout:20000});
+ expect(await savedReadFacts(page,childPath)).toEqual(saved);
  await page.getByRole("link",{name:"Organization",exact:true}).click();
  const workflowResponse=page.waitForResponse(response=>response.url().includes("/workflow")&&response.request().method()==="GET");
  await page.getByRole("button",{name:"Leader Two",exact:true}).click();
@@ -59,6 +85,7 @@ export async function existingCompartmentMembership(page:Page,sharedName:string)
  await modal.getByRole("button",{name:"Remove shared member",exact:true}).click();
  await modal.getByRole("link",{name:"View operation",exact:true}).click();
  await expect(page.getByText("Succeeded",{exact:true})).toBeVisible({timeout:20000});
+ expect(await savedReadFacts(page,childPath)).toEqual(saved);
  await expect(page.getByRole("heading",{name:"Remove user group memberships",exact:true})).toBeVisible();
  await expect(page.getByRole("heading",{name:"Delete tenancy user",exact:true})).toBeVisible();
  await capture(page,"shared-user-removal-evidence");
@@ -71,8 +98,22 @@ export async function existingCompartmentMembership(page:Page,sharedName:string)
  await page.getByRole("link",{name:sharedName,exact:true}).click();
  await expect(page.getByRole("region",{name:"Overrides",exact:true})).toBeVisible();
  await expect(page.getByRole("button",{name:"Manage owner & associations",exact:true})).toHaveCount(0);
+ await expect(users.getByText("Present",{exact:true})).toHaveCount(2);
+ await expect(page.getByRole("region",{name:"Current month costs",exact:true}).getByLabel(/actual: \$/)).toBeVisible();
+ expect(await savedReadFacts(page,childPath)).toEqual(saved);
+ await page.reload();
+ await expect(users.getByText("Present",{exact:true})).toHaveCount(2);
+ expect(await savedReadFacts(page,childPath)).toEqual(saved);
+ expect(acquisitions).toEqual([]);
+
  await capture(page,"tenancy-override-section");
  await page.getByRole("link",{name:"Tenancies",exact:true}).click();
+ const retained=page.getByRole("row").filter({has:page.getByRole("link",{name:sharedName,exact:true})});
+ await expect(retained.getByRole("link",{name:`Users: 2/2 present for ${sharedName}`})).toBeVisible();
+ await expect(retained.getByLabel(/actual: \$/)).toBeVisible();
+ await expect(retained.getByLabel(/budget: \$/)).toBeVisible();
+ await expect(retained.getByLabel(/forecast: \$/)).toBeVisible();
+ expect(acquisitions).toEqual([]);page.off("request",trackReads);
 }
 
 // Capture synthetic responsive screens while keeping overflow inside tables/native dialogs.
@@ -99,4 +140,14 @@ async function capture(page:Page,name:string){
   }
  }
  await page.setViewportSize({width:1280,height:900});
+}
+
+// Compare durable values and original observation times through ordinary authenticated read endpoints.
+async function savedReadFacts(page:Page,path:string){
+ return page.evaluate(async childPath=>{
+  const [detail,required]=await Promise.all([fetch("/api"+childPath),fetch("/api"+childPath+"/required-users")]);
+  if(!detail.ok||!required.ok)throw new Error("Stored reads unavailable");
+  const tenancy=(await detail.json()).tenancy;
+  return {costs:tenancy.costs,users:(await required.json()).users.map((user:{presence:unknown})=>user.presence)};
+ },path);
 }

@@ -465,7 +465,7 @@ def test_projection_and_availability(mode):
     assert bool(view.pending_operation_id) == (mode == "pending")
     expected = (
         "present"
-        if mode in {"present", "stale", "paused"}
+        if mode in {"present", "stale", "paused", "changed"}
         else "unknown"
         if mode == "failed"
         else "not_checked"
@@ -703,3 +703,75 @@ def test_worker_lock_scope(mode):
     ):
         value = c.worker.locked(c.connection, c.row["id"])
     assert (value is None) == (mode != "valid")
+
+
+# Registry-only changes cannot erase sealed presence for the same connection and exact subjects.
+def test_saved_presence_survives_registry_metadata_changes():
+    from otm.tenancies.presence import presence_views
+
+    c = case()
+    changed = c.snapshot.model_copy(
+        update={"tenancy_revision": 42, "tenancy_name": "Renamed child"}
+    )
+    views = presence_views(
+        changed, c.check, {"data": c.payload, "data_hash": canonical_hash(c.payload)}, NOW
+    )
+    assert set(views) == {"automation", "recovery"}
+    assert all(view.state == "present" and view.checked_at == NOW for view in views.values())
+
+
+# Ignoring registry metadata never permits changed authority, connections or required identities.
+@pytest.mark.parametrize(
+    "field",
+    [
+        "tenancy_id",
+        "connection_id",
+        "connection_revision",
+        "policy_hash",
+        "subject_binding_id",
+        "binding_generation",
+        "identity_domain_binding_id",
+        "domain_ocid",
+        "scim_resource_id",
+        "provider_ocid",
+        "user_name",
+        "organization_id",
+        "parent_tenancy_ocid",
+        "tenancy_ocid",
+        "workspace_id",
+    ],
+)
+def test_saved_presence_still_requires_exact_current_subject(field):
+    from otm.tenancies.presence import presence_views
+
+    c = case()
+    if field in {"tenancy_id", "connection_id", "connection_revision", "policy_hash"}:
+        prior = getattr(c.snapshot, field)
+        changed = c.snapshot.model_copy(
+            update={
+                field: prior + 1
+                if isinstance(prior, int)
+                else "0" * 64
+                if field == "policy_hash"
+                else uuid4()
+            }
+        )
+    else:
+        subject = c.snapshot.subjects[0]
+        prior = getattr(subject, field)
+        value = (
+            prior + 1
+            if isinstance(prior, int)
+            else uuid4()
+            if not isinstance(prior, str)
+            else prior + "changed"
+        )
+        changed = c.snapshot.model_copy(
+            update={"subjects": (subject.model_copy(update={field: value}), c.snapshot.subjects[1])}
+        )
+    assert (
+        presence_views(
+            changed, c.check, {"data": c.payload, "data_hash": canonical_hash(c.payload)}, NOW
+        )
+        == {}
+    )

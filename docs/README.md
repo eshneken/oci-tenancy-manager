@@ -25,6 +25,7 @@ are not competing implementation instructions or proof of real OCI behavior.
 | Required quality/security conventions | [Testing](engineering-test-plan.md), [security](security-review-policy.md), [code documentation](code-documentation-policy.md), [UI review](ui-ux-review-policy.md) |
 | Visual and interaction authority | [UI baseline](../DESIGN.md), [screen authority](ui-screen-authority.md) |
 | Former-owner retention/removal qualification | [Current workflow](reference/organization-workflows.md), [dated receipt](history/ownership-disposition-checkpoint-2026-11-07.md) |
+| Saved costs and user results | [Read compatibility and persistence](reference/README.md), [qualified fix](history/persisted-read-compatibility-checkpoint-2026-11-07.md) — membership changes retain compatible dated database observations |
 | Prior checkpoints | [Dated history](history/README.md) |
 
 ## Source of truth

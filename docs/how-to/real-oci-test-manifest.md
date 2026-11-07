@@ -93,6 +93,16 @@ implemented scheduler identity. No scheduled deployment or lifecycle email is cl
 | --- | --- | --- |
 | Shared summary/detail truth | After a real adapter is qualified, compare each inventory summary with the exact child's account observations and UTC times. Confirm fresh absence, stale/unknown facts and context changes never become a false positive; pending context stays dated. Navigation/GET must not acquire provider facts or imply privilege checks. Current source uses simulation only. | Pending |
 
+## Pending: persisted cost and required-user read compatibility
+
+On a disposable real child, refresh costs and both required-user observations once. Record the
+original retrieval/check times. Add and remove a shared member, navigate through Operations,
+return to Tenancies/detail and reload the browser. Unchanged Budget and required-user identities
+must retain the same dated facts without an additional provider acquisition. Then change a
+qualified Budget/configuration or required-user/connection binding and verify old incompatible
+facts cannot appear current. Existing unit, PostgreSQL and native-browser simulation regressions
+cover the application path; actual OCI identities, permissions and calculation delays remain Pending.
+
 ## Pending: explicit owner retention and identity removal
 
 Prerequisites: qualified real lifecycle facade, controlled disposable child/identity domain and

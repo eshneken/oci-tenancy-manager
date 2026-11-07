@@ -3,7 +3,7 @@
 import json
 from decimal import Decimal
 
-from sqlalchemy import and_, select
+from sqlalchemy import and_, or_, select
 
 from otm.financial.context import failure_source, target_source
 from otm.financial.contracts import CostSnapshot, CostTarget
@@ -57,6 +57,35 @@ def decode_snapshot(row):
     return snapshot
 
 
+# Match the billing subject; registry revision fences execution rather than data identity.
+# Original hashes still validate. Baseline/configuration, authority and full profile stay exact.
+def compatible_sources(table, sources):
+    return or_(
+        *(
+            and_(
+                table.c.tenancy_id == identifier,
+                table.c.context["profile"] == context["profile"],
+                table.c.context.contains(
+                    {
+                        "configuration": {
+                            "tenancy_id": context["tenancy_id"],
+                            "tenancy_ocid": context["tenancy_ocid"],
+                            "parent_tenancy_ocid": context["parent"],
+                            "organization_id": context["organization"],
+                            "baseline_id": context["baseline_id"],
+                            "configuration_id": context["configuration_id"],
+                            "policy_revision": context["policy_revision"],
+                        },
+                        "source_access_binding_id": context["access_binding_id"],
+                        "budget_ocid": context["budget_ocid"],
+                    }
+                ),
+            )
+            for identifier, context in sources.items()
+        )
+    )
+
+
 # Select in SQL before pagination, using current source keys and at most one coherent fact per
 # child.
 def current_records(connection, workspace, sources):
@@ -77,7 +106,8 @@ def current_records(connection, workspace, sources):
         select(history.c.safe_code)
         .where(
             history.c.workspace_id == financial_collection.c.workspace_id,
-            history.c.source_hash == financial_collection.c.source_hash,
+            history.c.tenancy_id == financial_collection.c.tenancy_id,
+            compatible_sources(history, sources),
             (
                 history.c.safe_code.in_(
                     ("COST_READ_UNAVAILABLE", "COST_RETRIES_EXHAUSTED", "COST_SOURCE_UNQUALIFIED")
@@ -95,12 +125,11 @@ def current_records(connection, workspace, sources):
             select(financial_collection, outcome.label("continuing_outcome"))
             .where(
                 financial_collection.c.workspace_id == workspace,
-                financial_collection.c.source_hash.in_(sources),
+                compatible_sources(financial_collection, sources),
             )
-            .distinct(financial_collection.c.tenancy_id, financial_collection.c.source_hash)
+            .distinct(financial_collection.c.tenancy_id)
             .order_by(
                 financial_collection.c.tenancy_id,
-                financial_collection.c.source_hash,
                 financial_collection.c.created_at.desc(),
                 financial_collection.c.id.desc(),
             )
@@ -122,16 +151,13 @@ def current_records(connection, workspace, sources):
         )
         .where(
             financial_observation.c.workspace_id == workspace,
-            financial_observation.c.source_hash.in_(sources),
+            compatible_sources(financial_collection, sources),
         )
     )
     observations = (
         connection.execute(
-            query.distinct(
-                financial_observation.c.tenancy_id, financial_observation.c.source_hash
-            ).order_by(
+            query.distinct(financial_observation.c.tenancy_id).order_by(
                 financial_observation.c.tenancy_id,
-                financial_observation.c.source_hash,
                 (financial_observation.c.snapshot["source_state"].astext == "qualified").desc(),
                 financial_observation.c.time_spend_computed.desc().nulls_last(),
                 financial_observation.c.captured_at.desc(),

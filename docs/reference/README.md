@@ -54,3 +54,7 @@ Shared-tenancy [Add member](organization-workflows.md#add-a-member-from-a-shared
 Compact create/import help: [Collapsed OCI operator checklist](tenancy-onboarding.md#collapsed-oci-operator-checklist).
 
 Owner retention, verified identity removal and manual cleanup: [explicit former-owner disposition](organization-workflows.md#explicit-former-owner-disposition--7-november-2026).
+
+Stored costs and required-user observations survive unrelated membership changes; see the retained-result
+sections in [cost visibility](cost-visibility.md#retained-results-after-membership-changes--7-november-2026)
+and [presence checks](user-presence-checks.md#retained-results-after-membership-changes--7-november-2026).

@@ -1,5 +1,6 @@
 """Authenticated per-child check admission and read-only current-result projection."""
 
+import json
 from datetime import timedelta
 from uuid import uuid4
 
@@ -13,7 +14,7 @@ from otm.storage.tables import administrator, audit_event, operation, tenancy
 from otm.storage.tables import user_presence_check as checks
 from otm.tenancies.contracts import ActionReceipt
 from otm.tenancies.presence_context import capture_snapshot
-from otm.tenancies.presence_contracts import PresenceCheckIntent, UserPresenceView
+from otm.tenancies.presence_contracts import PresenceCheckIntent, PresenceSnapshot, UserPresenceView
 from otm.tenancies.presence_records import decode_intent, decode_result, operation_rows
 
 FRESH_FOR = timedelta(hours=24)
@@ -254,8 +255,13 @@ def presence_views(snapshot, latest, event, now):
     if latest is None:
         return {}
     evidence = decode_result(latest, event["data"], event["data_hash"])
-    digest = canonical_hash(snapshot.model_dump(mode="json")) if snapshot else None
-    if digest != latest["context_hash"]:
+    # Validate the original sealed context first; only harmless registry metadata is ignored here.
+    # Dispatch/publication still compare the complete snapshot, including its revision.
+    stored = PresenceSnapshot.model_validate_json(json.dumps(latest["context"]))
+    excluded = {"tenancy_revision", "tenancy_name"}
+    if snapshot is None or snapshot.model_dump(exclude=excluded) != stored.model_dump(
+        exclude=excluded
+    ):
         return {}
     return {
         result.target.purpose: UserPresenceView(

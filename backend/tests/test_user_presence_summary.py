@@ -112,7 +112,7 @@ def test_scoped_batch_projection(mode):
         else "stale"
         if mode == "stale"
         else "not_checked"
-        if mode in {"changed", "unbound", "provider", "empty"}
+        if mode in {"unbound", "provider", "empty"}
         else "present"
     )
     assert view.state == expected and view.checking == (mode == "pending")
