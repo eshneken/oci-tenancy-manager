@@ -9,7 +9,9 @@ not establish cloud existence or credentials. Retired record does not assert OCI
 connection and both exact bound users exist. It does not check administrative permissions, console
 access, MFA or recovery readiness. **Permissions: Not checked** remains on both cards. The banner
 explicitly identifies local simulated fixture data; Present must never be described as live OCI
-verification. No new primary menu, daily scheduler, repair, email or password action is added.
+verification. No new primary menu, daily scheduler, repair or password action is added. The
+[current confirmed-Missing alert extension](required-user-alerts.md) adds email; the original
+presence-only receipt below retains its earlier scope.
 Local qualification and the main-preview upgrade pass; the parallel test preview is unchanged. See the [final receipt](../history/manual-presence-checkpoint-2026-11-06.md).
 
 ## API and all 22 public display fields

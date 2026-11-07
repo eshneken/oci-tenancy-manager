@@ -182,6 +182,7 @@ class PresenceChecks:
                 authorization_revision=grant["authorization_revision"],
                 snapshot=snapshot,
                 context_hash=context_hash,
+                notice_policy_version=1,
                 target=ConfigurationOperationTarget(
                     tenancy_ocid=snapshot.subjects[0].tenancy_ocid,
                     display_name=snapshot.tenancy_name,

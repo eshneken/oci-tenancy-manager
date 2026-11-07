@@ -1,7 +1,10 @@
 # Local review: Required users and Refresh user data
 
 After this UI checkpoint is installed, use the deliberately upgraded main preview on port 8443 with its matching API, foreground worker and immutable frontend snapshot. The prior presence pipeline is locally qualified; reload the main page after the current UI checkpoint is installed. The parallel preview on port 8444 is unchanged and may not offer Refresh user data. Do not reset an existing organization or assume a development build updates either preview. These steps exercise simulated producer fixtures, not OCI.
-No real cloud user, permission probe, email or password disclosure is part of Refresh user data.
+No real cloud-user change, permission probe or password disclosure is part of Refresh user data.
+The [confirmed-Missing email extension](../reference/required-user-alerts.md) can stage notices for
+qualified Missing, using the configured local capture override. Normal producer fixtures are Present;
+Missing/routing/delivery is exercised by disposable automated tests, without product fault controls.
 
 ## 1. Inspect an older registered child
 

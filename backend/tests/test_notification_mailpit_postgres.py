@@ -222,9 +222,7 @@ def test_native_mailpit_delivery_and_https(runtime, mail_capture, monkeypatch):
         assert str(receipt.operation_id) in body["Text"]
     # A separate completed child exercises non-onboarding delivery through the real native worker.
     # Failure is injected only at this disposable fixture's facade, never through a product control.
-    candidate = next(
-        p for p in store.head(c.principal).people if p.email == "two@example.test"
-    )
+    candidate = next(p for p in store.head(c.principal).people if p.email == "two@example.test")
     _, second = action(prepared, candidate.id, "create_tenancy")
     complete_setup(prepared, second.operation_id)
     setup = workflow.onboarding(c.principal, second.operation_id)
@@ -268,6 +266,55 @@ def test_native_mailpit_delivery_and_https(runtime, mail_capture, monkeypatch):
         ]
         assert any(str(deletion.operation_id) in m["Text"] for m in matching)
         assert all(m["To"] == [{"Name": "", "Address": "capture@otm.test"}] for m in failures)
+    # A separate qualified child exercises confirmed-Missing mail through the same capture/worker.
+    from test_presence_alerts_postgres import missing_factory
+
+    from otm.storage.enqueue import PRESENCE_TASK
+    from otm.tenancies.presence import PresenceChecks
+    from otm.tenancies.presence_contracts import PresenceCheckRequest
+    from otm.tenancies.presence_worker import UserPresenceWorker
+
+    leader = next(p for p in store.head(c.principal).people if p.email == "one@example.test")
+    _, third = action(prepared, leader.id, "create_tenancy")
+    complete_setup(prepared, third.operation_id)
+    child = workflow.onboarding(c.principal, third.operation_id).tenancy_id
+    presence = PresenceChecks(
+        store,
+        policy=sandbox.policy,
+        policy_loader=loader,
+        enqueuer=InspectionEnqueuer(
+            workspace_queue(sandbox.policy.workspace_id), task=PRESENCE_TASK
+        ),
+    )
+    reader = UserPresenceWorker(
+        c.owner,
+        sandbox.policy.workspace_id,
+        clock,
+        loader,
+        sandbox.policy,
+        missing_factory("recovery"),
+        notifications=notifier,
+    )
+    checked = presence.start(c.principal, child, PresenceCheckRequest(client_request_key=uuid4()))
+    reader.run(checked.operation_id)
+    drain(c, monkeypatch)
+    with c.owner.connect() as connection:
+        notices = list(
+            connection.execute(
+                select(notification_outbox).where(
+                    notification_outbox.c.operation_id == checked.operation_id
+                )
+            ).mappings()
+        )
+        assert len(notices) >= 3 and all(n["state"] == "sent" for n in notices)
+        assert len({n["intent"]["original_recipient"] for n in notices}) == len(notices)
+    with httpx.Client(trust_env=False, timeout=3) as client:
+        messages = client.get(mail_capture.url + "/api/v1/messages").json()["messages"]
+        warnings = [m for m in messages if m["Subject"] == "Required tenancy user is missing"]
+        assert len(warnings) == len(notices)
+        assert all(m["To"] == [{"Name": "", "Address": "capture@otm.test"}] for m in warnings)
+        body = client.get(mail_capture.url + "/api/v1/message/" + warnings[0]["ID"]).json()["Text"]
+        assert str(child) + "#required-users" in body and "recovery user missing" in body
     run_browser_runtime(
         c,
         "e2e/email-delivery.spec.ts",
@@ -276,5 +323,7 @@ def test_native_mailpit_delivery_and_https(runtime, mail_capture, monkeypatch):
             "OTM_E2E_EMAIL_LIFECYCLE_OPERATION_ID": str(deletion.operation_id),
             "OTM_E2E_EMAIL_TEST_ADDRESS": "capture@otm.test",
             "OTM_E2E_EMAIL_EMPLOYEE_NAME": "Delegate",
+            "OTM_E2E_EMAIL_PRESENCE_OPERATION_ID": str(checked.operation_id),
+            "OTM_E2E_EMAIL_PRESENCE_TENANCY_ID": str(child),
         },
     )

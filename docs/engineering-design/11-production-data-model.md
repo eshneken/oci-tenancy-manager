@@ -2113,3 +2113,14 @@ No new ownership/access profile table is needed. Existing canonical managed-user
 automation/recovery identities from removal. The worker gets UPDATE(role) on memberships alongside
 its existing column grants; membership/person/workspace identity and audit history remain protected.
 See the [current workflow contract](../reference/organization-workflows.md#explicit-former-owner-disposition--7-november-2026).
+
+
+## Required-user incident metadata and email — 7 November 2026
+
+The [field-complete implemented alert reference](../reference/required-user-alerts.md#fields-and-persistence)
+adds optional JSON fields to existing immutable check intent/evidence and one typed notification
+family. There is no physical schema change. Two ordered per-subject episode entries travel in sealed
+outcome audit JSON/verified step evidence; the check table's results remain provider observations.
+Frozen role-person/admin-grant references, routing revision and original/effective contacts live in
+existing outbox intent JSON. New summary fields are derived read-only UI metadata. Existing ER table
+relationships remain unchanged; application validators bind typed nested fields to stored scope/hash.

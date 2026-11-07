@@ -42,3 +42,5 @@ Private original feeds, raw evidence, screenshots and machine-specific paths are
 - [Explicit former-owner disposition: full qualification and preserved main preview](ownership-disposition-checkpoint-2026-11-07.md)
 
 - [Persisted costs/users across membership changes: qualified fix and preserved preview](persisted-read-compatibility-checkpoint-2026-11-07.md)
+
+- [Confirmed missing required-user notices: full local qualification and preserved preview](required-user-alerts-checkpoint-2026-11-07.md)

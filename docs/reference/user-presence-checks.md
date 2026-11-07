@@ -6,7 +6,9 @@ Tenancies → a registered child → **Required users** now supports **Refresh u
 both exact bound subjects independently through an explicitly selected simulator. Present means
 existence in that simulator's qualified fixture, not live OCI existence, usable signing credentials,
 administrative privileges, console access, MFA or recovery readiness. **Permissions: Not checked**
-remains visible on both cards. No daily scheduler, email, repair or password action is added.
+remains visible on both cards. The original presence-only checkpoint added no email. The
+[new confirmed-Missing alert slice](required-user-alerts.md) adds scoped notices; daily scheduling,
+repair and password actions remain deferred.
 
 ## API, admission and replay
 
@@ -111,8 +113,8 @@ The public schema inventory is now 75 exported snapshots. Complete Python valida
 | --- | --- |
 | PresenceCheckRequest (1) | client_request_key: caller's UUID for one logical submission/retry; no other input accepted. |
 | PresenceSnapshot (7) | tenancy_id/name/revision from registry; connection_id/revision from selected active connection; policy_hash from canonical trusted provider policy; subjects: exactly two RequiredUserTarget values from canonical bindings, automation then recovery, same child/domain and distinct subject/SCIM identities. |
-| PresenceCheckIntent (8) | contract_version=user-presence-check-1; kind=required_user_check; workspace_id and administrator_id/authorization_revision from authenticated current grant; snapshot; context_hash; target: existing ConfigurationOperationTarget carrying the exact child OCID and display label. Immutable operation_intent stores it with the initiating actor. |
-| PresenceCheckEvidence (9) | contract_version; tenancy_id; operation_id; context_hash; state=complete/unavailable/superseded; safe_code=USER_PRESENCE_CHECK_COMPLETE/USER_PRESENCE_UNAVAILABLE/USER_PRESENCE_SUPERSEDED respectively; started_at; checked_at; results: two provider observations tied to the admitted attempt/scope and capture window. |
+| PresenceCheckIntent (9) | contract_version=user-presence-check-1; kind=required_user_check; workspace_id and administrator_id/authorization_revision from authenticated current grant; snapshot; context_hash; target: existing ConfigurationOperationTarget carrying the exact child OCID and display label. Immutable operation_intent stores it with the initiating actor. |
+| PresenceCheckEvidence (10) | contract_version; tenancy_id; operation_id; context_hash; state=complete/unavailable/superseded; safe_code=USER_PRESENCE_CHECK_COMPLETE/USER_PRESENCE_UNAVAILABLE/USER_PRESENCE_SUPERSEDED respectively; started_at; checked_at; results: two provider observations tied to the admitted attempt/scope and capture window. |
 | UserPresenceView (4) | state=not_checked/present/missing/unknown; checked_at from that subject's captured_at, nullable when no current matching result; stale from server UTC age/window test; operation_id for the exact retained check, nullable when not checked. Defaults are not_checked/null/false/null. |
 
 The existing RequiredUserTarget (13), RequiredUserReadContext (8), InspectRequiredUser (3),
@@ -144,7 +146,9 @@ uses that key; navigation/reload may discard this local memory, so inspect pendi
 Server-side committed replay remains durable when a known key is reused.
 
 Both complete unit/coverage gates and all 351 PostgreSQL/native-worker/HTTPS-browser cases pass. The main preview is upgraded with all 28 preexisting public tables preserved; the parallel test preview remains unchanged. No live OCI result is claimed. Daily scheduling is deferred to staging/Kubernetes with a separately qualified machine
-admission/authorization path. No email or identity repair is included. All real-provider cases remain
+admission/authorization path. Those counts describe the original presence-only checkpoint;
+[current confirmed-Missing email](required-user-alerts.md) is a separate implemented extension.
+Identity repair remains deferred. All real-provider cases remain
 Pending in the [manual manifest](../how-to/real-oci-test-manifest.md); the
 [runbook](../how-to/required-users-runbook.md) provides the intended local simulated review steps.
 
@@ -180,3 +184,8 @@ and policy hash still match. The original stored context/hash and audit evidence
 and validated; admission and worker publication retain full revision fences. Inactive/unbound/busy
 contexts remain unavailable to this projection. Original capture timestamps determine staleness;
 viewing a page cannot renew them. A newer unavailable result never borrows an older positive result.
+
+
+New alert-enabled checks now carry optional incident state and may stage confirmed-Missing notices;
+see the [complete alert contract](required-user-alerts.md). This supersedes earlier no-email scope
+only for qualified Missing notifications. Daily scheduling, privilege checks and repairs remain deferred.

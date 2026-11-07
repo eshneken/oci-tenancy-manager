@@ -102,6 +102,7 @@ def run_worker(*, once=False):
                     transport,
                     email_enqueuer,
                     application_origin=settings.local_server.public_origin,
+                    presence_context_loader=lambda: load_sandbox(path, policy.workspace_id),
                     cost_context_loader=lambda: (
                         load_sandbox(path, policy.workspace_id),
                         load_settings(Path(os.environ["OTM_APPLICATION_CONFIG"])).costs,
@@ -163,6 +164,7 @@ def run_worker(*, once=False):
                 organization_policy,
                 organization_policy().policy,
                 simulated_presence_inspection,
+                notifications=notifier,
             ),
             queue,
         )

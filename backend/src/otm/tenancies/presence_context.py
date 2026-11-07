@@ -103,3 +103,16 @@ def bound_snapshot(workspace, child, policy, current, rows):
         policy_hash=canonical_hash(policy.model_dump(mode="json")),
         subjects=tuple(subjects),
     )
+
+
+# One incident belongs to one exact subject and selected connection, not mutable registry metadata.
+def subject_scope(snapshot, purpose):
+    subject = next(s for s in snapshot.subjects if s.purpose == purpose)
+    return canonical_hash(
+        {
+            "subject": subject.model_dump(mode="json"),
+            "connection_id": str(snapshot.connection_id),
+            "connection_revision": snapshot.connection_revision,
+            "policy_hash": snapshot.policy_hash,
+        }
+    )

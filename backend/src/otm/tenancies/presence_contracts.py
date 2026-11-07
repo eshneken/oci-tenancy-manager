@@ -66,6 +66,10 @@ class PresenceCheckIntent(Contract):
     snapshot: PresenceSnapshot
     context_hash: Digest
     target: ConfigurationOperationTarget
+    # New admissions opt into required-user notices; omission preserves historical intent bytes.
+    notice_policy_version: Literal[1] | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
 
     # Display metadata cannot redirect a frozen scoped read.
     @model_validator(mode="after")
@@ -77,6 +81,13 @@ class PresenceCheckIntent(Contract):
         ):
             raise ValueError("PRESENCE_INTENT_SCOPE_INVALID")
         return self
+
+
+# Current incident state travels with existing sealed evidence rather than a second incident table.
+class PresenceNoticeEpisode(Contract):
+    purpose: Literal["automation", "recovery"]
+    scope_hash: Digest
+    episode_id: UUID | None
 
 
 # Each sealed result retains two independent scoped provider observations, never a health claim.
@@ -93,7 +104,14 @@ class PresenceCheckEvidence(Contract):
     checked_at: UtcInstant
     results: Annotated[tuple[RequiredUserObservation, ...], Field(min_length=2, max_length=2)]
 
-    # A successful read may establish Missing, but partial or superseded reads cannot certify facts.
+    # Ordered state is present only on new alert-enabled head publications; historical
+    # bytes stay stable.
+    notice_episodes: (
+        Annotated[tuple[PresenceNoticeEpisode, ...], Field(min_length=2, max_length=2)] | None
+    ) = Field(default=None, exclude_if=lambda value: value is None)
+
+    # Qualified per-user Missing remains valid alongside an Unknown peer. Incomplete or
+    # denied per-user evidence and superseded reads cannot certify presence or absence.
     @model_validator(mode="after")
     def coverage(self):
         expected = {
@@ -102,6 +120,17 @@ class PresenceCheckEvidence(Contract):
             "superseded": "USER_PRESENCE_SUPERSEDED",
         }[self.state]
         a, b = self.results
+        if self.notice_episodes is not None and tuple(e.purpose for e in self.notice_episodes) != (
+            "automation",
+            "recovery",
+        ):
+            raise ValueError("PRESENCE_EPISODES_INVALID")
+        if self.notice_episodes is not None and any(
+            (result.state == "present" and episode.episode_id is not None)
+            or (result.state == "missing" and episode.episode_id is None)
+            for result, episode in zip(self.results, self.notice_episodes, strict=True)
+        ):
+            raise ValueError("PRESENCE_EPISODES_INVALID")
         if (
             self.safe_code != expected
             or self.checked_at < self.started_at

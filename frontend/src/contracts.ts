@@ -95,12 +95,26 @@ export type PolicyHash1 = string;
 export type Redirected2 = boolean;
 export type Attempts = number;
 export type CreatedAt = string;
-export type Event = "action_required" | "terminal_failure" | "cost_read_failed";
+export type Event =
+  | "action_required"
+  | "terminal_failure"
+  | "cost_read_failed"
+  | "required_user_missing";
 export type Id = string;
 export type LastAttemptAt = string | null;
 export type OriginalRecipient = string | null;
 export type Recipient = string | null;
+export type RecipientRoles = (
+  "owner" | "manager" | "designee" | "administrator"
+)[];
 export type Redirected3 = boolean;
+export type RequiredUserPurpose = ("automation" | "recovery") | null;
+export type RoutingIssues = (
+  | "owner_unavailable"
+  | "manager_unavailable"
+  | "designee_unavailable"
+  | "administrator_unavailable"
+)[];
 export type SafeCode = string | null;
 export type State2 =
   | "pending"
@@ -885,12 +899,25 @@ export type EventsLimited = boolean;
 export type Attempts1 = number;
 export type CreatedAt6 = string;
 export type Event1 =
-  "action_required" | "terminal_failure" | "cost_read_failed";
+  | "action_required"
+  | "terminal_failure"
+  | "cost_read_failed"
+  | "required_user_missing";
 export type Id14 = string;
 export type LastAttemptAt1 = string | null;
 export type OriginalRecipient1 = string | null;
 export type Recipient1 = string | null;
+export type RecipientRoles1 = (
+  "owner" | "manager" | "designee" | "administrator"
+)[];
 export type Redirected4 = boolean;
+export type RequiredUserPurpose1 = ("automation" | "recovery") | null;
+export type RoutingIssues1 = (
+  | "owner_unavailable"
+  | "manager_unavailable"
+  | "designee_unavailable"
+  | "administrator_unavailable"
+)[];
 export type SafeCode4 = string | null;
 export type State18 =
   | "pending"
@@ -1201,7 +1228,10 @@ export interface NotificationSummary {
   last_attempt_at?: LastAttemptAt;
   original_recipient: OriginalRecipient;
   recipient: Recipient;
+  recipient_roles?: RecipientRoles;
   redirected: Redirected3;
+  required_user_purpose?: RequiredUserPurpose;
+  routing_issues?: RoutingIssues;
   safe_code?: SafeCode;
   state: State2;
   updated_at: UpdatedAt;
@@ -2055,7 +2085,10 @@ export interface NotificationSummary1 {
   last_attempt_at?: LastAttemptAt1;
   original_recipient: OriginalRecipient1;
   recipient: Recipient1;
+  recipient_roles?: RecipientRoles1;
   redirected: Redirected4;
+  required_user_purpose?: RequiredUserPurpose1;
+  routing_issues?: RoutingIssues1;
   safe_code?: SafeCode4;
   state: State18;
   updated_at: UpdatedAt2;

@@ -126,11 +126,19 @@ def decode_result(row, data, digest):
     ):
         raise ValueError("PRESENCE_EVIDENCE_INVALID")
     validate_result_scope(row, evidence.results)
+    if evidence.notice_episodes is not None:
+        from otm.tenancies.presence_context import subject_scope
+
+        snapshot = PresenceSnapshot.model_validate_json(json.dumps(row["context"]))
+        if any(
+            e.scope_hash != subject_scope(snapshot, e.purpose) for e in evidence.notice_episodes
+        ):
+            raise ValueError("PRESENCE_EPISODES_INVALID")
     return evidence
 
 
 # Seal results, audit and logical-step history atomically under the current attempt lock.
-def seal(connection, row, check, results, state, at):
+def seal(connection, row, check, results, state, at, *, notice_episodes=None):
     validate_result_scope(check, results)
     key = "required_users:" + str(check["tenancy_id"])
     code = {
@@ -147,6 +155,7 @@ def seal(connection, row, check, results, state, at):
         started_at=check["started_at"],
         checked_at=at,
         results=results,
+        notice_episodes=notice_episodes,
     )
     payload = evidence.model_dump(mode="json")
     event = uuid4()

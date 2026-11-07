@@ -26,8 +26,19 @@ READ_WINDOW = timedelta(seconds=30)
 # The explicit adapter factory consumes authenticated producer facts; no live/fake fallback exists.
 class UserPresenceWorker:
     # Deployment scope, policy, UTC and selected adapter are all host-owned dependencies.
-    def __init__(self, engine, workspace, clock, policy_loader, policy, inspection_factory):
+    def __init__(
+        self,
+        engine,
+        workspace,
+        clock,
+        policy_loader,
+        policy,
+        inspection_factory,
+        *,
+        notifications=None,
+    ):
         self.engine, self.workspace, self.clock = engine, workspace, clock
+        self.notifications = notifications
         self.policy_loader, self.policy, self.inspection_factory = (
             policy_loader,
             policy,
@@ -254,4 +265,24 @@ class UserPresenceWorker:
                 state = "unavailable"
             else:
                 state = "complete" if all(r.state != "unknown" for r in results) else "unavailable"
-            seal(connection, row, check, results, state, at)
+            episodes, opened = None, ()
+            if frozen.intent.notice_policy_version == 1:
+                from otm.tenancies.presence_alerts import advance_episodes
+
+                episodes, opened = advance_episodes(
+                    connection, row, check, frozen.intent.snapshot, results
+                )
+            seal(connection, row, check, results, state, at, notice_episodes=episodes)
+            if opened and self.notifications is not None:
+                from otm.tenancies.presence_alerts import stage_missing
+
+                stage_missing(
+                    self.notifications,
+                    connection,
+                    row,
+                    check,
+                    frozen.intent.snapshot,
+                    episodes,
+                    opened,
+                    at,
+                )

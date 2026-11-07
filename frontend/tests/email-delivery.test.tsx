@@ -94,3 +94,29 @@ it("polls pending mail on a terminal operation and stops after server acceptance
 it("reads deployment routing through the guarded same-origin HTTP adapter",async()=>{
  const fetch=vi.fn().mockResolvedValue(new Response(JSON.stringify({environment:"staging",redirected:true,effective_test_email:testEmail}),{status:200}));vi.stubGlobal("fetch",fetch);const controller=new AbortController();expect(await api.emailPolicy(controller.signal)).toMatchObject({redirected:true});expect(fetch).toHaveBeenCalledWith("/api/email-policy",expect.objectContaining({method:"GET",credentials:"same-origin",cache:"no-store",signal:controller.signal}));
 });
+
+it.each(["automation","recovery"] as const)("shows %s missing notices with frozen role and routing explanations",purpose=>{
+ render(<EmailNotifications notifications={[{...notice,event:"required_user_missing",required_user_purpose:purpose,recipient_roles:["owner","manager","designee","administrator"],routing_issues:["owner_unavailable","manager_unavailable","designee_unavailable","administrator_unavailable"]}]}/>);
+ expect(screen.getByRole("heading",{name:`${purpose==="automation"?"Automation":"Recovery"} user missing`})).toBeVisible();
+ expect(screen.getByText("Owner, Manager, Designee, Administrator")).toBeVisible();
+ expect(screen.getByText(/Review the recorded recipients and delivery status/)).toBeVisible();
+ expect(screen.getByText(/Owner contact unavailable/)).toBeVisible();
+ expect(screen.queryByText("Terminal operation failure")).toBeNull();
+ expect(screen.queryByRole("button")).toBeNull();
+});
+
+it.each([
+ ["required_user_missing","Required user missing"],["cost_read_failed","Cost collection failure"],
+] as const)("labels %s independently from lifecycle failures",(event,label)=>{
+ render(<EmailNotifications notifications={[{...notice,event}]}/>);
+ expect(screen.getByRole("heading",{name:label})).toBeVisible();
+});
+
+it.each([
+ ["EMAIL_RECIPIENT_UNAVAILABLE","No currently authorized delivery contact"],
+ ["EMAIL_RECIPIENT_CHANGED","no longer holds a notified role"],
+] as const)("gives role-safe guidance for %s",(safe_code,message)=>{
+ render(<EmailNotifications notifications={[{...notice,event:"required_user_missing",state:"blocked",safe_code}]}/>);
+ expect(screen.getByText(new RegExp(message))).toBeVisible();
+ expect(screen.queryByText(safe_code)).toBeNull();
+});

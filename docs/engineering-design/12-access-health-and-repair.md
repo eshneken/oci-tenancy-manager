@@ -6,6 +6,10 @@
 [Shared model](11-production-data-model.md#identity-access-and-credential-model) ·
 [Access walkthrough](../walkthroughs/access-walkthrough.html#missing)
 
+The [confirmed-Missing email subset](../reference/required-user-alerts.md) is now implemented for
+manual checks using the simpler existing evidence/outbox model. Broader privilege observations,
+repair, recovery readiness and daily scheduling below remain proposed/unqualified.
+
 ## Scope and authority
 
 This slice designs the tenancy-detail **Required access** page, scoped observation acquisition and

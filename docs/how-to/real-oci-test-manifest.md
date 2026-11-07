@@ -123,3 +123,14 @@ accounts for destructive qualification. These cases remain Pending; simulator re
 5. Repeat for individual transfer (Remove only) and absent-owner offboarding, including shared Keep
    retaining an outside-directory obligation. Confirm live API permission/readback behavior and
    request replay do not duplicate provisioning or removal.
+
+
+## Pending: confirmed missing required-user notices
+
+With a controlled disposable real child and approved test mailbox routing, qualify exact Missing
+versus denied/incomplete reads. Verify one scoped initial per subject, correct owner/manager/designee
+and administrator contacts, unavailable-contact fallback evidence, repeated/Unknown suppression,
+Present then relapse, disabled delivery, stale-role suppression and no retargeted retry. Compare
+actual SMTP acceptance/uncertainty and staged redirection with immutable Operations/Audit evidence.
+No identity repair, privileged probe or live outgoing notice is implied by simulator qualification.
+Daily scheduled checks remain deferred until staging/Kubernetes qualification. Status: Pending.

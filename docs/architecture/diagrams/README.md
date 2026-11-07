@@ -36,3 +36,5 @@ runtime guarantees. The retained prototype diagram remains separate in prototype
 Ownership retention/removal reuses the existing membership role/status/identity/cleanup fields and
 immutable operation JSON. Physical ER relationships are unchanged; [the exact additional DTO mapping](../../engineering-design/11-production-data-model.md#explicit-ownership-retentionremoval--7-november-2026)
 explains the new choice and legacy compatibility.
+
+Required-user alert incidents add [typed JSON evidence and outbox fields](../../reference/required-user-alerts.md#fields-and-persistence), without changing physical ER tables/relationships.

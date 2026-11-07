@@ -16,7 +16,8 @@
       "enum": [
         "action_required",
         "terminal_failure",
-        "cost_read_failed"
+        "cost_read_failed",
+        "required_user_missing"
       ],
       "title": "Event",
       "type": "string"
@@ -65,9 +66,53 @@
       ],
       "title": "Recipient"
     },
+    "recipient_roles": {
+      "default": [],
+      "items": {
+        "enum": [
+          "owner",
+          "manager",
+          "designee",
+          "administrator"
+        ],
+        "type": "string"
+      },
+      "title": "Recipient Roles",
+      "type": "array"
+    },
     "redirected": {
       "title": "Redirected",
       "type": "boolean"
+    },
+    "required_user_purpose": {
+      "anyOf": [
+        {
+          "enum": [
+            "automation",
+            "recovery"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Required User Purpose"
+    },
+    "routing_issues": {
+      "default": [],
+      "items": {
+        "enum": [
+          "owner_unavailable",
+          "manager_unavailable",
+          "designee_unavailable",
+          "administrator_unavailable"
+        ],
+        "type": "string"
+      },
+      "title": "Routing Issues",
+      "type": "array"
     },
     "safe_code": {
       "anyOf": [

@@ -11,6 +11,7 @@ from otm.notifications.contracts import (
     NotificationEvidence,
     NotificationIntent,
     NotificationSummary,
+    RequiredUserMissingNotice,
 )
 from otm.operations.contracts import canonical_hash
 from otm.operations.responsibility import execution_authority, latest_claim
@@ -23,11 +24,10 @@ from otm.tenancies.onboarding import load_intent
 def decode_intent(row):
     if canonical_hash(row["intent"]) != row["intent_hash"]:
         raise ValueError("NOTIFICATION_INTENT_INVALID")
-    model = (
-        CostFailureNotice
-        if row["intent"].get("contract_version") == "cost-failure-email-1"
-        else NotificationIntent
-    )
+    model = {
+        "cost-failure-email-1": CostFailureNotice,
+        "required-user-missing-email-1": RequiredUserMissingNotice,
+    }.get(row["intent"].get("contract_version"), NotificationIntent)
     frozen = model.model_validate_json(json.dumps(row["intent"]))
     if (
         frozen.operation_id != row["operation_id"]
@@ -286,6 +286,15 @@ def list_for_operation(connection, workspace, operation_id):
                 last_attempt_at=row["last_attempt_at"],
                 attempts=row["attempts"],
                 safe_code=row["safe_code"],
+                required_user_purpose=intent.purpose
+                if isinstance(intent, RequiredUserMissingNotice)
+                else None,
+                recipient_roles=tuple(dict.fromkeys(r.role for r in intent.reasons))
+                if isinstance(intent, RequiredUserMissingNotice)
+                else (),
+                routing_issues=intent.routing_issues
+                if isinstance(intent, RequiredUserMissingNotice)
+                else (),
             )
         )
     return tuple(result)

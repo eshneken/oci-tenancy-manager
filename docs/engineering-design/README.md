@@ -73,3 +73,5 @@ Current member entry and user-data refresh follow the [workflow reference](../re
 Compact create/import help: [Collapsed OCI operator checklist](../reference/tenancy-onboarding.md#collapsed-oci-operator-checklist).
 
 Owner retention, verified identity removal and manual cleanup: [explicit former-owner disposition](../reference/organization-workflows.md#explicit-former-owner-disposition--7-november-2026).
+
+Confirmed required-user email: [current incident/routing/storage contract](../reference/required-user-alerts.md).

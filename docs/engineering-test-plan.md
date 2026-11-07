@@ -1212,3 +1212,18 @@ configuration lineage, authority and full profile arrays. Native Playwright refr
 once, navigates/reloads, adds/removes a member and verifies list/detail facts with zero additional
 acquisition POSTs. Existing delayed-publication, unavailable/pending, corruption and age tests must
 continue passing: read compatibility does not relax execution revision fences or evidence validation.
+
+
+## Confirmed required-user email regression matrix
+
+Cover per-subject Missing/open, repeated Missing dedup, Unknown carry, verified Present/relapse,
+independent automation/recovery, and Missing alongside an Unknown peer. Disabled mail must preserve
+incident state without backfill. Old markers/replays stay non-alerting. Late acquisitions cannot
+copy/reset heads or stage email; corrupt prior evidence fails closed. Seal/outbox/queue failure must
+roll back together. Frozen normalized originals preserve multiple roles and do not collapse to a
+single staging mailbox. Missing/invalid role contacts remain visible, including null admin emails.
+Before delivery, cover retained current role/address, changed still-present former roles, admin
+revocation/auth revision/email changes, exact target/connection/policy replacement and termination,
+plus route/origin/transport changes and SMTP rejection/unknown behavior. Native loopback capture and
+Playwright verify real redirected messages and read-only role/routing/delivery presentation at
+1280/390/320 pixels. No live employee records, outgoing real email or production simulator controls.

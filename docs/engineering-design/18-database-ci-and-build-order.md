@@ -1102,3 +1102,15 @@ action/failure states. Original responsibility and guided takeover eligibility a
 No new tables, columns, contracts, scheduling or provider capability are added. Local source
 qualification and saved-preview upgrade evidence must be recorded before declaring completion;
 live OCI and hosted email remain separate manifest gates.
+
+
+## Confirmed required-user email — 7 November 2026 source slice
+
+[Current implementation and fields](../reference/required-user-alerts.md) reuse check evidence for
+per-subject incident state and the existing email outbox for owner/manager/designee/admin notices.
+New admissions opt in; historical checks/replays remain non-alerting. Unknown preserves an incident,
+Present resolves it, and no transport toggle or late callback creates a duplicate initial email.
+Current role/identity/connection/policy checks precede submission; no recipient retargeting or blind
+resend. This supersedes earlier no-email statements for confirmed Missing only. Local qualification
+is recorded separately; daily machine admission stays deferred to staging/Kubernetes. No new table,
+column, migration, privilege qualification, live OCI adapter or identity repair follows.

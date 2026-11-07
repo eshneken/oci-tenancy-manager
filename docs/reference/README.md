@@ -58,3 +58,5 @@ Owner retention, verified identity removal and manual cleanup: [explicit former-
 Stored costs and required-user observations survive unrelated membership changes; see the retained-result
 sections in [cost visibility](cost-visibility.md#retained-results-after-membership-changes--7-november-2026)
 and [presence checks](user-presence-checks.md#retained-results-after-membership-changes--7-november-2026).
+
+- [Confirmed missing required-user email: incidents, routing, fields and delivery](required-user-alerts.md)

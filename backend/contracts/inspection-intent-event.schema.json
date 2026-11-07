@@ -1713,6 +1713,19 @@
           "title": "Kind",
           "type": "string"
         },
+        "notice_policy_version": {
+          "anyOf": [
+            {
+              "const": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notice Policy Version"
+        },
         "snapshot": {
           "$ref": "#/$defs/PresenceSnapshot"
         },

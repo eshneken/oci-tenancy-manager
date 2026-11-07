@@ -26,6 +26,7 @@ are not competing implementation instructions or proof of real OCI behavior.
 | Visual and interaction authority | [UI baseline](../DESIGN.md), [screen authority](ui-screen-authority.md) |
 | Former-owner retention/removal qualification | [Current workflow](reference/organization-workflows.md), [dated receipt](history/ownership-disposition-checkpoint-2026-11-07.md) |
 | Saved costs and user results | [Read compatibility and persistence](reference/README.md), [qualified fix](history/persisted-read-compatibility-checkpoint-2026-11-07.md) — membership changes retain compatible dated database observations |
+| Confirmed missing required-user notices | [Incident/routing model and full field dictionary](reference/required-user-alerts.md), [qualified checkpoint](history/required-user-alerts-checkpoint-2026-11-07.md) |
 | Prior checkpoints | [Dated history](history/README.md) |
 
 ## Source of truth
