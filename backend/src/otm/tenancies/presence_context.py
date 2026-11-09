@@ -11,7 +11,7 @@ from otm.tenancies.presence_contracts import PresenceSnapshot
 
 
 # These reads never create connections or infer identity from names/setup labels.
-def capture_snapshot(connection, workspace, child, policy):
+def capture_snapshot(connection, workspace, child, policy, recovery_console=None):
     if policy is None or policy.workspace_id != workspace or not registered_child(child, policy):
         return None
     if child["status"] != "active" or child["operation_id"]:
@@ -42,11 +42,11 @@ def capture_snapshot(connection, workspace, child, policy):
             )
         ).mappings()
     )
-    return bound_snapshot(workspace, child, policy, current, rows)
+    return bound_snapshot(workspace, child, policy, current, rows, recovery_console)
 
 
 # Both single-child and batched views validate the same exact current records, never names.
-def bound_snapshot(workspace, child, policy, current, rows):
+def bound_snapshot(workspace, child, policy, current, rows, recovery_console=None):
     if policy is None or policy.workspace_id != workspace or not registered_child(child, policy):
         return None
     if child["status"] != "active" or child["operation_id"] or current is None:
@@ -102,6 +102,7 @@ def bound_snapshot(workspace, child, policy, current, rows):
         connection_revision=current["revision"],
         policy_hash=canonical_hash(policy.model_dump(mode="json")),
         subjects=tuple(subjects),
+        recovery_console_fingerprint=recovery_console.fingerprint if recovery_console else None,
     )
 
 

@@ -20,7 +20,7 @@ It is separate from per-tenancy configuration baselines/overrides and contains n
 | Key | Default | Meaning |
 |---|---|---|
 | `schema_version` | `1` | Supported settings structure; unknown versions fail |
-| `sessions.idle_timeout_seconds` | `1800` | 30 minutes since qualified activity |
+| `sessions.idle_timeout_seconds` | `28800` local; `1800` staging/production | Eight-hour laptop idle limit; hosted profiles retain 30 minutes |
 | `sessions.absolute_timeout_seconds` | `28800` | Eight hours after session creation, regardless of activity |
 | `sessions.cleanup.hour_utc` | `2` | UTC hour for the daily cleanup CronJob |
 | `sessions.cleanup.minute_utc` | `0` | UTC minute for that daily job |
@@ -40,6 +40,11 @@ is introduced here. OKE should mount the same nonsecret file from a ConfigMap fo
 
 ## Updating settings in a running environment
 
+The [selected recovery-console CIDR design](../engineering-design/22-credential-security-lifecycles.md#configuration-contract-and-github-actions)
+uses this configuration-only release design. The [internal settings/renderer foundation](recovery-console-verification.md)
+now accepts `recovery_console.allowed_cidrs` and privately renders the release input. Local setup and read-only policy checks now have a [qualified UI checkpoint](../history/recovery-policy-ui-checkpoint-2026-11-07.md).
+Protected GitHub Environment wiring, reviewed per-child updates and hosted deployment remain pending. A desired setting is not evidence of effective OCI enforcement.
+
 Settings are nonsecret deployment configuration, supplied through a Kubernetes ConfigMap rather
 than baked into the application image. A supported value change requires **no image rebuild**.
 The [separate configuration deployment path](../engineering-design/18-database-ci-and-build-order.md#application-and-configuration-deployment-paths)
@@ -49,7 +54,11 @@ suite still runs; only the image build/publish step is avoided. Both application
 deployments are serialized per environment. New fields/behavior require a compatible code release.
 
 V1 operators edit the reviewed file; end users do not edit settings through the application UI.
-Settings are loaded once per process. Existing pods/jobs do not hot reload, and existing sessions
+Settings are normally loaded once per process. Recovery-console guards narrowly reread the current
+file fingerprint to reject stale setup/cleanup/reads and to stale prior policy evidence. This is not
+supported hot updating, policy propagation or fleet enforcement: a changed desired policy still uses
+the validated configuration release and rolling consumer update. Existing pods/jobs do not generally
+hot reload, and existing sessions
 keep their pinned limits. Configuration rollback uses the same path with a previous compatible
 file. This is the approved deployment design; hosted pipelines and OKE resources are not installed.
 
@@ -305,3 +314,13 @@ not installed by the standalone validator.
 (default 86400 seconds, each 1–604800) and 0–2 retry delays (each 1–3600 seconds; default30/120).
 See [cost visibility](cost-visibility.md). These do not start a daily scheduler. Coordinated
 configuration rollout/restart, rather than an image rebuild, applies changes.
+
+## Local eight-hour sessions — 9 November 2026
+
+The local application sample now issues sessions with eight-hour idle and absolute limits
+(28,800 seconds each). Staging and production retain 1,800-second idle and 28,800-second absolute
+limits. This changes no hard bounds or authentication checks. Already-issued sessions retain their
+original deadlines; sign out and back in after a local settings update to receive the new policy.
+Existing private local profiles require an explicit backed-up settings update and restart; changing
+the tracked sample alone does not rewrite them. The main laptop preview receives this update with
+the qualified UI checkpoint; the separately preserved parallel preview is unchanged.

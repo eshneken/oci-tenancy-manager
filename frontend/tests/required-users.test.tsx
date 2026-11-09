@@ -32,7 +32,7 @@ it("shows both identities and contextual setup links", async () => {
   const c = mount();
   await screen.findByText("otm-automation");
   expect(screen.getAllByText("Recorded", { exact: true })).toHaveLength(2);
-  expect(screen.getAllByText("Not checked", { exact: true })).toHaveLength(4);
+  expect(screen.getAllByText("Not checked", { exact: true })).toHaveLength(7);
   expect(screen.queryByText(/healthy|verified|missing/i)).not.toBeInTheDocument();
   const card = screen.getByRole("heading", { name: "Automation user" }).closest("li")!;
   const details = card.querySelector("details")!;
@@ -133,15 +133,15 @@ it("shows independent current and failed account observations", async()=>{
   const c=mount(present);
   expect(await screen.findByText("Present",{exact:true})).toBeVisible();
   expect(screen.getByText("Missing",{exact:true})).toBeVisible();
-  expect(screen.getAllByText("Permissions")).toHaveLength(2);
-  expect(screen.getAllByText("Not checked",{exact:true})).toHaveLength(2);
-  await userEvent.click(screen.getAllByRole("link",{name:"View check"})[0]);
+  expect(screen.getAllByText("Permissions")).toHaveLength(1);
+  expect(screen.getAllByText("Not checked",{exact:true})).toHaveLength(5);
+  await userEvent.click(screen.getAllByRole("link",{name:/^View presence check, /})[0]);
   expect(c.navigate).toHaveBeenCalledWith("/operations/"+checkId);
   c.read.mockResolvedValue({...present,users:present.users.map(u=>({...u,presence:{...u.presence!,state:"unknown"}})) as RequiredUsersDirectory["users"]});
   await c.client.invalidateQueries({queryKey:["tenancies","required-users",id]});
   await waitFor(()=>expect(screen.getAllByText("Unable to verify")).toHaveLength(2));
   expect(screen.queryByText("Present",{exact:true})).not.toBeInTheDocument();
-  expect(screen.getAllByText("Last attempt (UTC)")).toHaveLength(2);c.client.clear();
+  expect(screen.getAllByText("Presence last attempt (UTC)")).toHaveLength(2);c.client.clear();
 });
 
 // An old positive result is labeled out of date and never retains current green styling.
@@ -268,4 +268,86 @@ it("explains unavailable refresh and exposes no duplicate saved-record action",a
   expect(action).not.toHaveAttribute("aria-describedby");
   expect(screen.queryByText(/Existing tenancies are not enrolled automatically/)).not.toBeInTheDocument();
   expect(check).not.toHaveBeenCalled();c.client.clear();
+});
+
+
+// Policy drift remains separate from a present identity and never exposes configured networks.
+it("shows recovery MFA drift beside verified network controls and present users", async()=>{
+  const c=mount({...configured, recovery_console:{state:"drift",mfa_exemption:"drift",network_boundary:"verified",checked_at:"2026-11-07T12:00:00Z",operation_id:checkId},
+    users:configured.users.map(u=>({...u,presence:{state:"present",checked_at:"2026-11-07T12:00:00Z",operation_id:checkId}})) as RequiredUsersDirectory["users"]});
+  await screen.findByText("Policy drift");
+  const card=screen.getByRole("heading",{name:"Recovery user"}).closest("li")!;
+  expect(within(card).getByText("Present",{exact:true})).toBeVisible();
+  expect(within(card).getByText("Console MFA exemption")).toBeVisible();
+  expect(within(card).getByText("Approved-network restriction")).toBeVisible();
+  expect(within(card).getByText("Verified in simulation")).toBeVisible();
+  await userEvent.click(within(card).getByRole("link",{name:/^View policy check, /}));
+  expect(c.navigate).toHaveBeenCalledWith("/operations/"+checkId);
+  c.client.clear();
+});
+
+// Stale policy evidence cannot retain a positive current label after desired settings change.
+it("shows stale policy controls without asserting verified readiness", async()=>{
+  const c=mount({...configured,recovery_console:{state:"stale",mfa_exemption:"verified",network_boundary:"verified",checked_at:"2026-11-07T12:00:00Z",operation_id:checkId}});
+  await screen.findAllByText("Check out of date");
+  expect(screen.queryByText("Verified in simulation")).not.toBeInTheDocument();
+  c.client.clear();
+});
+
+// Unverified policy does not create a fake missing-user signal.
+it("keeps incomplete policy evidence visibly unverified", async()=>{
+  const c=mount({...configured,recovery_console:{state:"unknown",mfa_exemption:"unknown",network_boundary:"unknown"}});
+  await screen.findByText("Console MFA exemption");
+  expect(screen.getAllByText("Unable to verify")).toHaveLength(2);
+  c.client.clear();
+});
+
+// Presence never substitutes for required assignments; each read retains its own provenance.
+it.each(["verified","missing","unknown"] as const)("shows automation assignment result %s separately from presence", async state => {
+  const value = {...directory,users:directory.users.map(user => user.purpose === "automation" ? {...user,administrator_access:{group:state,domain_role:state,stale:false,checked_at:"2026-11-09T12:00:00Z",operation_id:id}} : user)} as RequiredUsersDirectory;
+  mount(value);
+  const heading=await screen.findByRole("heading",{name:"Automation user"});
+  const card=within(heading.closest("li")!);
+  expect(card.getByText("Administrators group")).toBeInTheDocument();
+  expect(card.getByText("Domain administrator role")).toBeInTheDocument();
+  expect(card.getAllByText(state === "verified" ? "Verified in simulation" : state === "missing" ? "Missing or disabled" : "Unable to verify")).toHaveLength(2);
+  expect(card.getByRole("link",{name:/^View assignment check, /})).toHaveAttribute("href","/operations/"+id);
+});
+
+// Expired assignment evidence remains dated and neutral even when the last observation passed.
+it("marks retained assignment results out of date", async () => {
+  mount({...directory,users:directory.users.map(user=>user.purpose === "automation" ? {...user,administrator_access:{group:"verified",domain_role:"verified",stale:true,checked_at:"2026-11-09T12:00:00Z",operation_id:id}} : user)} as RequiredUsersDirectory);
+  await screen.findByText("otm-automation");
+  expect(screen.getAllByText("Check out of date")).toHaveLength(2);
+  expect(screen.queryByText("Verified in simulation")).not.toBeInTheDocument();
+});
+
+// Compact UTC dates keep distinct check destinations even across local-time date boundaries.
+it("groups date-only provenance below badges with the exact check links", async () => {
+  const assignment="22222222-2222-4222-8222-222222222222",policy="33333333-3333-4333-8333-333333333333";
+  const c=mount({...directory,users:directory.users.map(user=>({...user,presence:{state:"present",checked_at:"2026-11-09T00:10:00Z",stale:false,operation_id:id},...(user.purpose==="automation"?{administrator_access:{group:"verified",domain_role:"verified",stale:false,checked_at:"2026-11-10T00:10:00Z",operation_id:assignment}}:{})})),recovery_console:{state:"verified",mfa_exemption:"verified",network_boundary:"verified",checked_at:"2026-11-11T00:10:00Z",operation_id:policy}} as RequiredUsersDirectory);
+  const presence=await screen.findAllByRole("link",{name:"View presence check, Nov 9, 2026"});
+  expect(presence).toHaveLength(2);
+  const assignmentLink=screen.getByRole("link",{name:"View assignment check, Nov 10, 2026"});
+  const policyLink=screen.getByRole("link",{name:"View policy check, Nov 11, 2026"});
+  expect(assignmentLink).toHaveTextContent(/^Nov 10, 2026$/);
+  expect(assignmentLink.querySelector("time")).toHaveAttribute("datetime","2026-11-10T00:10:00Z");
+  expect(assignmentLink).toHaveAttribute("title",expect.stringContaining("UTC"));
+  expect(assignmentLink).toHaveAttribute("href","/operations/"+assignment);
+  expect(policyLink).toHaveAttribute("href","/operations/"+policy);
+  for(const link of [...presence,assignmentLink,policyLink]){
+    const card=link.closest("li")!,footer=card.querySelector(".required-user-checks")!,facts=card.querySelector(".required-user-facts")!;
+    expect(facts.compareDocumentPosition(footer)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(footer.textContent).not.toMatch(/\d+:\d+/);
+  }
+  await userEvent.click(assignmentLink);
+  expect(c.navigate).toHaveBeenCalledWith("/operations/"+assignment);
+});
+
+// A legacy dated result without a check reference remains readable without inventing a destination.
+it("shows a date without a link when operation provenance is absent", async () => {
+  mount({...directory,users:directory.users.map(user=>({...user,presence:{state:"unknown",checked_at:"2026-11-09T00:10:00Z",operation_id:null}}))} as RequiredUsersDirectory);
+  await screen.findAllByText("Presence last attempt (UTC)");
+  expect(screen.getAllByText("Nov 9, 2026")).toHaveLength(2);
+  expect(screen.queryByRole("link",{name:/^View presence check/})).not.toBeInTheDocument();
 });

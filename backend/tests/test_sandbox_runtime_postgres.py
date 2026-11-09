@@ -60,7 +60,11 @@ def runtime(tmp_path_factory):
         setup(PROJECT, root)
         state = read_state(root)
         config = root / "application.toml"
-        config.write_text(config.read_text() + '\n[testing]\nemail_override = "capture@otm.test"\n')
+        config.write_text(
+            config.read_text()
+            + '\n[testing]\nemail_override = "capture@otm.test"\n'
+            + '\n[recovery_console]\nallowed_cidrs = ["198.51.100.0/24", "2001:db8::/32"]\n'
+        )
         settings = load_settings(config)
         owner = maintenance_engine(database_url(state, owner=True), None)
         api = maintenance_engine(database_url(state), None)

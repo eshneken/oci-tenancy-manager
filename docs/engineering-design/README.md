@@ -46,6 +46,7 @@ integration remains separately qualified.
 | [19: application administrators and local recovery sign-in](19-administrator-provisioning.md) |
 | [Organization mapping settings](20-organization-mapping-settings.md) |
 | [21: environment email routing and release guards](21-environment-email-policy.md) |
+| [22: recovery console CIDR boundary and 30-day API-key rotation](22-credential-security-lifecycles.md) |
 
 ## Authority and decisions
 

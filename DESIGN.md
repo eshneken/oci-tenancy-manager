@@ -350,3 +350,28 @@ Destructive actions retain danger styling and existing confirmations. Selected t
 may use cobalt to communicate state; they are not action-priority exceptions. Do not style
 equivalent actions differently because one queues an asynchronous read. UI review must audit
 the whole affected screen and apply these roles consistently across future screens.
+
+## Tenancy detail density — 9 November 2026
+
+Optimize tenancy detail for laptop use: pair Current month costs and Overrides in equal-width
+columns above 1000px viewport width, stacking them below that breakpoint. A solitary cost panel
+uses the available width. Use 24px gutters between the panels and 24px above and below the
+group, including before Current members. Keep the existing section order and all actions unchanged.
+Within each Required users card, pair short status facts in two columns above 700px; username
+spans the card. Dated evidence follows all badges in a two-column footer. Cards stack at 900px and below; facts and dated footer fields stack at 700px and below. Expanded identity
+details retain full-width wrapping for OCIDs. Preserve explicit labels, dated results and simulation
+qualifiers; compact layout must not hide warnings or imply access readiness.
+
+Recovery cards keep the two separately labelled policy-control statuses and the shared simulation/
+access qualification above the cards. Omit the redundant recovery-readiness paragraph below those
+statuses; no extra tooltip is needed for the same guidance.
+
+Checked-date footers use date-only UTC links to their exact check operation. Keep assignment,
+presence and policy labels distinct when dates match. Full UTC instants remain in time metadata
+and hover titles; stored timestamps/freshness rules do not change. Below 701px footer fields stack.
+
+Recovery's Identity record, Presence and Permissions form one three-column laptop row. Its two
+policy controls retain their own wider two-column row. These facts stack below 701px; automation
+keeps its existing paired layout. Costs and Overrides use matching header action placement. When
+paired panels are compact (1001–1150px viewport), both headers put actions on a second right-aligned
+row so wrapping in the longer costs title cannot shift one action independently.

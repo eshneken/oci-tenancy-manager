@@ -35,6 +35,11 @@ from otm.tenancies.worker import OrganizationLifecycleWorker
 # Consume the scoped native queue; once drains currently available work, not just one job.
 def run_worker(*, once=False):
     settings = load_settings(Path(os.environ["OTM_APPLICATION_CONFIG"]))
+
+    # Recheck the deployed desired revision before setup, cleanup and read publication.
+    def recovery_console_policy():
+        return load_settings(Path(os.environ["OTM_APPLICATION_CONFIG"])).recovery_console
+
     if settings.local_auth is None or settings.local_server is None:
         raise ValueError("EXPLICIT_LOCAL_CONFIGURATION_REQUIRED")
     path = Path(os.environ["OTM_SANDBOX_CONFIG"])
@@ -123,7 +128,11 @@ def run_worker(*, once=False):
                 policy.workspace_id,
                 clock,
                 organization_policy,
-                SimulatedLifecycleFacade(organization_policy().policy),
+                SimulatedLifecycleFacade(
+                    organization_policy().policy,
+                    recovery_console=settings.recovery_console,
+                    recovery_console_loader=recovery_console_policy,
+                ),
                 mail_policy_loader=mail_policy,
                 notifications=notifier,
             ),
@@ -152,7 +161,9 @@ def run_worker(*, once=False):
             queue,
         )
         from otm.operations.runner import register_presence_task
+        from otm.providers.administrator_access_simulator import simulated_administrator_inspection
         from otm.providers.presence_simulator import simulated_presence_inspection
+        from otm.providers.recovery_console_simulator import simulated_console_inspection
         from otm.tenancies.presence_worker import UserPresenceWorker
 
         register_presence_task(
@@ -165,6 +176,9 @@ def run_worker(*, once=False):
                 organization_policy().policy,
                 simulated_presence_inspection,
                 notifications=notifier,
+                recovery_console_loader=recovery_console_policy,
+                recovery_inspection_factory=simulated_console_inspection,
+                administrator_inspection_factory=simulated_administrator_inspection,
             ),
             queue,
         )

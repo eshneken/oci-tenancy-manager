@@ -187,6 +187,10 @@ class OrganizationIntent(Contract):
     presence_connection_contract: Literal["simulated-user-presence-1"] | None = Field(
         default=None, exclude_if=lambda value: value is None
     )
+    # New setup freezes the desired security revision without putting private networks in intent.
+    recovery_console_fingerprint: Annotated[str, Field(pattern=r"^[a-f0-9]{64}$")] | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
     # Full immutable publication snapshot; absent only for previously accepted local operations.
     baseline: BaselineVersion | None = None
     # The initiating verified mailbox is frozen separately from ownership; local testing may
@@ -215,6 +219,8 @@ class OrganizationIntent(Contract):
             or self.baseline.published_at is None
         ):
             raise ValueError("PUBLISHED_ONBOARDING_BASELINE_REQUIRED")
+        if self.recovery_console_fingerprint is not None and self.onboarding_version != 3:
+            raise ValueError("RECOVERY_CONSOLE_REQUIRES_FRESH_CAPTURE")
         if self.presence_connection_contract is not None and self.onboarding_version != 3:
             raise ValueError("PRESENCE_CONNECTION_REQUIRES_FRESH_CAPTURE")
         return self

@@ -206,9 +206,9 @@ def main() -> int:
             ],
             cwd=ROOT,
             env=env,
-            # The approved aggregate budget accommodates the growing integration inventory.
+            # The 7 November approval raises only the aggregate integration budget to 15 minutes.
             # Individual browser, database and I/O limits remain independently bounded.
-            timeout=600,
+            timeout=900,
         )
         (directory / "pytest.log").write_text(
             result.stdout.replace(password, "[REDACTED]")

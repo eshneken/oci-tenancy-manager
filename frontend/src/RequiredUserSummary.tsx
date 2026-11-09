@@ -22,11 +22,17 @@ export function RequiredUserSummary({id,name,status,summary,navigate}:{
     const at=user?.checked_at?" · "+new Date(user.checked_at).toLocaleString("en-US",{timeZone:"UTC",timeZoneName:"short"}):"";
     return (purpose==="automation"?"Automation":"Recovery")+": "+label+at;
   });
-  const description=[...facts,...(state==="unavailable"?["A current qualified result is unavailable."]:[]),"Presence is simulated locally. Permissions are not checked.",...(summary?.checking?["A new check is running; previous results retain their original dates."]:[])].join("\n");
+  const description=[...facts,...(state==="unavailable"?["A current qualified result is unavailable."]:[]),"Presence is simulated locally and does not establish permissions. Review administrator assignments on the tenancy page.",...(summary?.checking?["A new check is running; previous results retain their original dates."]:[])].join("\n");
   return <span className="required-users-inventory">
     <a className={"badge required-users-inventory-link "+(state==="present"?"active":state==="missing"?"presence-missing":state==="stale"?"review-open":"required-user-state")}
       href={href} title={description} aria-label={`Users: ${names[state]} for ${name}`}
       aria-describedby={descriptionId} onClick={event=>followLink(event,href,navigate)}>Users: {names[state]}</a>
+    {summary?.recovery_console && ["drift","stale"].includes(summary.recovery_console.state ?? "") &&
+      <a className={"badge " + (summary.recovery_console.state === "drift" ? "presence-missing" : "review-open")} href={href}
+        aria-label={`Recovery policy ${summary.recovery_console.state === "drift" ? "drift" : "out of date"} for ${name}`}
+        onClick={event=>followLink(event,href,navigate)}>{summary.recovery_console.state === "drift" ? "Recovery policy drift" : "Recovery policy out of date"}</a>}
+    {summary?.administrator_access && (summary.administrator_access.stale || [summary.administrator_access.group,summary.administrator_access.domain_role].includes("missing")) &&
+      <a className={"badge " + (summary.administrator_access.stale ? "review-open" : "presence-missing")} href={href} aria-label={`Automation assignments ${summary.administrator_access.stale ? "out of date" : "missing"} for ${name}`} onClick={event=>followLink(event,href,navigate)}>{summary.administrator_access.stale ? "Automation assignments out of date" : "Automation assignment missing"}</a>}
     {summary?.checking&&<span className="muted">Checking…</span>}
     <span className="sr-only" id={descriptionId}>{description}</span>
   </span>;

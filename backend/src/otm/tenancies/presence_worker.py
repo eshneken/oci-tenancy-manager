@@ -36,9 +36,15 @@ class UserPresenceWorker:
         inspection_factory,
         *,
         notifications=None,
+        recovery_console_loader=None,
+        recovery_inspection_factory=None,
+        administrator_inspection_factory=None,
     ):
+        self.administrator_inspection_factory = administrator_inspection_factory
         self.engine, self.workspace, self.clock = engine, workspace, clock
         self.notifications = notifications
+        self.recovery_console_loader = recovery_console_loader
+        self.recovery_inspection_factory = recovery_inspection_factory
         self.policy_loader, self.policy, self.inspection_factory = (
             policy_loader,
             policy,
@@ -69,7 +75,101 @@ class UserPresenceWorker:
             except Exception:
                 result = unknown(command, self.clock())
             results.append(result)
-        self.finish(identifier, check["attempt_id"], tuple(commands), tuple(results))
+        console = self.read_console(commands[1], source, frozen.intent.snapshot)
+        assignments = self.read_administrator(commands[0], source)
+        self.finish(
+            identifier, check["attempt_id"], tuple(commands), tuple(results), console, assignments
+        )
+
+    # Missing legacy capture, failed reads and substituted subjects never gain inferred assignments.
+    def read_administrator(self, subject_command, source):
+        from otm.providers.administrator_access import (
+            AdministratorCheck,
+            AdministratorResult,
+            InspectAdministratorAccess,
+        )
+
+        unknown_result = AdministratorResult(group="unknown", domain_role="unknown")
+        fallback = AdministratorCheck(
+            context=subject_command.context,
+            target=subject_command.target,
+            checked_at=self.clock(),
+            result=unknown_result,
+        )
+        capture = source.automation_administrator if source else None
+        if capture is None or self.administrator_inspection_factory is None:
+            return fallback
+        try:
+            command = InspectAdministratorAccess(
+                context=subject_command.context,
+                target=subject_command.target,
+                binding=capture.binding,
+            )
+            started = self.clock()
+            observed = AdministratorCheck.model_validate(
+                self.administrator_inspection_factory(command, source, self.clock).inspect(command)
+            )
+            ended = self.clock()
+            if (
+                observed.context != command.context
+                or observed.target != command.target
+                or not started <= observed.checked_at <= ended
+                or ended - started > READ_WINDOW
+            ):
+                return fallback
+            return observed
+        except Exception:
+            return fallback
+
+    # A missing legacy capture or unqualified policy read stays Unknown independently of presence.
+    def read_console(self, subject_command, source, snapshot):
+        from otm.providers.recovery_console import (
+            InspectRecoveryConsole,
+            RecoveryConsoleCheck,
+            RecoveryConsoleResult,
+        )
+
+        desired = snapshot.recovery_console_fingerprint
+        if desired is None:
+            return None
+        unverified = RecoveryConsoleResult(
+            state="unknown",
+            mfa_exemption="unknown",
+            network_boundary="unknown",
+            desired_fingerprint=desired,
+            safe_code="RECOVERY_CONSOLE_UNVERIFIED",
+        )
+        result = unverified
+        try:
+            policy = self.recovery_console_loader() if self.recovery_console_loader else None
+            capture = source.recovery_console if source else None
+            if (
+                policy is not None
+                and policy.fingerprint == desired
+                and capture is not None
+                and self.recovery_inspection_factory is not None
+            ):
+                command = InspectRecoveryConsole(
+                    context=subject_command.context,
+                    target=subject_command.target,
+                    binding=capture.binding,
+                    desired=policy,
+                )
+                observed = self.recovery_inspection_factory(command, source, self.clock).inspect(
+                    command
+                )
+                observed = RecoveryConsoleResult.model_validate(observed)
+                if observed.desired_fingerprint == desired:
+                    result = observed
+        except Exception:
+            # Malformed/failed reads publish only the original safe Unknown result.
+            result = unverified
+        return RecoveryConsoleCheck(
+            context=subject_command.context,
+            target=subject_command.target,
+            checked_at=self.clock(),
+            result=result,
+        )
 
     # Serialize the same anchor/workspace/operation/child order as existing lifecycle mutations.
     def locked(self, connection, identifier):
@@ -145,7 +245,11 @@ class UserPresenceWorker:
         policy = self.policy_loader()
         if policy.execution_paused or policy.policy != self.policy:
             return False
-        return capture_snapshot(connection, self.workspace, child, policy.policy) == intent.snapshot
+        console = self.recovery_console_loader() if self.recovery_console_loader else None
+        return (
+            capture_snapshot(connection, self.workspace, child, policy.policy, console)
+            == intent.snapshot
+        )
 
     # Producer evidence is independently authenticated; current expected user IDs never seed facts.
     def source(self, connection, snapshot):
@@ -240,7 +344,7 @@ class UserPresenceWorker:
             return frozen, check, commands, source
 
     # Late/replayed callbacks never replace a newer attempt or a terminal result.
-    def finish(self, identifier, attempt, commands, results):
+    def finish(self, identifier, attempt, commands, results, console=None, assignments=None):
         with self.engine.begin() as connection:
             locked = self.locked(connection, identifier)
             if locked is None:
@@ -265,6 +369,36 @@ class UserPresenceWorker:
                 state = "unavailable"
             else:
                 state = "complete" if all(r.state != "unknown" for r in results) else "unavailable"
+            if (
+                console is not None
+                and state in {"superseded", "unavailable"}
+                and (not current or clock_invalid or at - check["started_at"] > READ_WINDOW)
+            ):
+                from otm.providers.recovery_console import RecoveryConsoleResult
+
+                console = console.model_copy(
+                    update={
+                        "checked_at": at,
+                        "result": RecoveryConsoleResult(
+                            state="unknown",
+                            mfa_exemption="unknown",
+                            network_boundary="unknown",
+                            desired_fingerprint=console.result.desired_fingerprint,
+                            safe_code="RECOVERY_CONSOLE_UNVERIFIED",
+                        ),
+                    }
+                )
+            if assignments is not None and (
+                not current or clock_invalid or at - check["started_at"] > READ_WINDOW
+            ):
+                from otm.providers.administrator_access import AdministratorResult
+
+                assignments = assignments.model_copy(
+                    update={
+                        "checked_at": at,
+                        "result": AdministratorResult(group="unknown", domain_role="unknown"),
+                    }
+                )
             episodes, opened = None, ()
             if frozen.intent.notice_policy_version == 1:
                 from otm.tenancies.presence_alerts import advance_episodes
@@ -272,7 +406,17 @@ class UserPresenceWorker:
                 episodes, opened = advance_episodes(
                     connection, row, check, frozen.intent.snapshot, results
                 )
-            seal(connection, row, check, results, state, at, notice_episodes=episodes)
+            seal(
+                connection,
+                row,
+                check,
+                results,
+                state,
+                at,
+                notice_episodes=episodes,
+                recovery_console=console,
+                administrator_access=assignments,
+            )
             if opened and self.notifications is not None:
                 from otm.tenancies.presence_alerts import stage_missing
 

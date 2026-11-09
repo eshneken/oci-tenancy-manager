@@ -1,7 +1,7 @@
 # Local review: Required users and Refresh user data
 
 After this UI checkpoint is installed, use the deliberately upgraded main preview on port 8443 with its matching API, foreground worker and immutable frontend snapshot. The prior presence pipeline is locally qualified; reload the main page after the current UI checkpoint is installed. The parallel preview on port 8444 is unchanged and may not offer Refresh user data. Do not reset an existing organization or assume a development build updates either preview. These steps exercise simulated producer fixtures, not OCI.
-No real cloud-user change, permission probe or password disclosure is part of Refresh user data.
+No real cloud-user change, proof of all effective permissions or password disclosure is part of Refresh user data.
 The [confirmed-Missing email extension](../reference/required-user-alerts.md) can stage notices for
 qualified Missing, using the configured local capture override. Normal producer fixtures are Present;
 Missing/routing/delivery is exercised by disposable automated tests, without product fault controls.
@@ -13,7 +13,7 @@ Missing/routing/delivery is exercised by disposable automated tests, without pro
    children may say Not recorded; some have Recorded identities but no selected connection.
 3. Refresh user data must be disabled when the required current bindings/connection are absent, with an
    explanation. Do not interpret this as missing cloud users or try to manufacture a connection.
-4. There is one normal Refresh user data action. Page-level Refresh reloads stored results only. Permissions stays Not checked on both cards. No reset,
+4. There is one normal Refresh user data action. Page-level Refresh reloads stored results only. Recovery permissions stay Not checked; automation assignment results remain separate from presence. No reset,
    repair, password control or invented successful presence result is expected.
 
 ## 2. Create or import a fresh simulated child
@@ -27,13 +27,13 @@ Missing/routing/delivery is exercised by disposable automated tests, without pro
    retain the domain, two permanent identity mappings and selected simulated connection together.
 4. Open the now-active child. Both identity records should say Recorded. Expand Identity details
    with keyboard or mouse: the user OCIDs and SCIM IDs differ, the domain is shared, UTC recording
-   times and View setup operation are available. Permissions remains Not checked twice.
+   times and View setup operation are available. Assignment results start Not checked until refreshed; Recovery retains Permissions: Not checked.
 5. Select Refresh user data. Refreshing user data… and dated previous results reflect queued/running work. Keep the
    foreground worker running; opening or reloading a page cannot execute the job.
 6. When the check finishes, expect two Present results for the normal authenticated simulated
-   producer fixture and two Permissions: Not checked labels. Each card has its own Checked (UTC)
-   time and View check link. These labels establish simulator existence only, not live OCI access.
-7. Open View check. Verify the actual read-only required-user operation, safe result and retained
+   producer fixture. Recovery retains Permissions: Not checked; automation shows separate Administrators group and Domain administrator role results. Each card has its own Presence checked (UTC)
+   date link in the footer. Automation also has an Assignments checked (UTC) date link; recovery has a Policy checked (UTC) date link. These labels establish simulator existence only, not live OCI access.
+7. Click the Presence checked date. Verify the actual read-only required-user operation, safe result and retained
    history. Its tenancy context returns to the child. Check operations never offer repair or create
    an actionable attention badge. The setup operation remains a separate provenance link.
 8. Reload the child URL. The same recorded IDs and persisted last-check results
@@ -84,6 +84,8 @@ The summary revision is qualified and installed in the main preview on port 8443
    the compact link stays within the Status cell and its accessible label matches the Users: prefix and correct child. Config: labels remain distinguishable. At 320 pixels, verify actual page/viewport containment, including the hidden description, without body-level overflow clipping.
 6. Mixed missing/unavailable/stale/corrupt-record cases use disposable automated fixtures; no product
    simulator control or live mutation is added. Only fresh confirmed absence is labeled Missing.
-   Out-of-date positives must become Check out of date; permissions never become verified. A coarse positive missing its own date/check reference becomes Unable to verify. A configured connection with corrupt canonical references is unavailable, while genuine historical/unconfigured context remains Not checked. These injected failures are automated fixture cases, not live data-edit instructions.
+   Out-of-date positives must become Check out of date; expired automation assignment proof must also be marked out of date; broader effective permissions are not certified. A coarse positive missing its own date/check reference becomes Unable to verify. A configured connection with corrupt canonical references is unavailable, while genuine historical/unconfigured context remains Not checked. These injected failures are automated fixture cases, not live data-edit instructions.
 
 [All summary fields, precedence and query scope](../reference/required-users-summary.md).
+
+For new create/import assignment checks, see the [automation assignment review steps](../reference/administrator-assignments.md#local-review). Historical captures cannot be repaired by refreshing.

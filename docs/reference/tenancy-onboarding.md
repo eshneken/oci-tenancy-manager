@@ -514,3 +514,14 @@ says to use simulated handoff rather than creating real OCI users/keys.
 Disclosure does not submit a handoff, mutate an operation or satisfy cleanup consent. Current
 errors, exact temporary-account review and confirmations remain outside optional help. Open
 state is transient; a new mount starts closed and no database/API/ER field is added.
+
+
+## Recovery-only policy capture — 7 November 2026
+
+New local create/import intents optionally freeze the desired recovery-console fingerprint. When
+configured, exact-user MFA exemption and allow-approved/deny-elsewhere rules are captured and assessed
+before retiring temporary access. Current desired policy is rechecked at each simulator setup/readback/
+cleanup boundary, so an accepted waiting operation cannot finish on obsolete cached settings.
+`capture_required_users` retains the private normalized producer policy alongside exact identities;
+public onboarding views do not return those rules or configured ranges. Legacy accepted operations
+omit the new field and never gain automatic policy proof. See the [field map and current UI scope](recovery-console-verification.md).

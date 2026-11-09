@@ -6,6 +6,11 @@
 
 ## Current proposed data model — 21 October 2026
 
+**7 November selected refinement:** [Chapter22](22-credential-security-lifecycles.md) limits the
+standing recovery-only MFA exemption to approved configurable console source CIDRs. It replaces the
+temporary-exception proposal, keeps D40 first-disclosure password rotation and adds 30-day automation
+key retirement. No additional recovery account or TOTP broker; implementation/live qualification pending.
+
 [Chapter11](11-production-data-model.md#identity-access-and-credential-model) specifies access
 contexts, credential heads/immutable Vault references, access assignments, human grants and SSO
 sessions; shared binding/check records distinguish OCI OCIDs from SCIM/relationship IDs. No secrets

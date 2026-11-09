@@ -6,7 +6,17 @@ import { followLink } from "./navigation";
 const purposes = { automation: "Automation user", recovery: "Recovery user" };
 const presenceNames = {not_checked:"Not checked", present:"Present", missing:"Missing", unknown:"Unable to verify"};
 const blocked = {not_configured:"Presence checks require a registered automation connection and recorded user identities. This tenancy has not completed that setup. Existing tenancies are not enrolled automatically.", tenancy_inactive:"Presence checks are available for active tenancies.", tenancy_busy:"A tenancy operation is in progress. Check again when it finishes.", provider_unavailable:"The selected provider is currently unavailable."};
+const policyNames = {not_checked:"Not checked",verified:"Verified in simulation",drift:"Policy drift",unknown:"Unable to verify",stale:"Check out of date"};
+const assignmentNames = {not_checked:"Not checked",verified:"Verified in simulation",missing:"Missing or disabled",unknown:"Unable to verify"};
 const states = { recorded: "Recorded", not_recorded: "Not recorded", retired: "Retired record" };
+
+// Keep dated provenance compact while preserving the full UTC instant and exact operation target.
+function CheckDate({label,kind,at,operationId,navigate}:{label:string;kind:string;at:string;operationId?:string|null;navigate:(path:string)=>void}) {
+  const date=new Date(at).toLocaleDateString("en-US",{timeZone:"UTC",month:"short",day:"numeric",year:"numeric"});
+  const full=new Date(at).toLocaleString("en-US",{timeZone:"UTC",timeZoneName:"short"});
+  const href=operationId?"/operations/"+encodeURIComponent(operationId):null;
+  return <div><dt>{label} (UTC)</dt><dd>{href?<a href={href} aria-label={`View ${kind} check, ${date}`} title={full} onClick={event=>followLink(event,href,navigate)}><time dateTime={at}>{date}</time></a>:<time dateTime={at} title={full}>{date}</time>}</dd></div>;
+}
 
 // Show registered identities without suggesting OCI presence, usable credentials or admin access.
 export function RequiredUsers({ tenancyId, expired, navigate }: {
@@ -83,7 +93,7 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
       </button>
       </div>
     </div>
-    <p className="muted">Presence checks use local simulated fixture data. They do not verify live OCI access or administrative permissions.</p>
+    <p className="muted">User and recovery-policy checks use local simulated data. They do not prove live OCI access, password readiness or all effective permissions.</p>
     {result.isPending && <p role="status">Loading required user records…</p>}
     {result.isError && <p className="alert" role="alert">{data ? "Unable to refresh records. Previously loaded records are shown." : "Unable to load required user records. Try again."} <button type="button" className="text-link" disabled={result.isFetching} onClick={() => void result.refetch()}>Retry loading users</button></p>}
     {ownMutation && mutation.isError && !authorizationLost && <p className="alert" role="alert">Unable to confirm the check request. Retry uses the same request to avoid duplicate operations.</p>}
@@ -91,25 +101,45 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
       <p><strong>Refresh user data is unavailable.</strong> {blocked[data.check_unavailable_reason ?? "not_configured"]}</p>
       {(data.check_unavailable_reason ?? "not_configured")==="not_configured" && <p>For local testing, complete setup for a newly created or imported simulated tenancy. Refreshing does not configure access.</p>}
     </div>}
-    {data?.pending_operation_id && <p role="status">Checking required-user presence… Previous results remain dated below.</p>}
+    {data?.pending_operation_id && <p role="status">Checking users and recovery policy… Previous results remain dated below.</p>}
     {data && <>
       {data.tenancy_status === "pending" && <p className="notice">Setup is still in progress. Recorded identities do not mean the tenancy is ready.</p>}
       {!["active", "pending"].includes(data.tenancy_status) && <p className="notice">These identity records are retained for tenancy history.</p>}
       <ul className="required-users-grid">
         {data.users.map(user => {
           const presence = {...user.presence,state:user.presence?.state ?? "not_checked",stale:user.presence?.stale ?? false};
+          const consolePolicy = data.recovery_console;
+          const administrator = user.administrator_access;
           const label = presence.stale ? "Check out of date" : presenceNames[presence.state];
           return <li key={user.purpose} className="required-user-card">
           <h3>{purposes[user.purpose]}</h3>
-          <dl className="required-user-facts">
-            <div><dt>Username</dt><dd>{user.identity?.user_name ?? "Not recorded"}</dd></div>
-            <div><dt>Identity record</dt><dd><span className="badge required-user-state">{states[user.identity_state]}</span></dd></div>
-            <div><dt>Presence</dt><dd><span className={"badge " + (presence.stale ? "review-open" : presence.state === "present" ? "active" : presence.state === "missing" ? "presence-missing" : "required-user-state")}>{label}</span>
+          <dl className={"required-user-facts"+(user.purpose === "recovery" ? " required-recovery-facts" : "")}>
+            <div className="required-user-fact-wide"><dt>Username</dt><dd>{user.identity?.user_name ?? "Not recorded"}</dd></div>
+            <div className="required-user-overview-fact"><dt>Identity record</dt><dd><span className="badge required-user-state">{states[user.identity_state]}</span></dd></div>
+            <div className="required-user-overview-fact"><dt>Presence</dt><dd><span className={"badge " + (presence.stale ? "review-open" : presence.state === "present" ? "active" : presence.state === "missing" ? "presence-missing" : "required-user-state")}>{label}</span>
               {presence.stale && <span className="muted"> · Last result: {presenceNames[presence.state]}</span>}</dd></div>
-            <div><dt>Permissions</dt><dd>Not checked</dd></div>
-            {presence.checked_at && <div><dt>{presence.state === "unknown" ? "Last attempt (UTC)" : "Checked (UTC)"}</dt><dd>{new Date(presence.checked_at).toLocaleString("en-US",{timeZone:"UTC",timeZoneName:"short"})}
-              {presence.operation_id && <> · <a href={"/operations/"+encodeURIComponent(presence.operation_id)} onClick={event=>followLink(event,"/operations/"+encodeURIComponent(presence.operation_id!),navigate)}>View check</a></>}</dd></div>}
+            {user.purpose === "automation" ? <>
+              {(["group","domain_role"] as const).map(kind => {
+                const access = administrator;
+                const state = access?.[kind] ?? "not_checked";
+                return <div key={kind}><dt>{kind === "group" ? "Administrators group" : "Domain administrator role"}</dt><dd><span className={"badge " + (access?.stale ? "review-open" : state === "verified" ? "active" : state === "missing" ? "presence-missing" : "required-user-state")}>{access?.stale ? "Check out of date" : assignmentNames[state]}</span></dd></div>;
+              })}
+
+            </> : <div className="required-user-overview-fact"><dt>Permissions</dt><dd>Not checked</dd></div>}
+
+            {user.purpose === "recovery" && (["mfa_exemption","network_boundary"] as const).map(control => {
+              const policy = consolePolicy;
+              const state = policy?.state === "stale" ? "stale" : policy?.[control] ?? "not_checked";
+              return <div key={control}><dt>{control === "mfa_exemption" ? "Console MFA exemption" : "Approved-network restriction"}</dt>
+                <dd><span className={"badge " + (state === "verified" ? "active" : state === "drift" ? "presence-missing" : state === "stale" ? "review-open" : "required-user-state")}>{policyNames[state]}</span></dd></div>;
+            })}
+
           </dl>
+          {(presence.checked_at || (user.purpose === "automation" ? administrator?.checked_at : consolePolicy?.checked_at)) && <dl className="required-user-checks">
+            {user.purpose === "automation" && administrator?.checked_at && <CheckDate label="Assignments checked" kind="assignment" at={administrator.checked_at} operationId={administrator.operation_id} navigate={navigate}/>}
+            {presence.checked_at && <CheckDate label={presence.state === "unknown" ? "Presence last attempt" : "Presence checked"} kind="presence" at={presence.checked_at} operationId={presence.operation_id} navigate={navigate}/>}
+            {user.purpose === "recovery" && consolePolicy?.checked_at && <CheckDate label="Policy checked" kind="policy" at={consolePolicy.checked_at} operationId={consolePolicy.operation_id} navigate={navigate}/>}
+          </dl>}
           {user.identity && <details className="required-user-details">
             <summary>Identity details</summary>
             <dl className="required-user-facts">

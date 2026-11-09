@@ -1523,6 +1523,19 @@
           "default": null,
           "title": "Presence Connection Contract"
         },
+        "recovery_console_fingerprint": {
+          "anyOf": [
+            {
+              "pattern": "^[a-f0-9]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Recovery Console Fingerprint"
+        },
         "target": {
           "$ref": "#/$defs/LifecycleTarget"
         },
@@ -1767,6 +1780,19 @@
           "pattern": "^[0-9a-f]{64}$",
           "title": "Policy Hash",
           "type": "string"
+        },
+        "recovery_console_fingerprint": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Recovery Console Fingerprint"
         },
         "subjects": {
           "items": {

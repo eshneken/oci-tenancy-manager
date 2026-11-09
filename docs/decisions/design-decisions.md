@@ -1082,3 +1082,46 @@ uncertain removal keeps the current OTM owner and pending scope rather than clai
 The default-closed manual cleanup panel explains resources/shared scopes, empty dedicated
 compartments and additional manually created identities; this work is not automated.
 [Current flow and field map](../reference/organization-workflows.md#explicit-former-owner-disposition--7-november-2026).
+
+## 7 November 2026 — credential security lifecycle proposal
+
+Historical same-day proposal: enable the recovery-only MFA exception on demand, with cleanup committed
+before activation and an earlier four-hour clock. The user subsequently rejected extra human-account
+complexity and selected the CIDR alternative below. That temporary-exception proposal is withdrawn;
+it is not a concurrent V1 requirement. The 30-day automation-key retirement requirement is retained.
+
+## 7 November 2026 — recovery console CIDR boundary selected
+
+User approved the [chapter22 V1 design](../engineering-design/22-credential-security-lifecycles.md):
+one existing recovery user per child, standing recovery-only MFA exemption and console sign-in allowed
+only from multiple configurable source CIDRs. Explicitly deny this identity elsewhere before broader
+allows; other users retain MFA. No new human recovery account, per-window exception mutation or central
+TOTP broker. D40 first-authorized-disclosure four-hour password rotation and D54 CURRENT/manual restore
+remain unchanged. This refines D39's exception scope; provider implementation/qualification is pending.
+
+Expose `OTM_RECOVERY_CONSOLE_ALLOWED_CIDRS` through protected GitHub Environment variables and map it to
+`recovery_console.allowed_cidrs` in the strict rendered configuration. Use the existing configuration-only
+rolling release, retaining the image; no new settings UI/hot reload. Variable edits alone do not apply.
+Validate nonempty canonical lists and reject unrestricted unions. Review/confirm widening and lockout
+risk; keep exact-user deny-outside intact and record desired versus verified applied state per child.
+Actual supplied VPN ranges stay in private environment configuration, not publishable examples.
+
+User clarification: apply the boundary/exemption when creating each exact recovery identity and
+include both controls in its ongoing validation. Confirm MFA remains exempt and access outside the
+approved CIDRs remains denied; presence alone is insufficient. Re-enabled MFA or weakened rules are
+policy drift; incomplete inspection is unverified, not success. Both block readiness/new disclosure
+until resolved through the existing authorized workflow. No control applies to unrelated identities.
+
+Automation keys still retire by 30 days from original creation/upload, with proposed day29 preparation:
+stage private material in Vault, upload public key, independently verify new signer, switch exact binding,
+drain bounded old use and verify old deletion. Capacity/unknown effects retain overdue obligations.
+Reuse existing operations and records; no extra coordinator/journal/table or live mutation is added.
+
+## 9 November 2026 — Read-only automation administrator assignments
+
+Following UI review, user approved the next UI-verifiable slice to check automation administrator
+membership separately from account presence. Scope is exact built-in Administrators-group and
+identity-domain administrator-role assignments, using captured references and the existing queued
+read/evidence mechanism. Broader effective privilege proof, repair and real provider qualification
+remain distinct. Complete negative reads mean Missing or disabled; incomplete/denied/legacy reads
+mean Unable to verify. Simulation labels remain explicit.

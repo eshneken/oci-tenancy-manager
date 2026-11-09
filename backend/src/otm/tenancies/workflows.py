@@ -69,9 +69,11 @@ class OrganizationWorkflows:
         cost_collections=None,
         mail_policy=None,
         notifications=None,
+        recovery_console=None,
     ):
         self.store, self.enqueuer, self.policy, self.facade = store, enqueuer, policy, facade
         self.mail_policy, self.notifications = mail_policy, notifications
+        self.recovery_console = recovery_console
         self.configuration_checks = configuration_checks
         self.presence_checks = None
         self.cost_collections = cost_collections
@@ -1251,6 +1253,9 @@ class OrganizationWorkflows:
             whole_tenancy_deletion=deletion_plan is not None,
             presence_connection_contract="simulated-user-presence-1"
             if command.action in {"create_tenancy", "import_tenancy"}
+            else None,
+            recovery_console_fingerprint=self.recovery_console.fingerprint
+            if command.action in {"create_tenancy", "import_tenancy"} and self.recovery_console
             else None,
             onboarding_version=3
             if command.action in {"create_tenancy", "import_tenancy"}

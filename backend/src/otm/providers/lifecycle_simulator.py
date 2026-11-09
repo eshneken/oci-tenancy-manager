@@ -17,10 +17,14 @@ from otm.tenancies.views import CompartmentOption, CreationRegion
 # Synthetic IDs are deterministic across process restarts; no external OCI effect is claimed.
 class SimulatedLifecycleFacade:
     # Resolve trusted scope from the same explicit local sandbox policy used by the worker.
-    def __init__(self, policy: InspectionPolicy):
+    def __init__(
+        self, policy: InspectionPolicy, *, recovery_console=None, recovery_console_loader=None
+    ):
         from otm.providers.configuration_simulator import SimulatedConfigurationFacade
 
         self.policy = policy
+        self.recovery_console = recovery_console
+        self.recovery_console_loader = recovery_console_loader
         self.configuration_facade = SimulatedConfigurationFacade(policy)
         self._member_access = {}
 
@@ -91,6 +95,18 @@ class SimulatedLifecycleFacade:
     # Each bounded capability verifies the same target; a real adapter requires separate
     # qualification.
     def onboarding_step(self, intent, key, discovery):
+        current_console = (
+            self.recovery_console_loader()
+            if self.recovery_console_loader
+            else self.recovery_console
+        )
+        if intent.recovery_console_fingerprint is not None and (
+            current_console is None
+            or current_console.fingerprint != intent.recovery_console_fingerprint
+            or self.recovery_console is None
+            or self.recovery_console.fingerprint != intent.recovery_console_fingerprint
+        ):
+            raise ValueError("TARGET_CHANGED")
         expected = self.inspect_onboarding(intent, self.onboarding_handoff(intent))
         if discovery != expected.model_dump(mode="json") or key not in {
             "establish_automation",
@@ -105,12 +121,27 @@ class SimulatedLifecycleFacade:
     def capture_onboarding_users(self, intent, discovery):
         self.onboarding_step(intent, "verify_required", discovery)
         suffix = intent.pending_tenancy_id.hex
+        from otm.providers.recovery_console_simulator import configured_console_capture
+
+        capture = (
+            configured_console_capture(
+                discovery["domain_ocid"], "recovery-" + suffix, suffix, self.recovery_console
+            )
+            if intent.recovery_console_fingerprint
+            else None
+        )
+        from otm.providers.administrator_access_simulator import configured_administrator_capture
+
         return OnboardingUsers(
             workspace_id=intent.workspace_id,
             tenancy_ocid=intent.target.tenancy_ocid,
             parent_tenancy_ocid=intent.parent_tenancy_ocid,
             organization_id=intent.organization_id,
             domain_ocid=discovery["domain_ocid"],
+            recovery_console=capture,
+            automation_administrator=configured_administrator_capture(
+                discovery["domain_ocid"], "automation-" + suffix, suffix
+            ),
             automation=ObservedRequiredUser(
                 domain_ocid=discovery["domain_ocid"],
                 scim_resource_id="automation-" + suffix,

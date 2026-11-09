@@ -7,6 +7,11 @@
 
 ## Read this first
 
+The [7 November credential-lifecycle design](22-credential-security-lifecycles.md) specifies
+configurable recovery-console CIDRs and 30-day key retirement using existing configuration, managed
+binding, credential/version and operation records. Additional fields remain implementation work;
+no migration or runtime storage change is implied by either chapter.
+
 This is the full application data inventory: organization, tenancy identity, associations, durable
 operations, configuration, managed objects, access/credentials, financial observations, notification,
 audit, recurring work and recovery. It describes where a field lives, which values are derived,
@@ -2124,3 +2129,42 @@ outcome audit JSON/verified step evidence; the check table's results remain prov
 Frozen role-person/admin-grant references, routing revision and original/effective contacts live in
 existing outbox intent JSON. New summary fields are derived read-only UI metadata. Existing ER table
 relationships remain unchanged; application validators bind typed nested fields to stored scope/hash.
+
+
+## Implemented recovery-policy evidence subset — 7 November 2026
+
+This [read-only UI checkpoint](../reference/recovery-console-verification.md) adds no table/migration.
+The proposed full credential model remains future work. Existing immutable JSON evidence carries:
+
+| Record / field | Persisted structure and purpose |
+| --- | --- |
+| Organization intent `recovery_console_fingerprint` | Optional accepted desired CIDR-union SHA256; no private ranges in intent; absent fields omit from historical bytes |
+| Onboarding `required_users.recovery_console.binding` | Exact `application_id`, `policy_id`, `perimeter_id`, `group_id`, `allow_rule_id`, `deny_rule_id` from producer setup capture |
+| Capture `scim_resource_id`, `facts.domain_ocid` | Exact recovery identity/domain; checked against the independently captured permanent user |
+| Capture `facts` | Private `application_id`, `policy_id`, `perimeter_id`, `assigned`, `enabled`, `authorized`, `complete`, ordered `rules` and `perimeter.allowed_cidrs` |
+| Each normalized rule | `id`, `enabled`, full resolved `subjects` (null means all), `effect`, `mfa`, `perimeter_id`, `group_id`, explicit `supported`; unqualified shapes cannot verify |
+| Presence-check context `recovery_console_fingerprint` | Current desired union digest bound to check admission/dispatch/publication; does not imply applied state |
+| Sealed outcome `recovery_console.context` | Same `workspace_id`, `operation_id`, `step_key`, `attempt_id`, `intent_revision`, `execution_generation`, `connection_id`, `connection_revision` as the recovery presence read |
+| Sealed outcome `target`, `checked_at` | Same exact recovery target/binding generation/domain/SCIM/provider IDs as the admitted subject; dated read evidence inside the attempt window |
+| Sealed outcome `result` | Separate `state`, `mfa_exemption`, `network_boundary`, `desired_fingerprint`, full `observed_fingerprint`, closed `safe_code`; no raw ranges/rules |
+| Public `RecoveryConsoleView` | `state`, separate control results, `checked_at`, `operation_id`, desired/observed hashes; shared by inventory/detail, stale after policy/binding/time changes |
+
+The original two presence observations remain distinct. Policy results live in the existing immutable
+outcome referenced by `otm_user_presence_check.evidence_event_id`, not an extra state table. Private
+CIDRs/rules remain server-side onboarding evidence and private backups; Operations/audit/CSV/public
+DTOs retain safe projections. No credential plaintext or MFA seeds are added. No policy-write/rollout
+or API-key-age schema is claimed by this read-only subset; those require their own reviewed fields.
+
+## Automation assignment evidence — 9 November 2026
+
+The [exact field map](../reference/administrator-assignments.md#fields-and-persistence) uses existing
+onboarding outcome and required-user-check outcome JSON. `required_users.automation_administrator`
+retains expected SCIM group/application/role references plus independent assignment facts.
+`administrator_access` on check evidence retains the exact read context/target, checked time and two
+closed statuses. `RequiredUserRecord.administrator_access` and
+`RequiredUsersSummary.administrator_access` are derived views over this same evidence. No new table,
+foreign key or migration is introduced; older JSON omits these optional source fields.
+
+Checked-date footer formatting (9 November) derives date-only UTC labels from existing `checked_at`
+and exact check links from existing `operation_id` fields. The underlying UTC instants remain intact;
+this presentation refinement adds no stored field, table, index or migration.

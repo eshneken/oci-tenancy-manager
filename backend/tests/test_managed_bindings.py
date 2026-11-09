@@ -203,3 +203,29 @@ def test_insert_fault_normalization_and_retirement_scope(registry):
     statement = connection.execute.call_args.args[0]
     assert statement.compile().params["state"] == "retired"
     assert "workspace_id" in str(statement) and "tenancy_id" in str(statement)
+
+
+# JSONB list encoding must retain normalized policy tuples without blocking valid setup capture.
+def test_policy_capture_jsonb_round_trip(registry):
+    from otm.providers.recovery_console_simulator import configured_console_capture
+    from otm.recovery_console import parse_release_cidrs
+
+    c = scenario(registry)
+    capture = configured_console_capture(
+        c.users.domain_ocid,
+        c.users.recovery.scim_resource_id,
+        "binding-round-trip",
+        parse_release_cidrs("198.51.100.0/24,2001:db8::/32"),
+    )
+    c.users = c.users.model_copy(update={"recovery_console": capture})
+    data = OnboardingEvidence(
+        step="capture_required_users",
+        outcome="verified",
+        safe_code="ONBOARDING_VERIFIED",
+        required_users=c.users,
+    ).model_dump(mode="json")
+    c.event.update(data=data, data_hash=canonical_hash(data))
+    assert isinstance(data["required_users"]["recovery_console"]["facts"]["rules"], list)
+    connection = connection_for(c)
+    with patch("otm.storage.managed_bindings.require_transaction"):
+        assert len(capture_bindings(connection, c.row, c.intent, c.users, c.event_id, NOW)) == 3

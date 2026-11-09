@@ -1,5 +1,7 @@
 # Accepted decisions
 
+Selected refinement: [7 November recovery-console CIDR decision](design-decisions.md#7-november-2026--recovery-console-cidr-boundary-selected), including configurable deployment input and retained 30-day key retirement.
+
 - [D1–D17 engineering decisions](engineering-review-decisions.md)
 - [D18–D58 design decisions](design-decisions.md)
 

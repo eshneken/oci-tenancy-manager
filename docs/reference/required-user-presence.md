@@ -12,6 +12,11 @@ access-assignment/profile or separate credential/context generation heads. These
 remain future privilege/repair work.
 Never reconstruct a required identity from a username, email, successful setup label or naming rule.
 
+The [recovery-console policy extension](recovery-console-verification.md) adds a separate evaluator
+and separately sealed result. It does not redefine this existence-only provider contract. Policy
+drift cannot turn a present user into Missing, and a positive presence result cannot establish policy
+health. Both are shown together in the Required users UI; privilege/password actions remain deferred.
+
 ## What a result establishes
 
 | State | Required evidence / interpretation |
@@ -110,3 +115,11 @@ Not checked. Legacy unbound/unconfigured children cannot check. Simulation recon
 producer fixtures and does not verify live OCI. Assignments/profiles are deferred until separately
 needed for privileges/repair; no credential IDs are fabricated. Daily scheduling, emails, credential
 custody, readiness and repair remain outside this checkpoint. Local simulation qualification and the main-preview upgrade pass; the parallel preview is unchanged. [Final receipt](../history/manual-presence-checkpoint-2026-11-06.md).
+
+### Responsive tenancy detail layout
+
+The Automation user and Recovery user cards pair short status facts on laptop screens. Usernames keep full-width rows;
+dated presence/assignment/policy evidence follows all badges in a two-column footer; expanded identity details retain wrapping
+identifiers. The cards stack at 900px and below; their facts stack at 700px and below. Costs and overrides are also paired on
+laptop screens (above 1000px) and stack on smaller screens. This changes presentation only: the
+stored observations, refresh commands, policy gates and timestamps remain unchanged.

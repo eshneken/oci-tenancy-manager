@@ -130,6 +130,11 @@ def test_real_http_login_replay_and_logout(login_case):
         again = client.post("/api/auth/local/sign-in", json=body, headers=HEADERS)
         assert again.status_code == 401 and "set-cookie" not in again.headers
         assert len(records(c)[1]) == 1
+        stored = records(c)[1][0]
+        assert stored["idle_timeout_seconds"] == c.settings.sessions.idle_timeout_seconds
+        assert stored["expires_at"] - stored["created_at"] == timedelta(
+            seconds=c.settings.sessions.absolute_timeout_seconds
+        )
         assert client.post("/api/logout", headers=HEADERS).status_code == 204
         assert client.get("/api/session").status_code == 401
     assert records(c)[1][0]["revoked_at"] is not None

@@ -9,7 +9,7 @@ from otm.storage.tables import audit_event
 from otm.storage.tables import managed_object_binding as bindings
 from otm.storage.tables import user_presence_check as checks
 from otm.storage.tables import user_presence_connection as connections
-from otm.tenancies.presence import presence_views
+from otm.tenancies.presence import administrator_view, console_view, presence_views
 from otm.tenancies.presence_context import bound_snapshot
 from otm.tenancies.presence_contracts import RequiredUsersSummary, UserPresenceView
 from otm.tenancies.presence_records import decode_intent, operation_rows
@@ -56,6 +56,7 @@ def summaries(service, connection, workspace, children):
     policy = service.policy_loader() if service.policy is not None else None
     selected = service.policy if policy is not None and policy.policy == service.policy else None
     now = service.store.clock()
+    console_policy = service.console_policy()
     current = defaultdict(list)
     for row in connection.execute(
         select(connections).where(
@@ -138,12 +139,18 @@ def summaries(service, connection, workspace, children):
                 selected,
                 current[identifier][0] if current[identifier] else None,
                 identities[identifier],
+                console_policy,
             )
             row = latest.get(identifier)
             views = presence_views(snapshot, row, row, now)
             digest = canonical_hash(snapshot.model_dump(mode="json")) if snapshot else None
             result[identifier] = summarize(
                 views, digest is not None and digest in pending[identifier]
+            ).model_copy(
+                update={
+                    "recovery_console": console_view(snapshot, row, row, now),
+                    "administrator_access": administrator_view(snapshot, row, row, now),
+                }
             )
         except (ValueError, KeyError, TypeError):
             # Preserve the rest of the page without inventing facts for a corrupt child.

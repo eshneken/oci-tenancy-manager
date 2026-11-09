@@ -571,19 +571,23 @@ export function Tenancies({
                 )}
               </section>
               <RequiredUsers key={"required-users-"+tenant.id} tenancyId={tenant.id} expired={expired} navigate={navigate}/>
+              <div className="tenancy-summary-grid">
               <CostPanel key={"costs-"+tenant.id} cost={tenant.costs} tenancyId={tenant.id} expired={expired}/>
               {tenant.status === "active" && (
                 <section className="operation-panel tenancy-overrides" aria-labelledby="tenancy-overrides-title">
-                  <h2 id="tenancy-overrides-title">Overrides</h2>
+                  <div className="cost-panel-heading">
+                    <h2 id="tenancy-overrides-title">Overrides</h2>
+                    <div className="tenancy-override-actions"><TenancyOverride key={tenant.id} tenancyId={tenant.id} expired={expired} navigate={navigate} /></div>
+                  </div>
                   {tenant.override_categories?.length ? (
                     <>
                       <p>{tenant.override_categories.map(category => overrideNames[category]).join(", ")}</p>
                       <p className="muted">{tenant.desired_configuration_id && tenant.desired_configuration_id === tenant.last_verified_configuration_id ? "Verified in simulation" : "Verification pending"}</p>
                     </>
                   ) : <p className="muted">All categories inherit the assigned baseline. No tenancy-specific overrides are configured.</p>}
-                  <div className="tenancy-override-actions"><TenancyOverride key={tenant.id} tenancyId={tenant.id} expired={expired} navigate={navigate} /></div>
                 </section>
               )}
+              </div>
               {tenant.status==="active"&&<ConfigurationRollout key={tenant.id} tenancyId={tenant.id} selectedId={tenant.baseline_version_id} initialOperationId={detail.data.configuration_operation_id??undefined} expired={expired} navigate={navigate}/>}
               <section className="table-panel">
                 <div className="table-toolbar tenancy-members-toolbar">

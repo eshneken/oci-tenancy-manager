@@ -12,6 +12,14 @@ repair, recovery readiness and daily scheduling below remain proposed/unqualifie
 
 ## Scope and authority
 
+The [selected recovery validation contract](22-credential-security-lifecycles.md#provisioning-and-ongoing-recovery-user-validation)
+requires setup and subsequent recovery checks to verify BOTH the exact recovery-only console MFA
+exemption and deny-outside enforcement for the current approved CIDRs. User presence or missing MFA
+enrollment is insufficient. Unexpected MFA enforcement or unrestricted access is policy drift;
+incomplete/stale/denied inspection is Unable to verify. Block readiness/new disclosure until verified;
+read-only checks never silently change policy. This remains future readiness validation, separate
+from the currently implemented presence-only refresh; scheduling remains separately qualified.
+
 This slice designs the tenancy-detail **Required access** page, scoped observation acquisition and
 repair preview. It preserves owner full administration, the existing organization/prototype behavior,
 D19 independent recovery, D27 identity domains, and the single OTM root policy from D30.
@@ -62,7 +70,7 @@ The current modal presents the exact scope and a simulated Start repair action w
 | Required privileges | Profile verified, mismatch, Unable to verify | Versioned profile requirements plus qualified evidence for its required operations; successful generic reads are insufficient |
 | Console capability | Disabled by intent, observed enabled/disabled, Unable to verify | Separate observed capabilities; intent alone must not be labeled observed enforcement |
 | MFA/enrollment | Observed enrolled, not enrolled, unknown/not verified | Supported provider enrollment/policy facts and manual qualification where required; no factors/seeds are retrieved |
-| Recovery console readiness | Qualified, Exemption not verified, Not qualified, Unable to verify | Exact recovery-only MFA-exemption scope plus independent custody/sign-in evidence; never inferred from user presence |
+| Recovery console readiness | Qualified, Exemption not verified, Not qualified, Unable to verify | Exact recovery-only effective MFA exemption AND current approved CIDR allow/deny enforcement, plus same-account custody/sign-in qualification; never inferred from presence or enrollment alone |
 | Freshness | Current, stale, pending acquisition, unable to verify | Captured time plus versioned freshness policy, current head and coverage/generation checks |
 
 The page is a derived summary of the separate automation and recovery checks. Display both source
@@ -82,7 +90,7 @@ and provider pilot; no destructive probe is run simply to make the UI green.
 
 | Condition | Offered action | Completion boundary |
 |---|---|---|
-| Recovery user confirmed missing, automation sufficient | Preview → accepted recreate-user/grants operation | New binding recorded; identity/grant checks pass. Required enrollment remains a separate manual obligation |
+| Recovery user confirmed missing, automation sufficient | Preview → accepted recreate-user/grants operation | New binding and grants verified; exact-user MFA exemption, current CIDR deny-outside rules and same-account custody/sign-in qualification required before readiness; no recovery MFA-enrollment requirement |
 | Required grant differs, signer sufficient for exact change | Preview exact grant/policy delta | Current scoped observation matches; coordinate the one managed policy revision if it changes |
 | Automation cannot authenticate / cannot verify authority | Guidance only; restore through qualified independent recovery/manual process | Fresh authorized evidence, then new preview; no parent-membership bypass |
 | User present but recovery exemption/custody unqualified | Verify exact recovery-only sign-in policy and independent procedure | Evidence of policy scope/precedence, custody and successful recovery checks; never inferred from presence or password retrieval |
@@ -429,3 +437,12 @@ exact-child deep link; heading focus follows terminal success or nonauthorizatio
 never 401/403. Inventory Config: and Users: labels/ARIA names are distinct, while detail configuration
 labels retain context. Relative hidden-description positioning preserves the actual 320-pixel body
 width without page-level clipping. Final summary qualification and the preserved-data main update pass.
+
+## Automation assignment check implementation — 9 November 2026
+
+The [implemented assignment boundary](../reference/administrator-assignments.md) adds two read-only,
+exact-resource assignment checks to the same required-user operation. It supersedes earlier
+presence-only/no-privilege-check statements only for the automation account's built-in Administrators
+group and domain administrator role assignments. Broader effective privileges, signer validation,
+repairs and recovery-account assignment checks remain deferred. No new access-profile tables,
+policy interpreter, credential fallback or live OCI adapter are required for this slice.

@@ -126,6 +126,13 @@ def decode_result(row, data, digest):
     ):
         raise ValueError("PRESENCE_EVIDENCE_INVALID")
     validate_result_scope(row, evidence.results)
+    if evidence.recovery_console is not None:
+        snapshot = PresenceSnapshot.model_validate_json(json.dumps(row["context"]))
+        if (
+            evidence.recovery_console.result.desired_fingerprint
+            != snapshot.recovery_console_fingerprint
+        ):
+            raise ValueError("RECOVERY_CONSOLE_CHECK_SCOPE_INVALID")
     if evidence.notice_episodes is not None:
         from otm.tenancies.presence_context import subject_scope
 
@@ -138,8 +145,23 @@ def decode_result(row, data, digest):
 
 
 # Seal results, audit and logical-step history atomically under the current attempt lock.
-def seal(connection, row, check, results, state, at, *, notice_episodes=None):
+def seal(
+    connection,
+    row,
+    check,
+    results,
+    state,
+    at,
+    *,
+    notice_episodes=None,
+    recovery_console=None,
+    administrator_access=None,
+):
     validate_result_scope(check, results)
+    if recovery_console is not None:
+        snapshot = PresenceSnapshot.model_validate_json(json.dumps(check["context"]))
+        if recovery_console.result.desired_fingerprint != snapshot.recovery_console_fingerprint:
+            raise ValueError("RECOVERY_CONSOLE_CHECK_SCOPE_INVALID")
     key = "required_users:" + str(check["tenancy_id"])
     code = {
         "complete": "USER_PRESENCE_CHECK_COMPLETE",
@@ -156,6 +178,8 @@ def seal(connection, row, check, results, state, at, *, notice_episodes=None):
         checked_at=at,
         results=results,
         notice_episodes=notice_episodes,
+        recovery_console=recovery_console,
+        administrator_access=administrator_access,
     )
     payload = evidence.model_dump(mode="json")
     event = uuid4()

@@ -1,5 +1,6 @@
 """Canonical identity mappings from fresh typed onboarding evidence; no access-health authority."""
 
+import json
 from uuid import uuid4
 
 from sqlalchemy import func, select, update
@@ -75,7 +76,8 @@ def capture_bindings(connection, row, intent, users, event_id, at):
     )
     if event is None or child is None or step != event_id:
         raise ValueError("MANAGED_BINDING_SOURCE_UNVERIFIED")
-    evidence = OnboardingEvidence.model_validate(event["data"])
+    # JSONB arrays represent closed tuple fields; validate their wire representation as JSON.
+    evidence = OnboardingEvidence.model_validate_json(json.dumps(event["data"]))
     if (
         canonical_hash(event["data"]) != event["data_hash"]
         or evidence.step != "capture_required_users"

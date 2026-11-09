@@ -83,7 +83,13 @@ def test_independent_recorded_and_historical_unbound_accounts(count):
         2 - count
     )
     for record in result.users:
-        assert set(record.model_dump()) == {"purpose", "identity_state", "identity", "presence"}
+        assert set(record.model_dump()) == {
+            "purpose",
+            "identity_state",
+            "identity",
+            "presence",
+            "administrator_access",
+        }
         if record.identity is not None:
             assert record.identity.domain_ocid == domain["provider_ocid"]
             assert record.identity.retired_at is None

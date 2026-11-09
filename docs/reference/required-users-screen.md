@@ -5,16 +5,26 @@ The section has two independent cards, **Automation user** and **Recovery user**
 and presence are separate. Recorded/Not recorded/Retired record describe stored mappings; they do
 not establish cloud existence or credentials. Retired record does not assert OCI account deletion.
 
-**Refresh user data** now admits an asynchronous presence-only operation when a qualified current simulated
-connection and both exact bound users exist. It does not check administrative permissions, console
-access, MFA or recovery readiness. **Permissions: Not checked** remains on both cards. The banner
-explicitly identifies local simulated fixture data; Present must never be described as live OCI
-verification. No new primary menu, daily scheduler, repair or password action is added. The
-[current confirmed-Missing alert extension](required-user-alerts.md) adds email; the original
-presence-only receipt below retains its earlier scope.
-Local qualification and the main-preview upgrade pass; the parallel test preview is unchanged. See the [final receipt](../history/manual-presence-checkpoint-2026-11-06.md).
+**Refresh user data** admits one asynchronous read when a qualified current simulated connection
+and both exact bound users exist. It now includes independent
+[automation administrator assignments](administrator-assignments.md) and
+[recovery console policy checks](recovery-console-verification.md). The automation card shows
+Administrators group and Domain administrator role; only recovery retains Permissions: Not checked.
+These checks do not establish all effective permissions, live OCI access or credential readiness.
+No daily scheduler, repair or password action is added. The
+[confirmed-Missing alert extension](required-user-alerts.md) adds email for account absence;
+assignment health does not introduce another email incident or action badge.
+The original presence checkpoint passed local qualification and its main-preview upgrade; this historical receipt does not qualify later extensions. See the [original receipt](../history/manual-presence-checkpoint-2026-11-06.md).
 
-## API and all 22 public display fields
+## Compact check dates — 9 November 2026
+
+Assignment, presence and policy dates follow all badges in each card's footer. Dates are formatted
+in UTC, displayed without times, and link directly to their own check operation. Distinct labels and
+accessible names preserve the check kind when dates match. Full instants remain in hover detail and
+`time` metadata; API/storage timestamps and 24-hour freshness rules are unchanged. Footer fields use
+two columns above 700px and stack on smaller screens. Missing operation references remain plain dates.
+
+## API and public display fields
 
 `GET /api/tenancies/{UUID}/required-users` uses current administrator/session authorization and a
 single noncacheable read-only repeatable snapshot. Workspace comes from the principal. Foreign and
@@ -79,8 +89,8 @@ not access-assignment, credential or privilege heads. No read backfills historic
   to verify. At 24 hours, Check out of date and last-result text replace a current success claim.
   A changed binding/connection/policy/child context cannot make old evidence current.
 - Identity details uses native keyboard disclosure with domain/user OCIDs, SCIM ID, UTC record/
-  retirement times and the setup link. Long IDs wrap. Cards share a row on desktop/tablet and
-  stack below 700px; disclosure expansion remains independent. Refresh/check controls stay reachable.
+  retirement times and the setup link. Long IDs wrap. Cards share a row above 900px and
+  stack at 900px and below; inner facts/footer stack at 700px and below; disclosure expansion remains independent. Refresh/check controls stay reachable.
 
 ## Qualification boundary
 
@@ -132,3 +142,13 @@ request key after an uncertain response. No API, operation, eligibility or ident
 The sole normal action mirrors Refresh costs. Automatic pending polling updates the display;
 there is no separate saved-record refresh button. No user repair, enrollment or privilege
 verification is implied. Inventory's compact Checking… indicator remains a status, not an action.
+
+The [assignment field map](administrator-assignments.md#fields-and-persistence) extends these original presence fields with optional sealed assignment evidence and derived detail/inventory statuses. Historical receipts above retain their original scope.
+
+## Recovery overview row — 9 November 2026
+
+Identity record, Presence and Permissions share one laptop row in the Recovery card; console MFA
+and network controls stay paired below it. Cards stack at 900px and below to keep tablet badge text intact; these facts stack at 700px and below. Automation and the
+compact check-date footer are unchanged. In the neighboring summary panels, Manage overrides now
+sits in the header at the same position as Refresh costs, with coordinated wrapping on compact
+laptop screens. This is presentation only; permissions remain Not checked and no checks/actions change.

@@ -19,7 +19,7 @@ is in [the engineering chapters](../engineering-design/README.md).
 - [Required users summary in Tenancies Status](required-users-summary.md) — locally qualified, main preview updated
 - [Manual presence check API, storage and authority](user-presence-checks.md)
 - [Canonical managed identity bindings](managed-object-bindings.md)
-- [Required-user presence boundary: internal foundation](required-user-presence.md)
+- [Required-user presence boundary and responsive tenancy cards](required-user-presence.md)
 - [Internal tenancy inspection](inspection.md)
 - [Lifecycle email and environment contact routing](lifecycle-email.md), including [all supported lifecycle action/failure notices](lifecycle-email.md#lifecycle-notice-parity--6-november-2026)
 - [Run the local application](local-application.md)
@@ -60,3 +60,7 @@ sections in [cost visibility](cost-visibility.md#retained-results-after-membersh
 and [presence checks](user-presence-checks.md#retained-results-after-membership-changes--7-november-2026).
 
 - [Confirmed missing required-user email: incidents, routing, fields and delivery](required-user-alerts.md)
+
+- [Recovery console checks](recovery-console-verification.md): private settings, exact setup capture and qualified independent policy/presence UI; custody/rotation remain pending.
+
+- [Automation administrator assignments](administrator-assignments.md): separate exact group/role checks and persistent detail/inventory results.

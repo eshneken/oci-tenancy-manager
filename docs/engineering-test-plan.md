@@ -1,5 +1,10 @@
 # OCI Tenancy Manager test and merge policy
 
+The [credential-lifecycle acceptance matrix](engineering-design/22-credential-security-lifecycles.md#required-acceptance-scenarios)
+adds selected recovery-console CIDR and 30-day automation-key scenarios to implementation acceptance.
+[Live qualification](how-to/real-oci-test-manifest.md#credential-security-lifecycles) remains pending;
+documentation does not count as a passed test or weaken the required D53/D56 gates.
+
 Current quality requirements and behavioral acceptance inputs. These describe required tests,
 not a claim that the production application, hosted CI or 95% measured coverage exists.
 [Chapter18](engineering-design/18-database-ci-and-build-order.md) defines implementation gates;
@@ -67,6 +72,24 @@ a 600-second aggregate integration deadline after the growing suite exceeded 420
 test failures. Individual test/browser/database limits and the 95% coverage gate are unchanged.
 Earlier timed-out runs remain incomplete evidence. A fresh complete manual-presence run now passes all 351 postgres cases in 429.457 seconds, with zero failures/errors/skips and valid JUnit. Separate unit lanes pass 1,556 backend and 446 frontend cases. The disjoint backend selections cover 1,907 tests, not an overlapping sum. [Final local receipt](history/manual-presence-checkpoint-2026-11-06.md). The earlier deadline-expired attempts supply no completed full-suite evidence. Missing, failed, skipped, cancelled, timed-out or
 invalid reports still block qualification. Do not add counts from overlapping historical runs.
+
+### Current local cadence and integration budget — 7 November 2026
+
+The user approved increasing the aggregate integration deadline to **900 seconds (15 minutes)**.
+This supersedes the earlier 600-second runner limit; it changes no individual browser/test/I/O
+limit, assertion, completeness/no-skip rule, unit-only coverage target or protected-master gate.
+The CI integration job retains its existing 25-minute outer limit for setup and the test runner.
+Historical receipts keep the actual limits and results under which they were produced.
+
+Related internal development slices may proceed through several backend/frontend steps before
+integration execution. Run focused units, static/contract checks and both full-source 95% unit-only
+gates during implementation. Author database/native/browser regressions with the feature, then
+execute the complete integration suite once a coherent end-user UI flow is ready for qualification.
+Fix failures and repeat the applicable gates before saved-preview publication or merge. An internal
+step without that final evidence is implemented/unqualified, not a completed tested milestone.
+Documentation/security reviews remain part of the relevant slices; final responsive UI review covers
+the complete interaction. This cadence applies locally only: every CI build still runs all required
+unit, database and Playwright suites. No test omission, reclassification or check bypass is authorized.
 
 ### Prototype-to-production transition
 
@@ -1227,3 +1250,49 @@ revocation/auth revision/email changes, exact target/connection/policy replaceme
 plus route/origin/transport changes and SMTP rejection/unknown behavior. Native loopback capture and
 Playwright verify real redirected messages and read-only role/routing/delivery presentation at
 1280/390/320 pixels. No live employee records, outgoing real email or production simulator controls.
+
+
+## Recovery console policy UI regression subset — 7 November 2026
+
+The [current source/reference](reference/recovery-console-verification.md) and
+[manual UI steps](how-to/recovery-policy-ui-checkpoint.md) distinguish this read-only simulated
+checkpoint from later custody, rotation, repair and real-provider qualification. Required evidence:
+
+- `test_recovery_console.py` / `test_recovery_release.py`: strict multi-family CIDRs/unrestricted
+  unions, private renderer, complete ordered policy/MFA/selectors/fallback, wrong scope/time and
+  safe evidence fingerprints/errors.
+- `test_recovery_console_checks.py` / `test_local_worker.py`: both setup origins, absent/drifted
+  capture rejection, replacement-identity isolation, current desired loader in the registered
+  lifecycle worker, independent presence compatibility, stale proof and exact sealed context.
+- `test_recovery_console_checks_postgres.py`: real setup/readback/persistence, desired-policy
+  changes, denied/MFA/fallback drift, old queued reads, legacy non-backfill and API/audit/CSV privacy.
+- Frontend required-user units plus native `simulation.spec.ts`: independent labels/links, explicit
+  simulated verification after both create/import, no CIDR disclosure, persisted asynchronous
+  refresh and responsive1280/768/390/320 captures through the existing complete browser journey.
+
+No test here claims live OCI precedence or sign-in, fleet rollout, full recovery-user recreation,
+password retrieval/rotation, key rotation or installed daily scanning. Those retained requirements
+remain in the [real-OCI manifest](how-to/real-oci-test-manifest.md#credential-security-lifecycles).
+
+## Automation assignments — 9 November 2026
+
+Unit coverage includes exact user/domain/group/application/role binding, complete authorized direct
+and group role grants, missing/disabled assignments, partial/denied/unsupported reads, wrong-scope,
+late/future evidence, legacy absence, connection changes and sealed provenance. Disposable PostgreSQL
+covers durable readback, independent presence, inventory/detail agreement, negative results and late
+publication. Playwright creates/imports new simulated tenancies, refreshes assignment evidence,
+checks separate labels/operation links, navigates/reloads retained results and exercises laptop/mobile
+layout. No live qualification or product fault controls are implied. See the
+[implemented field map](reference/administrator-assignments.md) and real-provider test manifest.
+
+## Check-date footers and local sessions — 9 November 2026
+
+Unit regressions cover date-only UTC formatting at a local/UTC day boundary, distinct assignment/
+presence/policy destinations, full timestamp metadata and a missing-operation non-link fallback.
+Playwright checks dates below all badges, paired laptop versus stacked mobile fields, exact operation
+links and full-page24px section gaps in create/import flows. Session-policy unit tests retain hosted
+1800/28800-second limits while local becomes28800/28800; the real login PostgreSQL test verifies issued
+stored policy and existing cleanup/expiry cases remain mandatory. Existing sessions are not extended.
+
+Cleanup PostgreSQL fixtures explicitly retain an already-issued 1,800-second policy, so laptop
+default changes cannot silently relax the mandatory 30-minute idle expiry/polling tests.

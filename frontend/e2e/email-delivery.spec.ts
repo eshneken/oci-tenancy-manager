@@ -90,6 +90,6 @@ test("inspect redirected lifecycle delivery and immutable identities through rea
  const users=page.getByRole("region",{name:"Required users",exact:true});
  await expect(users.getByText("Missing",{exact:true})).toHaveCount(1);
  await expect(users.getByText("Present",{exact:true})).toHaveCount(1);
- await expect(users.getByText("Not checked",{exact:true})).toHaveCount(2);
+ await expect(users.getByText("Not checked",{exact:true})).toHaveCount(3);
  expect(errors).toEqual([]);
 });

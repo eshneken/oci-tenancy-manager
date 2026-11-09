@@ -14,7 +14,13 @@ from otm.storage.tables import administrator, audit_event, operation, tenancy
 from otm.storage.tables import user_presence_check as checks
 from otm.tenancies.contracts import ActionReceipt
 from otm.tenancies.presence_context import capture_snapshot
-from otm.tenancies.presence_contracts import PresenceCheckIntent, PresenceSnapshot, UserPresenceView
+from otm.tenancies.presence_contracts import (
+    AdministratorAccessView,
+    PresenceCheckIntent,
+    PresenceSnapshot,
+    RecoveryConsoleView,
+    UserPresenceView,
+)
 from otm.tenancies.presence_records import decode_intent, decode_result, operation_rows
 
 FRESH_FOR = timedelta(hours=24)
@@ -23,13 +29,18 @@ FRESH_FOR = timedelta(hours=24)
 # One service uses the existing session/store locks and explicit deployment policy/queue.
 class PresenceChecks:
     # No default adapter or authority is invented when the service is not composed.
-    def __init__(self, store, *, policy, policy_loader, enqueuer):
+    def __init__(self, store, *, policy, policy_loader, enqueuer, recovery_console_loader=None):
+        self.recovery_console_loader = recovery_console_loader
         self.store, self.policy, self.policy_loader, self.enqueuer = (
             store,
             policy,
             policy_loader,
             enqueuer,
         )
+
+    # Reload operator-owned desired policy only; this does not apply settings to any provider.
+    def console_policy(self):
+        return self.recovery_console_loader() if self.recovery_console_loader else None
 
     # Current server-side selection gates manual work and invalidates replaced provider context.
     def available_policy(self):
@@ -42,13 +53,15 @@ class PresenceChecks:
 
     # Freeze only a server-resolved registered child; callers cannot supply authority references.
     def snapshot(self, connection, workspace, child):
-        return capture_snapshot(connection, workspace, child, self.available_policy())
+        return capture_snapshot(
+            connection, workspace, child, self.available_policy(), self.console_policy()
+        )
 
     # Page refresh performs bounded local reads, never provider acquisition or historical backfill.
     def project(self, connection, workspace, child, directory):
         current = self.policy_loader() if self.policy is not None else None
         selected = self.policy if current is not None and current.policy == self.policy else None
-        snapshot = capture_snapshot(connection, workspace, child, selected)
+        snapshot = capture_snapshot(connection, workspace, child, selected, self.console_policy())
         reason = (
             "tenancy_inactive"
             if child["status"] != "active"
@@ -99,14 +112,25 @@ class PresenceChecks:
         views = presence_views(
             snapshot, latest, event if latest is not None else None, self.store.clock()
         )
+        assignments = administrator_view(
+            snapshot, latest, event if latest is not None else None, self.store.clock()
+        )
         return directory.model_copy(
             update={
                 "check_available": reason is None,
                 "check_unavailable_reason": reason,
                 "pending_operation_id": pending,
+                "recovery_console": console_view(
+                    snapshot, latest, event if latest is not None else None, self.store.clock()
+                ),
                 "users": tuple(
                     user.model_copy(
-                        update={"presence": views.get(user.purpose, UserPresenceView())}
+                        update={
+                            "presence": views.get(user.purpose, UserPresenceView()),
+                            "administrator_access": assignments
+                            if user.purpose == "automation"
+                            else AdministratorAccessView(),
+                        }
                     )
                     for user in directory.users
                 ),
@@ -259,7 +283,7 @@ def presence_views(snapshot, latest, event, now):
     # Validate the original sealed context first; only harmless registry metadata is ignored here.
     # Dispatch/publication still compare the complete snapshot, including its revision.
     stored = PresenceSnapshot.model_validate_json(json.dumps(latest["context"]))
-    excluded = {"tenancy_revision", "tenancy_name"}
+    excluded = {"tenancy_revision", "tenancy_name", "recovery_console_fingerprint"}
     if snapshot is None or snapshot.model_dump(exclude=excluded) != stored.model_dump(
         exclude=excluded
     ):
@@ -273,3 +297,49 @@ def presence_views(snapshot, latest, event, now):
         )
         for result in evidence.results
     }
+
+
+# Require current desired policy and the original exact subject/attempt for current labels.
+def console_view(snapshot, latest, event, now):
+    desired = snapshot.recovery_console_fingerprint if snapshot else None
+    base = RecoveryConsoleView(desired_fingerprint=desired)
+    if snapshot is None or desired is None:
+        return base.model_copy(
+            update={"state": "unknown", "mfa_exemption": "unknown", "network_boundary": "unknown"}
+        )
+    if latest is None:
+        return base
+    evidence = decode_result(latest, event["data"], event["data_hash"])
+    observed = evidence.recovery_console
+    # Presence compatibility excludes policy changes; policy evidence must compare them explicitly.
+    views = presence_views(snapshot, latest, event, now)
+    if not views or observed is None:
+        return base
+    matching = observed.result.desired_fingerprint == desired
+    fresh = observed.checked_at <= now < observed.checked_at + FRESH_FOR
+    return RecoveryConsoleView(
+        state=observed.result.state if matching and fresh else "stale",
+        mfa_exemption=observed.result.mfa_exemption,
+        network_boundary=observed.result.network_boundary,
+        checked_at=observed.checked_at,
+        operation_id=latest["operation_id"],
+        desired_fingerprint=desired,
+        observed_fingerprint=observed.result.observed_fingerprint,
+    )
+
+
+# Detail reads reuse sealed exact-subject evidence and the presence freshness/context boundary.
+def administrator_view(snapshot, latest, event, now):
+    if latest is None:
+        return AdministratorAccessView()
+    evidence = decode_result(latest, event["data"], event["data_hash"])
+    check = evidence.administrator_access
+    if check is None or not presence_views(snapshot, latest, event, now):
+        return AdministratorAccessView()
+    return AdministratorAccessView(
+        group=check.result.group,
+        domain_role=check.result.domain_role,
+        checked_at=check.checked_at,
+        operation_id=latest["operation_id"],
+        stale=not check.checked_at <= now < check.checked_at + FRESH_FOR,
+    )

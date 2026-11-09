@@ -27,7 +27,7 @@ def app_settings():
 
 # Verify approved defaults and server-selected deadlines without extending preexisting sessions.
 def test_defaults_and_configurable_new_session_lifetime(app_settings):
-    assert app_settings.sessions.idle_timeout_seconds == 1800
+    assert app_settings.sessions.idle_timeout_seconds == 28800
     assert app_settings.sessions.absolute_timeout_seconds == 28800
     lifetime = session_lifetime(NOW, app_settings.sessions)
     assert lifetime.expires_at == NOW + timedelta(hours=8)
@@ -235,3 +235,11 @@ def test_cli_cleanup_success(capsys):
         assert main(["cleanup-sessions", "--config", str(CONFIG)]) == 0
     assert json.loads(capsys.readouterr().out)["deleted"] == 2
     engine.dispose.assert_called_once()
+
+
+# Local convenience must not relax either hosted environment's issued-session policy.
+@pytest.mark.parametrize("profile", ["staging", "production"])
+def test_hosted_session_timeouts_unchanged(profile):
+    settings = load_settings(CONFIG.parent / (profile + ".application.toml"))
+    assert settings.sessions.idle_timeout_seconds == 1800
+    assert settings.sessions.absolute_timeout_seconds == 28800

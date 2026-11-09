@@ -1,5 +1,65 @@
 {
   "$defs": {
+    "AdministratorAccessView": {
+      "additionalProperties": false,
+      "properties": {
+        "checked_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Checked At"
+        },
+        "domain_role": {
+          "default": "not_checked",
+          "enum": [
+            "not_checked",
+            "verified",
+            "missing",
+            "unknown"
+          ],
+          "title": "Domain Role",
+          "type": "string"
+        },
+        "group": {
+          "default": "not_checked",
+          "enum": [
+            "not_checked",
+            "verified",
+            "missing",
+            "unknown"
+          ],
+          "title": "Group",
+          "type": "string"
+        },
+        "operation_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Operation Id"
+        },
+        "stale": {
+          "default": false,
+          "title": "Stale",
+          "type": "boolean"
+        }
+      },
+      "title": "AdministratorAccessView",
+      "type": "object"
+    },
     "AssociationView": {
       "additionalProperties": false,
       "properties": {
@@ -450,9 +510,105 @@
       "title": "PersonOption",
       "type": "object"
     },
+    "RecoveryConsoleView": {
+      "additionalProperties": false,
+      "properties": {
+        "checked_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Checked At"
+        },
+        "desired_fingerprint": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Desired Fingerprint"
+        },
+        "mfa_exemption": {
+          "default": "not_checked",
+          "enum": [
+            "not_checked",
+            "verified",
+            "drift",
+            "unknown"
+          ],
+          "title": "Mfa Exemption",
+          "type": "string"
+        },
+        "network_boundary": {
+          "default": "not_checked",
+          "enum": [
+            "not_checked",
+            "verified",
+            "drift",
+            "unknown"
+          ],
+          "title": "Network Boundary",
+          "type": "string"
+        },
+        "observed_fingerprint": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observed Fingerprint"
+        },
+        "operation_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Operation Id"
+        },
+        "state": {
+          "default": "not_checked",
+          "enum": [
+            "not_checked",
+            "verified",
+            "drift",
+            "unknown",
+            "stale"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "title": "RecoveryConsoleView",
+      "type": "object"
+    },
     "RequiredUsersSummary": {
       "additionalProperties": false,
       "properties": {
+        "administrator_access": {
+          "$ref": "#/$defs/AdministratorAccessView"
+        },
         "automation": {
           "$ref": "#/$defs/UserPresenceView"
         },
@@ -463,6 +619,9 @@
         },
         "recovery": {
           "$ref": "#/$defs/UserPresenceView"
+        },
+        "recovery_console": {
+          "$ref": "#/$defs/RecoveryConsoleView"
         },
         "state": {
           "default": "not_checked",

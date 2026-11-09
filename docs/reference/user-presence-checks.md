@@ -6,9 +6,20 @@ Tenancies → a registered child → **Required users** now supports **Refresh u
 both exact bound subjects independently through an explicitly selected simulator. Present means
 existence in that simulator's qualified fixture, not live OCI existence, usable signing credentials,
 administrative privileges, console access, MFA or recovery readiness. **Permissions: Not checked**
-remains visible on both cards. The original presence-only checkpoint added no email. The
+remains on recovery only; the [automation assignment extension](administrator-assignments.md) now
+checks its exact group and domain-role assignments separately. The original presence-only checkpoint added no email. The
 [new confirmed-Missing alert slice](required-user-alerts.md) adds scoped notices; daily scheduling,
 repair and password actions remain deferred.
+
+## Recovery-policy extension — 7 November 2026
+
+[Recovery console checks](recovery-console-verification.md#current-ui-checkpoint) now accompany
+manual refresh as independent controls. Presence semantics and Missing episodes remain unchanged.
+New setup can retain private exact policy facts; refresh compares them with current desired policy
+without treating desired settings as observed state. Separate MFA/network results, dated policy links
+and inventory drift indicators do not certify credentials, privileges or live provider qualification.
+The [qualified UI checkpoint receipt](../history/recovery-policy-ui-checkpoint-2026-11-07.md) now records
+complete gates and main-only preservation. Daily CronJob installation and real provider qualification remain deferred.
 
 ## API, admission and replay
 
@@ -188,4 +199,11 @@ viewing a page cannot renew them. A newer unavailable result never borrows an ol
 
 New alert-enabled checks now carry optional incident state and may stage confirmed-Missing notices;
 see the [complete alert contract](required-user-alerts.md). This supersedes earlier no-email scope
-only for qualified Missing notifications. Daily scheduling, privilege checks and repairs remain deferred.
+only for qualified Missing notifications. Daily scheduling, broader effective-privilege checks and repairs remain deferred; the scoped automation assignment extension is implemented.
+
+## Compact checked-date presentation — 9 November 2026
+
+Current cards collect their checked dates after all status facts. Date-only UTC links replace the
+separate full timestamp plus View check text; accessible names identify each check and full UTC
+instants remain in hover detail/metadata. This changes no API fields, freshness, polling, history,
+operation IDs or read authority. See the [current screen guide](required-users-screen.md#compact-check-dates--9-november-2026).

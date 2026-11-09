@@ -191,6 +191,7 @@ async function organizationFlows(page: Page) {
   // Acceptance closes the handoff; verified completion is observed separately in real Operations.
   let defaultAdvanced=false;
   let latestVersion=1;
+  let assignmentRenderReviewed=false;
   async function finish(action: string) {
     if (action === "Create tenancy") {
       await modal
@@ -427,7 +428,7 @@ async function organizationFlows(page: Page) {
       );
       const users = page.getByRole("region", { name: "Required users", exact: true });
       await expect(users.getByText("Recorded", { exact: true })).toHaveCount(2);
-      await expect(users.getByText("Not checked", { exact: true })).toHaveCount(4);
+      await expect(users.getByText("Not checked", { exact: true })).toHaveCount(7);
       await expect(users.getByText("otm-automation", { exact: true })).toBeVisible();
       await expect(users.getByRole("button", { name: "Refresh required users", exact: true })).toHaveCount(0);
       // Real HTTPS admission and the native worker publish independent fixture observations.
@@ -442,9 +443,20 @@ async function organizationFlows(page: Page) {
       expect(response.status()).toBe(202);
       const checkId = (await response.json()).operation_id;
       await expect(users.getByText("Present", { exact: true })).toHaveCount(2, { timeout: 20_000 });
-      await expect(users.getByText("Not checked", { exact: true })).toHaveCount(2);
-      await expect(users.getByText("Checked (UTC)", { exact: true })).toHaveCount(2);
-      await expect(users.getByRole("link", { name: "View check", exact: true })).toHaveCount(2);
+      await expect(users.getByText("Not checked", { exact: true })).toHaveCount(1);
+      const automation = users.locator(".required-user-card").filter({has:page.getByRole("heading",{name:"Automation user",exact:true})});
+      await expect(automation.getByText("Verified in simulation",{exact:true})).toHaveCount(2);
+      await expect(automation.getByRole("link",{name:/^View assignment check, /})).toHaveAttribute("href",/\/operations\/[a-f0-9-]+$/);
+      await expect(users.getByText("Console MFA exemption", { exact: true })).toBeVisible();
+      await expect(users.getByText("Approved-network restriction", { exact: true })).toBeVisible();
+      await expect(users.locator(".required-user-card").filter({has:page.getByRole("heading",{name:"Recovery user",exact:true})}).getByText("Verified in simulation", { exact: true })).toHaveCount(2);
+      // Private provider perimeter evidence must not appear in ordinary authenticated responses.
+      const privateCheck=await page.request.get(new URL(childUrl).pathname.replace("/tenancies/","/api/tenancies/")+"/required-users");
+      const privateBody=await privateCheck.text();
+      expect(privateBody).not.toContain("198.51.100");
+      expect(privateBody).not.toContain("2001:db8");
+      await expect(users.getByText("Presence checked (UTC)", { exact: true })).toHaveCount(2);
+      await expect(users.getByRole("link", { name: /^View presence check, / })).toHaveCount(2);
       if(!userRefreshCaptured) {
         await expect(check).toBeEnabled();
         for(const width of [1280,390,320]) {
@@ -455,7 +467,7 @@ async function organizationFlows(page: Page) {
         await page.setViewportSize({width:1280,height:900});
         userRefreshCaptured=true;
       }
-      await users.getByRole("link", { name: "View check", exact: true }).first().click();
+      await users.getByRole("link", { name: /^View presence check, / }).first().click();
       await expect(page).toHaveURL(new RegExp("/operations/" + checkId + "$"));
       await expect(page.getByRole("heading", { level: 1 })).toHaveText("Check required users");
       await expect(page.getByText("Completed", { exact: true }).first()).toBeVisible();
@@ -467,7 +479,7 @@ async function organizationFlows(page: Page) {
       const inventoryRow=page.getByRole("row").filter({has:page.getByRole("link",{name:childName!,exact:true})});
       const summary=inventoryRow.getByRole("link",{name:`Users: 2/2 present for ${childName}`});
       await expect(summary).toHaveAttribute("href",new URL(childUrl).pathname+"#required-users");
-      await expect(summary).toHaveAccessibleDescription(/Permissions are not checked/);
+      await expect(summary).toHaveAccessibleDescription(/does not establish permissions/);
       for(const width of [1280,768,390,320]){
         await page.setViewportSize({width,height:900});
         await page.getByRole("table").scrollIntoViewIfNeeded();
@@ -483,15 +495,112 @@ async function organizationFlows(page: Page) {
       await disclosure.focus(); await disclosure.press("Enter");
       await expect(users.locator("details").first()).toHaveAttribute("open", "");
       await expect(users.getByRole("link", { name: "View setup operation" }).first()).toHaveAttribute("href", /\/operations\/[a-f0-9-]+$/);
-      for (const width of [1280, 768, 390, 320]) {
+      for (const width of [1280, 1024, 768, 390, 320]) {
         await page.setViewportSize({ width, height: 900 });
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
         const cards = await users.locator(".required-user-card").evaluateAll(elements => elements.map(e => {
           const r = e.getBoundingClientRect(); return { x: r.x, y: r.y };
         }));
-        if (width <= 700) expect(cards[1].y).toBeGreaterThan(cards[0].y);
+        if (width <= 900) expect(cards[1].y).toBeGreaterThan(cards[0].y);
         else expect(Math.abs(cards[0].y - cards[1].y)).toBeLessThan(2);
+        // Laptop status pairs share a row; mobile keeps label/value groups readable in one column.
+        const facts = users.locator(".required-user-card").first().locator(":scope > .required-user-facts");
+        const identity = await facts.locator("div").filter({has:page.getByText("Identity record",{exact:true})}).boundingBox();
+        const presence = await facts.locator("div").filter({has:page.getByText("Presence",{exact:true})}).boundingBox();
+        expect(identity).not.toBeNull(); expect(presence).not.toBeNull();
+        if(width > 700) expect(Math.abs(identity!.y-presence!.y)).toBeLessThan(2);
+        else expect(presence!.y).toBeGreaterThan(identity!.y);
+        // Recovery's three short facts share one row while policy controls retain their wider pair.
+        const recoveryFacts=users.locator(".required-recovery-facts");
+        const overview=await recoveryFacts.locator(".required-user-overview-fact").evaluateAll(nodes=>nodes.map(node=>{const box=node.getBoundingClientRect();return {x:box.x,y:box.y};}));
+        expect(overview).toHaveLength(3);
+        const wholeWords=await recoveryFacts.locator(".required-user-overview-fact dd").evaluateAll(nodes=>nodes.every(node=>{
+          const walk=document.createTreeWalker(node,NodeFilter.SHOW_TEXT);
+          for(let text=walk.nextNode();text;text=walk.nextNode()){
+            if(!text.textContent?.trim())continue;
+            const range=document.createRange();range.selectNodeContents(text);
+            if(range.getClientRects().length!==1)return false;
+          }
+          return true;
+        }));
+        expect(wholeWords).toBe(true);
+        if(width>700){
+          expect(Math.abs(overview[0].y-overview[1].y)).toBeLessThan(2);expect(Math.abs(overview[1].y-overview[2].y)).toBeLessThan(2);
+          expect(overview[1].x).toBeGreaterThan(overview[0].x);expect(overview[2].x).toBeGreaterThan(overview[1].x);
+        }else{expect(overview[1].y).toBeGreaterThan(overview[0].y);expect(overview[2].y).toBeGreaterThan(overview[1].y);}
+        // Evidence dates follow all badges, share a laptop row and retain compact exact check links.
+        for(const card of await users.locator(".required-user-card").all()){
+          const factsBox=await card.locator(":scope > .required-user-facts").boundingBox();
+          const footer=card.locator(".required-user-checks");
+          const footerBox=await footer.boundingBox();
+          expect(footerBox!.y).toBeGreaterThan(factsBox!.y+factsBox!.height);
+          const dates=await footer.locator(":scope > div").evaluateAll(nodes=>nodes.map(node=>{const r=node.getBoundingClientRect();return {x:r.x,y:r.y};}));
+          expect(dates).toHaveLength(2);
+          if(width>700){
+            expect(Math.abs(dates[0].y-dates[1].y)).toBeLessThan(2);expect(dates[1].x).toBeGreaterThan(dates[0].x);
+            const values=await footer.locator("dd").evaluateAll(nodes=>nodes.map(node=>node.getBoundingClientRect().y));
+            expect(Math.abs(values[0]-values[1])).toBeLessThan(2);
+          }
+          else expect(dates[1].y).toBeGreaterThan(dates[0].y);
+          for(const link of await footer.getByRole("link").all()){
+            await expect(link).toHaveText(/^[A-Z][a-z]{2} \d{1,2}, \d{4}$/);
+            await expect(link).toHaveAttribute("href",/\/operations\/[a-f0-9-]+$/);
+          }
+        }
+        const costs = page.getByRole("region",{name:"Current month costs",exact:true});
+        const overrides = page.getByRole("region",{name:"Overrides",exact:true});
+        const costBox = await costs.boundingBox(), overrideBox = await overrides.boundingBox();
+        expect(costBox).not.toBeNull(); expect(overrideBox).not.toBeNull();
+        if(width > 1000) {
+          expect(Math.abs(costBox!.y-overrideBox!.y)).toBeLessThan(2);
+          const refreshBox=await costs.getByRole("button",{name:"Refresh costs",exact:true}).boundingBox();
+          const manageBox=await overrides.getByRole("button",{name:"Manage overrides",exact:true}).boundingBox();
+          expect(Math.abs(refreshBox!.y+refreshBox!.height/2-manageBox!.y-manageBox!.height/2)).toBeLessThan(2);
+          expect(Math.abs(costBox!.x+costBox!.width-refreshBox!.x-refreshBox!.width-(overrideBox!.x+overrideBox!.width-manageBox!.x-manageBox!.width))).toBeLessThan(2);
+          expect(overrideBox!.x).toBeGreaterThanOrEqual(costBox!.x+costBox!.width);
+        } else expect(overrideBox!.y).toBeGreaterThanOrEqual(costBox!.y+costBox!.height);
+        // Whole-section rhythm matters as much as card internals: no panel may touch its neighbour.
+        const gridBox = await page.locator(".tenancy-summary-grid").boundingBox();
+        const usersBox = await users.boundingBox();
+        const membersBox = await page.locator(".table-panel").filter({has:page.getByRole("heading",{name:"Current members",exact:true})}).boundingBox();
+        expect(gridBox).not.toBeNull(); expect(usersBox).not.toBeNull(); expect(membersBox).not.toBeNull();
+        expect(gridBox!.y-(usersBox!.y+usersBox!.height)).toBeCloseTo(24,0);
+        const rollout = page.getByRole("region",{name:"Tenancy baseline update",exact:true});
+        const rolloutBox = await rollout.count() ? await rollout.boundingBox() : null;
+        if(rolloutBox) {
+          expect(rolloutBox.y-(gridBox!.y+gridBox!.height)).toBeCloseTo(24,0);
+          expect(membersBox!.y-(rolloutBox.y+rolloutBox.height)).toBeCloseTo(24,0);
+        } else expect(membersBox!.y-(gridBox!.y+gridBox!.height)).toBeCloseTo(24,0);
+        if(width > 1000) expect(overrideBox!.x-(costBox!.x+costBox!.width)).toBeCloseTo(24,0);
+        else expect(overrideBox!.y-(costBox!.y+costBox!.height)).toBeCloseTo(24,0);
+        await page.screenshot({path:resolve(".local-dev/browser",`tenancy-detail-spacing-${action === "Create tenancy" ? "create" : "import"}-${rolloutBox ? "baseline-update" : "no-baseline-update"}-${width}.png`),fullPage:true});
+        await page.locator(".tenancy-summary-grid").screenshot({path:resolve(".local-dev/browser",`tenancy-summary-${action === "Create tenancy" ? "create" : "import"}-${width}.png`)});
         await users.screenshot({ path: resolve(".local-dev/browser", `required-users-${action === "Create tenancy" ? "create" : "import"}-${width}.png`) });
+      }
+      if(!assignmentRenderReviewed){
+        assignmentRenderReviewed=true;
+        const resource="**/api"+new URL(childUrl).pathname+"/required-users";
+        // Render-only browser fixtures complement real persisted negative cases in PostgreSQL tests.
+        for(const stale of [false,true]){
+          await page.route(resource,async route=>{
+            const response=await route.fetch();
+            const body=await response.json();
+            body.users[0].administrator_access={...body.users[0].administrator_access,group:stale?"verified":"missing",domain_role:"verified",stale};
+            await route.fulfill({response,json:body});
+          });
+          try{
+            await page.reload();
+            const card=users.locator(".required-user-card").first();
+            await expect(card.getByText(stale?"Check out of date":"Missing or disabled",{exact:true})).toHaveCount(stale?2:1);
+            for(const width of [1280,320]){
+              await page.setViewportSize({width,height:900});
+              expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+              await page.screenshot({path:resolve(".local-dev/browser",`automation-assignment-render-only-${stale?"stale":"missing"}-${width}.png`),fullPage:true});
+            }
+          }finally{await page.unroute(resource);}
+        }
+        await page.reload();
+        await expect(users.locator(".required-user-card").first().getByText("Verified in simulation",{exact:true})).toHaveCount(2);
       }
       await page.setViewportSize({ width: 1280, height: 900 });
     }

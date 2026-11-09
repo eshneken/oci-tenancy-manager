@@ -134,3 +134,46 @@ Present then relapse, disabled delivery, stale-role suppression and no retargete
 actual SMTP acceptance/uncertainty and staged redirection with immutable Operations/Audit evidence.
 No identity repair, privileged probe or live outgoing notice is implied by simulator qualification.
 Daily scheduled checks remain deferred until staging/Kubernetes qualification. Status: Pending.
+
+## Credential security lifecycles
+
+Status: **Pending**. The [selected chapter22 design](../engineering-design/22-credential-security-lifecycles.md)
+requires disposable-child qualification with synthetic identities and separately approved live mutations.
+Use private approved source ranges, never publish operational CIDRs/secrets in receipts or CI artifacts.
+
+1. Verify the exact recovery user can sign in without MFA from every approved CIDR and is denied
+   elsewhere. Qualify rule priority/fallback, IPv4/IPv6, actual VPN/proxy egress and split tunneling.
+   Owners/members/general administrators keep MFA. Profile/My Apps/API credentials and existing sessions
+   are separate evidence, not assumed covered by console sign-on restrictions.
+   Re-run recovery-user validation after re-enabling its MFA challenge, changing group membership,
+   disabling/reordering its rules or widening/removing CIDRs. Verify drift and blocked readiness/new
+   disclosure; denied/incomplete inspection stays Unable to verify. Repeat creation/recreation/import
+   against exact bindings. Missing enrollment must not be mistaken for a verified exemption.
+2. Exercise initial setup/import, multiple CIDRs, invalid/empty/all-Internet unions, widening/narrowing,
+   rollback and an offline child. Keep deny-outside effective throughout changes. Record desired versus
+   verified applied revisions; failed narrowing remains visible and affected new disclosure blocked.
+3. Qualify configuration-only release with retained image, strict deployed-schema validation, environment
+   lock, consumer rollout and per-child updates. Missing variables fail safely; editing GitHub alone
+   does not apply. Stale/late writes reconcile before successor; no false fleet completion.
+4. Use the SAME recovery user with independent password custody when OTM/automation are unavailable;
+   record VPN/corporate identity dependencies. Verify D40 first-disclosure clock and four-hour child/Vault
+   password rotation; boundary/exemption remain. Restore under maintenance and inspect actual policy
+   and CURRENT before resuming. No extra human account, TOTP broker or public bypass is required.
+5. Qualify domain key create/list/get/delete, exact IDs/fingerprints, permission/propagation and three-key
+   capacity. Prove the new signer alone can operate, old use drains and exact old deletion is verified.
+6. Exercise day29/day30, unknown creation age, occupied slots, upload/delete timeouts, candidate failure,
+   overlapping scans and restore before activation. Never delete the sole working/unowned key or reset
+   original age. Unresolved retirement remains overdue with scoped repair available. Inventory every
+   registered managed automation principal and explicitly owned parent/hosting keys.
+
+## Automation administrator assignment qualification
+
+Pending a real provider and staging tenancy: independently discover the protected built-in
+Administrators group and exact domain application/administrator role; verify SCIM IDs rather than
+names or OCI IAM group OCIDs. Qualify direct and supported group role grants, complete pagination,
+removed membership/role, disabled resources, denied/partial reads, wrong-app/group/user replacements
+and connection changes during reads. Confirm Missing versus Unable to verify, separate user
+presence, dated persisted list/detail consistency and no provider/list disclosure in public outputs.
+Validate actual SDK authentication and identity-domain administration separately; assignment success
+alone must not authorize credential disclosure, destructive workflows or claim all effective access.
+No live cases in this section have been run by the local simulation slice.

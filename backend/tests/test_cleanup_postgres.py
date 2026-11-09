@@ -27,6 +27,8 @@ __all__ = ["session_case"]
 # Insert only synthetic sessions directly; production still has no unqualified sign-in shortcut.
 @pytest.fixture
 def cleanup_case(pg_engine, session_case):
+    # Retain issued/hosted thirty-minute policy independently of new laptop defaults.
+    session_case.session = session_case.session.model_copy(update={"idle_timeout_seconds": 1800})
     with pg_engine.begin() as connection:
         seed_session_grant(connection, session_case.session.model_dump())
         connection.execute(admin_session.insert().values(**session_case.session.model_dump()))

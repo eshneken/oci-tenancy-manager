@@ -16,7 +16,7 @@ it.each([
   render(<RequiredUserSummary id={id} name="Example child" status="active" summary={summary} navigate={navigate}/>);
   const link=screen.getByRole("link",{name:`Users: ${label} for Example child`});
   expect(link).toHaveAttribute("href",`/tenancies/${id}#required-users`);
-  expect(link).toHaveAccessibleDescription(/Permissions are not checked/);
+  expect(link).toHaveAccessibleDescription(/does not establish permissions/);
   expect(link).toHaveAttribute("title",expect.stringContaining("UTC"));
   if(state==="stale") expect(link).toHaveAttribute("title",expect.stringContaining("last result: Unable to verify"));
   expect(screen.getByText("Checking…")).toBeVisible();
@@ -37,4 +37,12 @@ it("handles older payloads and omits inactive children",()=>{
 it.each(["present","missing"] as const)("rejects incomplete %s wire summaries",state=>{
   render(<RequiredUserSummary id={id} name="Example" status="active" summary={{state}} navigate={vi.fn()}/>);
   expect(screen.getByRole("link")).toHaveTextContent("Users: Unable to verify");
+});
+
+
+// Inventory assignment warnings link to the same exact tenancy detail evidence as user presence.
+it.each([false,true])("shows assignment warning with stale=%s",stale=>{
+  const navigate=vi.fn();
+  render(<RequiredUserSummary id={id} name="Synthetic" status="active" navigate={navigate} summary={{administrator_access:{group:"missing",domain_role:"verified",stale,checked_at:"2026-11-09T12:00:00Z",operation_id:id}}}/>);
+  expect(screen.getByRole("link",{name:`Automation assignments ${stale?"out of date":"missing"} for Synthetic`})).toHaveAttribute("href","/tenancies/"+id+"#required-users");
 });

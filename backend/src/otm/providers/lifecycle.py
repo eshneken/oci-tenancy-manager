@@ -3,10 +3,12 @@
 from typing import Protocol
 from uuid import UUID
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 
 from otm.contracts import Contract, Text
+from otm.providers.administrator_access import AdministratorCapture
 from otm.providers.inspection_contracts import TenancyOcid
+from otm.providers.recovery_console import RecoveryConsoleCapture
 from otm.providers.required_user_contracts import DomainOcid, ObservedRequiredUser
 from otm.tenancies.contracts import MemberRemoval, OrganizationIntent
 from otm.tenancies.views import CompartmentOption, CreationRegion
@@ -46,6 +48,10 @@ class LifecycleCompletion(Contract):
 
 # Capture actual read-back identities; this evidence is not an access grant or credential.
 class OnboardingUsers(Contract):
+    # Omission preserves legacy producer hashes and never backfills assignment proof.
+    automation_administrator: AdministratorCapture | None = Field(
+        default=None, exclude_if=lambda value: value is None, repr=False
+    )
     workspace_id: Text
     tenancy_ocid: TenancyOcid
     parent_tenancy_ocid: TenancyOcid
@@ -53,6 +59,10 @@ class OnboardingUsers(Contract):
     domain_ocid: DomainOcid
     automation: ObservedRequiredUser
     recovery: ObservedRequiredUser
+    # Omitted historical producer bytes stay stable; normalized policy facts remain private.
+    recovery_console: RecoveryConsoleCapture | None = Field(
+        default=None, exclude_if=lambda value: value is None, repr=False
+    )
 
     # The two purposes require distinct identified users in the discovered child domain.
     @model_validator(mode="after")
@@ -67,6 +77,17 @@ class OnboardingUsers(Contract):
             or self.automation.provider_ocid == self.recovery.provider_ocid
         ):
             raise ValueError("REQUIRED_USER_IDENTITIES_UNVERIFIED")
+        if self.automation_administrator is not None and (
+            self.automation_administrator.binding.domain_ocid != self.domain_ocid
+            or self.automation_administrator.binding.scim_resource_id
+            != self.automation.scim_resource_id
+        ):
+            raise ValueError("ADMINISTRATOR_CAPTURE_SCOPE_INVALID")
+        if self.recovery_console is not None and (
+            self.recovery_console.scim_resource_id != self.recovery.scim_resource_id
+            or self.recovery_console.facts.domain_ocid != self.domain_ocid
+        ):
+            raise ValueError("RECOVERY_CONSOLE_CAPTURE_SCOPE_INVALID")
         return self
 
 

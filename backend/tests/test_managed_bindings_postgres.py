@@ -78,7 +78,7 @@ def test_canonical_capture_and_identical_replay(workflow_case, kind):
             .one()
         )
         intent = IntentEventData.model_validate_json(json.dumps(intent_event)).intent
-        evidence = OnboardingEvidence.model_validate(event["data"])
+        evidence = OnboardingEvidence.model_validate_json(json.dumps(event["data"]))
         result = capture_bindings(
             connection, row, intent, evidence.required_users, event["id"], event["at"]
         )
@@ -304,7 +304,7 @@ def test_missing_setup_proof_blocks_binding_source(workflow_case):
             )
         ).scalar_one()
         intent = IntentEventData.model_validate_json(json.dumps(data)).intent
-        evidence = OnboardingEvidence.model_validate(event["data"])
+        evidence = OnboardingEvidence.model_validate_json(json.dumps(event["data"]))
         connection.execute(
             update(operation_step)
             .where(

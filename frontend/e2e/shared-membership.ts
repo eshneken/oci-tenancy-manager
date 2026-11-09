@@ -10,7 +10,7 @@ export async function existingCompartmentMembership(page:Page,sharedName:string)
  const userResponse=page.waitForResponse(response=>response.request().method()==="POST"&&response.url().endsWith("/required-users/check"));
  await users.getByRole("button",{name:"Refresh user data",exact:true}).click();
  const userCheck=(await(await userResponse).json()).operation_id;
- await expect(users.getByRole("link",{name:"View check",exact:true}).first()).toHaveAttribute("href","/operations/"+userCheck,{timeout:20000});
+ await expect(users.getByRole("link",{name:/^View presence check, /}).first()).toHaveAttribute("href","/operations/"+userCheck,{timeout:20000});
  await expect(users.getByText("Present",{exact:true})).toHaveCount(2,{timeout:20000});
  const costResponse=page.waitForResponse(response=>response.request().method()==="POST"&&response.url().endsWith("/api/costs/refresh"));
  await page.getByRole("button",{name:"Refresh costs",exact:true}).click();

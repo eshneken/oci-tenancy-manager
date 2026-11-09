@@ -27,9 +27,14 @@ are not competing implementation instructions or proof of real OCI behavior.
 | Former-owner retention/removal qualification | [Current workflow](reference/organization-workflows.md), [dated receipt](history/ownership-disposition-checkpoint-2026-11-07.md) |
 | Saved costs and user results | [Read compatibility and persistence](reference/README.md), [qualified fix](history/persisted-read-compatibility-checkpoint-2026-11-07.md) — membership changes retain compatible dated database observations |
 | Confirmed missing required-user notices | [Incident/routing model and full field dictionary](reference/required-user-alerts.md), [qualified checkpoint](history/required-user-alerts-checkpoint-2026-11-07.md) |
+| Local build cadence | [Batched UI checkpoints and the 15-minute integration limit](engineering-test-plan.md#current-local-cadence-and-integration-budget--7-november-2026) |
 | Prior checkpoints | [Dated history](history/README.md) |
 
 ## Source of truth
+
+[Selected credential security design](engineering-design/22-credential-security-lifecycles.md):
+recovery-only MFA exemption with configurable console CIDRs and 30-day automation-key retirement.
+User-selected design; implementation and live OCI qualification remain pending.
 
 Current [manual required-user checks](reference/user-presence-checks.md) connect the internal presence
 boundary, exact identity mappings and one selected simulated connection to asynchronous acquisition
@@ -109,3 +114,33 @@ Compact create/import help: [Collapsed OCI operator checklist](reference/tenancy
 - [Compact operator help and consistent action emphasis: qualification and main preview](history/compact-help-action-emphasis-checkpoint-2026-11-07.md)
 
 Owner retention, verified identity removal and manual cleanup: [explicit former-owner disposition](reference/organization-workflows.md#explicit-former-owner-disposition--7-november-2026).
+
+- [Recovery console checks, private setup evidence and remaining credential milestone](reference/recovery-console-verification.md): private CIDR settings, exact setup capture, independent policy/presence UI results and remaining custody/rotation work.
+
+- [Manual recovery-policy UI checkpoint](how-to/recovery-policy-ui-checkpoint.md): exercise separate presence/MFA/network results and stored refresh behavior in local simulation.
+
+- [Recovery-policy UI qualification — 7 November](history/recovery-policy-ui-checkpoint-2026-11-07.md):402 complete integration cases, independent reviews and main-only preserved publication.
+
+The [required-user presence reference](reference/required-user-presence.md#responsive-tenancy-detail-layout)
+and [design baseline](../DESIGN.md#tenancy-detail-density--9-november-2026) describe the compact,
+responsive tenancy detail layout for laptop and mobile screens.
+
+The [UI review policy](ui-ux-review-policy.md#whole-page-section-rhythm--9-november-2026)
+requires full-page spacing checks alongside cropped panel reviews.
+
+- [Automation administrator assignments](reference/administrator-assignments.md): scoped simulated group/role checks, evidence fields and local review.
+
+- [Automation assignment UI checkpoint](history/automation-assignments-ui-checkpoint-2026-11-09.md): final qualification receipt and saved-preview preservation.
+
+The [compact checked-date policy](ui-ux-review-policy.md#compact-checked-date-provenance--9-november-2026)
+and [local session defaults](reference/application-settings.md#local-eight-hour-sessions--9-november-2026)
+record the date-footer and local-only eight-hour session refinements.
+
+[Saved-preview publication safeguards](reference/local-application.md#saved-preview-publication-safeguards--9-november-2026) cover owned database ports, private backups and qualified asset snapshots.
+
+- [Compact check-date and local-session checkpoint](history/check-date-footer-local-session-checkpoint-2026-11-09.md): qualification and preserved local preview.
+
+The [Recovery overview row](reference/required-users-screen.md#recovery-overview-row--9-november-2026)
+records the compact three-fact layout and aligned cost/override header actions.
+
+The [Recovery overview and matching header actions checkpoint](history/check-date-footer-local-session-checkpoint-2026-11-09.md#recovery-overview-and-matching-header-actions) records final responsive qualification and unchanged data/settings.

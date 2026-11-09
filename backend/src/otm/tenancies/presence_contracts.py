@@ -1,4 +1,4 @@
-"""Presence-only check scope, immutable results and closed browser-facing projections."""
+"""Independent presence/policy check scope, immutable evidence and safe browser projections."""
 
 from typing import Annotated, Literal
 from uuid import UUID
@@ -7,6 +7,8 @@ from pydantic import Field, model_validator
 
 from otm.configuration.rollout_contracts import ConfigurationOperationTarget, Digest
 from otm.contracts import Contract, Generation, Text, UtcInstant
+from otm.providers.administrator_access import AdministratorCheck
+from otm.providers.recovery_console import RecoveryConsoleCheck
 from otm.providers.required_user_contracts import RequiredUserObservation, RequiredUserTarget
 
 
@@ -24,6 +26,10 @@ class PresenceSnapshot(Contract):
     connection_revision: Generation
     policy_hash: Digest
     subjects: Annotated[tuple[RequiredUserTarget, ...], Field(min_length=2, max_length=2)]
+    # Absent legacy snapshots stay byte-compatible and never gain inferred policy proof.
+    recovery_console_fingerprint: Digest | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
 
     # A snapshot cannot mix children/domains, omit a purpose or alias the two account identities.
     @model_validator(mode="after")
@@ -104,6 +110,16 @@ class PresenceCheckEvidence(Contract):
     checked_at: UtcInstant
     results: Annotated[tuple[RequiredUserObservation, ...], Field(min_length=2, max_length=2)]
 
+    # Administrator assignments are independent of presence and absent in historical payloads.
+    administrator_access: AdministratorCheck | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
+
+    # Policy verification is independent of the two user-existence results.
+    recovery_console: RecoveryConsoleCheck | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
+
     # Ordered state is present only on new alert-enabled head publications; historical
     # bytes stay stable.
     notice_episodes: (
@@ -114,6 +130,26 @@ class PresenceCheckEvidence(Contract):
     # denied per-user evidence and superseded reads cannot certify presence or absence.
     @model_validator(mode="after")
     def coverage(self):
+        if self.administrator_access is not None:
+            access = self.administrator_access
+            if (
+                access.context != self.results[0].context
+                or access.target != self.results[0].target
+                or not self.started_at <= access.checked_at <= self.checked_at
+                or self.state == "superseded"
+                and (access.result.group != "unknown" or access.result.domain_role != "unknown")
+            ):
+                raise ValueError("ADMINISTRATOR_CHECK_SCOPE_INVALID")
+        if self.recovery_console is not None:
+            policy = self.recovery_console
+            if (
+                policy.context != self.results[1].context
+                or policy.target != self.results[1].target
+                or not self.started_at <= policy.checked_at <= self.checked_at
+                or self.state == "superseded"
+                and policy.result.state != "unknown"
+            ):
+                raise ValueError("RECOVERY_CONSOLE_CHECK_SCOPE_INVALID")
         expected = {
             "complete": "USER_PRESENCE_CHECK_COMPLETE",
             "unavailable": "USER_PRESENCE_UNAVAILABLE",
@@ -157,12 +193,58 @@ class UserPresenceView(Contract):
     operation_id: UUID | None = None
 
 
-# A compact inventory projection describes existence only, never permissions or credential health.
+# Stored policy facts never imply password health, admin grants or live OCI qualification.
+class RecoveryConsoleView(Contract):
+    state: Literal["not_checked", "verified", "drift", "unknown", "stale"] = "not_checked"
+    mfa_exemption: Literal["not_checked", "verified", "drift", "unknown"] = "not_checked"
+    network_boundary: Literal["not_checked", "verified", "drift", "unknown"] = "not_checked"
+    checked_at: UtcInstant | None = None
+    operation_id: UUID | None = None
+    desired_fingerprint: Digest | None = None
+    observed_fingerprint: Digest | None = None
+
+    # A positive label needs complete dated evidence; stale retains past results without readiness.
+    @model_validator(mode="after")
+    def verified_evidence(self):
+        if self.state in {"verified", "drift", "stale"} and (
+            self.checked_at is None or self.operation_id is None or self.desired_fingerprint is None
+        ):
+            raise ValueError("RECOVERY_CONSOLE_VIEW_UNQUALIFIED")
+        if self.state == "verified" and (
+            self.mfa_exemption != "verified"
+            or self.network_boundary != "verified"
+            or self.observed_fingerprint is None
+        ):
+            raise ValueError("RECOVERY_CONSOLE_VIEW_UNQUALIFIED")
+        return self
+
+
+# Dated assignment reads never certify signing, passwords or all effective privileges.
+class AdministratorAccessView(Contract):
+    group: Literal["not_checked", "verified", "missing", "unknown"] = "not_checked"
+    domain_role: Literal["not_checked", "verified", "missing", "unknown"] = "not_checked"
+    stale: bool = False
+    checked_at: UtcInstant | None = None
+    operation_id: UUID | None = None
+
+    # Positive and negative assignment claims require dated exact-operation provenance.
+    @model_validator(mode="after")
+    def qualified(self):
+        if any(s in {"verified", "missing"} for s in (self.group, self.domain_role)) and (
+            self.checked_at is None or self.operation_id is None
+        ):
+            raise ValueError("ADMINISTRATOR_VIEW_UNQUALIFIED")
+        return self
+
+
+# Inventory keeps existence and recovery policy separate from privileges/password readiness.
 class RequiredUsersSummary(Contract):
     state: Literal["not_checked", "present", "missing", "unavailable", "stale"] = "not_checked"
     automation: UserPresenceView = Field(default_factory=UserPresenceView)
     recovery: UserPresenceView = Field(default_factory=UserPresenceView)
     checking: bool = False
+    recovery_console: RecoveryConsoleView = Field(default_factory=RecoveryConsoleView)
+    administrator_access: AdministratorAccessView = Field(default_factory=AdministratorAccessView)
 
     # Positive summaries require dated per-subject source references, not a caller's label alone.
     @model_validator(mode="after")

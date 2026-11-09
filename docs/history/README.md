@@ -44,3 +44,11 @@ Private original feeds, raw evidence, screenshots and machine-specific paths are
 - [Persisted costs/users across membership changes: qualified fix and preserved preview](persisted-read-compatibility-checkpoint-2026-11-07.md)
 
 - [Confirmed missing required-user notices: full local qualification and preserved preview](required-user-alerts-checkpoint-2026-11-07.md)
+
+- [Recovery-policy UI checkpoint — 7 November 2026](recovery-policy-ui-checkpoint-2026-11-07.md): exact policy capture, independent checks, completed quality gates and preserved preview.
+
+- [Automation assignment UI checkpoint — 9 November 2026](automation-assignments-ui-checkpoint-2026-11-09.md): qualified simulated assignment checks and preserved main preview.
+
+- [Check-date footer and local session checkpoint — 9 November 2026](check-date-footer-local-session-checkpoint-2026-11-09.md): compact exact check links, aligned footers and local-only eight-hour idle policy.
+
+The [Recovery/header refinement](check-date-footer-local-session-checkpoint-2026-11-09.md#recovery-overview-and-matching-header-actions) extends that same UI checkpoint with a readable tablet layout and matching panel actions.
