@@ -3,7 +3,7 @@
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import AfterValidator, Field
+from pydantic import AfterValidator, Field, model_validator
 
 from otm.contracts import Contract, HttpsOrigin, Text, UtcInstant
 from otm.email_policy import EmailRoute
@@ -68,6 +68,60 @@ class CostFailureNotice(Contract):
     created_at: UtcInstant
 
 
+# Frozen role provenance is rechecked at submission; a role change never silently retargets email.
+class RecipientReason(Contract):
+    role: Literal["owner", "manager", "designee", "administrator"]
+    person_id: UUID | None = None
+    administrator_id: UUID | None = None
+    authorization_revision: UUID | None = None
+
+    # Employee roles and administrator grants use distinct, noninterchangeable authority references.
+    @model_validator(mode="after")
+    def scoped_reason(self):
+        if self.role == "administrator":
+            if self.person_id is not None or (
+                (self.administrator_id is None) != (self.authorization_revision is None)
+            ):
+                raise ValueError("NOTIFICATION_REASON_INVALID")
+        elif (
+            self.person_id is None
+            or self.administrator_id is not None
+            or self.authorization_revision is not None
+        ):
+            raise ValueError("NOTIFICATION_REASON_INVALID")
+        return self
+
+
+# A missing-user incident names one exact checked subject and one deduplicated original recipient.
+class RequiredUserMissingNotice(Contract):
+    contract_version: Literal["required-user-missing-email-1"] = "required-user-missing-email-1"
+    operation_id: UUID
+    tenancy_id: UUID
+    purpose: Literal["automation", "recovery"]
+    scope_hash: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
+    episode_id: UUID
+    check_context_hash: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
+    organization_version_id: UUID
+    configuration_id: UUID
+    reasons: Annotated[tuple[RecipientReason, ...], Field(min_length=1, max_length=1024)]
+    routing_issues: tuple[
+        Literal[
+            "owner_unavailable",
+            "manager_unavailable",
+            "designee_unavailable",
+            "administrator_unavailable",
+        ],
+        ...,
+    ] = ()
+    original_recipient: Mailbox | None
+    delivery_recipient: Mailbox | None
+    route: EmailRoute
+    application_origin: HttpsOrigin | None = None
+    delivery_profile_hash: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")] | None = None
+    event: Literal["required_user_missing"] = "required_user_missing"
+    created_at: UtcInstant
+
+
 # The SMTP capability receives one bounded plain-text message; no HTML, attachments or custom
 # headers.
 class Envelope(Contract):
@@ -87,7 +141,9 @@ class DeliveryResult(Contract):
 class NotificationSummary(Contract):
     id: UUID
     state: DeliveryState
-    event: Literal["action_required", "terminal_failure", "cost_read_failed"]
+    event: Literal[
+        "action_required", "terminal_failure", "cost_read_failed", "required_user_missing"
+    ]
     recipient: Mailbox | None
     original_recipient: Mailbox | None
     created_at: UtcInstant
@@ -96,6 +152,21 @@ class NotificationSummary(Contract):
     last_attempt_at: UtcInstant | None = None
     attempts: Annotated[int, Field(ge=0, le=3)]
     safe_code: Text | None = None
+    required_user_purpose: Literal["automation", "recovery"] | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
+    recipient_roles: tuple[Literal["owner", "manager", "designee", "administrator"], ...] = Field(
+        default=(), exclude_if=lambda value: not value
+    )
+    routing_issues: tuple[
+        Literal[
+            "owner_unavailable",
+            "manager_unavailable",
+            "designee_unavailable",
+            "administrator_unavailable",
+        ],
+        ...,
+    ] = Field(default=(), exclude_if=lambda value: not value)
 
 
 # Append-only state evidence identifies a frozen intent without copying mailbox or message data.

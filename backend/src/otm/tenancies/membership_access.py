@@ -2,15 +2,16 @@
 
 from uuid import uuid4
 
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
 from otm.providers.lifecycle import LifecycleBlocked
-from otm.storage.tables import operation_step
+from otm.storage.tables import managed_object_binding, operation_step
 
 
 # Missing, duplicate, foreign or unverified receipts never retire a local association.
 def validate_removals(intent, completion):
-    expected = {a.id: a for a in intent.associations if a.action == "remove"}
+    expected = {a.id: a for a in intent.associations if a.removes_identity}
     receipts = {r.association_id: r for r in completion.removals}
     if len(receipts) != len(completion.removals) or set(receipts) != set(expected):
         raise LifecycleBlocked("TARGET_CHANGED")
@@ -48,3 +49,21 @@ def save_removal_steps(connection, row, receipts, outcome, evidence_id, at):
                 evidence_event_id=evidence_id,
             )
             connection.execute(statement.on_conflict_do_nothing())
+
+
+# Required managed identities are never a personal-removal target, even through corrupt mappings.
+def validate_removal_targets(connection, workspace, intent):
+    targets = [item for item in intent.associations if item.removes_identity]
+    if not targets:
+        return
+    protected = set(
+        connection.execute(
+            select(managed_object_binding.c.provider_ocid).where(
+                managed_object_binding.c.workspace_id == workspace,
+                managed_object_binding.c.tenancy_id.in_({item.tenancy_id for item in targets}),
+                managed_object_binding.c.kind == "managed_user",
+            )
+        ).scalars()
+    )
+    if any(item.user_ocid in protected for item in targets):
+        raise LifecycleBlocked("TARGET_CHANGED")

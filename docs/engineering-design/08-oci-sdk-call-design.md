@@ -7,6 +7,10 @@
 
 ## Read this first
 
+The [7 November credential-lifecycle design](22-credential-security-lifecycles.md) adds candidate
+network-perimeter/sign-on rule and API-key rotation calls with pending live qualification. It does
+not update this chapter's older pinned static SDK inventory or establish live provider support.
+
 The workflows now have concrete Python SDK candidates. Create/import and bootstrap are traced in
 execution order; deletion and association flows reuse those primitives. Configuration, financial and
 credential calls are mapped, but their complete payload/normalization rules still belong to C3–C5.

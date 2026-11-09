@@ -104,8 +104,35 @@ def pg_engine():
                 "WHERE workspace_id='migration-legacy-session'"
             ).one()
             assert row.revoked_at is not None and row.idle_timeout_seconds == 1800
+        # Qualify the narrow capture migration against actual preexisting operation/audit data.
+        migrate(engine, "0021_financial_collection")
+        capture_orders = {
+            "otm_operation": "id",
+            "audit_event": "id",
+            "otm_operation_step": "workspace_id,operation_id,intent_revision,step_key",
+        }
+        with engine.connect() as connection:
+            before_capture = {
+                table: connection.exec_driver_sql(
+                    f"SELECT * FROM public.{table} ORDER BY {order}"
+                ).all()
+                for table, order in capture_orders.items()
+            }
         migrate(engine)
         with engine.connect() as connection:
+            assert (
+                connection.exec_driver_sql(
+                    "SELECT count(*) FROM public.otm_managed_object_binding"
+                ).scalar_one()
+                == 0
+            )
+            for table, rows in before_capture.items():
+                assert (
+                    connection.exec_driver_sql(
+                        f"SELECT * FROM public.{table} ORDER BY {capture_orders[table]}"
+                    ).all()
+                    == rows
+                )
             assert (
                 connection.exec_driver_sql(
                     "SELECT count(*) FROM public.otm_admin_session "

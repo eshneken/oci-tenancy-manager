@@ -55,7 +55,7 @@ operation = Table(
     ),
     CheckConstraint(
         "kind IN ('inspect_import','organization_action"
-        "','configuration_update','configuration_check','cost_collection')",
+        "','configuration_update','configuration_check','cost_collection','required_user_check')",
         name="ck_operation_kind",
     ),
     CheckConstraint(
@@ -108,7 +108,7 @@ audit_event = Table(
         "((kind='operation_intent' AND intent_revision IS NOT NULL AND intent_revision>=1) "
         "OR (kind IN ('inspection_dispatch','inspection_outcome','organization_action_out"
         "come','onboarding_action','onboarding_outcome','configuration_outcome',"
-        "'configuration_retry','configuration_check_outcome','cost_collection_outcome','operation_responsibility_changed',"
+        "'configuration_retry','configuration_check_outcome','cost_collection_outcome','required_user_check_outcome','operation_responsibility_changed',"
         "'email_delivery') "
         "AND intent_revision IS NULL))) "
         "OR (kind IN ('administrator_revoked','administrator_bootstrapped',"
@@ -180,11 +180,13 @@ operation_step = Table(
         "OR step_key ~ '^(remove_member_groups|delete_member_user):[0-9a-f-]{36}$')) "
         "OR (command_kind='onboarding' AND step_key IN ('handoff','inspect_bootstrap',"
         "'establish_automation','verify_automation','configure_required','verify_required',"
-        "'retire_temporary','configure_baseline','verify_configured_access')) "
+        "'retire_temporary','configure_baseline','verify_configured_access',"
+        "'capture_required_users')) "
         "OR (command_kind='configuration_update' AND step_key ~ '^configuration:[0-9a-f-]{36}$') "
         "OR (command_kind='configuration_check' AND ste"
         "p_key ~ '^configuration_check:[0-9a-f-]{36}$') "
-        "OR (command_kind='cost_collection' AND step_key ~ '^cost:[0-9a-f-]{36}$')",
+        "OR (command_kind='cost_collection' AND step_key ~ '^cost:[0-9a-f-]{36}$') "
+        "OR (command_kind='required_user_check' AND step_key ~ '^required_users:[0-9a-f-]{36}$')",
         name="ck_inspection_step_kind",
     ),
     CheckConstraint(
@@ -196,7 +198,7 @@ operation_step = Table(
     ),
     CheckConstraint(
         "(command_kind IN ('inspect_tenancy','configur"
-        "ation_check','cost_collection') AND effect_knowledge='none') OR "
+        "ation_check','cost_collection','required_user_check') AND effect_knowledge='none') OR "
         "(command_kind IN ('organization_action','onboarding','configuration_update') "
         "AND effect_knowledge IN ('none','known'))",
         name="ck_inspection_read_only",
@@ -1270,4 +1272,261 @@ Index(
     financial_collection.c.workspace_id,
     financial_collection.c.failure_scope_hash,
     financial_collection.c.updated_at.desc(),
+)
+
+
+managed_object_binding = Table(
+    "otm_managed_object_binding",
+    metadata,
+    Column("id", Uuid(as_uuid=True), primary_key=True),
+    Column("workspace_id", String(256), nullable=False),
+    Column("tenancy_id", Uuid(as_uuid=True), nullable=False),
+    Column("logical_key", String(64), nullable=False),
+    Column("kind", String(32), nullable=False),
+    Column("handler_contract_version", String(64), nullable=False),
+    Column("generation", Integer, nullable=False),
+    Column("identity_domain_binding_id", Uuid(as_uuid=True)),
+    Column("provider_ocid", String(256), nullable=False),
+    Column("scim_resource_id", String(256)),
+    Column("user_name", String(256)),
+    Column("ownership_mode", String(32), nullable=False),
+    Column("state", String(16), nullable=False),
+    Column("created_operation_id", Uuid(as_uuid=True), nullable=False),
+    Column("source_evidence_event_id", Uuid(as_uuid=True), nullable=False),
+    Column("retired_operation_id", Uuid(as_uuid=True)),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
+    UniqueConstraint("workspace_id", "tenancy_id", "id", name="uq_managed_binding_scope"),
+    UniqueConstraint(
+        "workspace_id",
+        "tenancy_id",
+        "logical_key",
+        "generation",
+        name="uq_managed_binding_generation",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "tenancy_id"],
+        ["public.otm_tenancy.workspace_id", "public.otm_tenancy.id"],
+        name="fk_managed_binding_tenancy",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "tenancy_id", "identity_domain_binding_id"],
+        [
+            "public.otm_managed_object_binding.workspace_id",
+            "public.otm_managed_object_binding.tenancy_id",
+            "public.otm_managed_object_binding.id",
+        ],
+        name="fk_managed_binding_domain",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "created_operation_id", "source_evidence_event_id"],
+        [
+            "public.audit_event.workspace_id",
+            "public.audit_event.operation_id",
+            "public.audit_event.id",
+        ],
+        name="fk_managed_binding_capture",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "retired_operation_id"],
+        ["public.otm_operation.workspace_id", "public.otm_operation.id"],
+        name="fk_managed_binding_retirement",
+    ),
+    CheckConstraint(
+        "generation>=1 AND handler_contract_version='required-user-binding-1'",
+        name="ck_managed_binding_version",
+    ),
+    CheckConstraint(
+        "(state='active' AND retired_operation_id IS NULL) OR "
+        "(state='retired' AND retired_operation_id IS NOT NULL)",
+        name="ck_managed_binding_state",
+    ),
+    CheckConstraint("updated_at>=created_at", name="ck_managed_binding_time"),
+    CheckConstraint(
+        "(kind='identity_domain' AND logical_key='identity/domain' "
+        "AND ownership_mode='observed_reference' AND identity_domain_binding_id IS NULL "
+        "AND scim_resource_id IS NULL AND user_name IS NULL "
+        "AND provider_ocid ~ '^ocid1[.]domain[.][A-Za-z0-9.]+$') OR "
+        "(kind='managed_user' AND logical_key IN "
+        "('identity/user/automation','identity/user/recovery') "
+        "AND ownership_mode='managed' AND identity_domain_binding_id IS NOT NULL "
+        "AND scim_resource_id IS NOT NULL AND length(btrim(scim_resource_id))>0 "
+        "AND user_name IS NOT NULL AND length(btrim(user_name))>0 "
+        "AND provider_ocid ~ '^ocid1[.]user[.][A-Za-z0-9.]+$')",
+        name="ck_managed_binding_shape",
+    ),
+)
+Index(
+    "uq_managed_binding_live_key",
+    managed_object_binding.c.workspace_id,
+    managed_object_binding.c.tenancy_id,
+    managed_object_binding.c.logical_key,
+    unique=True,
+    postgresql_where=managed_object_binding.c.state == "active",
+)
+Index(
+    "uq_managed_binding_live_ocid",
+    managed_object_binding.c.workspace_id,
+    managed_object_binding.c.tenancy_id,
+    managed_object_binding.c.provider_ocid,
+    unique=True,
+    postgresql_where=managed_object_binding.c.state == "active",
+)
+Index(
+    "uq_managed_binding_live_scim",
+    managed_object_binding.c.workspace_id,
+    managed_object_binding.c.tenancy_id,
+    managed_object_binding.c.identity_domain_binding_id,
+    managed_object_binding.c.scim_resource_id,
+    unique=True,
+    postgresql_where=(managed_object_binding.c.state == "active")
+    & managed_object_binding.c.scim_resource_id.is_not(None),
+)
+
+
+# One explicit simulated read connection per child; canonical bindings retain all provider identity.
+user_presence_connection = Table(
+    "otm_user_presence_connection",
+    metadata,
+    Column("id", Uuid(as_uuid=True), primary_key=True),
+    Column("workspace_id", String(256), nullable=False),
+    Column("tenancy_id", Uuid(as_uuid=True), nullable=False),
+    Column("automation_binding_id", Uuid(as_uuid=True), nullable=False),
+    Column("domain_binding_id", Uuid(as_uuid=True), nullable=False),
+    Column("revision", Integer, nullable=False),
+    Column("provider_mode", String(16), nullable=False),
+    Column("contract_version", String(64), nullable=False),
+    Column("state", String(16), nullable=False),
+    Column("created_operation_id", Uuid(as_uuid=True), nullable=False),
+    Column("source_evidence_event_id", Uuid(as_uuid=True), nullable=False),
+    Column("retired_operation_id", Uuid(as_uuid=True)),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
+    UniqueConstraint("workspace_id", "tenancy_id", "id", name="uq_presence_connection_scope"),
+    ForeignKeyConstraint(
+        ["workspace_id", "tenancy_id"],
+        ["public.otm_tenancy.workspace_id", "public.otm_tenancy.id"],
+        name="fk_presence_connection_child",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "tenancy_id", "automation_binding_id"],
+        [
+            "public.otm_managed_object_binding.workspace_id",
+            "public.otm_managed_object_binding.tenancy_id",
+            "public.otm_managed_object_binding.id",
+        ],
+        name="fk_presence_connection_signer",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "tenancy_id", "domain_binding_id"],
+        [
+            "public.otm_managed_object_binding.workspace_id",
+            "public.otm_managed_object_binding.tenancy_id",
+            "public.otm_managed_object_binding.id",
+        ],
+        name="fk_presence_connection_domain",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "created_operation_id", "source_evidence_event_id"],
+        [
+            "public.audit_event.workspace_id",
+            "public.audit_event.operation_id",
+            "public.audit_event.id",
+        ],
+        name="fk_presence_connection_source",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "retired_operation_id"],
+        ["public.otm_operation.workspace_id", "public.otm_operation.id"],
+        name="fk_presence_connection_retirement",
+    ),
+    CheckConstraint(
+        "revision=1 AND provider_mode='simulated' AND contract_version='simulated-user-presence-1'",
+        name="ck_presence_connection_version",
+    ),
+    CheckConstraint(
+        "(state='active' AND retired_operation_id IS NULL) OR "
+        "(state='retired' AND retired_operation_id IS NOT NULL)",
+        name="ck_presence_connection_state",
+    ),
+    CheckConstraint("updated_at>=created_at", name="ck_presence_connection_time"),
+)
+Index(
+    "uq_presence_connection_active",
+    user_presence_connection.c.workspace_id,
+    user_presence_connection.c.tenancy_id,
+    unique=True,
+    postgresql_where=user_presence_connection.c.state == "active",
+)
+
+
+# One admitted check owns monotonic ordering, fenced read attempts and an immutable terminal result.
+user_presence_check = Table(
+    "otm_user_presence_check",
+    metadata,
+    Column("operation_id", Uuid(as_uuid=True), primary_key=True),
+    Column("workspace_id", String(256), nullable=False),
+    Column("tenancy_id", Uuid(as_uuid=True), nullable=False),
+    Column("acquisition_sequence", BigInteger, Identity(always=True), nullable=False, unique=True),
+    Column("context", JSONB, nullable=False),
+    Column("context_hash", String(64), nullable=False),
+    Column("state", String(16), nullable=False),
+    Column("attempt_id", Uuid(as_uuid=True)),
+    Column("attempt_number", Integer, nullable=False),
+    Column("started_at", DateTime(timezone=True)),
+    Column("checked_at", DateTime(timezone=True)),
+    Column("results", JSONB),
+    Column("evidence_event_id", Uuid(as_uuid=True)),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    ForeignKeyConstraint(
+        ["workspace_id", "operation_id"],
+        ["public.otm_operation.workspace_id", "public.otm_operation.id"],
+        name="fk_presence_check_operation",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "tenancy_id"],
+        ["public.otm_tenancy.workspace_id", "public.otm_tenancy.id"],
+        name="fk_presence_check_tenancy",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "operation_id", "evidence_event_id"],
+        [
+            "public.audit_event.workspace_id",
+            "public.audit_event.operation_id",
+            "public.audit_event.id",
+        ],
+        name="fk_presence_check_evidence",
+    ),
+    CheckConstraint(
+        "context_hash ~ '^[0-9a-f]{64}$' AND jsonb_typeof(context)='object' AND "
+        "acquisition_sequence>0",
+        name="ck_presence_check_context",
+    ),
+    CheckConstraint(
+        "(state='queued' AND attempt_number=0 AND attempt_id IS NULL AND started_at IS NULL) OR "
+        "(state IN ('reading','complete','unavailable','superseded') AND attempt_number>=1 AND "
+        "attempt_id IS NOT NULL AND started_at IS NOT NULL AND started_at>=created_at)",
+        name="ck_presence_check_attempt",
+    ),
+    CheckConstraint(
+        "(state IN ('queued','reading') AND checked_at IS NULL AND results IS NULL AND "
+        "evidence_event_id IS NULL) OR (state IN ('complete','unavailable','superseded') AND "
+        "checked_at IS NOT NULL AND checked_at>=started_at AND results IS NOT NULL AND "
+        "jsonb_typeof(results)='array' AND "
+        "jsonb_array_length(results)=2 AND evidence_event_id IS NOT NULL)",
+        name="ck_presence_check_result",
+    ),
+)
+Index(
+    "ix_presence_check_latest",
+    user_presence_check.c.workspace_id,
+    user_presence_check.c.tenancy_id,
+    user_presence_check.c.acquisition_sequence.desc(),
+)
+Index(
+    "ix_presence_check_pending",
+    user_presence_check.c.workspace_id,
+    user_presence_check.c.tenancy_id,
+    user_presence_check.c.context_hash,
+    postgresql_where=user_presence_check.c.state.in_(("queued", "reading")),
 )

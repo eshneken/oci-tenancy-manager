@@ -282,7 +282,8 @@
       "default": "baseline_update",
       "enum": [
         "baseline_update",
-        "override_change"
+        "override_change",
+        "repair"
       ],
       "title": "Change Kind",
       "type": "string"

@@ -7,6 +7,10 @@ migrations or Python validation.
 
 ## Implemented local subsets
 
+- [financial-implemented](financial-implemented.mmd): exact collection/observation scope and reused operations/outbox.
+- [user-presence-connections-implemented](user-presence-connections-implemented.mmd) — [all 14 fields and limits](../../reference/user-presence-connections.md)
+- [user-presence-checks-implemented](user-presence-checks-implemented.mmd) — all 14 check columns; context connection/subject references remain typed JSON, not invented SQL FKs
+- [managed-identities-implemented](managed-identities-implemented.mmd) — [SVG](managed-identities-implemented.svg), [field guide](../../reference/managed-object-bindings.md); Excalidraw is an image annotation export
 - [baseline-authoring-implemented](baseline-authoring-implemented.mmd)
 - [configuration-drift-implemented](configuration-drift-implemented.mmd)
 - [configuration-updates-implemented](configuration-updates-implemented.mmd)
@@ -29,4 +33,8 @@ and its runtime guide links for the whole implementation boundary.
 Proposed fields and relationships require implementation/provider qualification before they become
 runtime guarantees. The retained prototype diagram remains separate in prototype/diagrams/.
 
-- [financial-implemented](financial-implemented.mmd): exact collection/observation scope and reused operations/outbox.
+Ownership retention/removal reuses the existing membership role/status/identity/cleanup fields and
+immutable operation JSON. Physical ER relationships are unchanged; [the exact additional DTO mapping](../../engineering-design/11-production-data-model.md#explicit-ownership-retentionremoval--7-november-2026)
+explains the new choice and legacy compatibility.
+
+Required-user alert incidents add [typed JSON evidence and outbox fields](../../reference/required-user-alerts.md#fields-and-persistence), without changing physical ER tables/relationships.

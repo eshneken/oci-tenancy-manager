@@ -1,5 +1,10 @@
 # OCI Tenancy Manager test and merge policy
 
+The [credential-lifecycle acceptance matrix](engineering-design/22-credential-security-lifecycles.md#required-acceptance-scenarios)
+adds selected recovery-console CIDR and 30-day automation-key scenarios to implementation acceptance.
+[Live qualification](how-to/real-oci-test-manifest.md#credential-security-lifecycles) remains pending;
+documentation does not count as a passed test or weaken the required D53/D56 gates.
+
 Current quality requirements and behavioral acceptance inputs. These describe required tests,
 not a claim that the production application, hosted CI or 95% measured coverage exists.
 [Chapter18](engineering-design/18-database-ci-and-build-order.md) defines implementation gates;
@@ -7,6 +12,13 @@ not a claim that the production application, hosted CI or 95% measured coverage 
 The dated test-plan record (private historical evidence; not distributed) preserves earlier
 milestone counts and proposed file names without making them current build instructions.
 
+
+## Live-provider qualification tracking
+
+Maintain the [real OCI manual test manifest](how-to/real-oci-test-manifest.md) with each slice.
+Every behavior that cannot be verified locally needs a pending live case with prerequisites,
+steps and expected outcomes. Passing simulated tests does not close live qualification cases.
+Checkpoint reports must distinguish local interactive checks, automated coverage and pending OCI tests.
 
 ## D53: required test and merge gates
 
@@ -38,6 +50,46 @@ justification. Do not lower the threshold, omit untested files or add trivial te
 the number. Critical authorization, scope, failure/retry, destructive-operation and credential
 branches still require behavior assertions; 95% aggregate coverage is not proof of their correctness.
 Exact Python/frontend test-runner tooling and report formats are implementation setup work.
+
+### Complementary backend test lanes
+
+The required backend lanes partition the complete authored suite by the postgres marker:
+
+- Backend unit/coverage runs every test selected by `-m "not postgres"` through
+  `scripts/check_unit_coverage.py`. Its complete-source, unit-only coverage must remain at least 95%.
+- Database/browser integration runs every test selected by `-m postgres` through
+  `scripts/run_backend_postgres_tests.py`, including the native HTTP/worker/Playwright cases hosted
+  by PostgreSQL-marked fixtures. It uses disposable Docker PostgreSQL, never a saved preview.
+
+Each backend test belongs to exactly one of these selections. Deselection by the complementary
+marker is lane ownership, not a skipped required test; the separately required companion lane must
+still pass. Frontend unit/coverage remains independently required. An integration result alone
+cannot establish the complete test gate or unit coverage. Do not reclassify tests to avoid execution.
+
+The integration runner previously repeated the non-database unit suite. Removing that duplicate
+execution preserves the same assertions and required checks. On 6 November 2026 the user approved
+a 600-second aggregate integration deadline after the growing suite exceeded 420 seconds without
+test failures. Individual test/browser/database limits and the 95% coverage gate are unchanged.
+Earlier timed-out runs remain incomplete evidence. A fresh complete manual-presence run now passes all 351 postgres cases in 429.457 seconds, with zero failures/errors/skips and valid JUnit. Separate unit lanes pass 1,556 backend and 446 frontend cases. The disjoint backend selections cover 1,907 tests, not an overlapping sum. [Final local receipt](history/manual-presence-checkpoint-2026-11-06.md). The earlier deadline-expired attempts supply no completed full-suite evidence. Missing, failed, skipped, cancelled, timed-out or
+invalid reports still block qualification. Do not add counts from overlapping historical runs.
+
+### Current local cadence and integration budget — 7 November 2026
+
+The user approved increasing the aggregate integration deadline to **900 seconds (15 minutes)**.
+This supersedes the earlier 600-second runner limit; it changes no individual browser/test/I/O
+limit, assertion, completeness/no-skip rule, unit-only coverage target or protected-master gate.
+The CI integration job retains its existing 25-minute outer limit for setup and the test runner.
+Historical receipts keep the actual limits and results under which they were produced.
+
+Related internal development slices may proceed through several backend/frontend steps before
+integration execution. Run focused units, static/contract checks and both full-source 95% unit-only
+gates during implementation. Author database/native/browser regressions with the feature, then
+execute the complete integration suite once a coherent end-user UI flow is ready for qualification.
+Fix failures and repeat the applicable gates before saved-preview publication or merge. An internal
+step without that final evidence is implemented/unqualified, not a completed tested milestone.
+Documentation/security reviews remain part of the relevant slices; final responsive UI review covers
+the complete interaction. This cadence applies locally only: every CI build still runs all required
+unit, database and Playwright suites. No test omission, reclassification or check bypass is authorized.
 
 ### Prototype-to-production transition
 
@@ -926,3 +978,321 @@ reload and desktop/mobile320/390 layouts. Saved-instance data is never a mutatin
 Daily scheduling, live Budget response/billing semantics, provider timeouts/permissions and OKE CronJob
 qualification remain staging work. No new simulator-control page or test-only production endpoint is
 a prerequisite for these checks. [Field/run contract](reference/cost-visibility.md).
+
+
+## Selected configuration repair regression matrix — 6 November 2026
+
+The [implemented flow and field map](reference/configuration-repair.md) requires these cases:
+
+| Scenario | Required evidence |
+| --- | --- |
+| Missing/different, fresh complete check | Preview and admission freeze exact categories, assigned content, source check, context and bindings |
+| Stale, unknown, foreign, busy, changed observations or assignment | Fail closed before provider writes; no latest-baseline substitution |
+| Selected policy with unselected quota drift | Only policy written; quota finding remains, no desired revision or false whole-config verification time |
+| Partial write/readback failure | Prior findings retained; explicit retry independently rereads exact bindings; no duplicate accepted work |
+| New publication while queued | Original assigned baseline and overrides remain frozen |
+| Concurrent/pending old check and repeated worker delivery | Final-generation check wins; superseded reads cannot green; exactly one sealed successful repair check |
+| All-category repair writes | Unit and SQL: 4 categories × Missing/Different × inherited/override profile; exact values, unchanged unselected objects and desired revisions |
+| Concurrent admission with independent request keys | Same administrator submits two simultaneous requests; one accepted, one blocked, no duplicate operation |
+| Real UI preview/confirm/reload at desktop/mobile | Existing protected HTTPS session, native worker and disposable PostgreSQL; sequential selected repairs of all four categories with accepted overrides; no fake production endpoint |
+
+Both unit-only 95% gates and independent documentation, security and responsive UI reviews remain
+required. A local simulator result does not qualify OCI writes or deploy daily drift scheduling.
+
+
+### Real OCI configuration drift and repair manual gate
+
+Hands-on validation is explicitly deferred until a real provider and disposable child tenancy are
+available. The [pending manual checklist and current automated coverage](how-to/configuration-drift-runbook.md#pending-real-oci-manual-validation)
+cover each managed category, selected-only repair, overrides/assigned baseline, authorization loss,
+partial/unknown effects, real object recreation/OCID rebinding and overlapping reads. All live cases
+remain Pending. No local drift-injection scaffolding or saved-instance mutation is requested.
+The 20-case unit comparison matrix remains distinct from the 16-case repair-write matrix and
+all-category browser journey. None is a claim of live OCI qualification. See the
+[all-category repair field/coverage note](reference/configuration-repair.md#all-category-repair-qualification--6-november-2026).
+
+
+## Required-user presence boundary — 6 November 2026
+
+[Source field map and integration limits](reference/required-user-presence.md) define this internal
+read-only capability. Units must distinguish exact authorized complete presence/absence from
+unqualified domain, denied/timeout/delayed/partial/unsupported reads; isolate automation/recovery
+subjects; reject same-name adoption, wrong-domain404, changed actual IDs, cross-attempt/generation
+facts and out-of-window timestamps. Unknown cannot carry confirmed identity facts. Models reject
+secret fields and the deferred audit-user purpose. Neutral modules must load without simulators.
+Existing full database/browser suites remain regressions, not execution of an uncomposed capability.
+No new production binding/check/secret storage or public screen is qualified here.
+
+
+## Permanent-user capture regression matrix — 6 November 2026
+
+- Unit: separate automation/recovery OCI and SCIM identities, correct workspace/organization/parent/
+  child/domain, exclusion of both temporary identities, duplicate/null subjects, sanitized failures,
+  forbidden secret extras, evidence pairing, version 1/2 compatibility and capture-before-retirement.
+- PostgreSQL: version 3 create/import retain the same exact capture in operation-step and immutable
+  audit evidence; completed worker redelivery preserves it. Forward migration 0022 changes only the
+  step allowlist and must retain earlier data and valid legacy step keys.
+- Playwright: normal guided create/import displays the verified permanent-user capture step through
+  the real API/worker/store path. Existing handoff/reload/responsive regressions remain required.
+- Live OCI: exact returned identities, interrupted setup, same-name/different-ID protection and
+  post-policy checks before temporary retirement remain in the [manual manifest](how-to/real-oci-test-manifest.md).
+
+Do not treat retained onboarding provenance as canonical current access bindings or current health.
+
+
+## Canonical identity-binding regression matrix — 6 November 2026
+
+- Unit: typed capture/hash/current-step/current scope and version gates, exact three-row shape,
+  idempotent IDs/generation, partial/conflicting mappings, transaction guard and closed DB failures.
+- PostgreSQL: actual create/import rows and immutable source, wrong workspace/child/domain/event/
+  operation/identifiers, no identity rewrite/delete/truncate, partial-insert rollback before cleanup,
+  retry, whole-tenancy and employee-flow termination retirement, failed termination preservation,
+  historical v1/v2 and already-captured v3 no-backfill behavior.
+- Installed roles: API SELECT only; denied insert/update/delete/truncate; worker insertion and narrow
+  retirement columns, with identity rewrite denied. Full native worker/browser onboarding remains
+  required and exercises the new table through actual runtime grants.
+- Migration/reset: no historical adoption, preserved operation/audit/step rows, reviewed local-only
+  reset table set and foreign-key ordering; no CASCADE or weakened owner/container guards.
+- Live: binding identity/provenance agreement and accepted-termination ordering remain Pending in
+  the [manual test manifest](how-to/real-oci-test-manifest.md). Active identity is not access health.
+
+
+## Required users read-only screen — 6 November 2026
+
+The [field/behavior reference](reference/required-users-screen.md) and
+[local review runbook](how-to/required-users-runbook.md) define this identity-record subset.
+Required cases: exactly two independent purposes; pending and legacy unrecorded states; actual
+create/import IDs and immutable source links; retained retired facts; scoped foreign-workspace404;
+no provider/job/audit/binding mutation on read; malformed target/auth/expiry/safe-error behavior;
+initial loading vs read failure vs successfully unrecorded identities; failed refresh with qualified
+retained records; no retained facts after401/403; private cache isolation/invalidation; native
+keyboard disclosures/refresh/source links and responsive widths1280/768/390/320. Use actual SQL
+and installed worker/browser flows as well as unit assertions. No live health/readiness claim is
+qualified; those cases remain Pending in the [OCI manifest](how-to/real-oci-test-manifest.md).
+
+
+## Presence-only connection regression matrix — 6 November 2026
+
+See the [implemented field/model guide](reference/user-presence-connections.md). Required cases:
+create/import capture; old marker-absent v3 captures remain unbound; exact replay versus conflict;
+whole capture rollback/retry before cleanup; current domain/automation role/source FKs; forged
+inserts while the child is legitimately pending; an in-memory marker cannot alter accepted intent;
+both deletion entry points retire, failed initiation preserves; API SELECT only, worker immutable
+columns denied; owner-only reset inventory; package includes frozen SQL/version/hash. Internal
+version 2 rejects obsolete assignment and credential fields, with independent connection-revision
+and user/domain fixture tests. No new UI control or live presence evidence is claimed by this slice.
+
+## Manual user-presence checks — locally qualified, 6 November 2026
+
+Source scope and all fields: [check reference](reference/user-presence-checks.md). Required cases:
+
+- Exact fresh create/import capture and accepted connection; historical/partial/unconfigured/pending/
+  inactive/busy children disabled, no name-based or read-triggered backfill.
+- Current session/admin/revision/actor, CSRF/Origin, foreign scope, one-key replay, different-request
+  conflict, distinct-key independent admission and atomic intent/check/audit/native deferral.
+- Provider reads outside transactions; independent subject results and timestamps, exact response
+  scope/read window, malformed/denied/domain/absence cases, no expected-ID-to-observed-fact shortcut.
+- Attempt reclaim/late callback fences, no terminal overwrite, changed binding/connection/child/
+  policy/grant before or after read, paused execution, superseded results and backward clocks.
+- Latest admission sequence wins even when older work finishes later. Freshness at 24 hours,
+  per-account stale labels, pending progress preserving dated results, new unavailable results not
+  silently borrowing earlier success. The 30-second window is late-result validation, not SDK timeout.
+- Real PostgreSQL provenance/guard/grant/rollback/reset evidence; authenticated native browser
+  Check now → independent Present/Permissions Not checked → View check, cache/auth handling,
+  uncertain-response key reuse while mounted, keyboard focus and responsive containment.
+- Read-only behavior: no cloud mutation, credential disclosure, repair, notification or scheduler.
+  Actual OCI credentials, SDK bounded I/O, exact-domain absence and propagation stay Pending in the
+  [live manifest](how-to/real-oci-test-manifest.md). All required local lanes, independent reviews and main-preview preservation now pass; the parallel preview remains unchanged. [Final receipt](history/manual-presence-checkpoint-2026-11-06.md).
+
+## Required-user inventory summary — locally qualified
+
+The [complete field map](reference/required-users-summary.md) and
+[manual review](how-to/required-users-runbook.md#inventory-summary-source-checkpoint) define this
+source follow-up. Required cases:
+
+- Exact four-field summary and per-user four-field views, independent UTC times/provenance, safe
+  defaults and no changes to the existing 22-field directory or persisted check schema.
+- State matrix: fresh dated Missing first; unsupported positive with no date/check reference becomes unavailable; then stale, Unknown/unavailable, both fresh dated Present, otherwise Not checked. Cover mixed Present/Unknown/stale and both DTO/frontend positive guards; historical unconfigured identities remain Not checked and inactive rows hide the link.
+- List/detail equivalence using shared strict context/evidence/age logic; latest admission order,
+  changed valid context versus configured broken canonical domain/signer/source references, missing/corrupt audit evidence, invalid pending intent and no older green fallback. Configured corruption must be per-child unavailable in inventory and closed 503 in detail, not a clean default.
+- Four added queries for active visible page IDs only, every query workspace/ID-scoped; empty or
+  non-active input adds no queries. Use real SQL/scoping tests as well as isolated unit fixtures;
+  mocked query-count assertions do not prove database isolation or transaction behavior.
+- Native Users link targets the real required-users section on the exact child; focus follows terminal success or 503 but never 401/403, with no retained unauthorized data. Cover reload/new tab, per-account accessible descriptions/UTC, pending refreshes, Users:/Config: visible/ARIA consistency and unchanged detail configuration labels. Verify actual 320-pixel body containment, including hidden description positioning; keep existing paging/search/sort and all configuration-link assertions.
+- No GET provider call, new job, mutation, navigation badge, daily scan, email, credential or
+  privilege/repair claim. All required lanes/reviews and the main update pass: 1,587 backend units, 458 frontend units, all 352 integration/native/browser cases in 430.159 seconds; no failures/errors/skips/timeout. All 29 existing public tables are preserved and port 8444 is unchanged. [Final summary receipt](history/required-users-summary-checkpoint-2026-11-06.md).
+
+
+## Lifecycle notice parity regressions — 6 November 2026
+
+The [implemented lifecycle scope](reference/lifecycle-email.md#lifecycle-notice-parity--6-november-2026)
+retains the existing outbox and contracts. Required units cover every additional action's
+attention/failure notice, responsible-only frozen test routing, excluded local decisions/legacy
+unguided onboarding and silence for routine states or provider-only waits. PostgreSQL tests
+accept join/remove/transfer/offboard/delete through real previews and active grants, exercise
+normal completion and both blocked/unexpected provider failures, and verify one notice on
+replay. Send-time grant revocation, replaced authorization revision/email, unclaimed responsibility
+and resolved operation must prevent delivery. Email-less recovery failures remain blocked without
+fallback; ordinary success sends nothing. Existing known-rejection, uncertain-acceptance and
+transaction rollback protections remain required. Native worker/loopback Mailpit/HTTPS Playwright
+exercise a non-onboarding deletion notice through the installed runtime roles and existing
+read-only delivery panel, category and export. No product fault-injection control is introduced.
+These are local simulation assertions; staging/production provider mail remains a manual gate.
+
+## Directory restoration and destructive consent — source correction, qualification pending
+
+[Workflow fields/rules](reference/organization-workflows.md#destructive-consent-and-directory-return-correction--source-checkpoint)
+and [manual review](how-to/organization-mapping-runbook.md#return-and-destructive-consent-correction-review-after-installation)
+require the following regression matrix, without weakening complete-census departure inference:
+
+- Fresh applied full and partial actual employee rows restore already-offboarded stable identities,
+  settle only handled absence on an immutable evaluation copy and open one setup episode as needed.
+  Cover legacy removed_capture_at=null with prior source/publication fallback and no absence cycle. Include merged survivor → cleanup → absence/explicit offboard → fresh current-email return, resolving canonical supplied rows to the retained stable UUID rather than immutable original org_person.email.
+- No restoration from references, stale/equal/replayed/staged/rejected/config-only evidence or while
+  pending, exempt or merged. Repeated presence creates no duplicate setup episode. No source/audit/
+  operation history, tenancy, user or association resurrection; role defects stay independently open.
+- Standalone whole/person tenancy deletion, member removal and owner transfer preserve directory
+  status/independent absence for both present and absent zero-link people, including review rows, source-derived absence flags and application-decision/reclassification paths. Source-present last-link
+  cleanup can set existing setup flags, without automatic provisioning or absence settlement.
+- Only explicit offboard_person for an actually absent eligible employee changes offboarding state;
+  current actual-row presence hides/refuses it. Root, kept-obligation and pending-work guards remain.
+- New destructive admissions offboard_person/delete_tenancy/remove_member/transfer_owner-remove/merge
+  need confirm_destructive=true. Standalone validated transfer/keep_member is neutral; offboarding
+  always retains destructive consent. Missing/false consent produces no mutation/queue/audit transition. False
+  omission preserves old canonical hashes and current-authenticated exact committed replay precedes
+  the new guard; changed requests still conflict. Consent resets on action/target/plan/preview changes.
+- Separate TenancyDeletionCommand keeps its seven fields/confirm_deletion; DeletionPerson's seven
+  fields retain leaves_directory, always false. OrganizationAction has 22 fields after the explicit former-owner choice; no storage change.
+- Unit, disposable PostgreSQL and actual browser coverage must include all cross-surface directory/
+  review/cache outcomes and consent UI/API negatives. Current notification parity work is preserved;
+  new full validation and saved-preview qualification are not claimed yet.
+
+## Accept onboarding without a tenancy
+
+Required regression cases for keep_without_tenancy: ordinary and unmapped current employees remain
+included with zero associations; only setup review closes; replay is exact; repeated feeds and
+name changes do not reopen setup; later create/import/join remains available. Reject absent,
+exempt, merged, pending, associated and unrelated-review targets or stale context. Preserve
+independent mapping/role and future departure work. Cover admission and database persistence
+in unit/disposable PostgreSQL tests and the real dialog in HTTPS Playwright, including narrow
+viewports, no destructive checkbox, immediate decision receipt and repeat upload. No live OCI
+qualification is needed for this application-only decision.
+
+## Shared-tenancy member entry and user-data refresh
+
+Required UI coverage: Add member is visible only for active shared tenancies and disabled for known
+pending work; search requires at least two characters, bounded query/25-result page, and filters
+existing/absent/excluded/pending candidates. No valid selected employee means no continuation,
+including script submission. Search changes clear selection; cancel/Escape releases the modal
+without mutation. Authorization failure hides choices, expires the session, and cannot advance.
+A native HTTPS case selects an employee from the tenancy detail, verifies the exact preselected
+child, and completes the existing membership workflow. Toolbar centering and picker width are
+checked at desktop and 320/390-pixel widths.
+
+Required-user acquisition is now labeled Refresh user data; tests still exercise the same queued
+check endpoint, eligibility, pending/polling, exact-key retry and dated presence publication.
+There is one normal acquisition button per section, with no separate saved-record user refresh.
+Page-level refresh/background reads remain GET-only, with Retry loading users only on read failure.
+Capture the acquisition control at desktop and narrow widths. No new provider call, grant, table or OCI-specific qualification
+case is introduced; existing shared membership and presence live cases remain mandatory.
+
+## Optional operator disclosures
+
+Create/import instructions start closed; native summary Enter/Space and click toggle the complete
+checklist, including its documentation links. Collapsing does not submit any operation and leaves
+all handoff fields, simulated handoff button, errors and cleanup consent available. Cover both
+origins and closed/open 1280/390/320-pixel screenshots, page containment, summary focus and
+keyboard operation through the existing complete native onboarding/worker browser journey.
+No new backend state, API, schema or live provider qualification is introduced.
+
+## Explicit former-owner disposition regression matrix
+
+| Scenario | Required evidence |
+| --- | --- |
+| Shared Keep | Old row, user and compartment IDs preserved; role member, no group/user write, existing admin rights not implied reduced. Recipient existing identity reused, exactly one current owner. |
+| Shared/individual Remove | Explicit consent, exact recorded nonprotected personal identity, independent group/user deletion readback and operation steps before retirement. Resources/compartments/additional accounts remain manual. |
+| Missing/invalid choice | New standalone request fails without explicit disposition; other actions cannot use keep to bypass consent; individual Keep rejected. |
+| Absent offboard transfer | New omitted choice freezes Remove; explicit shared Keep retains outside-directory obligation, Remove can complete offboarding. Overall destructive consent remains required. |
+| Replay/concurrency | Exact replay has same receipt and no duplicate writes; reused key with changed choice conflicts; stale preview fails. Historical omitted-None bytes/legacy frozen behavior preserved. |
+| Failure/protection | Protected/reused/unknown identities fail closed; aliased replacement is rejected before removal; changed recipient identity cannot redirect the job. Partial provider effects remain unknown/pending with no false success. |
+| UI admission | No default standalone choice, no-ID removal disabled in standalone/offboard variants; unchecked/Enter/programmatic submit/direct API cannot bypass relevant consent. Choice/target/recipient/plan changes reset acknowledgments. |
+| Cleanup help | Closed by default, opens with keyboard, all responsibilities present, critical identity/consequences remain visible; post-removal person/unknown scope stays visible. Responsive 1280/390/320 controls remain reachable. |
+
+Unit tests cover guards/serialization/readback/UI branches; disposable PostgreSQL verifies actual
+publication/replay/failure; HTTPS Playwright exercises both keep directions, existing identity
+preservation and explicit removal through real application roles and the native worker. Required
+unit-only 95% per-tier gates and the approved integration timeout are unchanged.
+
+
+## Persisted read compatibility regression — 7 November 2026
+
+Membership-only registry revisions must preserve stored costs and exact required-user results,
+including original timestamps, across detail/list navigation, browser reloads and reconstructed
+services. Unit tests distinguish harmless name/revision edits from changed domain/user/SCIM/binding
+generation/connection/policy facts. Disposable PostgreSQL exercises a real shared-member join,
+unchanged list/detail observations and rejection of foreign scope or changed billing identities,
+configuration lineage, authority and full profile arrays. Native Playwright refreshes both sources
+once, navigates/reloads, adds/removes a member and verifies list/detail facts with zero additional
+acquisition POSTs. Existing delayed-publication, unavailable/pending, corruption and age tests must
+continue passing: read compatibility does not relax execution revision fences or evidence validation.
+
+
+## Confirmed required-user email regression matrix
+
+Cover per-subject Missing/open, repeated Missing dedup, Unknown carry, verified Present/relapse,
+independent automation/recovery, and Missing alongside an Unknown peer. Disabled mail must preserve
+incident state without backfill. Old markers/replays stay non-alerting. Late acquisitions cannot
+copy/reset heads or stage email; corrupt prior evidence fails closed. Seal/outbox/queue failure must
+roll back together. Frozen normalized originals preserve multiple roles and do not collapse to a
+single staging mailbox. Missing/invalid role contacts remain visible, including null admin emails.
+Before delivery, cover retained current role/address, changed still-present former roles, admin
+revocation/auth revision/email changes, exact target/connection/policy replacement and termination,
+plus route/origin/transport changes and SMTP rejection/unknown behavior. Native loopback capture and
+Playwright verify real redirected messages and read-only role/routing/delivery presentation at
+1280/390/320 pixels. No live employee records, outgoing real email or production simulator controls.
+
+
+## Recovery console policy UI regression subset — 7 November 2026
+
+The [current source/reference](reference/recovery-console-verification.md) and
+[manual UI steps](how-to/recovery-policy-ui-checkpoint.md) distinguish this read-only simulated
+checkpoint from later custody, rotation, repair and real-provider qualification. Required evidence:
+
+- `test_recovery_console.py` / `test_recovery_release.py`: strict multi-family CIDRs/unrestricted
+  unions, private renderer, complete ordered policy/MFA/selectors/fallback, wrong scope/time and
+  safe evidence fingerprints/errors.
+- `test_recovery_console_checks.py` / `test_local_worker.py`: both setup origins, absent/drifted
+  capture rejection, replacement-identity isolation, current desired loader in the registered
+  lifecycle worker, independent presence compatibility, stale proof and exact sealed context.
+- `test_recovery_console_checks_postgres.py`: real setup/readback/persistence, desired-policy
+  changes, denied/MFA/fallback drift, old queued reads, legacy non-backfill and API/audit/CSV privacy.
+- Frontend required-user units plus native `simulation.spec.ts`: independent labels/links, explicit
+  simulated verification after both create/import, no CIDR disclosure, persisted asynchronous
+  refresh and responsive1280/768/390/320 captures through the existing complete browser journey.
+
+No test here claims live OCI precedence or sign-in, fleet rollout, full recovery-user recreation,
+password retrieval/rotation, key rotation or installed daily scanning. Those retained requirements
+remain in the [real-OCI manifest](how-to/real-oci-test-manifest.md#credential-security-lifecycles).
+
+## Automation assignments — 9 November 2026
+
+Unit coverage includes exact user/domain/group/application/role binding, complete authorized direct
+and group role grants, missing/disabled assignments, partial/denied/unsupported reads, wrong-scope,
+late/future evidence, legacy absence, connection changes and sealed provenance. Disposable PostgreSQL
+covers durable readback, independent presence, inventory/detail agreement, negative results and late
+publication. Playwright creates/imports new simulated tenancies, refreshes assignment evidence,
+checks separate labels/operation links, navigates/reloads retained results and exercises laptop/mobile
+layout. No live qualification or product fault controls are implied. See the
+[implemented field map](reference/administrator-assignments.md) and real-provider test manifest.
+
+## Check-date footers and local sessions — 9 November 2026
+
+Unit regressions cover date-only UTC formatting at a local/UTC day boundary, distinct assignment/
+presence/policy destinations, full timestamp metadata and a missing-operation non-link fallback.
+Playwright checks dates below all badges, paired laptop versus stacked mobile fields, exact operation
+links and full-page24px section gaps in create/import flows. Session-policy unit tests retain hosted
+1800/28800-second limits while local becomes28800/28800; the real login PostgreSQL test verifies issued
+stored policy and existing cleanup/expiry cases remain mandatory. Existing sessions are not extended.
+
+Cleanup PostgreSQL fixtures explicitly retain an already-issued 1,800-second policy, so laptop
+default changes cannot silently relax the mandatory 30-minute idle expiry/polling tests.

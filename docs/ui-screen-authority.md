@@ -250,7 +250,7 @@ unchanged. Independent whole-flow responsive/UI review and final test evidence a
 
 ## Tenancy detail deletion — 31 October2026
 
-[DeleteTenancy](../frontend/src/DeleteTenancy.tsx) is the current local runtime action for whole-tenancy impact review on both individual and shared child detail. The wrapping person list shows other association counts/directory outcomes; one explicit confirmation follows manager/shared warnings. It reuses shared native dialog/checkbox controls and links accepted work to Operations. This does not change shared-member removal or introduce real OCI effects.
+[DeleteTenancy](../frontend/src/DeleteTenancy.tsx) is the current local runtime action for whole-tenancy impact review on both individual and shared child detail. The wrapping person list shows other association counts and explicitly unchanged employee directory status; one explicit confirmation follows manager/shared warnings. It reuses shared native dialog/checkbox controls and links accepted work to Operations. This does not change shared-member removal or introduce real OCI effects.
 
 ## Create request metadata and completion — 31 October2026
 
@@ -572,7 +572,9 @@ A newer publication or a pending review remains separate.
 Check now / Check all tenancies explicitly queues read-only work. Refresh only fetches evidence;
 active checks poll. Exact child/category detail shows assigned baseline, overrides, expected/observed
 text, UTC timestamps and operation context with guarded Back routes. Queueing does not clear drift.
-No Repair, fake acknowledgment/delete or navigation-action badge is introduced. Four local category
+The original read-only check foundation added no Repair control. The later
+[explicit repair flow](reference/configuration-repair.md) adds its guarded preview/confirmation;
+there is still no fake acknowledgment/delete or drift navigation-action badge. Four local category
 bundles do not imply real OCI grammar/binding/access qualification.
 
 [Field/evidence authority](reference/configuration-drift.md) ·
@@ -666,3 +668,67 @@ manager remains searchable and in employee/detail context. Independent monetary 
 Actual/Budget header. Per-value colors and accessible status use observed same-response budget;
 missing/stale/prior-month/source-unqualified labels stay visible. Retrieval tooltips show only OTM
 retrieval; optional source diagnostics belong on detail. See [runtime fields](reference/cost-visibility.md).
+
+
+### Explicit repair follow-up — 6 November 2026
+
+Earlier read-only checkpoint statements excluding Repair describe the check foundation. The current
+[explicit selected-object repair flow](reference/configuration-repair.md) now adds a guarded modal
+preview/confirmation and native worker verification. Checks remain read-only. No daily scheduler,
+live OCI repair or local drift-injection control is enabled.
+
+
+## Required users identity-record section — 6 November 2026
+
+[Implemented React section](../frontend/src/RequiredUsers.tsx) and its
+[API/UI field guide](reference/required-users-screen.md) are authoritative for the read-only
+identity-record subset embedded in tenancy detail. Static access walkthroughs still illustrate the
+future full presence/permission/repair flow; they must not imply those controls are implemented.
+Neutral registration states and explicit Not checked guidance remain separate from access health.
+
+## Manual required-user presence controls — 6 November 2026
+
+The [Required users field guide](reference/required-users-screen.md) supersedes the earlier identity-
+record-only subset: authenticated Check now queues an explicit simulated read; Refresh
+remains GET only. Independent Presence labels/times and View check links are separate from identity
+registration and Permissions: Not checked. The simulation banner, historical-disabled reason,
+queued progress, uncertain-request retry, stale label and auth/cache boundaries are current source
+behavior. There is no live OCI health, repair, email or daily schedule. Local qualification and the main-preview upgrade pass; the parallel preview is unchanged. [Final receipt](history/manual-presence-checkpoint-2026-11-06.md). Current source and the [review runbook](how-to/required-users-runbook.md) define this slice.
+
+## Required users link in inventory Status — source checkpoint
+
+The [derived summary reference](reference/required-users-summary.md) governs the compact Users link
+inside the existing active-tenancy Status cell. It names the exact child's Required users fragment,
+focuses the actual section heading after terminal success/503 (never 401/403), retains each account's UTC state/time in title/accessible text
+and distinguishes simulation from permissions. Checking is secondary; fresh dated Missing, invalid positive provenance/unavailable, stale, Unknown/unavailable, both fresh dated Present and Not checked use the documented order. Configured corruption is not a clean default. Inventory Config: and Users: prefixes match visible/ARIA labels; detail configuration labels are unchanged. Container-relative hidden descriptions preserve body containment at 320 pixels. No new nav/column/filter
+or attention badge is added. Local qualification and the preserved-data main update pass; the parallel preview is unchanged. [Final summary receipt](history/required-users-summary-checkpoint-2026-11-06.md). Earlier qualified manual-check UI retains its original scope.
+
+
+## Employee restoration and destructive consent — 6 November 2026
+
+Current React PersonActions is authoritative for the five destructive person actions: employee
+offboarding, tenancy termination, shared-member removal, ownership transfer with removal, and
+identity merge. The 7 November standalone shared transfer/keep_member path instead uses neutral
+confirmation while explicitly preserving existing permissions. Destructive choices show named targets and consequences, an initially unchecked acknowledgment and a danger
+submit control. Action/person/target/recipient/plan/preview changes clear consent; the browser
+and server enforce it independently. Existing manager/shared/empty-association warnings remain.
+The [workflow reference](reference/organization-workflows.md) maps the new request flag and
+historical replay rule. Readonly/refetch failures cannot mask another query's authorization loss.
+
+DeleteTenancy retains its separate explicit checkbox. Both whole-tenancy and person-centric
+cleanup preserve employee directory status and independent absence work, even at zero associations.
+Only explicit absent-person offboarding changes that status. Fresh positive full/partial employee
+rows can later restore directory/onboarding, never deleted infrastructure or access. Review
+checkbox/control frames at 1280/390/320 are locally visually approved. Complete local runtime
+qualification and the preserved-data main-preview upgrade pass; the parallel preview is unchanged.
+See the [final receipt](history/employee-restoration-consent-checkpoint-2026-11-06.md).
+
+## Explicit former-owner choice — 7 November 2026
+
+Current PersonActions and Tenancies screens are authoritative for explicit Keep/Remove. Keep is
+shared-only, preserving all old identity/access bindings and tracking the former owner as a member.
+Remove displays the exact bound identity outside optional help and requires destructive consent.
+The offboarding variant has the same missing-ID guard and retains its overall destructive consent.
+Manual cleanup instructions use a default-closed panel; affected people and known/unknown scope
+remain visible after removal. This supersedes older retained-profile/demotion walkthrough choices.
+See [the current flow and field map](reference/organization-workflows.md#explicit-former-owner-disposition--7-november-2026).

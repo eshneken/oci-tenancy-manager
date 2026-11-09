@@ -14,6 +14,7 @@ from otm.configuration.override_contracts import (
     SaveConfigurationReview,
 )
 from otm.configuration.plans import ConfigurationPlans
+from otm.configuration.repair_contracts import ConfigurationRepairRequest
 from otm.configuration.rollout_contracts import (
     ConfigurationPlanView,
     ConfigurationPreview,
@@ -34,6 +35,7 @@ def guarded(call):
     except (OrganizationConflict, RequestConflict) as error:
         known = {
             "CONFIGURATION_TARGET_NOT_FOUND",
+            "CONFIGURATION_REPAIR_BLOCKED",
             "CONFIGURATION_CHECK_BUSY",
             "NO_CONFIGURATION_CHECK_TARGETS",
             "CONFIGURATION_PREVIEW_CHANGED",
@@ -76,6 +78,16 @@ def rollout_router(service):
     @router.get("/api/configuration/updates/preview", response_model=ConfigurationPreview)
     def preview(request: Request, tenancy_id: UUID | None = None):
         return guarded(lambda: service.preview(request.user, tenancy_id))
+
+    # Only a fresh same-assignment exact-object preview can authorize selected-category repair.
+    @router.post("/api/configuration/repairs/preview", response_model=ConfigurationPreview)
+    async def repair_preview(request: Request):
+        command = await bounded_command(request, ConfigurationRepairRequest, 4096)
+        if isinstance(command, JSONResponse):
+            return command
+        return await run_in_threadpool(
+            guarded, lambda: service.preview_repair(request.user, command)
+        )
 
     # A small closed command contains no policies, credentials, arbitrary target set or
     # actor claims.

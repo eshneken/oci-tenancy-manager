@@ -12,7 +12,7 @@ from otm.organization.review_rules import (
     issue_basis,
     suppressed,
 )
-from otm.storage.tables import org_person, org_recommendation
+from otm.storage.tables import org_person, org_recommendation, tenancy_membership
 
 CHANGE_FIELDS = (
     "full_name",
@@ -32,8 +32,25 @@ def profile(person):
     }
 
 
-# Initialize only later additions as onboarding; returning offboarded people require qualified
-# evidence.
+# Only newer explicit employee rows can restore an offboarded identity; references and pending
+# operations cannot. Callers supply actually applied source, never a configuration reclassification.
+def returning_people(controls, previous, capture, employee_row_ids):
+    if previous is None or capture is None:
+        return set()
+    predecessor_capture = previous.source_captured_at or previous.published_at
+    if capture <= predecessor_capture:
+        return set()
+    return {
+        row["id"]
+        for row in controls
+        if row["directory_status"] == "offboarded"
+        and not row["pending_operation_id"]
+        and row["id"] in employee_row_ids
+        and capture > (row["removed_capture_at"] or predecessor_capture)
+    }
+
+
+# New employee rows and qualified returns open one setup episode without restoring cloud access.
 def directory_transitions(connection, workspace, current, previous, supplied):
     rows = {
         row["id"]: row
@@ -42,41 +59,38 @@ def directory_transitions(connection, workspace, current, previous, supplied):
         ).mappings()
     }
     old = {p.id: p for p in previous.people} if previous else {}
+    # Controls retain original identity emails across merges; positive rows select stable IDs.
+    present = {p.id for p in current.people if p.profile == "employee" and p.email in supplied}
+    returned = returning_people(rows.values(), previous, current.source_captured_at, present)
+    associated = (
+        set(
+            connection.execute(
+                select(tenancy_membership.c.person_id).where(
+                    tenancy_membership.c.workspace_id == workspace,
+                    tenancy_membership.c.person_id.in_(returned),
+                    tenancy_membership.c.status.in_(("active", "pending", "removing")),
+                )
+            ).scalars()
+        )
+        if returned
+        else set()
+    )
     for person in current.people:
         state = rows[person.id]
         if person.profile != "employee" or state["directory_status"] == "merged":
             continue
-        # A deletion while still present becomes return-eligible only after a later full absence.
-        if (
-            state["directory_status"] == "offboarded"
-            and state["removed_capture_at"] is None
-            and current.absence_eligible
-            and person.email not in supplied
-            and current.source_captured_at is not None
-        ):
-            connection.execute(
-                update(org_person)
-                .where(org_person.c.workspace_id == workspace, org_person.c.id == person.id)
-                .values(removed_capture_at=current.source_captured_at)
-            )
-            state = {**state, "removed_capture_at": current.source_captured_at}
-            rows[person.id] = state
-        returning = (
-            state["directory_status"] == "offboarded"
-            and state["removed_capture_at"] is not None
-            and current.absence_eligible
-            and person.email in supplied
-            and current.source_captured_at
-            and current.source_captured_at > state["removed_capture_at"]
-        )
         added = previous is not None and (
             person.id not in old or old[person.id].profile != "employee"
         )
-        if returning or (
+        if person.id in returned or (
             added and state["directory_status"] == "included" and not state["pending_operation_id"]
         ):
+            needs_setup = person.id not in associated
             values = dict(
-                directory_status="included", setup_required=True, setup_episode_id=uuid4()
+                directory_status="included",
+                setup_required=needs_setup,
+                setup_episode_id=uuid4() if needs_setup else state["setup_episode_id"],
+                removed_capture_at=None,
             )
             connection.execute(
                 update(org_person)
@@ -353,27 +367,28 @@ def initialize_existing_reviews(connection):
         )
 
 
-# Settle an already-offboarded identity's old absence only after a qualified later return.
-# Reconciliation uses this working copy; the persisted predecessor remains immutable.
+# Settle handled absence only in a working predecessor copy after fresh explicit row evidence.
+# Partial rows qualify for presence; absence inference still requires a qualified complete census.
 def qualified_return_history(connection, workspace, previous, candidate, supplied):
-    if previous is None or not candidate.absence_eligible or candidate.envelope.captured_at is None:
+    if previous is None or candidate.rejected or candidate.envelope.captured_at is None:
         return previous
     controls = connection.execute(
         select(org_person).where(
             org_person.c.workspace_id == workspace,
             org_person.c.directory_status == "offboarded",
-            org_person.c.removed_capture_at.is_not(None),
         )
     ).mappings()
-    returned = {
-        row["id"]
-        for row in controls
-        if row["removed_capture_at"] is not None
-        and candidate.envelope.captured_at > row["removed_capture_at"]
+    present = {
+        p.id
+        for p in candidate.people
+        if p.profile == "employee"
+        and p.email in candidate.employee_row_emails
+        and p.email in supplied
     }
+    returned = returning_people(controls, previous, candidate.envelope.captured_at, present)
     settled = tuple(
         p.model_copy(update={"absence_review": False, "absence_review_since": None})
-        if p.id in returned and p.email in supplied
+        if p.id in returned
         else p
         for p in previous.people
     )

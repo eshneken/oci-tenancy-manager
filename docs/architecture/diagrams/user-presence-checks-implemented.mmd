@@ -1,0 +1,34 @@
+erDiagram
+  otm_tenancy ||--o{ otm_user_presence_check : scoped_child
+  otm_operation ||--o| otm_user_presence_check : one_manual_acquisition
+  audit_event o|--o| otm_user_presence_check : sealed_outcome
+  otm_operation ||--o{ otm_operation_step : retained_steps
+  audit_event ||--o| otm_operation : accepted_intent
+  otm_user_presence_check {
+    uuid operation_id PK,FK
+    string workspace_id FK
+    uuid tenancy_id FK
+    bigint acquisition_sequence UK
+    jsonb context
+    string context_hash
+    string state
+    uuid attempt_id
+    int attempt_number
+    timestamptz started_at
+    timestamptz checked_at
+    jsonb results
+    uuid evidence_event_id FK
+    timestamptz created_at
+  }
+  otm_user_presence_connection {
+    uuid id PK
+    uuid tenancy_id FK
+    uuid automation_binding_id FK
+    uuid domain_binding_id FK
+    int revision
+    string state
+  }
+  otm_managed_object_binding ||--o{ otm_user_presence_connection : exact_bound_automation_domain
+  otm_tenancy ||--o{ otm_user_presence_connection : selected_connection
+  %% Connection/subject UUIDs in check.context are frozen typed JSON references.
+  %% They are validated against current scoped rows; they are not separate SQL FK columns.

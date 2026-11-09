@@ -33,6 +33,12 @@ class ConfigurationTarget(Contract):
     configuration: TenancyConfiguration | None = None
     overrides: OverrideValues = Field(default_factory=OverrideValues)
     review: OverrideReviewEvidence | None = None
+    # Server-frozen repair scope, exact bindings, separate context/value fences and source check.
+    repair_categories: tuple[Category, ...] = ()
+    repair_bindings: dict[Category, str] | None = None
+    repair_context_hash: Digest | None = None
+    repair_observation_hash: Digest | None = None
+    repair_check_id: UUID | None = None
     tenancy_id: UUID
     name: Text
     tenancy_ocid: TenancyOcid
@@ -45,7 +51,7 @@ class ConfigurationTarget(Contract):
 
 # One accepted operation owns the complete batch; later publication never retargets it.
 class ConfigurationIntent(Contract):
-    change_kind: Literal["baseline_update", "override_change"] = "baseline_update"
+    change_kind: Literal["baseline_update", "override_change", "repair"] = "baseline_update"
     contract_version: Literal["configuration-update-1"] = "configuration-update-1"
     kind: Literal["configuration_update"] = "configuration_update"
     workspace_id: Text
@@ -80,6 +86,27 @@ class ConfigurationIntent(Contract):
             for t in self.targets
         ):
             raise ValueError("INVALID_CONFIGURATION_SCOPE")
+        repair = self.change_kind == "repair"
+        if repair and len(self.targets) != 1:
+            raise ValueError("SINGLE_REPAIR_TARGET_REQUIRED")
+        for target in self.targets:
+            if bool(target.repair_categories) != repair or bool(target.repair_bindings) != repair:
+                raise ValueError("INVALID_REPAIR_SCOPE")
+            if not repair and any(
+                (target.repair_context_hash, target.repair_observation_hash, target.repair_check_id)
+            ):
+                raise ValueError("INVALID_REPAIR_SCOPE")
+            if repair and (
+                not target.repair_context_hash
+                or not target.repair_observation_hash
+                or not target.repair_check_id
+                or len(set(target.repair_categories)) != len(target.repair_categories)
+                or set(target.repair_bindings) != {"policy", "quota", "budget", "tags"}
+                or target.source_baseline_id != self.baseline.id
+                or target.source_configuration_id
+                != (target.configuration.id if target.configuration else None)
+            ):
+                raise ValueError("INVALID_REPAIR_SCOPE")
         return self
 
 
@@ -99,6 +126,13 @@ class ConfigurationBlocker(Contract):
 
 # The UI needs one ready count and complete blocker list, not a second tenancy inventory.
 class ConfigurationPreview(Contract):
+    # Repair confirmation renders these fresh server observations, never stale page values.
+    repair_expected: dict[Category, Annotated[str, Field(max_length=700000)]] = Field(
+        default_factory=dict
+    )
+    repair_observed: dict[Category, Annotated[str, Field(max_length=700000)] | None] = Field(
+        default_factory=dict
+    )
     conflicts: tuple[OverrideConflict, ...] = ()
     baseline: BaselineVersion | None
     tenancy_id: UUID | None
@@ -110,6 +144,7 @@ class ConfigurationPreview(Contract):
 
 # Only the reviewed hash/scope and request identity cross the browser admission boundary.
 class ConfigurationUpdate(Contract):
+    repair_categories: tuple[Category, ...] = ()
     plan_id: UUID | None = None
     override_context: OverrideContext | None = None
     override_mode: bool = False
@@ -121,6 +156,14 @@ class ConfigurationUpdate(Contract):
     # Only a one-child override may carry authored values; plan reviews never bypass this boundary.
     @model_validator(mode="after")
     def mode_scope(self):
+        if self.repair_categories and (
+            self.tenancy_id is None
+            or self.plan_id is not None
+            or self.override_mode
+            or len(self.repair_categories) > 4
+            or len(set(self.repair_categories)) != len(self.repair_categories)
+        ):
+            raise ValueError("INVALID_REPAIR_SCOPE")
         if (
             self.override_mode != (self.overrides is not None)
             or self.override_mode != (self.override_context is not None)
@@ -188,7 +231,7 @@ class ConfigurationTargetProgress(Contract):
 
 # Read-only progress and an explicit failed-target retry reuse one durable operation identity.
 class ConfigurationProgress(Contract):
-    change_kind: Literal["baseline_update", "override_change"] = "baseline_update"
+    change_kind: Literal["baseline_update", "override_change", "repair"] = "baseline_update"
     operation_id: UUID
     state: str
     baseline: BaselineVersion

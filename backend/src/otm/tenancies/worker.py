@@ -159,6 +159,9 @@ class OrganizationLifecycleWorker:
                         raise LifecycleBlocked("EMAIL_ROUTING_CHANGED") from None
                 state = registry_state(connection, self.workspace)
                 self._validate(state, intent, identifier)
+                from otm.tenancies.membership_access import validate_removal_targets
+
+                validate_removal_targets(connection, self.workspace, intent)
                 if intent.baseline is not None:
                     from otm.configuration.service import published_baseline
 
@@ -169,13 +172,27 @@ class OrganizationLifecycleWorker:
                             raise ValueError("BASELINE_PIN_CHANGED")
                     except (ValueError, RuntimeError, OrganizationConflict):
                         raise LifecycleBlocked("TARGET_CHANGED") from None
-                if intent.onboarding_version in {1, 2}:
+                if intent.onboarding_version in {1, 2, 3}:
                     from otm.tenancies.onboarding import advance
 
                     if not advance(connection, row, intent, self.facade, at):
                         self._stage_email(connection, identifier, at)
                         return
-                completion = self.facade.apply(intent)
+                if any(item.removes_identity for item in intent.associations):
+                    # An attempted identity write stays uncertain until independent readback passes.
+                    connection.execute(
+                        update(operation)
+                        .where(
+                            operation.c.id == identifier, operation.c.workspace_id == self.workspace
+                        )
+                        .values(effect_knowledge="unknown")
+                    )
+                try:
+                    completion = self.facade.apply(intent)
+                except LifecycleBlocked:
+                    raise
+                except Exception:
+                    raise LifecycleBlocked("LIFECYCLE_UNAVAILABLE") from None
                 self._publish(connection, state, intent, completion, identifier, at)
                 code, status = "SIMULATED_LIFECYCLE_VERIFIED", "succeeded"
             except LifecycleBlocked as failure:
@@ -356,6 +373,13 @@ class OrganizationLifecycleWorker:
                 or frozen.actor.key != row["initiating_actor_subject"]
             ):
                 raise ValueError("INVALID_ORGANIZATION_INTENT_SCOPE")
+            if any(item.removes_identity for item in frozen.intent.associations):
+                # A rolled-back publish cannot prove that an external identity write did not occur.
+                connection.execute(
+                    update(operation)
+                    .where(operation.c.id == identifier, operation.c.workspace_id == self.workspace)
+                    .values(effect_knowledge="unknown")
+                )
             self._finish(
                 connection,
                 row,
@@ -391,7 +415,9 @@ class OrganizationLifecycleWorker:
             raise LifecycleBlocked(
                 "PERSON_RETURNED" if intent.person_was_absent else "TARGET_CHANGED"
             )
-        if intent.person_was_absent and person.email in state.supplied:
+        if (
+            intent.person_was_absent or intent.action == "offboard_person"
+        ) and person.email in state.supplied:
             raise LifecycleBlocked("PERSON_RETURNED")
         if (
             any(a.action == "delete" for a in intent.associations)
@@ -443,8 +469,8 @@ class OrganizationLifecycleWorker:
                 or len(state.associations(tenant=row["id"])) != 1
             ):
                 raise LifecycleBlocked("TARGET_CHANGED")
-            if item.action == "remove" and (
-                item.role != "member"
+            if item.removes_identity and (
+                (item.action == "remove" and item.role != "member")
                 or not item.user_ocid
                 or any(
                     other["id"] != item.id and other["user_ocid"] == item.user_ocid
@@ -454,6 +480,20 @@ class OrganizationLifecycleWorker:
                 # An inconsistent reused identity must not remove another member's access.
                 raise LifecycleBlocked("TARGET_CHANGED")
             if item.action == "transfer":
+                if item.former_owner_disposition == "keep_member" and row["kind"] != "shared":
+                    raise LifecycleBlocked("TARGET_CHANGED")
+                recipient_links = state.associations(
+                    person=item.recipient_person_id, tenant=item.tenancy_id
+                )
+                recipient_link = next(iter(recipient_links), None)
+                if item.recipient_user_ocid is not None and (
+                    recipient_link is None
+                    or recipient_link["user_ocid"] != item.recipient_user_ocid
+                    or recipient_link["compartment_ocid"] != item.recipient_compartment_ocid
+                    or recipient_link["parent_compartment_ocid"]
+                    != item.recipient_parent_compartment_ocid
+                ):
+                    raise LifecycleBlocked("TARGET_CHANGED")
                 recipient = state.people.get(item.recipient_person_id)
                 recipient_control = state.controls.get(item.recipient_person_id)
                 if (
@@ -568,6 +608,11 @@ class OrganizationLifecycleWorker:
             link = next(a for a in state.links if a["id"] == item.id)
             if item.action == "transfer":
                 binding = bindings[item.new_association_id]
+                if (
+                    item.recipient_user_ocid is not None
+                    and binding.user_ocid != item.recipient_user_ocid
+                ) or binding.user_ocid == item.user_ocid:
+                    raise LifecycleBlocked("TARGET_CHANGED")
                 for recipient_link in state.associations(
                     person=item.recipient_person_id, tenant=item.tenancy_id
                 ):
@@ -591,9 +636,15 @@ class OrganizationLifecycleWorker:
                         tenancy_membership.c.id == item.id,
                     )
                     .values(
-                        status="removed",
+                        status="active"
+                        if item.former_owner_disposition == "keep_member"
+                        else "removed",
+                        role="member"
+                        if item.former_owner_disposition == "keep_member"
+                        else "owner",
                         operation_id=None,
-                        cleanup_required=bool(item.compartment_ocid),
+                        cleanup_required=item.former_owner_disposition == "remove"
+                        or (item.former_owner_disposition is None and bool(item.compartment_ocid)),
                         updated_at=at,
                         revision=link["revision"] + 1,
                     )
@@ -624,11 +675,15 @@ class OrganizationLifecycleWorker:
                     .values(
                         status="removed",
                         operation_id=None,
-                        cleanup_required=item.action == "remove" and bool(item.compartment_ocid),
+                        cleanup_required=item.action == "remove",
                         updated_at=at,
                         revision=link["revision"] + 1,
                     )
                 )
+            if item.action == "delete":
+                from otm.storage.managed_bindings import retire_bindings
+
+                retire_bindings(connection, self.workspace, item.tenancy_id, identifier, at)
             connection.execute(
                 update(tenancy)
                 .where(tenancy.c.workspace_id == self.workspace, tenancy.c.id == item.tenancy_id)
@@ -647,21 +702,18 @@ class OrganizationLifecycleWorker:
                 tenancy_membership.c.status.in_(("active", "pending", "removing")),
             )
         ).first()
-        status = "included"
         person = state.people[intent.target.person_id]
-        if intent.action in {
-            "offboard_person",
-            "remove_member",
-            "delete_tenancy",
-            "transfer_owner",
-        }:
-            status = (
-                "offboarded"
-                if remaining is None
-                else "outside"
-                if intent.action == "offboard_person" or intent.person_was_absent
-                else "included"
-            )
+        control = state.controls[person.id]
+        status = control["directory_status"]
+        # Only explicit offboarding changes directory presence; association work never does.
+        if intent.action == "offboard_person":
+            status = "offboarded" if remaining is None else "outside"
+        needs_setup = (
+            remaining is None
+            and status == "included"
+            and person.email in state.supplied
+            and not control["setup_required"]
+        )
         connection.execute(
             update(org_person)
             .where(
@@ -672,8 +724,9 @@ class OrganizationLifecycleWorker:
                 directory_status=status,
                 pending_operation_id=None,
                 removed_capture_at=state.head.source_captured_at
-                if status == "offboarded" and intent.person_was_absent
-                else None,
+                if intent.action == "offboard_person"
+                else control["removed_capture_at"],
+                **({"setup_required": True, "setup_episode_id": uuid4()} if needs_setup else {}),
             )
         )
         for recipient_id in {

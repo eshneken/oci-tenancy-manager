@@ -49,7 +49,8 @@ contain Unable to verify results; native/business completion is not universal he
 
 These cases are provided by synthetic fixture setup in the disposable PostgreSQL/native-worker/
 HTTPS-browser test harness. Do not reproduce them by editing saved databases or manually deleting
-objects in OCI. This milestone exposes no simulation-helper command and no Repair button.
+objects in OCI. There is no simulation-helper command. The later [explicit repair flow](../reference/configuration-repair.md)
+shows a Repair button only for fresh complete confirmed differences.
 
 - Matching: all four retained objects agree with the assigned effective content and original
   bindings. Complete current results can show Matching; object age and newer publications do not
@@ -151,3 +152,100 @@ Daily drift admission/worker qualification remains deferred to staging/Kubernete
 records passing unit, PostgreSQL, native-worker/browser and review gates. Both saved local instances
 have the same qualified build and unchanged data. Manual check actions remain available; the daily
 drift-detection CronJob waits for staging/Kubernetes deployment.
+
+
+### Explicit repair follow-up — 6 November 2026
+
+Earlier read-only checkpoint statements excluding Repair describe the check foundation. The current
+[explicit selected-object repair flow](../reference/configuration-repair.md) now adds a guarded modal
+preview/confirmation and native worker verification. Checks remain read-only. No daily scheduler,
+live OCI repair or local drift-injection control is enabled.
+
+
+## Pending real OCI manual validation
+
+**Status: not run.** Hands-on repair validation is deferred until a real OCI adapter and an approved
+disposable child tenancy are available (6 November 2026). No extra local drift-injection page,
+command or saved-data edit will be added for this exercise. Automated simulator/SQL/browser tests
+continue to run meanwhile. Passing them does not qualify OCI permissions or response semantics.
+
+Use an active registered disposable child with a verified assigned baseline and accepted overrides.
+Retain independent administrator access. Capture the initial managed object identities and expected
+configuration; record only sanitized test outcomes in the repository, keeping credentials, private
+contacts, screenshots and raw cloud responses in approved private evidence storage.
+
+| Manual scenario | Expected outcome | Status |
+| --- | --- | --- |
+| All managed objects match | Complete check reports Matching; inventory and drift detail agree. | Pending |
+| Missing managed policy, quota, budget or tag default | Exercise each category separately; an authorized complete read reports Missing rather than unknown. Exercise safe tag definition/default changes on disposable resources only. | Pending |
+| Changed policy/quota statement block, budget amount or defined-tag/default value | Check reports Different against the assigned baseline plus accepted overrides; preserve exact intended values for comparison. | Pending |
+| Permission denied, unavailable automation, timeout or incomplete enumeration | Unable to verify; no fabricated Missing/Matching result and no repair without verified sufficient access. Existing confirmed findings remain visible. | Pending |
+| Two confirmed differences, repair only one | Preview fresh current/expected content, select one category, confirm; only that selected managed object changes and the other finding remains open. | Pending |
+| Repair the remaining selected differences | Repeat selected-only and complete-repair checks for policy, quota, budget and tags, including permitted non-default statement/budget overrides. All-four independent verification clears findings only when matching; dashboard, detail, Operations and audit agree. | Pending |
+| Assigned older baseline with an override; newer baseline published | Repair restores the assigned effective configuration, preserving the override and baseline assignment. It does not silently upgrade or create a new desired revision. | Pending |
+| Source changes after preview or while queued | Changed assignment, scope or retained binding blocks stale authorization; refresh/review is required. No cross-tenancy write or name-based adoption. | Pending |
+| Delete and recreate a real managed object | Qualify OCI's actual new-OCID/binding lifecycle and safe identity reconciliation; deterministic simulator identities are not evidence that this works live. | Pending |
+| Partial write or readback/permission failure | Findings stay open until qualified verification; known effects and unknown outcomes are distinguished. Retry/reconciliation must not blindly repeat ambiguous OCI writes. | Pending |
+| Duplicate request/delivery and overlapping old check | No duplicate logical repair; stale checks cannot overwrite current verification. Qualify real network timing and eventual consistency rather than assuming local transaction behavior. | Pending |
+| Owner-created objects and unrelated resources | They remain unchanged. Check any protected automation policies/access separately after configuration repair. | Pending |
+| Expired/incomplete source evidence and delayed OCI reads | A stale/unknown result does not authorize an unsafe repair or falsely clear drift; freshness, timestamps and retry guidance remain understandable. | Pending |
+
+Record completion by adapter/build version, category/scenario, expected versus observed outcome and
+private evidence reference. OCI grammar, tag namespace/key/default enumeration, budget scope and
+currency, recreation bindings, permission probes, retries and response completeness need live
+qualification. Daily scheduling is a separate staging/Kubernetes test, not enabled by this checklist.
+
+### What automation currently covers
+
+- **Unit comparison matrix:** each of policy/quota/budget/tags is tested as matching, missing,
+  different, unavailable and binding-conflicted (20 combinations). Changed values use synthetic JSON;
+  these are comparison tests, not OCI grammar or per-service response tests.
+- **Unit guards/history:** malformed or absent inventory, permission/timeout/value errors, incomplete
+  bundles, assigned configuration/policy/parent/revision fences, invalid evidence hashes, retained
+  findings after failed reads, expiry boundaries, pending work and pause behavior.
+- **PostgreSQL/native-worker checks:** matching/read-only behavior, representative policy drift,
+  missing then unavailable then recovered, partial/unbound/conflicting reads, assigned versus newest
+  baseline, stale dispatch, replay, scope/busy guards and acquisition ordering independent of clocks.
+- **Repair units and PostgreSQL:** closed selected-category requests, fresh complete evidence,
+  changed bindings/observations/context, selected-only mutation, failed pre-read/apply/readback/
+  post-read, unchanged desired configuration, unselected quota drift retained after policy repair,
+  failed repair/retry, later publication, older pending check and expired-source rejection. A separate
+  16-case repair matrix covers four categories × Missing/Different × inherited/override profiles in
+  both unit and PostgreSQL tests. The override profile authors policy, quota and a $650 budget together;
+  tags still inherit the baseline. Exact values, unchanged unselected objects and unchanged desired
+  revision IDs are asserted. A concurrent two-request PostgreSQL case admits only one repair. Queued
+  repairs and failed reservations have distinct progress states.
+- **Native Playwright:** real protected HTTPS/API/native worker against disposable databases;
+  matching-check flow plus sequential selected-only policy, quota, budget and tag repairs through
+  selection, preview, confirmation, completion and reload, including desktop/mobile widths. The
+  browser uses accepted non-default policy/quota/budget overrides, verifies exact expected values
+  and whole-dollar budget display, and confirms other findings persist. Its mixed scenario uses a
+  missing quota and different policy/budget/tag content; it is not every fault/category combination.
+
+Budget/tag mutation journeys and the non-default override profile now have dedicated automated
+coverage. This remains a simulator-backed pipeline: tags are one local bundle, not qualified
+namespace/key/default OCI enumeration. Real object recreation, new OCIDs, permissions, eventual
+consistency and live response handling remain Pending in the manual checklist above.
+
+Source: [comparison/history units](../../backend/tests/test_configuration_drift.py),
+[check SQL/worker cases](../../backend/tests/test_configuration_drift_postgres.py),
+[repair units](../../backend/tests/test_configuration_repairs.py),
+[repair SQL/worker cases](../../backend/tests/test_configuration_repairs_postgres.py),
+[native browser repair](../../frontend/e2e/configuration-repair.spec.ts).
+
+
+## Pending required-user presence qualification
+
+**Status: Pending.** The [presence boundary](../reference/required-user-presence.md) is internal
+only. A real adapter, durable exact permanent-user bindings and check/UI integration are prerequisites
+for hands-on account checks. No account is queried or changed by adding this checklist. Use the
+approved disposable-child/independent-access rules above when live testing becomes available.
+
+| Planned live scenario | Required outcome | Status |
+| --- | --- | --- |
+| Automation and recovery exact-user reads | Separate subject evidence for each known domain/SCIM/OCI binding; one passing read cannot cover another account. | Pending |
+| Complete authorized absence versus failed/domain reads | Only qualified exact-domain absence is Missing; wrong-domain404, denial, timeout, incomplete coverage and delayed propagation stay Unknown. | Pending |
+| Same name/different ID and renamed bound user | Never adopt the same-name account; unchanged verified IDs can return changed username metadata. | Pending |
+| Binding/assignment/credential changes during acquisition | The later integrated worker rechecks live generations and refuses stale publication; echoed transport fields alone are not current authority. | Pending |
+| Present account with unusable signing/privileges/console | Presence alone cannot show full access health or enable repair/password release; independent probes remain necessary. | Pending |
+| OCI/SCIM mapping and provider failure normalization | Preserve distinct identifiers, require explicit mapping updates and expose only closed diagnostics, keeping raw/private provider evidence out of public artifacts. | Pending |

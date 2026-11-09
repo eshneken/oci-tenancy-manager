@@ -439,6 +439,45 @@
       "title": "Ready Count",
       "type": "integer"
     },
+    "repair_expected": {
+      "additionalProperties": {
+        "maxLength": 700000,
+        "type": "string"
+      },
+      "propertyNames": {
+        "enum": [
+          "policy",
+          "quota",
+          "budget",
+          "tags"
+        ]
+      },
+      "title": "Repair Expected",
+      "type": "object"
+    },
+    "repair_observed": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxLength": 700000,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "propertyNames": {
+        "enum": [
+          "policy",
+          "quota",
+          "budget",
+          "tags"
+        ]
+      },
+      "title": "Repair Observed",
+      "type": "object"
+    },
     "tenancy_id": {
       "anyOf": [
         {

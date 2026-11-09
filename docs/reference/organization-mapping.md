@@ -94,8 +94,7 @@ cleanup cannot make an invalid nomination eligible. Actual mapping/source repair
 role condition. Fixing mappings does not close tenancy cleanup/absence decisions.
 
 Unresolved absence remains a decision even after a person reappears. Completed offboarding followed
-by a qualified later return retains the existing renewal path: settle the old episode, reinclude the
-person and reopen onboarding, then validate every role against actual current reporting evidence.
+by a newly applied fresh actual employee row restores the stable directory identity, settling only its already-handled absence and opening one onboarding episode when needed. Full and partial feeds qualify for this positive presence; no intervening absence cycle is required. Validate each role independently against actual reporting evidence.
 The return does not make an ineligible nomination healthy by itself. Accepted operation targets and
 existing notification evidence stay frozen; future eligible routing comes from the new head only.
 
@@ -106,7 +105,7 @@ clocks, absence flags and continuous-absence keys. Reused fresh evidence cannot 
 evidence can recalculate classification without pretending to be fresh. Reviews skip directory
 return/onboarding transitions in this mode. Explicit administrator absence decisions are applied to
 a working baseline, independently of source inference; original source and predecessor remain immutable.
-The first genuine new feed still follows the existing completeness/freshness and qualified-return gates.
+The first genuine newly applied feed still follows freshness/actual-row return guards. Full census qualification remains necessary for departure inference; a fresh partial employee row can establish that person's presence.
 During replacement, the immutable previously accepted feed can contain the former root without a
 manager. Mapping-only recalculation retains a nonfatal MANAGER_REQUIRED diagnostic and shows that
 unresolved path; it does not invent the missing edge. Fresh uploads remain strict: every non-root
@@ -272,3 +271,14 @@ Manual check: unlock the root fields, enter a name without changing email, Previ
 Refresh Organization and confirm direct reports display the configured manager name. Reload settings
 to confirm persistence. Load another feed and confirm the name persists and role-health checks still
 reflect actual feed presence. A replacement should update both fields before Preview.
+
+## Fresh presence versus offboarding — source checkpoint
+
+Already-offboarded identities may return on fresh applied full/partial actual employee rows;
+reference-only, staged, replayed, stale and configuration-only inputs cannot do so. Exempt/merged/
+pending people are not resurrected, no infrastructure is restored and unrelated leader/designee
+conditions are not closed by directory restoration. Standalone deletion/member removal/transfer
+never offboards or settles an independent absence. Explicit Offboard employee requires actual
+current-row absence and destructive consent. No mapping or source-history rewrite is added.
+Qualification and saved-preview update for this correction are pending; see the
+[workflow contract](organization-workflows.md#destructive-consent-and-directory-return-correction--source-checkpoint).

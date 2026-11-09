@@ -18,6 +18,22 @@
           "title": "Association Id",
           "type": "string"
         },
+        "former_owner_disposition": {
+          "anyOf": [
+            {
+              "enum": [
+                "keep_member",
+                "remove"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Former Owner Disposition"
+        },
         "recipient_person_id": {
           "anyOf": [
             {
@@ -85,6 +101,7 @@
         "remove_member",
         "transfer_owner",
         "no_tenancy_required",
+        "keep_without_tenancy",
         "ignore",
         "resolve",
         "merge",
@@ -113,6 +130,11 @@
       ],
       "default": null,
       "title": "Compartment Name"
+    },
+    "confirm_destructive": {
+      "default": false,
+      "title": "Confirm Destructive",
+      "type": "boolean"
     },
     "confirm_manager": {
       "default": false,
@@ -145,6 +167,22 @@
       ],
       "default": null,
       "title": "Existing Compartment Ocid"
+    },
+    "former_owner_disposition": {
+      "anyOf": [
+        {
+          "enum": [
+            "keep_member",
+            "remove"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Former Owner Disposition"
     },
     "home_region": {
       "anyOf": [

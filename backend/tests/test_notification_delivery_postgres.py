@@ -1,7 +1,8 @@
 """Disposable PostgreSQL notification staging, no-duplicate delivery and append-only boundaries."""
 
 from datetime import timedelta
-from unittest.mock import Mock
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 from uuid import uuid4
 
 import pytest
@@ -351,3 +352,254 @@ def test_email_audit_category_and_csv_are_separate_from_operations(workflow_case
             .one()
         )
     assert dict(after) == dict(original)
+
+
+# The installed notification hook cannot roll back non-onboarding completion or failure reporting.
+@pytest.mark.parametrize("outcome", ["complete", "blocked", "unexpected"])
+def test_deletion_with_real_lifecycle_notification_hook(workflow_case, outcome):
+    from test_organization_workflows_postgres import action, complete_setup
+
+    from otm.providers.lifecycle import LifecycleBlocked
+    from otm.storage.tables import tenancy, tenancy_membership
+    from otm.tenancies.deletion import TenancyDeletionCommand
+    from otm.tenancies.views import TenancyQuery
+
+    c = workflow_case
+    person = next(p for p in c.store.head(c.principal).people if p.email == "engineer@example.test")
+    _, created = action(c, person.id, "create_tenancy")
+    complete_setup(c, created.operation_id)
+    child = c.workflow.tenancies(c.principal, TenancyQuery()).items[0]
+    preview = c.workflow.deletion_preview(c.principal, child.id)
+    receipt = c.workflow.delete_tenancy(
+        c.principal,
+        TenancyDeletionCommand(
+            client_request_key=uuid4(),
+            tenancy_id=child.id,
+            context=preview.context,
+            confirm_deletion=True,
+            confirm_shared=True,
+            confirm_manager=True,
+        ),
+    )
+    enqueue = Mock()
+    c.worker.notifications = LifecycleNotifier(MailPolicy(), enqueue)
+    effects = {"blocked": LifecycleBlocked("TARGET_CHANGED"), "unexpected": RuntimeError("TEST")}
+    if outcome == "complete":
+        c.worker.run(receipt.operation_id)
+    else:
+        with patch.object(c.provider, "apply", side_effect=effects[outcome]):
+            c.worker.run(receipt.operation_id)
+    with c.engine.connect() as connection:
+        current = (
+            connection.execute(select(operation).where(operation.c.id == receipt.operation_id))
+            .mappings()
+            .one()
+        )
+        status = connection.execute(
+            select(tenancy.c.status).where(tenancy.c.id == child.id)
+        ).scalar_one()
+        links = (
+            connection.execute(
+                select(tenancy_membership.c.status).where(
+                    tenancy_membership.c.tenancy_id == child.id
+                )
+            )
+            .scalars()
+            .all()
+        )
+        assert current["state"] == ("succeeded" if outcome == "complete" else "needs_attention")
+        assert status == ("terminated" if outcome == "complete" else "terminating")
+        assert links == (["removed"] if outcome == "complete" else ["removing"])
+        notices = list_for_operation(connection, c.policy.workspace_id, receipt.operation_id)
+        if outcome == "complete":
+            assert notices == ()
+        else:
+            assert len(notices) == 1 and notices[0].state == "blocked"
+            assert notices[0].original_recipient is None
+            assert notices[0].safe_code == "EMAIL_ROUTE_BLOCKED"
+    enqueue.enqueue.assert_not_called()
+    c.worker.run(receipt.operation_id)
+
+
+# Accept each workflow through real previews and grants, without editing stored intents.
+def non_onboarding_case(c, action_name):
+    from test_organization_fixtures import example_records
+    from test_organization_workflows_postgres import action, complete_setup, feed
+
+    from otm.tenancies.deletion import TenancyDeletionCommand
+    from otm.tenancies.views import ReviewQuery, TenancyQuery
+
+    actor = colleague(c, "Lifecycle Administrator")
+    prepared = SimpleNamespace(
+        **{
+            **vars(c),
+            "principal": actor.principal,
+            "workflow": actor.workflow,
+            "store": actor.store,
+        }
+    )
+    people = {p.email: p.id for p in actor.store.head(actor.principal).people}
+    owner, member = people["one@example.test"], people["engineer@example.test"]
+    _, created = action(prepared, owner, "create_tenancy", tenancy_kind="shared")
+    complete_setup(prepared, created.operation_id)
+    child = actor.workflow.tenancies(actor.principal, TenancyQuery()).items[0]
+    if action_name in {"remove_member", "transfer_owner", "offboard_person"}:
+        _, joined = action(
+            prepared,
+            member,
+            "join_shared",
+            tenancy_id=child.id,
+            parent_compartment_ocid=child.tenancy_ocid,
+            compartment_name="member",
+        )
+        c.worker.run(joined.operation_id)
+    if action_name == "delete_tenancy":
+        preview = actor.workflow.deletion_preview(actor.principal, child.id)
+        receipt = actor.workflow.delete_tenancy(
+            actor.principal,
+            TenancyDeletionCommand(
+                client_request_key=uuid4(),
+                tenancy_id=child.id,
+                context=preview.context,
+                confirm_deletion=True,
+                confirm_shared=True,
+                confirm_manager=True,
+            ),
+        )
+    elif action_name == "offboard_person":
+        feed(prepared, tuple(r for r in example_records() if r.email != "engineer@example.test"))
+        review = next(
+            r
+            for r in actor.workflow.reviews(actor.principal, ReviewQuery()).items
+            if r.person_id == member and r.kind == "PERSON_ABSENCE_REVIEW"
+        )
+        preview = actor.workflow.preview(actor.principal, member, review.id)
+        _, receipt = action(
+            prepared,
+            member,
+            action_name,
+            review_id=review.id,
+            confirm_shared=True,
+            plan=tuple({"association_id": a.id, "action": "remove"} for a in preview.associations),
+        )
+    elif action_name == "transfer_owner":
+        _, receipt = action(
+            prepared,
+            owner,
+            action_name,
+            tenancy_id=child.id,
+            recipient_person_id=member,
+            confirm_shared=True,
+        )
+    elif action_name == "remove_member":
+        _, receipt = action(prepared, member, action_name, tenancy_id=child.id, confirm_shared=True)
+    else:
+        _, receipt = action(
+            prepared,
+            member,
+            "join_shared",
+            tenancy_id=child.id,
+            parent_compartment_ocid=child.tenancy_ocid,
+            compartment_name="member",
+        )
+    policy = MailPolicy(environment="staging", email_override="capture@example.test")
+    enqueue = NotificationEnqueuer(workspace_queue(c.policy.workspace_id))
+    notifier = LifecycleNotifier(policy, enqueue)
+    transport = Mock(profile_hash=None)
+    transport.send.return_value = DeliveryResult(state="accepted", safe_code="SMTP_ACCEPTED")
+    delivery = NotificationDeliveryWorker(
+        c.engine, c.policy.workspace_id, c.clock, lambda: policy, transport, enqueue
+    )
+    c.worker.notifications = notifier
+    return actor, receipt.operation_id, notifier, delivery, transport
+
+
+# Every lifecycle failure stages/delivers once; routine successes and worker replays send nothing.
+@pytest.mark.parametrize(
+    "action_name",
+    ["join_shared", "remove_member", "transfer_owner", "offboard_person", "delete_tenancy"],
+)
+@pytest.mark.parametrize("outcome", ["success", "blocked", "unexpected"])
+def test_non_onboarding_delivery_matrix(workflow_case, action_name, outcome):
+    from otm.providers.lifecycle import LifecycleBlocked
+
+    c = workflow_case
+    actor, identifier, notifier, delivery, transport = non_onboarding_case(c, action_name)
+    if outcome == "success":
+        c.worker.run(identifier)
+    else:
+        error = LifecycleBlocked("TARGET_CHANGED") if outcome == "blocked" else RuntimeError("TEST")
+        with patch.object(c.provider, "apply", side_effect=error):
+            c.worker.run(identifier)
+    c.worker.run(identifier)
+    with c.engine.begin() as connection:
+        row = (
+            connection.execute(select(operation).where(operation.c.id == identifier))
+            .mappings()
+            .one()
+        )
+        assert row["state"] == ("succeeded" if outcome == "success" else "needs_attention")
+        notices = list_for_operation(connection, c.policy.workspace_id, identifier)
+        if outcome == "success":
+            assert notices == ()
+            return
+        assert len(notices) == 1 and notices[0].original_recipient == actor.grant.email
+        assert notices[0].recipient == "capture@example.test" and notices[0].state == "pending"
+        assert notifier.stage(connection, row, c.clock()) == notices[0].id
+    delivery.run(notices[0].id)
+    delivery.run(notices[0].id)
+    transport.send.assert_called_once()
+    assert transport.send.call_args.args[0].subject == "Tenancy operation requires your attention"
+    assert str(identifier) in transport.send.call_args.args[0].body
+    assert email_row(c, notices[0].id)["state"] == "sent"
+
+
+# Broader email loading never permits unclaimed responsibility or revoked/replaced recipient grants.
+@pytest.mark.parametrize("change", ["revoked", "revision", "email", "responsible", "completed"])
+def test_non_onboarding_send_time_guards(workflow_case, change):
+    from otm.providers.lifecycle import LifecycleBlocked
+    from otm.storage.tables import administrator
+
+    c = workflow_case
+    actor, identifier, _, delivery, transport = non_onboarding_case(c, "delete_tenancy")
+    with patch.object(c.provider, "apply", side_effect=LifecycleBlocked("TARGET_CHANGED")):
+        c.worker.run(identifier)
+    with c.engine.begin() as connection:
+        notice = (
+            connection.execute(
+                select(notification_outbox).where(notification_outbox.c.operation_id == identifier)
+            )
+            .mappings()
+            .one()
+        )
+        if change in {"revoked", "revision", "email"}:
+            values = {
+                "revoked": {
+                    "status": "revoked",
+                    "revoked_at": c.clock(),
+                    "authorization_revision": uuid4(),
+                },
+                "revision": {"authorization_revision": uuid4()},
+                "email": {"email": "replacement@example.test"},
+            }[change]
+            connection.execute(
+                update(administrator).where(administrator.c.id == actor.grant.id).values(**values)
+            )
+        else:
+            values = (
+                {"responsible_actor_subject": c.principal.actor.key}
+                if change == "responsible"
+                else {"state": "succeeded"}
+            )
+            connection.execute(
+                update(operation).where(operation.c.id == identifier).values(**values)
+            )
+    if change == "responsible":
+        with pytest.raises(ValueError, match="RESPONSIBILITY_PROOF_REQUIRED"):
+            delivery.run(notice["id"])
+    else:
+        delivery.run(notice["id"])
+        assert email_row(c, notice["id"])["state"] == (
+            "superseded" if change == "completed" else "blocked"
+        )
+    transport.send.assert_not_called()

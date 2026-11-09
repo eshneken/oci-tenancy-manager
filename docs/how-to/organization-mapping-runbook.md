@@ -107,9 +107,8 @@ Upload [02-employee-absence.csv](organization-mapping/02-employee-absence.csv).
 - Upload the same file again with a later source time. It is a new snapshot; the absence stays open
   without creating duplicate open reviews for the same continuous absence.
 - If the engineer has an individual tenancy, initiate termination and finish the simulated flow.
-  If they also have shared memberships, review and remove those separately through offboarding.
-  Their managed profile should not disappear while associations or cleanup remain outstanding.
-- Complete offboarding when all associations are gone. The actionable absence closes. Retained feed
+  If they also have shared memberships, review/remove those independently or in an explicit offboarding plan. Standalone termination/member removal/transfer must preserve the profile and independent absence review, including after the last association is gone.
+- Because this employee is actually absent from the applied feed, explicitly choose Offboard employee when appropriate, including after all associations are gone. Review the consequences and required destructive-action checkbox; zero-link offboarding also needs its separate no-associations confirmation. The actionable absence closes. Retained feed
   and audit history remain; this is not deletion of historical identity evidence.
 - If you choose not to offboard yet, leave the review open and continue. Do not expect a later return
   to silently settle an unfinished administrator decision.
@@ -184,12 +183,11 @@ preview source. Change the root deliberately, then re-upload the corrected CSV w
 time. A former-root row left in a fresh CSV with no manager is invalid now that it is not the root;
 remove that departed row or supply its real new manager. OTM does not repair the source CSV silently.
 
-## 7. Qualified return after completed offboarding
+## 7. Fresh employee-row return after completed offboarding
 
 Upload [05-engineer-return.csv](organization-mapping/05-engineer-return.csv).
 
-- If Test Engineer was fully offboarded in step4, the qualified return renews onboarding. The same
-  identity returns with its new name; its terminated tenancy/membership must not be resurrected.
+- If Test Engineer was explicitly offboarded in step4, a fresh applied actual employee row restores the same stable identity and one onboarding episode when needed. A fresh partial feed can establish this person's presence too; no intervening absence cycle is required. Its terminated tenancy/membership must never be resurrected.
 - If the absence was still unresolved, it remains an administrator decision. Presence alone must
   not silently close it.
 - The repaired Alpha mapping stays assigned to Acting Alpha Leader. Returning or acknowledging an
@@ -228,3 +226,26 @@ identifier for unsettled workflows. Screenshots should omit passwords, MFA codes
 | Qualified return without resurrecting access | |
 | Stale preview, pending work and CSV validation | |
 | Desktop/mobile/keyboard and audit evidence | |
+
+## Return and destructive-consent correction: review after installation
+
+This correction is a source checkpoint with qualification and saved-preview updates pending. Do not
+assume existing saved previews changed; preserve both installations and do not edit database controls
+or source history to fabricate legacy states.
+
+- On a source-present employee, Offboard employee is unavailable even with an old unresolved absence
+  review. Standalone termination/Remove shared member/Transfer owner leave directory status and
+  independent absence unchanged. Last-link cleanup may flag new setup as needed, not remove them.
+- After explicitly offboarding an actually absent synthetic employee, apply the return file with a
+  genuinely later capture. Repeat with a fresh partial declared feed when safely available. Confirm
+  stable UUID/name updates, one setup episode as needed, retained retired resources/history and no
+  automatic provisioning. References or a staged/replayed/stale feed cannot restore the person.
+- Legacy offboarded records with no removed_capture_at use prior source/publication freshness.
+  Automated fixtures cover this no-absence-cycle path; do not offboard a present employee or edit
+  stored controls merely to manufacture that case. Exempt/merged/pending identities stay guarded.
+- For Offboard employee, person-context Delete, Remove member, Transfer owner and Merge, verify the
+  explicit consequence checkbox before submitting. Changing action, target/recipient/partner, plan
+  or preview clears consent. Manager/shared/empty-association warnings remain additional. Exact
+  uncertain retries reuse their original request; do not force a new operation after ambiguity.
+- Tenancy-level Delete retains its own impact confirmation and leaves_directory=false for everyone.
+  Role/mapping defects and unfinished independent absence work remain separate decisions.

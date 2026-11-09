@@ -7,6 +7,11 @@
 
 ## Read this first
 
+The [7 November credential-lifecycle design](22-credential-security-lifecycles.md) specifies
+configurable recovery-console CIDRs and 30-day key retirement using existing configuration, managed
+binding, credential/version and operation records. Additional fields remain implementation work;
+no migration or runtime storage change is implied by either chapter.
+
 This is the full application data inventory: organization, tenancy identity, associations, durable
 operations, configuration, managed objects, access/credentials, financial observations, notification,
 audit, recurring work and recovery. It describes where a field lives, which values are derived,
@@ -1752,7 +1757,7 @@ tables with no new column or assignment backfill. The
 | MemberRemoval (5 fields) | association_id, tenancy_ocid, user_ocid, group_memberships_removed=true, user_deleted=true; exact typed identity receipt, no resource claim. |
 | OrganizationActionOutcome.removals | Tuple of receipts, empty by default for historical results; same immutable operation_outcome data, not a new audit store. |
 | Two member-removal steps | remove_member_groups:{association_uuid} and delete_member_user:{association_uuid}, existing operation_step.inputs contains the receipt; verified timestamp/evidence_event_id link immutable outcome. Receipt validation precedes retirement; all writes commit together. |
-| OrganizationIntent.onboarding_version | Newly accepted 2; original 1 and absent-version intents retain their original step graph and hashes. |
+| OrganizationIntent.onboarding_version | Newly accepted 3 captures permanent user IDs before cleanup; original 1/2 and absent-version intents retain their original step graph and hashes. |
 | OnboardingEvidence.step / safe_code | Adds configure_baseline and verify_configured_access keys plus BASELINE_UNVERIFIED; public field shape is unchanged. |
 | Verified baseline state | Existing configuration_observation retains partial four-category state; verified_baseline_version_id/time advance only after all category readbacks. Access readiness is independently checked afterward. |
 | Existing UI read fields | Dedicated Overrides uses override_categories/desired and verified configuration IDs; creation tooltip reads created_at, the registered row's immutable timestamp, not OCI creation discovery. |
@@ -1931,3 +1936,247 @@ clocks, change email identity or touch tenancy associations. Historical null/omi
 feed/reference fallback. `OrganizationEvidence.mapping_root_name_before` and
 `mapping_root_name_after` record immutable display-name changes alongside the existing email fields.
 No table or column is added. See the [implemented root-name guide](../reference/organization-mapping.md#root-manager-display-name).
+
+
+## Selected repair intent fields — 6 November 2026
+
+The [implemented repair field map](../reference/configuration-repair.md#contracts-and-storage) uses
+existing operation/step/check/audit tables. `ConfigurationRepairRequest` carries `tenancy_id` and
+unique selected `categories`; `ConfigurationUpdate.repair_categories` binds acceptance. Immutable
+`ConfigurationTarget` freezes `repair_categories`, all-four `repair_bindings`,
+`repair_context_hash`, `repair_observation_hash` and `repair_check_id`. The intent/progress
+`change_kind` adds `repair`. These are typed JSON fields, not new table columns. Repair creates no
+configuration revision, advances no baseline assignment and seals complete post-repair evidence
+against the released registry generation. Existing check/ER relationships remain unchanged; larger
+proposed live binding tables above remain separately qualified work.
+
+
+## Required-user presence foundation — 6 November 2026
+
+The [internal implemented boundary and full field map](../reference/required-user-presence.md)
+separates automation/recovery subject identity, inspecting authority and returned presence evidence.
+Only Present/Missing/Unknown are implemented; no privilege, signer, console or recovery-readiness
+qualification follows. These are typed transport models, not new database tables or established
+foreign keys. ER diagrams and current persisted schema are unchanged. Current onboarding does not
+yet retain permanent user bindings; verified binding capture and live-head checks must precede
+worker/UI composition. There is no guessed backfill, API route, schedule, repair, secret retrieval
+or saved-instance change. The broader proposed access model above remains future work.
+
+
+## Implemented onboarding identity capture — 6 November 2026
+
+Newly accepted create/import intents now use onboarding version 3. After baseline application and
+fresh access probes, a required capture step retains exact automation/recovery domain, SCIM and OCI
+identifiers in existing `otm_operation_step.last_outcome` and immutable `audit_event.data` before
+retiring temporary access. Failed capture blocks retirement. Historical accepted version 1/2/absent
+intents keep their graphs; no name-based adoption or historical binding backfill occurs.
+
+See the [implemented field/storage map](../reference/tenancy-onboarding.md#permanent-user-capture--6-november-2026).
+Migration 0022 only expands the existing step constraint. No table, column, credential store or new
+ER relationship is added. This supersedes earlier statements that onboarding retains no permanent
+identifiers, while keeping the proposed canonical managed-object binding, access-assignment heads,
+current-generation checks and full access-health model as future implementation. Capture evidence
+alone must not authorize repair, disclosure or live operations. Saved previews are not changed.
+Live qualification remains Pending in the [manual manifest](../how-to/real-oci-test-manifest.md).
+
+
+## Implemented canonical identity bindings — 6 November 2026
+
+Migration 0023 adds the first 18-column subset of `otm_managed_object_binding`: an observed domain
+reference and managed automation/recovery users from fresh typed onboarding capture. Same-child
+foreign keys, immutable capture/operation provenance, verified setup prerequisites, unique active
+identities and atomic three-row persistence precede temporary cleanup. Verified termination
+initiation retires management while retaining history. No historical capture is automatically adopted.
+
+The [complete implemented field map](../reference/managed-object-bindings.md) and
+[rendered ER](../architecture/diagrams/managed-identities-implemented.svg) distinguish physical fields
+from the fuller proposed model above. This supersedes earlier notes that canonical binding rows are
+entirely future work. Configuration objects keep their existing storage; future kinds require their
+own handlers/migrations. Access assignments, context/credential heads, current-generation checks,
+replacement and Required users UI remain future integration. An active binding is an identity mapping,
+not healthy access or authority to repair/disclose credentials. Saved previews remain unchanged.
+
+
+## Presence-only simplification and connection checkpoint — 6 November 2026
+
+The user approved exact identity bindings plus one automation connection revision for the first
+presence-only check. Access-assignment/profile and separate credential/context generation tables
+are deferred for this capability; broader privilege, repair and credential custody work remains.
+Authentication failure is unverified; no recovery/parent fallback is introduced.
+
+The [implemented 14-field connection model and ER](../reference/user-presence-connections.md) records
+the scoped simulated-only table, accepted onboarding marker, atomic capture, immutable provenance,
+legacy no-backfill behavior and verified termination retirement. This is a connection-registration
+checkpoint, not a check job/API, live signer, privilege profile or new UI action. The next integration
+must qualify current lifecycle, bindings, connection revision, selected provider and admin authority
+before/after reads. Earlier text requiring assignment IDs for the first presence check is superseded;
+future permission/repair requirements are not waived.
+
+## Manual required-user presence checks — 6 November 2026 source checkpoint
+
+The [implemented check reference](../reference/user-presence-checks.md) now connects exact identities
+and one selected simulated automation connection to authenticated manual Check now. Migration 0025
+adds the 14-column otm_user_presence_check table (25 actual application tables), immutable context,
+database admission sequence, attempt fences and sealed per-subject results. Existing operations,
+steps, audit and native queue are reused; the operation/task kind is required_user_check and native
+task is otm.required_user_check. The [implemented ER](../architecture/diagrams/user-presence-checks-implemented.mmd)
+and [22-field screen dictionary](../reference/required-users-screen.md) cover all current fields.
+
+Authorization, exact bindings/connection/child/provider context are rechecked before and after
+provider work outside DB transactions. Latest admission sequence, not callback order, selects the
+terminal projection. Each account has its own captured time and 24-hour freshness; changed context
+cannot make old evidence current. The 30-second late-return bound does not cancel I/O or qualify an
+SDK timeout. Present/Missing/Unable to verify are existence-only simulator results; Permissions stays
+Not checked. Legacy unqualified children remain disabled. No live OCI adapter, daily scheduler,
+email, privilege repair or password action is added. Presence-only requires no fabricated assignment/
+profile/credential heads. Daily machine admission/authorization stays a staging/Kubernetes task.
+
+Local test/review qualification and the main-preview update pass; all 28 preexisting public tables are preserved and the parallel preview is unchanged. [Final receipt](../history/manual-presence-checkpoint-2026-11-06.md). The [local runbook](../how-to/required-users-runbook.md)
+describes the intended fresh create/import → Check now → View check review; the
+[real-provider manifest](../how-to/real-oci-test-manifest.md) remains Pending for actual OCI behavior.
+
+## Compact required-user inventory summary — source checkpoint
+
+The [summary field/behavior map](../reference/required-users-summary.md) defines one additive derived
+TenancyView.required_users field (38 TenancyView fields total), containing RequiredUsersSummary:
+state, automation, recovery and checking. The two subjects reuse UserPresenceView's state,
+checked_at, stale and operation_id. Existing Status cells link to the exact child's Required users
+section; no new column/filter/nav/attention count is introduced. The existing 22-field Required
+users directory is unchanged; nested tenancy contract exports are updated within the same 75-schema
+inventory. No migration/ER relationship or table is added; all 14 check columns remain unchanged.
+
+Summary queries use authenticated workspace and server-visible page IDs, with four added reads;
+shared snapshot/evidence/age helpers preserve detail equivalence. Fresh dated Missing wins; unsupported positive labels lacking per-account date/check references are unavailable; then stale, Unknown/unavailable, both fresh dated Present, otherwise Not checked. Backend DTO and frontend guards both enforce positive provenance. Configured canonical corruption is unavailable (detail 503), while genuinely unconfigured or validly replaced contexts remain Not checked. Pending is secondary and
+per-user UTC dates stay distinct. Corrupt evidence cannot silently become green or break unrelated
+rows. List/detail cache invalidation and pending polling remain read-only. Simulation/permissions
+limits stay explicit; no provider calls, jobs, daily scheduling, email, privileges or repair are added.
+
+This follow-up passes local qualification/reviews and the main-preview update with all 29 preexisting public tables preserved. The parallel preview remains unchanged. [Final summary receipt](../history/required-users-summary-checkpoint-2026-11-06.md). Prior manual-check receipts keep their original scope. The
+[runbook additions](../how-to/required-users-runbook.md#inventory-summary-source-checkpoint) describe
+intended local UI review; live provider qualification remains separately Pending.
+
+Current refinement keeps fields/storage unchanged. The real required-users section anchors the
+exact-child deep link; heading focus follows terminal success or nonauthorization failure (503),
+never 401/403. Inventory Config: and Users: labels/ARIA names are distinct, while detail configuration
+labels retain context. Relative hidden-description positioning preserves the actual 320-pixel body
+width without page-level clipping. Final summary qualification and the preserved-data main update pass.
+
+
+## Directory restoration and destructive consent — 6 November 2026
+
+The [implemented workflow reference](../reference/organization-workflows.md) uses existing
+org_person directory/setup/episode/removal-capture/pending fields and immutable revisions. Fresh
+applied full/partial employee rows map to canonical stable IDs; original anchor emails are not
+return keys after a merge. Only directory/onboarding state can return, never provider bindings,
+tenancies, memberships or credentials. Standalone association cleanup never offboards employees
+or resolves their absence work. Only explicit actually-absent employee offboarding changes that
+status. No table/column/migration is added.
+
+OrganizationAction adds the optional omitted-false confirm_destructive field; five destructive
+person commands require true only on new admission after exact authenticated replay lookup,
+except the 7 November standalone transfer_owner/keep_member neutral path. This
+is a request field committed through the existing request digest, not a new database column.
+The separate TenancyDeletionCommand retains confirm_deletion. DeletionPerson.leaves_directory
+is retained as an always-false compatibility field; tenancy deletion cannot remove an employee.
+
+## Keep without tenancy — 7 November 2026
+
+The application-only keep_without_tenancy action extends the existing Action enum in the request,
+workflow choices and immutable audit evidence. It sets only org_person.setup_required=false,
+retains setup_episode_id and directory_status=included, and closes current setup recommendations
+with the existing status/resolution/resolved_at fields. Existing request digests, workspace
+revision and audit receipts capture the decision. No new entity, column, directory state or
+ER relationship is introduced. See the [workflow contract](../reference/organization-workflows.md#keep-in-organization-without-a-tenancy).
+
+### Shared-member entry and refresh labels — 7 November 2026
+
+The tenancy Add member chooser reuses OrganizationQuery.query/page/page_size and EmployeeView
+id/full_name/email/directory_status/absence_review/pending_operation_id. Current members come
+from existing TenancyDetail.memberships. Its selected stable person ID and displayed tenancy ID
+initialize the existing PersonActions join_shared command; search/selection/modal state is transient.
+Refresh user data only renames the required-user acquisition button; existing request keys,
+operation IDs and presence observations remain unchanged. No persisted fields or ER changes.
+
+## Explicit ownership retention/removal — 7 November 2026
+
+No physical entity or column changes. Implemented DTO counts now are OrganizationAction 22,
+AssociationChoice 4, FrozenAssociation 18 and AssociationView 14. Generated schemas/bindings remain
+the source of exact shape. The additive fields map as follows:
+
+| Field | Representation and authority |
+| --- | --- |
+| OrganizationAction.former_owner_disposition | Optional omitted-None keep_member/remove, required for new standalone transfer; hashed with the existing request and frozen into intent. |
+| AssociationChoice.former_owner_disposition | Optional omitted-None per-transfer choice; new offboard admission freezes remove when omitted. Other action types reject the field. |
+| FrozenAssociation.former_owner_disposition | Immutable intent JSON, not a column. Legacy None retains original behavior at dispatch. |
+| FrozenAssociation.removes_identity | Pure nonserialized property selecting member removal or explicit transfer/remove; never a client-controlled persisted flag. |
+| AssociationView.user_ocid | Existing otm_tenancy_membership.user_ocid read projection for review; not an editable target. |
+| Kept former relationship | Existing membership role becomes member with same row/user/compartment IDs; status active, no identity/group/permission mutation. |
+| Removal completion | Existing status removed and cleanup_required=true, even with no recorded compartment. Existing operation steps/evidence contain exact verified removal receipts. |
+| Failed identity write | Existing operation.effect_knowledge stays unknown and pending participants remain reserved until safe resolution. |
+
+No new ownership/access profile table is needed. Existing canonical managed-user bindings protect
+automation/recovery identities from removal. The worker gets UPDATE(role) on memberships alongside
+its existing column grants; membership/person/workspace identity and audit history remain protected.
+See the [current workflow contract](../reference/organization-workflows.md#explicit-former-owner-disposition--7-november-2026).
+
+
+## Required-user incident metadata and email — 7 November 2026
+
+The [field-complete implemented alert reference](../reference/required-user-alerts.md#fields-and-persistence)
+adds optional JSON fields to existing immutable check intent/evidence and one typed notification
+family. There is no physical schema change. Two ordered per-subject episode entries travel in sealed
+outcome audit JSON/verified step evidence; the check table's results remain provider observations.
+Frozen role-person/admin-grant references, routing revision and original/effective contacts live in
+existing outbox intent JSON. New summary fields are derived read-only UI metadata. Existing ER table
+relationships remain unchanged; application validators bind typed nested fields to stored scope/hash.
+
+
+## Implemented recovery-policy evidence subset — 7 November 2026
+
+This [read-only UI checkpoint](../reference/recovery-console-verification.md) adds no table/migration.
+The proposed full credential model remains future work. Existing immutable JSON evidence carries:
+
+| Record / field | Persisted structure and purpose |
+| --- | --- |
+| Organization intent `recovery_console_fingerprint` | Optional accepted desired CIDR-union SHA256; no private ranges in intent; absent fields omit from historical bytes |
+| Onboarding `required_users.recovery_console.binding` | Exact `application_id`, `policy_id`, `perimeter_id`, `group_id`, `allow_rule_id`, `deny_rule_id` from producer setup capture |
+| Capture `scim_resource_id`, `facts.domain_ocid` | Exact recovery identity/domain; checked against the independently captured permanent user |
+| Capture `facts` | Private `application_id`, `policy_id`, `perimeter_id`, `assigned`, `enabled`, `authorized`, `complete`, ordered `rules` and `perimeter.allowed_cidrs` |
+| Each normalized rule | `id`, `enabled`, full resolved `subjects` (null means all), `effect`, `mfa`, `perimeter_id`, `group_id`, explicit `supported`; unqualified shapes cannot verify |
+| Presence-check context `recovery_console_fingerprint` | Current desired union digest bound to check admission/dispatch/publication; does not imply applied state |
+| Sealed outcome `recovery_console.context` | Same `workspace_id`, `operation_id`, `step_key`, `attempt_id`, `intent_revision`, `execution_generation`, `connection_id`, `connection_revision` as the recovery presence read |
+| Sealed outcome `target`, `checked_at` | Same exact recovery target/binding generation/domain/SCIM/provider IDs as the admitted subject; dated read evidence inside the attempt window |
+| Sealed outcome `result` | Separate `state`, `mfa_exemption`, `network_boundary`, `desired_fingerprint`, full `observed_fingerprint`, closed `safe_code`; no raw ranges/rules |
+| Public `RecoveryConsoleView` | `state`, separate control results, `checked_at`, `operation_id`, desired/observed hashes; shared by inventory/detail, stale after policy/binding/time changes |
+
+The original two presence observations remain distinct. Policy results live in the existing immutable
+outcome referenced by `otm_user_presence_check.evidence_event_id`, not an extra state table. Private
+CIDRs/rules remain server-side onboarding evidence and private backups; Operations/audit/CSV/public
+DTOs retain safe projections. No credential plaintext or MFA seeds are added. No policy-write/rollout
+or API-key-age schema is claimed by this read-only subset; those require their own reviewed fields.
+
+## Automation assignment evidence — 9 November 2026
+
+The [exact field map](../reference/administrator-assignments.md#fields-and-persistence) uses existing
+onboarding outcome and required-user-check outcome JSON. `required_users.automation_administrator`
+retains expected SCIM group/application/role references plus independent assignment facts.
+`administrator_access` on check evidence retains the exact read context/target, checked time and two
+closed statuses. `RequiredUserRecord.administrator_access` and
+`RequiredUsersSummary.administrator_access` are derived views over this same evidence. No new table,
+foreign key or migration is introduced; older JSON omits these optional source fields.
+
+Checked-date footer formatting (9 November) derives date-only UTC labels from existing `checked_at`
+and exact check links from existing `operation_id` fields. The underlying UTC instants remain intact;
+this presentation refinement adds no stored field, table, index or migration.
+
+
+### Recovery assignment evidence extension — 9 November 2026
+
+The same [assignment field map](../reference/administrator-assignments.md#fields-and-persistence)
+now adds omitted-when-absent `required_users.recovery_administrator` to immutable onboarding JSON
+and `recovery_administrator_access` to immutable required-user outcome JSON. Each carries its own
+exact recovery SCIM identity/domain binding and separate observed group/application/role facts.
+`RequiredUserRecord.administrator_access` is populated for each purpose;
+`RequiredUsersSummary.recovery_administrator_access` supplies the recovery inventory warning.
+Existing audit/check rows retain these fields; no new table, migration or index is required.
+Historical omitted bytes stay stable, and source capture is never backfilled from presence.

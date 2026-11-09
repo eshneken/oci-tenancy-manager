@@ -11,7 +11,7 @@ from test_configuration_drift import drift_case, update_case
 from test_financial_values import NOW, example
 
 from otm.configuration.rollout_contracts import ConfigurationOperationTarget
-from otm.financial.context import failure_source, target_source
+from otm.financial.context import failure_source, source_context, target_source
 from otm.financial.contracts import (
     CostIntent,
     CostPolicy,
@@ -24,7 +24,8 @@ from otm.financial.records import current_records, decode_collection, decode_sna
 from otm.financial.service import CostCollections, CostConflict
 from otm.financial.worker import CostCollectionWorker, cost_intent
 from otm.operations.contracts import IntentEventData, canonical_hash
-from otm.providers.budget import BudgetReadUnavailable, SimulatedBudgetFacade
+from otm.providers.budget import BudgetReadUnavailable
+from otm.providers.budget_simulator import SimulatedBudgetFacade
 from otm.storage.admission import RequestConflict
 
 __all__ = ["drift_case", "update_case"]
@@ -154,7 +155,9 @@ def test_stored_integrity_and_query_selection(cost_case):
         Mock(mappings=Mock(return_value=Mock(all=Mock(return_value=[row])))),
     ]
     facts, heads = current_records(
-        c.connection, c.policy.workspace_id, {c.collection["source_hash"]}
+        c.connection,
+        c.policy.workspace_id,
+        {c.row["id"]: source_context(c.row, c.policy, c.profile)},
     )
     assert facts[row["tenancy_id"]][1] == snapshot and heads[row["tenancy_id"]] == c.collection
 

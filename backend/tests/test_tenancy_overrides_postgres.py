@@ -23,7 +23,7 @@ from otm.configuration.override_contracts import (
 from otm.configuration.plans import ConfigurationPlans
 from otm.configuration.rollout_contracts import ConfigurationUpdate
 from otm.configuration.service import BaselineAuthoring
-from otm.providers.baseline import SimulatedBaselineQualifier
+from otm.providers.baseline_simulator import SimulatedBaselineQualifier
 from otm.storage.organization import OrganizationConflict
 from otm.storage.tables import (
     audit_event,

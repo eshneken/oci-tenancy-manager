@@ -412,3 +412,12 @@ the outcome code comes from validated CostEvidence. The directory and CSV export
 projection. Human-shaped or mismatched worker identities remain invalid. Existing immutable events
 are read correctly without deleting, rewriting or skipping history. Regression coverage includes
 real worker-written records through PostgreSQL search/export and browser navigation after a refresh.
+
+## Required-user presence worker evidence — 6 November 2026
+
+The required_user_check_outcome kind uses exact actor_subject otm-worker:user-presence and snapshot
+{kind: worker, subject: user-presence}; it renders User presence worker. Typed PresenceCheckEvidence
+supplies the safe state/code and scoped tenancy/operation context in the shared directory/CSV
+projection. Earlier immutable events are not rewritten. These are existence-only simulated read
+outcomes; a completed operation does not certify both accounts or permissions. No new audit column
+or CSV layout is introduced. [Complete evidence map](user-presence-checks.md).

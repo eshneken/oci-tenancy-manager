@@ -11,9 +11,17 @@ is in [the engineering chapters](../engineering-design/README.md).
 - [Session verification and request authorization](authentication.md)
 - [Baseline authoring and publication history](baseline-authoring.md)
 - [Configuration drift: read-only on-demand checks](configuration-drift.md)
+- [Selected configuration repair](configuration-repair.md), including
+  [all-category/override qualification](configuration-repair.md#all-category-repair-qualification--6-november-2026)
 - [Baseline updates for existing tenancies](configuration-updates.md)
+- [Provider contracts and simulator layout](provider-layout.md)
+- [Required users: identities and manual simulated presence](required-users-screen.md)
+- [Required users summary in Tenancies Status](required-users-summary.md) — locally qualified, main preview updated
+- [Manual presence check API, storage and authority](user-presence-checks.md)
+- [Canonical managed identity bindings](managed-object-bindings.md)
+- [Required-user presence boundary and responsive tenancy cards](required-user-presence.md)
 - [Internal tenancy inspection](inspection.md)
-- [Lifecycle email and environment contact routing](lifecycle-email.md)
+- [Lifecycle email and environment contact routing](lifecycle-email.md), including [all supported lifecycle action/failure notices](lifecycle-email.md#lifecycle-notice-parity--6-november-2026)
 - [Run the local application](local-application.md)
 - [Local recovery authentication](local-authentication.md)
 - [Read-only Operations list and detail](operations.md)
@@ -21,11 +29,11 @@ is in [the engineering chapters](../engineering-design/README.md).
 - [Organization Mapping implementation and operator guide](organization-mapping.md), including [root manager names](organization-mapping.md#root-manager-display-name)
 - [Organization directory and CSV intake](organization-screens.md)
 - [Production organization snapshot storage](organization-storage.md)
-- [Organization reviews and tenancy workflows](organization-workflows.md)
+- [Organization reviews and tenancy workflows](organization-workflows.md), including [fresh directory return and destructive consent](organization-workflows.md#destructive-consent-and-directory-return-correction--source-checkpoint) — qualified locally; live OCI remains pending
 - [Guided onboarding responsibility takeover](responsibility.md)
 - [Submit and run a simulated inspection](simulation.md)
 - [Delete an individual or shared tenancy](tenancy-deletion.md)
-- [Guided tenancy onboarding](tenancy-onboarding.md)
+- [Guided tenancy onboarding](tenancy-onboarding.md), including [permanent-user capture](tenancy-onboarding.md#permanent-user-capture--6-november-2026)
 - [Tenancy overrides and staged baseline reviews](tenancy-overrides.md)
 - [Durable simulated inspection worker](worker.md)
 
@@ -36,3 +44,23 @@ establish actual database fields; diagrams explain relationships rather than add
 - [Current-month cost visibility and financial field dictionary](cost-visibility.md)
 
 Audit history includes strict cost-worker identity projection and shared directory/CSV validation; see [audit reference](audit-history.md).
+
+- [Simulated user-presence connections and full field map](user-presence-connections.md)
+
+Normal-directory onboarding without provisioning: [Keep in organization without a tenancy](organization-workflows.md#keep-in-organization-without-a-tenancy).
+
+Shared-tenancy [Add member](organization-workflows.md#add-a-member-from-a-shared-tenancy) and [provider refresh terminology](required-users-screen.md#consistent-provider-refresh-terminology--7-november-2026).
+
+Compact create/import help: [Collapsed OCI operator checklist](tenancy-onboarding.md#collapsed-oci-operator-checklist).
+
+Owner retention, verified identity removal and manual cleanup: [explicit former-owner disposition](organization-workflows.md#explicit-former-owner-disposition--7-november-2026).
+
+Stored costs and required-user observations survive unrelated membership changes; see the retained-result
+sections in [cost visibility](cost-visibility.md#retained-results-after-membership-changes--7-november-2026)
+and [presence checks](user-presence-checks.md#retained-results-after-membership-changes--7-november-2026).
+
+- [Confirmed missing required-user email: incidents, routing, fields and delivery](required-user-alerts.md)
+
+- [Recovery console checks](recovery-console-verification.md): private settings, exact setup capture and qualified independent policy/presence UI; custody/rotation remain pending.
+
+- [Required-user administrator assignments](administrator-assignments.md): separate exact group/role checks and persistent detail/inventory results.

@@ -11,6 +11,7 @@ from otm.notifications.contracts import (
     NotificationEvidence,
     NotificationIntent,
     NotificationSummary,
+    RequiredUserMissingNotice,
 )
 from otm.operations.contracts import canonical_hash
 from otm.operations.responsibility import execution_authority, latest_claim
@@ -23,11 +24,10 @@ from otm.tenancies.onboarding import load_intent
 def decode_intent(row):
     if canonical_hash(row["intent"]) != row["intent_hash"]:
         raise ValueError("NOTIFICATION_INTENT_INVALID")
-    model = (
-        CostFailureNotice
-        if row["intent"].get("contract_version") == "cost-failure-email-1"
-        else NotificationIntent
-    )
+    model = {
+        "cost-failure-email-1": CostFailureNotice,
+        "required-user-missing-email-1": RequiredUserMissingNotice,
+    }.get(row["intent"].get("contract_version"), NotificationIntent)
     frozen = model.model_validate_json(json.dumps(row["intent"]))
     if (
         frozen.operation_id != row["operation_id"]
@@ -78,14 +78,29 @@ class LifecycleNotifier:
         require_transaction(connection)
         if row["kind"] != "organization_action":
             return None
-        frozen = load_intent(connection, row)
+        # Authenticate lifecycle scope without imposing handoff-only eligibility on other actions.
+        frozen = load_intent(connection, row, onboarding_only=False)
         intent = frozen.intent
         if intent.action not in {
             "create_tenancy",
             "import_tenancy",
-        } or intent.onboarding_version not in {1, 2}:
+            "join_shared",
+            "remove_member",
+            "transfer_owner",
+            "offboard_person",
+            "delete_tenancy",
+        }:
             return None
-        if row["state"] not in {"waiting", "needs_attention", "failed"}:
+        # Historical unguided create/import records do not acquire new notices on this extension.
+        if intent.action in {
+            "create_tenancy",
+            "import_tenancy",
+        } and intent.onboarding_version not in {1, 2, 3}:
+            return None
+        if row["state"] not in {"waiting", "needs_attention", "failed"} or (
+            row["state"] == "waiting"
+            and row["wait_reason"] not in {"onboarding_handoff", "onboarding_review"}
+        ):
             self._supersede(connection, row, at)
             return None
         uncertain = (
@@ -271,6 +286,15 @@ def list_for_operation(connection, workspace, operation_id):
                 last_attempt_at=row["last_attempt_at"],
                 attempts=row["attempts"],
                 safe_code=row["safe_code"],
+                required_user_purpose=intent.purpose
+                if isinstance(intent, RequiredUserMissingNotice)
+                else None,
+                recipient_roles=tuple(dict.fromkeys(r.role for r in intent.reasons))
+                if isinstance(intent, RequiredUserMissingNotice)
+                else (),
+                routing_issues=intent.routing_issues
+                if isinstance(intent, RequiredUserMissingNotice)
+                else (),
             )
         )
     return tuple(result)

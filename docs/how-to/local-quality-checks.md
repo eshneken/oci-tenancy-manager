@@ -107,3 +107,22 @@ No Git commit, push, repository creation or hosted CI setup has occurred at this
 - After final user design approval and publication clearance, configure required GitHub checks,
   protected `master`, Playwright integration tests and PR-only changes. Local checks are not branch
   protection and cannot substitute for it.
+
+## Current production backend lane ownership
+
+The commands in the preserved prototype sections above remain lab-specific. For the production
+application, run from the repository root:
+
+```sh
+uv run --project backend python scripts/check_unit_coverage.py
+uv run --project backend python scripts/run_backend_postgres_tests.py
+```
+
+The first command executes every non-postgres backend unit test and enforces complete-source
+unit-only coverage. The second runs every postgres marked test, including native Playwright/
+HTTP/worker flows, against disposable Docker PostgreSQL. It no longer repeats the unit lane.
+Neither uses the saved human preview as its test database. Frontend unit coverage remains a third,
+separate required result. The approved aggregate integration budget is 600 seconds; individual test
+limits are unchanged. No test/assertion or CI-required check is removed; complementary marker
+deselection is not permission to omit the other lane. See the
+[canonical test partition](../engineering-test-plan.md#complementary-backend-test-lanes).

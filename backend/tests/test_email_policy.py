@@ -132,6 +132,7 @@ def test_provider_contacts():
 @pytest.mark.parametrize("kind", ["application", "configuration"])
 def test_release_profiles(tmp_path, capsys, kind):
     base = CONFIG.read_text().split("# Laptop-only serving;")[0]
+    base += '\n[recovery_console]\nallowed_cidrs=["198.51.100.0/24"]\n'
     staging = tmp_path / "staging.toml"
     staging.write_text(
         'environment = "staging"\n' + base + '\n[testing]\nemail_override = "tester@example.test"\n'
@@ -292,10 +293,12 @@ def test_admin_contacts_do_not_rewrite_profiles():
 # Deployment examples remain executable validation inputs for both independent release paths.
 @pytest.mark.parametrize("environment", ["staging", "production"])
 @pytest.mark.parametrize("kind", ["application", "configuration"])
-def test_versioned_release_templates(environment, kind):
-    result = validate_release(
-        CONFIG.with_name(environment + ".application.toml"), environment, kind
-    )
+def test_versioned_release_templates(tmp_path, environment, kind):
+    from otm.recovery_release import render_candidate
+
+    path = tmp_path / "candidate.toml"
+    render_candidate(CONFIG.with_name(environment + ".application.toml"), path, "198.51.100.0/24")
+    result = validate_release(path, environment, kind)
     assert result["email_redirected"] == (environment == "staging")
 
 

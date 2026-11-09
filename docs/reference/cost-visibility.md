@@ -184,3 +184,18 @@ tooltip without reopening dismissed details. A delayed pointer-leave timer does 
 keyboard-owned information. Hover-only details retain their existing dismissal behavior. The
 regression replays delayed pointer leave and viewport movement; native browser checks retain exact
 viewport bounds and require a non-null visible tooltip before reading its geometry.
+
+
+## Retained results after membership changes — 7 November 2026
+
+Saved costs survive navigation, reloads and unrelated membership/ownership registry revisions.
+`financial_collection.context_hash` and `source_hash` retain their original exact bytes, including
+execution revision. Dispatch/publication fencing is unchanged. The two-query read projection
+selects compatible stored contexts across registry revisions rather than requiring the current
+revision's source hash. It still requires exact workspace, child/parent/organization, assigned
+baseline/configuration and policy revision, source access binding, managed Budget OCID and the
+entire billing profile (including exact arrays). It chooses one compatible outcome/fact per child;
+failures/pending work, coherent-response ordering, period/currency qualification and original
+retrieval/computation age rules remain intact. No history rewrite, provider fetch, migration or
+browser-local persistence is introduced. New baseline/budget/authority identities do not inherit
+an unrelated old source's results.

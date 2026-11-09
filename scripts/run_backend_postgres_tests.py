@@ -197,14 +197,18 @@ def main() -> int:
                 "-m",
                 "pytest",
                 "-q",
+                # The independently required unit/coverage gate owns non-database tests.
+                "-m",
+                "postgres",
                 "--tb=short",
                 "--junitxml=" + str(directory / "junit.xml"),
                 "--basetemp=" + str(directory / "tmp"),
             ],
             cwd=ROOT,
             env=env,
-            # The full suite includes real HTTPS lifecycle flows and their bounded worker waits.
-            timeout=420,
+            # The 7 November approval raises only the aggregate integration budget to 15 minutes.
+            # Individual browser, database and I/O limits remain independently bounded.
+            timeout=900,
         )
         (directory / "pytest.log").write_text(
             result.stdout.replace(password, "[REDACTED]")

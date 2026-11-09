@@ -54,7 +54,8 @@
             "organization_action",
             "configuration_update",
             "configuration_check",
-            "cost_collection"
+            "cost_collection",
+            "required_user_check"
           ],
           "title": "Kind",
           "type": "string"

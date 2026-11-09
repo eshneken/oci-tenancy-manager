@@ -20,7 +20,8 @@ from otm.configuration.contracts import (
 )
 from otm.configuration.http import guarded
 from otm.configuration.service import BaselineAuthoring, draft_view
-from otm.providers.baseline import PublicationUnavailable, SimulatedBaselineQualifier
+from otm.providers.baseline import PublicationUnavailable
+from otm.providers.baseline_simulator import SimulatedBaselineQualifier
 from otm.storage.organization import OrganizationConflict
 
 

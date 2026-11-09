@@ -14,7 +14,8 @@ from otm.maintenance import maintenance_engine, require_runtime_role
 from otm.notifications.runtime import compose_notifications
 from otm.operations.sandbox import SandboxAdmission, load_sandbox
 from otm.organization.web import OrganizationWeb, load_profile
-from otm.providers.lifecycle import SimulatedLifecycleFacade
+from otm.providers.configuration_simulator import SimulatedConfigurationFacade
+from otm.providers.lifecycle_simulator import SimulatedLifecycleFacade
 from otm.secrets.directory import DirectorySecrets
 from otm.settings import load_settings
 from otm.storage.administrators import SqlAdministratorStore
@@ -31,6 +32,11 @@ from otm.tenancies.workflows import OrganizationWorkflows
 # Construct only explicitly configured laptop dependencies; never use a saved prototype connection.
 def create_local_application():
     settings = load_settings(Path(os.environ["OTM_APPLICATION_CONFIG"]))
+
+    # Recheck the deployed desired revision before setup, cleanup and read publication.
+    def recovery_console_policy():
+        return load_settings(Path(os.environ["OTM_APPLICATION_CONFIG"])).recovery_console
+
     if settings.local_auth is None or settings.local_server is None:
         raise ValueError("EXPLICIT_LOCAL_CONFIGURATION_REQUIRED")
     origin = settings.local_server.public_origin
@@ -98,14 +104,19 @@ def create_local_application():
                     queue=workspace_queue(workspace), task=ORGANIZATION_TASK
                 ),
                 policy=policy,
-                facade=SimulatedLifecycleFacade(policy),
+                facade=SimulatedLifecycleFacade(
+                    policy,
+                    recovery_console=settings.recovery_console,
+                    recovery_console_loader=recovery_console_policy,
+                ),
+                recovery_console=settings.recovery_console,
                 policy_loader=organization_policy,
                 mail_policy=settings.mail_policy(),
                 notifications=notifier,
             )
         from otm.configuration.drift import ConfigurationChecks
         from otm.configuration.rollout import ConfigurationRollouts
-        from otm.providers.baseline import SimulatedBaselineQualifier
+        from otm.providers.baseline_simulator import SimulatedBaselineQualifier
         from otm.storage.enqueue import CONFIGURATION_CHECK_TASK, CONFIGURATION_TASK
 
         checks = ConfigurationChecks(
@@ -120,6 +131,21 @@ def create_local_application():
             else None,
         )
         workflow.configuration_checks = checks
+        from otm.storage.enqueue import PRESENCE_TASK
+        from otm.tenancies.presence import PresenceChecks
+
+        workflow.presence_checks = PresenceChecks(
+            organization_store,
+            recovery_console_loader=recovery_console_policy,
+            policy=workflow.policy,
+            policy_loader=workflow.policy_loader,
+            enqueuer=InspectionEnqueuer(
+                queue=workspace_queue(settings.local_auth.workspace_id), task=PRESENCE_TASK
+            )
+            if workflow.policy
+            else None,
+        )
+
         from otm.financial.service import CostCollections
         from otm.storage.enqueue import COST_TASK
 
@@ -151,6 +177,9 @@ def create_local_application():
             cost_collections=costs,
             configuration_rollouts=ConfigurationRollouts(
                 organization_store,
+                repair_facade=SimulatedConfigurationFacade(workflow.policy)
+                if workflow.policy
+                else None,
                 policy=workflow.policy,
                 policy_loader=workflow.policy_loader,
                 enqueuer=InspectionEnqueuer(

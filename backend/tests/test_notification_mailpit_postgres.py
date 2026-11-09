@@ -5,7 +5,7 @@ import subprocess
 import time
 from datetime import UTC, datetime
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 from uuid import uuid4
 
 import httpx
@@ -14,7 +14,7 @@ import tomli_w
 from sqlalchemy import select
 from test_baseline_authoring import content
 from test_organization_fixtures import envelope, example_config, example_records
-from test_organization_workflows_postgres import action
+from test_organization_workflows_postgres import action, complete_setup
 from test_sandbox_runtime_postgres import drain, run_browser_runtime, runtime
 
 from otm.configuration.contracts import PublishBaseline, SaveBaselineDraft
@@ -22,12 +22,14 @@ from otm.configuration.service import BaselineAuthoring
 from otm.notifications.runtime import compose_notifications
 from otm.operations.sandbox import load_sandbox
 from otm.organization.contracts import Intake
-from otm.providers.baseline import SimulatedBaselineQualifier
-from otm.providers.lifecycle import SimulatedLifecycleFacade
+from otm.providers.baseline_simulator import SimulatedBaselineQualifier
+from otm.providers.lifecycle import LifecycleBlocked
+from otm.providers.lifecycle_simulator import SimulatedLifecycleFacade
 from otm.settings import load_settings
 from otm.storage.enqueue import ORGANIZATION_TASK, InspectionEnqueuer, workspace_queue
 from otm.storage.organization import SqlOrganizationStore
 from otm.storage.tables import notification_outbox
+from otm.tenancies.deletion import TenancyDeletionCommand
 from otm.tenancies.worker import OrganizationLifecycleWorker
 from otm.tenancies.workflows import OrganizationWorkflows
 
@@ -218,12 +220,110 @@ def test_native_mailpit_delivery_and_https(runtime, mail_capture, monkeypatch):
         assert message["To"] == [{"Name": "", "Address": "capture@otm.test"}]
         body = client.get(mail_capture.url + "/api/v1/message/" + message["ID"]).json()
         assert str(receipt.operation_id) in body["Text"]
+    # A separate completed child exercises non-onboarding delivery through the real native worker.
+    # Failure is injected only at this disposable fixture's facade, never through a product control.
+    candidate = next(p for p in store.head(c.principal).people if p.email == "two@example.test")
+    _, second = action(prepared, candidate.id, "create_tenancy")
+    complete_setup(prepared, second.operation_id)
+    setup = workflow.onboarding(c.principal, second.operation_id)
+    preview = workflow.deletion_preview(c.principal, setup.tenancy_id)
+    deletion = workflow.delete_tenancy(
+        c.principal,
+        TenancyDeletionCommand(
+            client_request_key=uuid4(),
+            tenancy_id=setup.tenancy_id,
+            context=preview.context,
+            confirm_deletion=True,
+            confirm_shared=True,
+            confirm_manager=True,
+        ),
+    )
+    with patch.object(facade, "apply", side_effect=LifecycleBlocked("TARGET_CHANGED")):
+        worker.run(deletion.operation_id)
+    drain(c, monkeypatch)
+    with c.owner.connect() as connection:
+        notices = (
+            connection.execute(
+                select(notification_outbox).where(
+                    notification_outbox.c.operation_id == deletion.operation_id
+                )
+            )
+            .mappings()
+            .all()
+        )
+        assert len(notices) == 1 and notices[0]["state"] == "sent"
+        assert notices[0]["intent"]["original_recipient"] is None
+        assert notices[0]["intent"]["delivery_recipient"] == "capture@otm.test"
+    with httpx.Client(trust_env=False, timeout=3) as client:
+        capture = client.get(mail_capture.url + "/api/v1/messages").json()
+        failures = [
+            m
+            for m in capture["messages"]
+            if m["Subject"] == "Tenancy operation requires your attention"
+        ]
+        matching = [
+            client.get(mail_capture.url + "/api/v1/message/" + m["ID"]).json() for m in failures
+        ]
+        assert any(str(deletion.operation_id) in m["Text"] for m in matching)
+        assert all(m["To"] == [{"Name": "", "Address": "capture@otm.test"}] for m in failures)
+    # A separate qualified child exercises confirmed-Missing mail through the same capture/worker.
+    from test_presence_alerts_postgres import missing_factory
+
+    from otm.storage.enqueue import PRESENCE_TASK
+    from otm.tenancies.presence import PresenceChecks
+    from otm.tenancies.presence_contracts import PresenceCheckRequest
+    from otm.tenancies.presence_worker import UserPresenceWorker
+
+    leader = next(p for p in store.head(c.principal).people if p.email == "one@example.test")
+    _, third = action(prepared, leader.id, "create_tenancy")
+    complete_setup(prepared, third.operation_id)
+    child = workflow.onboarding(c.principal, third.operation_id).tenancy_id
+    presence = PresenceChecks(
+        store,
+        policy=sandbox.policy,
+        policy_loader=loader,
+        enqueuer=InspectionEnqueuer(
+            workspace_queue(sandbox.policy.workspace_id), task=PRESENCE_TASK
+        ),
+    )
+    reader = UserPresenceWorker(
+        c.owner,
+        sandbox.policy.workspace_id,
+        clock,
+        loader,
+        sandbox.policy,
+        missing_factory("recovery"),
+        notifications=notifier,
+    )
+    checked = presence.start(c.principal, child, PresenceCheckRequest(client_request_key=uuid4()))
+    reader.run(checked.operation_id)
+    drain(c, monkeypatch)
+    with c.owner.connect() as connection:
+        notices = list(
+            connection.execute(
+                select(notification_outbox).where(
+                    notification_outbox.c.operation_id == checked.operation_id
+                )
+            ).mappings()
+        )
+        assert len(notices) >= 3 and all(n["state"] == "sent" for n in notices)
+        assert len({n["intent"]["original_recipient"] for n in notices}) == len(notices)
+    with httpx.Client(trust_env=False, timeout=3) as client:
+        messages = client.get(mail_capture.url + "/api/v1/messages").json()["messages"]
+        warnings = [m for m in messages if m["Subject"] == "Required tenancy user is missing"]
+        assert len(warnings) == len(notices)
+        assert all(m["To"] == [{"Name": "", "Address": "capture@otm.test"}] for m in warnings)
+        body = client.get(mail_capture.url + "/api/v1/message/" + warnings[0]["ID"]).json()["Text"]
+        assert str(child) + "#required-users" in body and "recovery user missing" in body
     run_browser_runtime(
         c,
         "e2e/email-delivery.spec.ts",
         {
             "OTM_E2E_EMAIL_OPERATION_ID": str(receipt.operation_id),
+            "OTM_E2E_EMAIL_LIFECYCLE_OPERATION_ID": str(deletion.operation_id),
             "OTM_E2E_EMAIL_TEST_ADDRESS": "capture@otm.test",
             "OTM_E2E_EMAIL_EMPLOYEE_NAME": "Delegate",
+            "OTM_E2E_EMAIL_PRESENCE_OPERATION_ID": str(checked.operation_id),
+            "OTM_E2E_EMAIL_PRESENCE_TENANCY_ID": str(child),
         },
     )

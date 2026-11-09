@@ -1,6 +1,7 @@
 """Persist guided onboarding in existing operations and steps; no second workflow engine."""
 
 import json
+from contextlib import nullcontext
 from uuid import uuid4
 
 from sqlalchemy import select, update
@@ -31,7 +32,7 @@ STEPS = (
 
 # New onboarding applies the accepted baseline and reprobes access before retiring its bootstrap.
 def onboarding_steps(intent):
-    if intent.onboarding_version == 2 and intent.baseline is not None:
+    if intent.onboarding_version in {2, 3} and intent.baseline is not None:
         return (
             STEPS[:-1]
             + (
@@ -40,6 +41,11 @@ def onboarding_steps(intent):
                     "verify_configured_access",
                     "Reverify automation and recovery access after configuration",
                 ),
+            )
+            + (
+                (("capture_required_users", "Record permanent user identities"),)
+                if intent.onboarding_version == 3
+                else ()
             )
             + STEPS[-1:]
         )
@@ -60,8 +66,8 @@ def step_rows(connection, row):
     }
 
 
-# Follow and authenticate the immutable intent pointer before accepting any handoff input.
-def load_intent(connection, row):
+# Authenticate immutable organization intent; handoff callers additionally require onboarding.
+def load_intent(connection, row, *, onboarding_only=True):
     event = (
         connection.execute(
             select(audit_event).where(
@@ -82,7 +88,7 @@ def load_intent(connection, row):
         or frozen.intent.workspace_id != row["workspace_id"]
     ):
         raise ValueError("INVALID_ONBOARDING_INTENT")
-    if frozen.intent.onboarding_version not in {1, 2}:
+    if onboarding_only and frozen.intent.onboarding_version not in {1, 2, 3}:
         raise OrganizationConflict("ONBOARDING_NOT_AVAILABLE")
     return frozen
 
@@ -151,6 +157,7 @@ def save_step(connection, row, key, at, *, inputs, payload, state="verified", ac
             },
         )
     )
+    return event
 
 
 # Explicit waits end the job and release transaction locks; the next command enqueues fresh work.
@@ -383,7 +390,12 @@ def advance(connection, row, intent, facade, at):
         for current, _ in onboarding_steps(intent)[1:]:
             if current in steps and steps[current]["state"] == "verified":
                 continue
-            if current == "configure_baseline":
+            captured = None
+            if current == "capture_required_users":
+                from otm.tenancies.onboarding_users import capture_users
+
+                captured = capture_users(facade, intent, inspection["inputs"]["discovery"])
+            elif current == "configure_baseline":
                 from otm.tenancies.onboarding_baseline import configure_baseline
 
                 configure_baseline(connection, row, intent, facade, at)
@@ -395,16 +407,29 @@ def advance(connection, row, intent, facade, at):
                 facade.onboarding_step(intent, "verify_required", inspection["inputs"]["discovery"])
             else:
                 facade.onboarding_step(intent, current, inspection["inputs"]["discovery"])
-            save_step(
-                connection,
-                row,
-                current,
-                at,
-                inputs={},
-                payload=OnboardingEvidence(
-                    step=current, outcome="verified", safe_code="ONBOARDING_VERIFIED"
-                ),
-            )
+            # Capture evidence, identities and opted-in connection either all persist or roll back.
+            with connection.begin_nested() if captured is not None else nullcontext():
+                captured_event = save_step(
+                    connection,
+                    row,
+                    current,
+                    at,
+                    inputs={},
+                    payload=OnboardingEvidence(
+                        step=current,
+                        outcome="verified",
+                        safe_code="ONBOARDING_VERIFIED",
+                        required_users=captured,
+                    ),
+                )
+                if captured is not None:
+                    from otm.storage.managed_bindings import capture_bindings
+
+                    capture_bindings(connection, row, intent, captured, captured_event, at)
+                if captured is not None:
+                    from otm.storage.user_presence_connections import capture_connection
+
+                    capture_connection(connection, row, intent, captured_event, at)
             # A known setup effect prevents the no-effect cancellation path from abandoning it.
             connection.execute(
                 update(operation)

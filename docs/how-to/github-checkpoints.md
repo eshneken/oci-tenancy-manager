@@ -34,9 +34,9 @@ no force pushes and no branch deletion. Real OCI/deployment qualification remain
 
 | Check | Requirement |
 | --- | --- |
-| Backend unit coverage | Executed, unskipped unit tests; complete-source line coverage at least 95%; lint and purpose comments |
+| Backend unit coverage | All non-postgres backend units; complete-source unit-only line coverage at least 95%; lint and purpose comments |
 | Frontend unit coverage | Executed, unskipped unit tests; complete-source line coverage at least 95%; generated types and build |
-| PostgreSQL and Playwright | Disposable Docker PostgreSQL, real HTTP/worker/browser flows and locally captured email; no saved app database |
+| PostgreSQL and Playwright | All postgres marked tests, including real HTTP/worker/browser flows and locally captured email; disposable Docker PostgreSQL, no saved app database |
 | Security and publication | Full candidate privacy/asset guard, pinned Gitleaks, Bandit and locked Python/JavaScript dependency audits |
 | Documentation and contracts | All candidate documentation links/images, top-level section index, generated schemas and design contract checks |
 
@@ -44,6 +44,17 @@ All lanes run for every pull request to `master`, every push to `master`, and ma
 There are no path-based skips. No private logs, test databases, screenshots or credential files are
 uploaded as CI artifacts. The hosted jobs and protections are verified at the baseline above;
 workflow or protection changes still require execution and read-back verification, not YAML alone.
+
+### Backend partition and evidence
+
+The backend unit job invokes `scripts/check_unit_coverage.py` (`-m "not postgres"`); the integration
+job invokes `scripts/run_backend_postgres_tests.py` (`-m postgres`). Together they execute every
+backend test once across the required lanes. The integration job no longer repeats units already
+owned by the independently required coverage job. Frontend units remain a separate required job.
+This changes test orchestration only: assertions, unit scope, the 95% threshold and required hosted
+checks remain intact. The user approved a 600-second aggregate integration budget; individual test
+limits remain unchanged. A lane's missing/skipped/timed-out evidence blocks
+merge; a passing companion lane cannot compensate. [Canonical policy](../engineering-test-plan.md#complementary-backend-test-lanes).
 
 ## Publication checks
 

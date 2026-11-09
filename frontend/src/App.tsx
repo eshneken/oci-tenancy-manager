@@ -123,7 +123,7 @@ export function App() {
         <h1>Unable to verify your session</h1>
         <p>Check that the local application and database are running.</p>
         <button
-          className="button primary"
+          className="button secondary"
           onClick={() => void session.refetch()}
         >
           Try again

@@ -20,7 +20,7 @@ def target_is_current(row, target, intent, identifier):
         and row["status"] == "active"
         and row["provider_mode"] == "simulated"
         and row["operation_id"] == identifier
-        and row["revision"] == target.revision + 1
+        and row["revision"] == target.revision + (0 if intent.change_kind == "repair" else 1)
         and row["baseline_version_id"] == intent.baseline.id
         and row.get("desired_configuration_id")
         == (target.configuration.id if target.configuration else None)
@@ -191,45 +191,82 @@ class ConfigurationUpdateWorker:
             at = self.clock()
             category = None
             if not code:
-                objects, category = configure_target(
-                    target,
-                    intent.baseline.model_copy(
-                        update={"content": effective_content(intent.baseline, target.configuration)}
-                    )
-                    if target.configuration
-                    else intent.baseline,
-                    self.facade,
-                    registered["configuration_observation"],
-                )
-                code = "CONFIGURATION_UNVERIFIED" if category else "CONFIGURATION_VERIFIED"
-                # Persist partial fake-cloud state, but advance verification
-                # only after every readback.
-                connection.execute(
-                    update(tenancy)
-                    .where(tenancy.c.workspace_id == self.workspace, tenancy.c.id == target_id)
-                    .values(
-                        configuration_observation=objects,
-                        updated_at=at,
-                        **(
-                            {
-                                "verified_baseline_version_id": intent.baseline.id,
-                                "last_verified_configuration_id": target.configuration.id
-                                if target.configuration
-                                else None,
-                                "configuration_verified_at": at,
-                                "operation_id": None,
-                                "revision": registered["revision"] + 1,
+                if intent.change_kind == "repair":
+                    from otm.configuration.repairs import execute_repair
+
+                    try:
+                        objects, category, repair_results = execute_repair(
+                            connection,
+                            self.workspace,
+                            registered,
+                            target,
+                            intent.baseline,
+                            self.facade,
+                            require_original=row["effect_knowledge"] == "none",
+                        )
+                    except ValueError:
+                        code = "TARGET_CHANGED"
+                else:
+                    objects, category = configure_target(
+                        target,
+                        intent.baseline.model_copy(
+                            update={
+                                "content": effective_content(intent.baseline, target.configuration)
                             }
-                            if not category
-                            else {}
-                        ),
+                        )
+                        if target.configuration
+                        else intent.baseline,
+                        self.facade,
+                        registered["configuration_observation"],
                     )
-                )
-                connection.execute(
-                    update(operation)
-                    .where(operation.c.id == identifier, operation.c.workspace_id == self.workspace)
-                    .values(effect_knowledge="known")
-                )
+                if not code:
+                    code = "CONFIGURATION_UNVERIFIED" if category else "CONFIGURATION_VERIFIED"
+                    # Persist partial fake-cloud state, but advance verification
+                    # only after every readback.
+                    connection.execute(
+                        update(tenancy)
+                        .where(tenancy.c.workspace_id == self.workspace, tenancy.c.id == target_id)
+                        .values(
+                            configuration_observation=objects,
+                            updated_at=at,
+                            **(
+                                {
+                                    "verified_baseline_version_id": intent.baseline.id,
+                                    "last_verified_configuration_id": target.configuration.id
+                                    if target.configuration
+                                    else None,
+                                    "configuration_verified_at": (
+                                        registered["configuration_verified_at"]
+                                        if intent.change_kind == "repair"
+                                        and any(item.state != "matching" for item in repair_results)
+                                        else at
+                                    ),
+                                    "operation_id": None,
+                                    "revision": registered["revision"] + 1,
+                                }
+                                if not category
+                                else {}
+                            ),
+                        )
+                    )
+                    connection.execute(
+                        update(operation)
+                        .where(
+                            operation.c.id == identifier, operation.c.workspace_id == self.workspace
+                        )
+                        .values(effect_knowledge="known")
+                    )
+                    if intent.change_kind == "repair" and not category:
+                        from otm.configuration.repairs import record_repair_check
+
+                        record_repair_check(
+                            connection,
+                            row,
+                            registered,
+                            self.facade.policy,
+                            repair_results,
+                            at,
+                        )
             save_target_result(
                 connection, row, target, intent.baseline, at, code=code, category=category
             )
@@ -275,7 +312,11 @@ class ConfigurationUpdateWorker:
                 .where(operation.c.workspace_id == self.workspace, operation.c.id == identifier)
                 .values(
                     state="succeeded" if complete else "needs_attention",
-                    stage="Baseline update verified locally"
+                    stage=(
+                        "Configuration repair verified locally"
+                        if intent.change_kind == "repair"
+                        else "Baseline update verified locally"
+                    )
                     if complete
                     else "Some tenancy updates need attention",
                     completed_at=at if complete else None,

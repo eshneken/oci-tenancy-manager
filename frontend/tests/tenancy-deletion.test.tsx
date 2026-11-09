@@ -98,12 +98,8 @@ describe("Whole-tenancy deletion preview", () => {
     expect(
       screen.getByText("Member", { selector: "strong" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Will leave the managed directory/),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Will remain in the managed directory/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Tenancy deletion never removes an employee/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Employee directory status is unchanged/)).toHaveLength(2);
     expect(
       screen.getByRole("button", { name: "Initiate termination" }),
     ).toBeDisabled();

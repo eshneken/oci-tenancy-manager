@@ -12,7 +12,7 @@ from test_organization_workflows_postgres import action, complete_setup, workflo
 
 from otm.configuration.contracts import PublishBaseline, SaveBaselineDraft
 from otm.configuration.service import BaselineAuthoring
-from otm.providers.baseline import SimulatedBaselineQualifier
+from otm.providers.baseline_simulator import SimulatedBaselineQualifier
 from otm.storage.organization import OrganizationConflict
 from otm.storage.tables import operation, org_workspace, tenancy
 
@@ -240,6 +240,7 @@ def test_legacy_accepted_operation_stays_unpinned_after_publication(workflow_cas
                     data["intent"] = {
                         key: value for key, value in data["intent"].items() if key != "baseline"
                     }
+                    data["intent"].pop("presence_connection_contract", None)
                     data["intent"]["onboarding_version"] = 1
                     statement = statement.values(data=data, data_hash=canonical_hash(data))
             elif statement.table.name == "otm_tenancy":

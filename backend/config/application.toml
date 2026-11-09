@@ -3,8 +3,9 @@
 schema_version = 1
 
 [sessions]
-# Issued idle timeout in seconds (1–2147483647); polling does not extend it.
-idle_timeout_seconds = 1800
+# Issued idle seconds (1–2147483647); polling does not extend this limit.
+# Local laptop default is eight hours; staging/production templates retain 1800 seconds.
+idle_timeout_seconds = 28800
 # Issued hard lifetime in seconds (1–2147483647), at least the idle timeout.
 absolute_timeout_seconds = 28800
 

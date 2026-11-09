@@ -39,6 +39,10 @@ def event(kind="local_sign_in_succeeded", operator=False):
         display_name=None if operator else "Example administrator",
     )
     data = {"private_marker": "must-not-escape"}
+    if kind == "required_user_check_outcome":
+        from test_user_presence_check_units import case
+
+        data = case().evidence.model_dump(mode="json")
     if kind == "cost_collection_outcome":
         from otm.financial.contracts import CostEvidence
 
@@ -182,7 +186,9 @@ def event(kind="local_sign_in_succeeded", operator=False):
         workspace_id="audit-org",
         at=NOW,
         kind=kind,
-        actor_subject="otm-worker:costs"
+        actor_subject="otm-worker:user-presence"
+        if kind == "required_user_check_outcome"
+        else "otm-worker:costs"
         if kind == "cost_collection_outcome"
         else "otm-worker:email"
         if kind == "email_delivery"
@@ -195,7 +201,9 @@ def event(kind="local_sign_in_succeeded", operator=False):
         else "otm-worker:inspection"
         if worker
         else actor.key,
-        actor_snapshot={"kind": "worker", "subject": "costs"}
+        actor_snapshot={"kind": "worker", "subject": "user-presence"}
+        if kind == "required_user_check_outcome"
+        else {"kind": "worker", "subject": "costs"}
         if kind == "cost_collection_outcome"
         else {"kind": "worker", "subject": "email"}
         if kind == "email_delivery"
@@ -259,6 +267,8 @@ def test_public_projection_all_kinds(kind):
     )
     if kind == "local_sign_in_failed":
         assert result.actor_name is None
+    elif kind == "required_user_check_outcome":
+        assert result.actor_name == "User presence worker"
     elif kind == "cost_collection_outcome":
         assert result.actor_name == "Cost collection worker"
     elif kind == "email_delivery":
@@ -274,7 +284,9 @@ def test_public_projection_all_kinds(kind):
     else:
         assert result.actor_name == "Example administrator"
     assert result.safe_code == (
-        "COST_READ_COMPLETE"
+        "USER_PRESENCE_CHECK_COMPLETE"
+        if kind == "required_user_check_outcome"
+        else "COST_READ_COMPLETE"
         if kind == "cost_collection_outcome"
         else "CONFIGURATION_VERIFIED"
         if kind == "configuration_outcome"
@@ -414,6 +426,7 @@ def test_audit_http_authorization_and_errors(session_case):
         ("organization_configured", "mapping_apply"),
         ("organization_configured", None),
         ("organization_review_decided", "no_tenancy_required"),
+        ("organization_review_decided", "keep_without_tenancy"),
         ("organization_review_decided", "unrecognized"),
         ("organization_feed_received", None),
         ("organization_feed_rejected", None),

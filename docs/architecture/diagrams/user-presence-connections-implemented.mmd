@@ -1,0 +1,22 @@
+erDiagram
+    otm_tenancy ||--o{ otm_user_presence_connection : registers
+    otm_managed_object_binding ||--o{ otm_user_presence_connection : automation_binding
+    otm_managed_object_binding ||--o{ otm_user_presence_connection : domain_binding
+    audit_event ||--o{ otm_user_presence_connection : capture_evidence
+    otm_operation ||--o{ otm_user_presence_connection : creates_or_retires
+    otm_user_presence_connection {
+        uuid id PK
+        string workspace_id FK
+        uuid tenancy_id FK
+        uuid automation_binding_id FK
+        uuid domain_binding_id FK
+        int revision
+        string provider_mode
+        string contract_version
+        string state
+        uuid created_operation_id FK
+        uuid source_evidence_event_id FK
+        uuid retired_operation_id FK
+        timestamp created_at
+        timestamp updated_at
+    }

@@ -344,3 +344,41 @@ There is no SMTP relay configured and ports are loopback-only; normal Docker bri
 network egress is firewalled. Injected production secrets, real OCI email contacts and hosted SMTP
 remain future qualification. The source migration chain adds 0020_email_delivery (20 tables); saved
 instances are not yet claimed upgraded.
+
+## Manual presence-check source revision
+
+After deliberate coordinated installation of the matching API/frontend/worker and migration 0025,
+a fresh simulated create/import can use Required users → Check now. Keep the foreground worker
+running. Older recorded identities without an accepted connection remain unqualified; do not reset
+or invent connections to enable them. No extra service, scheduler or simulator-control CLI is
+required. Local qualification and the main-preview upgrade pass; the parallel preview is unchanged. See the
+[manual runbook](../how-to/required-users-runbook.md).
+
+## Local verification uses separate required lanes
+
+The persistent preview is not a test database. Run backend unit/coverage separately with
+`uv run --project backend python scripts/check_unit_coverage.py`; it selects all non-postgres tests
+and measures the entire production source inventory. Run the integration wrapper separately with
+`uv run --project backend python scripts/run_backend_postgres_tests.py`; it selects all postgres
+marked tests, including native worker/HTTPS/browser fixtures, in disposable owned databases.
+The frontend unit/coverage gate remains separate. Both backend lanes and the frontend gate must
+pass; an integration receipt does not stand in for unit execution or coverage. The user approved
+a 600-second aggregate integration budget; individual test limits and all assertions are unchanged. Final Check now qualification passes 1,556 backend units, all 351 PostgreSQL/native-worker/browser cases (429.457 seconds), and 446 frontend units separately. Main port 8443 is upgraded with all 28 preexisting public tables preserved and one empty 14-column check table added. Port 8444 remains unchanged and healthy. [Final receipt](../history/manual-presence-checkpoint-2026-11-06.md). [Canonical lane ownership](../engineering-test-plan.md#complementary-backend-test-lanes).
+
+## Saved-preview publication safeguards — 9 November 2026
+
+Before changing a saved local preview, verify its exact local origin, owned runtime processes,
+container label and running state. The container must expose exactly one PostgreSQL binding on
+127.0.0.1, with the port matching saved instance state; backup and preservation reads must target
+that same database. Refuse redirected/symlinked instance paths.
+
+After complete qualification, freeze the exact frontend file hashes in private evidence. Reject
+symlinks in the source tree and snapshot paths, hidden/nonregular frontend entries and reused
+snapshot destinations. Copy into the instance's new immutable release directory, then verify the
+entire copied file set/hash map before serving it. Start matching API and worker code, verify SPA
+routes and served asset bytes, and preserve the independent parallel instance.
+
+Keep database/configuration backups private. Compare complete preexisting table-content hashes
+before and after preparation, with no automatic replay or user/session-row repair. A local settings
+change must be explicitly scoped and model-checked to the approved fields before atomic replacement.
+Changing the local idle limit applies to newly issued sessions; it never rewrites existing deadlines.

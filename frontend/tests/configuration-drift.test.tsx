@@ -58,6 +58,7 @@ it("allows previous-page navigation and identifies the active name sort",async()
 
 it("queues the exact scope and keeps evidence visible until readback",async()=>{
  const c=mount({identifier:id});await screen.findByRole("heading",{name:"Example tenancy"});
+ expect(screen.getByRole("button",{name:"Check now"})).toHaveClass("secondary");
  await userEvent.click(screen.getByRole("button",{name:"Check now"}));
  const message=await screen.findByText(/Check request accepted/);expect(message).toHaveFocus();
  expect(c.start).toHaveBeenCalledWith({client_request_key:expect.any(String),tenancy_id:id},expect.any(AbortSignal));

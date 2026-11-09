@@ -123,6 +123,8 @@ export function DeleteTenancy({
           <p>
             Removal is pending. All mappings remain tracked until termination
             initiation is verified. Other tenancy associations are preserved.
+            Employees remain in the managed directory; tenancy
+            deletion does not explicitly offboard them.
           </p>
           <a
             href={"/operations/" + receipt.operation_id}
@@ -168,6 +170,13 @@ export function DeleteTenancy({
             in it. Once initiation is verified, all {data.people.length}{" "}
             owner/member associations below will be removed from this tenancy.
           </p>
+          <p className="notice">
+            <strong>Employee directory.</strong> Tenancy deletion never removes an employee from
+            the managed directory, even when this is their last tenancy or they
+            are absent from the feed. Explicit
+            employee offboarding is a separate action. Later feed imports never
+            recreate deleted tenancies, memberships, accounts or credentials.
+          </p>
           {data.shared_warning && (
             <p className="notice">
               <strong>Shared tenancy.</strong> Every listed member is affected,
@@ -198,9 +207,7 @@ export function DeleteTenancy({
                 <p>
                   {person.other_tenancy_count} other tenancy association
                   {person.other_tenancy_count === 1 ? "" : "s"}.{" "}
-                  {person.leaves_directory
-                    ? "Will leave the managed directory; source and audit history remain."
-                    : "Will remain in the managed directory."}
+                  Employee directory status is unchanged. Offboarding is a separate action.
                 </p>
               </li>
             ))}

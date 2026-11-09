@@ -50,6 +50,36 @@ def test_onboarding_applies_frozen_baseline_without_second_operation(workflow_ca
             ).scalars()
         )
         assert {"configure_baseline", "verify_configured_access", "retire_temporary"} <= keys
+        assert "capture_required_users" in keys
+        captured = connection.execute(
+            select(operation_step.c.last_outcome).where(
+                operation_step.c.operation_id == receipt.operation_id,
+                operation_step.c.step_key == "capture_required_users",
+            )
+        ).scalar_one()
+        facts = captured["required_users"]
+        assert facts["workspace_id"] == c.policy.workspace_id
+        assert facts["tenancy_ocid"] == row["tenancy_ocid"]
+        assert facts["automation"]["provider_ocid"] != facts["recovery"]["provider_ocid"]
+        event = connection.execute(
+            select(audit_event.c.data).where(
+                audit_event.c.operation_id == receipt.operation_id,
+                audit_event.c.kind == "onboarding_outcome",
+                audit_event.c.data["step"].astext == "capture_required_users",
+            )
+        ).scalar_one()
+        assert event == captured
+    # Redelivery of completed work must not append or replace the captured identity evidence.
+    c.worker.run(receipt.operation_id)
+    with c.engine.connect() as connection:
+        replay = connection.execute(
+            select(audit_event.c.data).where(
+                audit_event.c.operation_id == receipt.operation_id,
+                audit_event.c.kind == "onboarding_outcome",
+                audit_event.c.data["step"].astext == "capture_required_users",
+            )
+        ).scalar_one()
+        assert replay == captured
 
 
 # Two people may use one existing compartment; removing one deletes only their identity binding.
@@ -251,3 +281,102 @@ def test_onboarding_failure_preserves_bootstrap_and_retries_exact_pin(workflow_c
     final = c.workflow.onboarding(c.principal, receipt.operation_id)
     assert final.phase == "complete" and final.baseline.id == review.baseline.id
     assert all(step.state == "verified" for step in final.checks)
+
+
+# Accepted historical graphs still finish without synthesizing permanent-user capture evidence.
+@pytest.mark.parametrize("version", [1, 2])
+@pytest.mark.parametrize("kind", ["create_tenancy", "import_tenancy"])
+def test_legacy_onboarding_completes_without_binding_backfill(workflow_case, version, kind):
+    from otm.tenancies.contracts import OrganizationIntent
+
+    c = workflow_case
+    person = next(p for p in c.store.head(c.principal).people if p.email == "engineer@example.test")
+
+    # Freeze an old server contract at admission to exercise real replay semantics, not JSON edits.
+    def freeze_legacy(**fields):
+        return OrganizationIntent(
+            **{**fields, "onboarding_version": version, "presence_connection_contract": None}
+        )
+
+    extra = (
+        {"import_ocid": "ocid1.tenancy.oc1..otmsimlegacycapture"}
+        if kind == "import_tenancy"
+        else {}
+    )
+    with patch("otm.tenancies.workflows.OrganizationIntent", side_effect=freeze_legacy):
+        _, receipt = action(c, person.id, kind, **extra)
+    complete_setup(c, receipt.operation_id)
+    with c.engine.connect() as connection:
+        keys = set(
+            connection.execute(
+                select(operation_step.c.step_key).where(
+                    operation_step.c.operation_id == receipt.operation_id,
+                )
+            ).scalars()
+        )
+    assert "capture_required_users" not in keys
+    assert ("configure_baseline" in keys) == (version == 2)
+    from otm.storage.tables import managed_object_binding
+
+    with c.engine.connect() as connection:
+        assert (
+            connection.execute(
+                select(managed_object_binding.c.id).where(
+                    managed_object_binding.c.workspace_id == c.policy.workspace_id,
+                )
+            ).all()
+            == []
+        )
+
+
+# A failed identity capture persists a repairable stop and never retires temporary access.
+def test_capture_failure_retains_temporary_access_and_retry_records_users(workflow_case):
+    from otm.tenancies.onboarding_contracts import OnboardingCommand
+
+    c = workflow_case
+    person = next(p for p in c.store.head(c.principal).people if p.email == "engineer@example.test")
+    _, receipt = action(c, person.id, "create_tenancy")
+    with patch.object(c.provider, "capture_onboarding_users", side_effect=ValueError("private")):
+        complete_setup(c, receipt.operation_id, expected_phase="blocked")
+    with c.engine.connect() as connection:
+        steps = {
+            row["step_key"]: row
+            for row in connection.execute(
+                select(operation_step).where(
+                    operation_step.c.operation_id == receipt.operation_id,
+                )
+            ).mappings()
+        }
+    assert "retire_temporary" not in steps
+    failed = steps["capture_required_users"]["last_outcome"]
+    assert failed["safe_code"] == "REQUIRED_ACCESS_UNVERIFIED"
+    assert "required_users" not in failed and "private" not in str(failed)
+    blocked = c.workflow.onboarding(c.principal, receipt.operation_id)
+    c.workflow.onboarding_action(
+        c.principal,
+        receipt.operation_id,
+        OnboardingCommand(
+            client_request_key=uuid4(),
+            revision=blocked.revision,
+            action="start_setup",
+            confirm_cleanup=True,
+        ),
+    )
+    c.worker.run(receipt.operation_id)
+    assert c.workflow.onboarding(c.principal, receipt.operation_id).phase == "complete"
+    with c.engine.connect() as connection:
+        outcomes = (
+            connection.execute(
+                select(audit_event.c.data)
+                .where(
+                    audit_event.c.operation_id == receipt.operation_id,
+                    audit_event.c.kind == "onboarding_outcome",
+                    audit_event.c.data["step"].astext == "capture_required_users",
+                )
+                .order_by(audit_event.c.at, audit_event.c.id)
+            )
+            .scalars()
+            .all()
+        )
+    assert {o["outcome"] for o in outcomes} == {"blocked", "verified"}
+    assert next(o for o in outcomes if o["outcome"] == "verified")["required_users"]

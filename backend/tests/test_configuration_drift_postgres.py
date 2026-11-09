@@ -15,7 +15,7 @@ from otm.configuration.drift_contracts import ConfigurationCheckRequest, Configu
 from otm.configuration.drift_worker import ConfigurationCheckWorker
 from otm.configuration.observation_contracts import ManagedObservation
 from otm.configuration.observations import decode_observation
-from otm.providers.configuration import SimulatedConfigurationFacade
+from otm.providers.configuration_simulator import SimulatedConfigurationFacade
 from otm.storage.enqueue import CONFIGURATION_CHECK_TASK, InspectionEnqueuer, workspace_queue
 from otm.storage.organization import OrganizationConflict
 from otm.storage.tables import audit_event, configuration_check, operation, tenancy

@@ -14,6 +14,7 @@ React sign-in/logout, an authenticated administrator directory, ordinary-grant r
 now accepts durable work, which a separately started foreground worker executes asynchronously.
 The [Organization directory/upload and current drift](../docs/reference/organization-screens.md) now use
 authorized production snapshots. The [workflow guide](../docs/reference/organization-workflows.md) describes durable reviews, registered simulated tenancy/member flows and managed-person decisions.
+[Manual required-user checks](../docs/reference/user-presence-checks.md) connect authenticated API admission to a separate worker and independent dated simulated results. Local qualification and the main-preview upgrade pass; [the receipt](../docs/history/manual-presence-checkpoint-2026-11-06.md) preserves exact test lanes and installation limits.
 Public shell/assets contain no identity data; APIs retain current authority and request guards.
 There is no permissive provider or corporate SSO. Tenancy routes expose only the explicitly simulated local registry in this parity candidate.
 The durable simulated provider runs in a separate worker process; HTTP acceptance does not claim
@@ -75,7 +76,7 @@ change the preserved prototype database.
 ## Application settings and cleanup
 
 [Settings and usage](../docs/reference/application-settings.md) document the nonsecret
-[application TOML file](config/application.toml), pinned 30-minute idle/eight-hour absolute policy,
+[application TOML file](config/application.toml), eight-hour local idle/absolute policy (hosted profiles retain 30-minute idle/eight-hour absolute limits),
 explicit activity, logout and bounded expired/revoked-session cleanup. The `otm-maintenance` command
 can run cleanup or render its daily UTC CronJob. No scheduler is installed automatically; credentials
 are injected separately and no saved development database is used.
@@ -99,9 +100,10 @@ production result or a reason to exclude imported production modules.
 The frontend has a separate complete-source 95% unit gate and browser integration tests. Current
 results belong in [development progress](../docs/history/development-progress.md); backend ASGI tests do not
 substitute for Playwright. Production authentication/ingress, managed OCI/runner deployment
-qualification and hosted CI/protected `master`
-and publication privacy review remain P0 or later work. Passing this bootstrap alone cannot authorize
-a feature merge or deployment. Git check-ins and publishing remain on hold for final design approval.
+qualification remain deployment work. Hosted checkpoint CI and protected `master` are established;
+[checkpoint policy](../AGENTS.md#incremental-github-checkpoints--5-november-2026) requires passing
+checks, independent reviews, publication privacy checks and PR-only merges. The owner approved
+sanitized source checkpoints; passing local bootstrap alone does not qualify a production deployment.
 
 
 ## Administrator foundation
@@ -115,7 +117,7 @@ use the same services through guarded directory/revocation HTTP routes; see the 
 
 ## Generated contracts and local state
 
-The frontend derives public TypeScript contracts from authoritative backend models; Python validation remains authoritative. The current local schema has 20 application tables through migration 0020. Generated contracts are checked against the current Python models; earlier checkpoint counts on this page are historical.
+The frontend derives public TypeScript contracts from authoritative backend models; Python validation remains authoritative. The current schema has 25 OTM application tables through migration 0025, excluding separately owned native job-queue tables. Generated contracts are checked against the current Python models; earlier checkpoint counts on this page are historical.
 
 The launcher owns separate persistent laptop state under ignored `.local-dev/application/`; the
 organization prototype is untouched. Database owner and runtime credentials are separate, but the
@@ -220,10 +222,13 @@ needs no OCI access, adds no temporary simulator controls and does not qualify m
 
 ## Lifecycle email and environment routing
 
-The [lifecycle email guide](../docs/reference/lifecycle-email.md) maps responsible-admin create/import notices,
+The [lifecycle email guide](../docs/reference/lifecycle-email.md) maps responsible-admin lifecycle notices (create/import, deletion, shared membership, ownership
+transfer and offboarding),
 immutable contact/policy/profile/origin evidence and bounded SMTP delivery knowledge. One outbox
-table through 0020 brings source to 20 application tables. Both release kinds use the offline
-otm-validate-release gate against a trusted expected environment; hosted CI remains uninstalled.
+table brought the lifecycle-email checkpoint through 0020 to 20 application tables; later presence
+checkpoints bring current OTM metadata to 25 through 0025. Both release kinds use the offline
+otm-validate-release gate against a trusted expected environment. Hosted checkpoint CI is installed;
+staging/production OCI delivery and infrastructure qualification remain pending.
 [Local capture runbook](../docs/how-to/lifecycle-email-runbook.md). Local capture and saved-instance
 qualification pass; OCI/Vault/production-SMTP and uncontrolled provider mail remain unqualified.
 

@@ -460,7 +460,8 @@
           "default": "baseline_update",
           "enum": [
             "baseline_update",
-            "override_change"
+            "override_change",
+            "repair"
           ],
           "title": "Change Kind",
           "type": "string"
@@ -594,6 +595,82 @@
           "pattern": "^ocid1\\.tenancy\\.[A-Za-z0-9.]+$",
           "title": "Parent Tenancy Ocid",
           "type": "string"
+        },
+        "repair_bindings": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "propertyNames": {
+                "enum": [
+                  "policy",
+                  "quota",
+                  "budget",
+                  "tags"
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Repair Bindings"
+        },
+        "repair_categories": {
+          "default": [],
+          "items": {
+            "enum": [
+              "policy",
+              "quota",
+              "budget",
+              "tags"
+            ],
+            "type": "string"
+          },
+          "title": "Repair Categories",
+          "type": "array"
+        },
+        "repair_check_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Repair Check Id"
+        },
+        "repair_context_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Repair Context Hash"
+        },
+        "repair_observation_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Repair Observation Hash"
         },
         "review": {
           "anyOf": [
@@ -931,6 +1008,22 @@
           "default": null,
           "title": "Compartment Ocid"
         },
+        "former_owner_disposition": {
+          "anyOf": [
+            {
+              "enum": [
+                "keep_member",
+                "remove"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Former Owner Disposition"
+        },
         "id": {
           "format": "uuid",
           "title": "Id",
@@ -1211,6 +1304,7 @@
             "remove_member",
             "transfer_owner",
             "no_tenancy_required",
+            "keep_without_tenancy",
             "ignore",
             "resolve",
             "merge",
@@ -1340,7 +1434,8 @@
             {
               "enum": [
                 1,
-                2
+                2,
+                3
               ],
               "type": "integer"
             },
@@ -1414,6 +1509,32 @@
           "format": "uuid",
           "title": "Policy Revision",
           "type": "string"
+        },
+        "presence_connection_contract": {
+          "anyOf": [
+            {
+              "const": "simulated-user-presence-1",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Presence Connection Contract"
+        },
+        "recovery_console_fingerprint": {
+          "anyOf": [
+            {
+              "pattern": "^[a-f0-9]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Recovery Console Fingerprint"
         },
         "target": {
           "$ref": "#/$defs/LifecycleTarget"
@@ -1573,6 +1694,251 @@
         }
       },
       "title": "OverrideValues",
+      "type": "object"
+    },
+    "PresenceCheckIntent": {
+      "additionalProperties": false,
+      "properties": {
+        "administrator_id": {
+          "format": "uuid",
+          "title": "Administrator Id",
+          "type": "string"
+        },
+        "authorization_revision": {
+          "format": "uuid",
+          "title": "Authorization Revision",
+          "type": "string"
+        },
+        "context_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Context Hash",
+          "type": "string"
+        },
+        "contract_version": {
+          "const": "user-presence-check-1",
+          "default": "user-presence-check-1",
+          "title": "Contract Version",
+          "type": "string"
+        },
+        "kind": {
+          "const": "required_user_check",
+          "default": "required_user_check",
+          "title": "Kind",
+          "type": "string"
+        },
+        "notice_policy_version": {
+          "anyOf": [
+            {
+              "const": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notice Policy Version"
+        },
+        "snapshot": {
+          "$ref": "#/$defs/PresenceSnapshot"
+        },
+        "target": {
+          "$ref": "#/$defs/ConfigurationOperationTarget"
+        },
+        "workspace_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Workspace Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "administrator_id",
+        "authorization_revision",
+        "snapshot",
+        "context_hash",
+        "target"
+      ],
+      "title": "PresenceCheckIntent",
+      "type": "object"
+    },
+    "PresenceSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "connection_id": {
+          "format": "uuid",
+          "title": "Connection Id",
+          "type": "string"
+        },
+        "connection_revision": {
+          "minimum": 1,
+          "title": "Connection Revision",
+          "type": "integer"
+        },
+        "policy_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Policy Hash",
+          "type": "string"
+        },
+        "recovery_console_fingerprint": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Recovery Console Fingerprint"
+        },
+        "subjects": {
+          "items": {
+            "$ref": "#/$defs/RequiredUserTarget"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "title": "Subjects",
+          "type": "array"
+        },
+        "tenancy_id": {
+          "format": "uuid",
+          "title": "Tenancy Id",
+          "type": "string"
+        },
+        "tenancy_name": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Tenancy Name",
+          "type": "string"
+        },
+        "tenancy_revision": {
+          "minimum": 1,
+          "title": "Tenancy Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "tenancy_id",
+        "tenancy_name",
+        "tenancy_revision",
+        "connection_id",
+        "connection_revision",
+        "policy_hash",
+        "subjects"
+      ],
+      "title": "PresenceSnapshot",
+      "type": "object"
+    },
+    "RequiredUserTarget": {
+      "additionalProperties": false,
+      "properties": {
+        "binding_generation": {
+          "minimum": 1,
+          "title": "Binding Generation",
+          "type": "integer"
+        },
+        "domain_ocid": {
+          "maxLength": 256,
+          "minLength": 15,
+          "pattern": "^ocid1\\.domain\\.[A-Za-z0-9.]+$",
+          "title": "Domain Ocid",
+          "type": "string"
+        },
+        "identity_domain_binding_id": {
+          "format": "uuid",
+          "title": "Identity Domain Binding Id",
+          "type": "string"
+        },
+        "organization_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Organization Id",
+          "type": "string"
+        },
+        "parent_tenancy_ocid": {
+          "maxLength": 256,
+          "minLength": 15,
+          "pattern": "^ocid1\\.tenancy\\.[A-Za-z0-9.]+$",
+          "title": "Parent Tenancy Ocid",
+          "type": "string"
+        },
+        "provider_ocid": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 15,
+              "pattern": "^ocid1\\.user\\.[A-Za-z0-9.]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Provider Ocid"
+        },
+        "purpose": {
+          "enum": [
+            "automation",
+            "recovery"
+          ],
+          "title": "Purpose",
+          "type": "string"
+        },
+        "scim_resource_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Scim Resource Id",
+          "type": "string"
+        },
+        "subject_binding_id": {
+          "format": "uuid",
+          "title": "Subject Binding Id",
+          "type": "string"
+        },
+        "tenancy_id": {
+          "format": "uuid",
+          "title": "Tenancy Id",
+          "type": "string"
+        },
+        "tenancy_ocid": {
+          "maxLength": 256,
+          "minLength": 15,
+          "pattern": "^ocid1\\.tenancy\\.[A-Za-z0-9.]+$",
+          "title": "Tenancy Ocid",
+          "type": "string"
+        },
+        "user_name": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "User Name",
+          "type": "string"
+        },
+        "workspace_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Workspace Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "organization_id",
+        "parent_tenancy_ocid",
+        "tenancy_ocid",
+        "workspace_id",
+        "tenancy_id",
+        "purpose",
+        "subject_binding_id",
+        "binding_generation",
+        "identity_domain_binding_id",
+        "domain_ocid",
+        "scim_resource_id",
+        "provider_ocid",
+        "user_name"
+      ],
+      "title": "RequiredUserTarget",
       "type": "object"
     },
     "TagDefault": {
@@ -1751,6 +2117,9 @@
         },
         {
           "$ref": "#/$defs/CostIntent"
+        },
+        {
+          "$ref": "#/$defs/PresenceCheckIntent"
         }
       ],
       "title": "Intent"

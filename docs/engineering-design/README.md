@@ -14,6 +14,15 @@ required gates and protections apply to every reviewed candidate.
 
 ## Chapters
 
+Required-account foundation: [implemented presence boundary and remaining integration](../reference/required-user-presence.md).
+Current configuration repair: [implemented flow and field map](../reference/configuration-repair.md).
+
+
+Provider implementation layout: the [5 November decision](02-operations-and-provider.md#provider-contract-and-implementation-files--5-november-2026)
+separates functional contracts, simulators and future OCI adapters. The
+[implemented extraction](../reference/provider-layout.md) preserves local behavior; real OCI
+integration remains separately qualified.
+
 | Design area |
 | --- |
 | [01: domain, workflows, data and screens](01-domain-and-journeys.md) |
@@ -37,6 +46,7 @@ required gates and protections apply to every reviewed candidate.
 | [19: application administrators and local recovery sign-in](19-administrator-provisioning.md) |
 | [Organization mapping settings](20-organization-mapping-settings.md) |
 | [21: environment email routing and release guards](21-environment-email-policy.md) |
+| [22: recovery console CIDR boundary and 30-day API-key rotation](22-credential-security-lifecycles.md) |
 
 ## Authority and decisions
 
@@ -52,3 +62,17 @@ as history; dated receipts and progress do not supersede current requirements. P
 feeds, screenshots and unsanitized reports are not distributed.
 
 Current-month financial implementation and deferred/live boundaries: [cost visibility](../reference/cost-visibility.md).
+
+Current manual user-presence source, fields and qualification boundary: [presence checks](../reference/user-presence-checks.md).
+
+Compact required-user inventory summary: [qualified field/state reference](../reference/required-users-summary.md), with the main preview updated and the parallel preview unchanged.
+
+Normal-directory onboarding without provisioning: [Keep in organization without a tenancy](../reference/organization-workflows.md#keep-in-organization-without-a-tenancy).
+
+Current member entry and user-data refresh follow the [workflow reference](../reference/organization-workflows.md#add-a-member-from-a-shared-tenancy) and [presence screen guide](../reference/required-users-screen.md).
+
+Compact create/import help: [Collapsed OCI operator checklist](../reference/tenancy-onboarding.md#collapsed-oci-operator-checklist).
+
+Owner retention, verified identity removal and manual cleanup: [explicit former-owner disposition](../reference/organization-workflows.md#explicit-former-owner-disposition--7-november-2026).
+
+Confirmed required-user email: [current incident/routing/storage contract](../reference/required-user-alerts.md).

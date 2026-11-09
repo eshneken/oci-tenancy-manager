@@ -1,3 +1,7 @@
+import { CleanupResponsibilities } from "./CleanupResponsibilities";
+import { AddSharedMember } from "./AddSharedMember";
+import { RequiredUserSummary } from "./RequiredUserSummary";
+import { RequiredUsers } from "./RequiredUsers";
 import { CostCells, CostPanel, RefreshCosts } from "./FinancialCosts";
 import { configurationMessages, configurationMessageClass } from "./configurationStatus";
 import {TenancyOverride} from "./TenancyOverride";
@@ -6,7 +10,7 @@ import { DeleteTenancy } from "./DeleteTenancy";
 import { Onboarding } from "./Onboarding";
 import { Select } from "./Select";
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "./api";
 import type { OrganizationAction, TenancyQuery, TenancyView } from "./contracts";
 import { PersonActions } from "./PersonActions";
@@ -27,7 +31,10 @@ function ConfigurationCheckLinks({tenancy,navigate,detail=false}:{tenancy:Tenanc
   if(tenancy.status!=="active")return null;
   const messages=configurationMessages({state:tenancy.configuration_check_state??"not_checked",stale:tenancy.configuration_check_stale,confirmed:tenancy.configuration_confirmed_issue_count}).filter(message=>detail||message.kind!=="matching");
   const href="/configuration/drift/"+tenancy.id+"?returnTo="+encodeURIComponent(detail?"/tenancies/"+tenancy.id:"/tenancies");
-  return <span className="configuration-status-links">{messages.map(message=><a key={message.kind} className={"badge configuration-issue-link "+configurationMessageClass(message.kind)} href={href} aria-label={`${message.label} for ${tenancy.name}`} onClick={event=>followLink(event,href,navigate)}>{message.label}</a>)}</span>;
+  return <span className="configuration-status-links">{messages.map(message=>{
+    const label=detail?message.label:"Config: "+message.label.replace(/^Configuration drift/,"Drift");
+    return <a key={message.kind} className={"badge configuration-issue-link "+configurationMessageClass(message.kind)} href={href} aria-label={`${label} for ${tenancy.name}`} onClick={event=>followLink(event,href,navigate)}>{label}</a>;
+  })}</span>;
 }
 
 const overrideNames: Record<"policy" | "quota" | "budget", string> = { policy: "Policy statements", quota: "Quota statements", budget: "Monthly budget" };
@@ -80,6 +87,7 @@ export function Tenancies({
   expired: () => void;
   navigate: (path: string) => void;
 }) {
+  const [addingMember, setAddingMember] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [query, setQuery] = useState<TenancyQuery>({
     shared_only: false,
@@ -96,9 +104,11 @@ export function Tenancies({
   } | null>(null);
   // Browser Back or a different detail cannot reopen a deletion/person dialog for another target.
   useEffect(() => {
+    setAddingMember(false);
     setDeleting(null);
     setSelected(null);
   }, [identifier]);
+  const client = useQueryClient();
   const list = useQuery({
     queryKey: ["tenancies", "list", query],
     queryFn: ({ signal }) => api.tenancies(query, signal),
@@ -111,7 +121,7 @@ export function Tenancies({
         : undefined,
     retry: false,
     refetchInterval: (value) =>
-      (value.state.data?.pending_count || value.state.data?.costs_pending_count) ? 2000 : false,
+      (value.state.data?.pending_count || value.state.data?.costs_pending_count || value.state.data?.items.some(row=>row.required_users?.checking)) ? 2000 : false,
   });
   const detail = useQuery({
     queryKey: ["tenancies", "detail", identifier],
@@ -192,7 +202,10 @@ export function Tenancies({
             className="button secondary"
             disabled={identifier ? detail.isFetching : list.isFetching}
             onClick={() =>
-              void (identifier ? detail.refetch() : list.refetch())
+              void (identifier ? Promise.all([
+                detail.refetch(),
+                client.invalidateQueries({ queryKey: ["tenancies", "required-users", identifier] }),
+              ]) : list.refetch())
             }
           >
             Refresh
@@ -360,6 +373,7 @@ export function Tenancies({
                             </td>
                             <td>
                               <TenancyStatus tenancy={row} />
+                              <RequiredUserSummary id={row.id} name={row.name} status={row.status} summary={row.required_users} navigate={navigate}/>
                               <ConfigurationCheckLinks tenancy={row} navigate={navigate}/>
                               <div className="tenancy-configuration">{row.baseline_version_id?<><a href={baselineHref(row.baseline_version_id,location.pathname)} onClick={event=>followLink(event,baselineHref(row.baseline_version_id!,location.pathname),navigate)}>Baseline v{row.baseline_version_number??"?"}</a>{data.latest_baseline_id===row.baseline_version_id?<span className={row.verified_baseline_version_id===row.baseline_version_id&&row.desired_configuration_id===row.last_verified_configuration_id?"baseline-latest":"muted"} title={row.verified_baseline_version_id===row.baseline_version_id&&row.desired_configuration_id===row.last_verified_configuration_id?"Latest baseline verified in simulation":"Latest baseline selected; verification pending"}>Latest</span>:data.latest_baseline_version_number&&<a href={"/tenancies/"+row.id} onClick={event=>followLink(event,"/tenancies/"+row.id,navigate)} aria-label={`Update ${row.name} to baseline v${data.latest_baseline_version_number}`}>↑ v{data.latest_baseline_version_number}</a>}</>:<span className="muted">No baseline assigned</span>}{!!row.override_categories?.length&&<a className="override-indicator" title={"Overrides: "+row.override_categories.join(", ")} href={"/tenancies/"+row.id+"?override=1"} onClick={event=>followLink(event,"/tenancies/"+row.id+"?override=1",navigate)}>Override</a>}</div>
                               {hasInventoryOperation(row) && (
@@ -556,23 +570,29 @@ export function Tenancies({
                   </a>
                 )}
               </section>
+              <RequiredUsers key={"required-users-"+tenant.id} tenancyId={tenant.id} expired={expired} navigate={navigate}/>
+              <div className="tenancy-summary-grid">
               <CostPanel key={"costs-"+tenant.id} cost={tenant.costs} tenancyId={tenant.id} expired={expired}/>
               {tenant.status === "active" && (
                 <section className="operation-panel tenancy-overrides" aria-labelledby="tenancy-overrides-title">
-                  <h2 id="tenancy-overrides-title">Overrides</h2>
+                  <div className="cost-panel-heading">
+                    <h2 id="tenancy-overrides-title">Overrides</h2>
+                    <div className="tenancy-override-actions"><TenancyOverride key={tenant.id} tenancyId={tenant.id} expired={expired} navigate={navigate} /></div>
+                  </div>
                   {tenant.override_categories?.length ? (
                     <>
                       <p>{tenant.override_categories.map(category => overrideNames[category]).join(", ")}</p>
                       <p className="muted">{tenant.desired_configuration_id && tenant.desired_configuration_id === tenant.last_verified_configuration_id ? "Verified in simulation" : "Verification pending"}</p>
                     </>
                   ) : <p className="muted">All categories inherit the assigned baseline. No tenancy-specific overrides are configured.</p>}
-                  <div className="tenancy-override-actions"><TenancyOverride key={tenant.id} tenancyId={tenant.id} expired={expired} navigate={navigate} /></div>
                 </section>
               )}
+              </div>
               {tenant.status==="active"&&<ConfigurationRollout key={tenant.id} tenancyId={tenant.id} selectedId={tenant.baseline_version_id} initialOperationId={detail.data.configuration_operation_id??undefined} expired={expired} navigate={navigate}/>}
               <section className="table-panel">
-                <div className="table-toolbar">
+                <div className="table-toolbar tenancy-members-toolbar">
                   <h2>Current members</h2>
+                  {tenant.kind === "shared" && tenant.status === "active" && <button type="button" className="button secondary" disabled={Boolean(tenant.has_pending_operation)} onClick={() => setAddingMember(true)}>Add member</button>}
                 </div>
                 <div
                   className="table-scroll"
@@ -619,18 +639,20 @@ export function Tenancies({
                 <section className="operation-panel">
                   <h2>Manual cleanup guidance</h2>
                   <p>
-                    Ask the current owner,{" "}
-                    {tenant.owner_name ?? "the assigned tenancy owner"}, to
-                    clean these employee compartments. The tool removes
-                    user/group access and preserves compartments and resources.
-                    Cleanup completion is handled outside this screen.
+                    Coordinate manual cleanup with the current owner,{" "}
+                    {tenant.owner_name ?? "the assigned tenancy owner"}. Review
+                    the former members and scopes below. The tool removes recorded
+                    user/group access; resources, compartments and additional accounts
+                    remain. Cleanup completion is handled outside this screen.
                   </p>
+                  <CleanupResponsibilities/>
                   <ul>
                     {detail.data.memberships
                       .filter((a) => a.cleanup_required)
                       .map((a) => (
                         <li key={a.id}>
-                          {a.compartment_name ?? "Employee compartment"}{" "}
+                          <strong>{detail.data!.people.find(p=>p.id===a.person_id)?.name ?? "Former member"}</strong>{" · "}
+                          {a.compartment_name ?? "Scope not recorded — review with the tenancy owner"}{" "}
                           <span className="technical-id">
                             {a.compartment_ocid}
                           </span>
@@ -650,6 +672,12 @@ export function Tenancies({
           navigate={navigate}
           onClose={() => setDeleting(null)}
         />
+      )}
+      {addingMember && tenant?.kind === "shared" && tenant.status === "active" && detail.data && (
+        <AddSharedMember tenancyName={tenant.name}
+          memberIds={detail.data.memberships.filter(link => ["active","pending","removing"].includes(link.status)).map(link => link.person_id)}
+          expired={expired} onClose={() => setAddingMember(false)}
+          onChoose={person => {setAddingMember(false);setSelected({person,action:"join_shared",tenancy:tenant.id});}}/>
       )}
       {selected && (
         <PersonActions
@@ -699,7 +727,7 @@ function MembershipRow({
       <td className="tenancy-member-role">{link.role}</td>
       <td>
         {link.compartment_name ??
-          (link.role === "owner" ? "Accountable owner" : "—")}
+          (link.role === "owner" ? "Accountable owner" : "Existing access — scope not recorded")}
         <span className="technical-id cell-secondary">
           {link.compartment_ocid}
         </span>

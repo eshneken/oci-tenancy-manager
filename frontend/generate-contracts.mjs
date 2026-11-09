@@ -1,10 +1,11 @@
 import { compile } from "json-schema-to-typescript";
 import { readFile, writeFile } from "node:fs/promises";
 const names = [
+ "required-users-directory", "presence-check-request",
  "cost-refresh-request", "cost-refresh-receipt", "cost-view",
  "email-policy-view", "email-contacts", "email-route", "notification-summary",
  "responsibility-command",
- "configuration-drift-directory", "configuration-drift-query", "configuration-check-detail", "configuration-check-request",
+ "configuration-repair-request", "configuration-drift-directory", "configuration-drift-query", "configuration-check-detail", "configuration-check-request",
  "override-editor", "override-preview-request", "configuration-plan", "configuration-plan-create", "configuration-plan-review",
   "configuration-preview", "configuration-update", "configuration-progress",
   "baseline-directory", "baseline-draft", "baseline-save", "baseline-version", "baseline-query", "baseline-publish",

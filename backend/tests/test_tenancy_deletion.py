@@ -102,15 +102,20 @@ def test_publication_preserves_other_tenancies_and_records_each_person(registry)
         return Mock(first=Mock(return_value=(uuid4(),) if member.id in values.values() else None))
 
     connection.execute.side_effect = results
-    with patch("otm.tenancies.deletion.add_change") as history:
+    with (
+        patch("otm.tenancies.deletion.add_change") as history,
+        patch("otm.storage.managed_bindings.retire_bindings") as retired,
+    ):
         publish_deletion(connection, s, frozen, LifecycleCompletion(), op, NOW)
         assert history.call_count == 2
+        retired.assert_called_once_with(connection, s.workspace, plan[0].tenancy_id, op, NOW)
     updates = [
         call.args[0].compile().params
         for call in connection.execute.call_args_list
         if getattr(call.args[0], "is_update", False)
     ]
-    assert any(v.get("directory_status") == "offboarded" for v in updates)
+    assert not any(v.get("directory_status") == "offboarded" for v in updates)
+    assert any(v.get("setup_required") for v in updates)
     assert any(v.get("directory_status") == "included" for v in updates)
     assert any(v.get("status") == "terminated" for v in updates)
     with pytest.raises(LifecycleBlocked):

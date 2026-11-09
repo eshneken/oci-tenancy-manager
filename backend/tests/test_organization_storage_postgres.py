@@ -269,7 +269,7 @@ def test_scope_and_expired_session_fail_closed(organization_case):
     with pytest.raises(OrganizationConflict, match="SOURCE_SCOPE"):
         c.store.ingest(c.principal, bad)
     assert counts(c)[1] == 0
-    c.clock.return_value += timedelta(hours=1)
+    c.clock.return_value = c.principal.session.expires_at
     with pytest.raises(SessionFailure):
         c.store.ingest(c.principal, intake(c))
 

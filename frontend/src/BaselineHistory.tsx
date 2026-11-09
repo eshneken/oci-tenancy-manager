@@ -76,7 +76,7 @@ export function BaselineHistory({ data, openDraft, navigate, expired, published,
         <td><span className="baseline-version-status">{version.published_at?"Published · simulated":"Draft"}</span></td>
         <td>{new Date(version.published_at??version.created_at).toLocaleString("en-US",{timeZone:"UTC",timeZoneName:"short"})}</td>
         <td>{version.published_by_name??"—"}</td>
-        <td>{version.published_at?<div className="baseline-version-actions"><a href={`/configuration?baseline=${version.id}`} onClick={event=>followLink(event,`/configuration?baseline=${version.id}`,navigate)}>View version</a></div>:<div className="baseline-version-actions"><button className="button secondary" onClick={openDraft}>Open draft</button><button className="button primary" disabled={!data.publication_available} onClick={()=>{setTarget(version);setError("");}}>Publish</button></div>}</td>
+        <td>{version.published_at?<div className="baseline-version-actions"><a href={`/configuration?baseline=${version.id}`} onClick={event=>followLink(event,`/configuration?baseline=${version.id}`,navigate)}>View version</a></div>:<div className="baseline-version-actions"><button className="button secondary" onClick={openDraft}>Open draft</button><button className="button secondary" disabled={!data.publication_available} onClick={()=>{setTarget(version);setError("");}}>Publish</button></div>}</td>
       </tr>)}</tbody>
     </table></div>
     {!versions.length && <div className="table-feedback"><h2>No baseline draft yet</h2><p>Create the shared recipe to review before publication.</p></div>}

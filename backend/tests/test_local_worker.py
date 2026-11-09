@@ -37,6 +37,8 @@ def test_worker_composition(worker_environment, host, once):
         patch.object(local_worker.procrastinate, "PsycopgConnector") as connector,
         patch.object(local_worker.procrastinate, "App", return_value=native),
         patch.object(local_worker, "register_inspection_task") as register,
+        patch.object(local_worker, "register_organization_task") as lifecycle,
+        patch("otm.operations.runner.register_presence_task") as presence,
     ):
         local_worker.run_worker(once=once)
         require.assert_called_once_with(engine)
@@ -45,6 +47,23 @@ def test_worker_composition(worker_environment, host, once):
         assert native.run_worker.call_args.kwargs["queues"] == [expected]
         assert native.run_worker.call_args.kwargs["wait"] is not once
         assert register.call_args.kwargs["queue"] == expected
+        assignment_worker = presence.call_args.args[1]
+        from otm.providers.administrator_access_simulator import simulated_administrator_inspection
+
+        assert (
+            assignment_worker.administrator_inspection_factory is simulated_administrator_inspection
+        )
+        workflow = lifecycle.call_args.args[1]
+        assert callable(workflow.facade.recovery_console_loader)
+        from otm.recovery_console import parse_release_cidrs
+
+        changed = parse_release_cidrs("198.51.100.0/24")
+        with patch.object(
+            local_worker,
+            "load_settings",
+            return_value=worker_environment.model_copy(update={"recovery_console": changed}),
+        ):
+            assert workflow.facade.recovery_console_loader() == changed
         worker = register.call_args.args[1]
         assert worker.clock().tzinfo is not None
         engine.dispose.assert_called_once()

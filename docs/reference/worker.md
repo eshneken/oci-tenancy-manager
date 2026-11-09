@@ -189,3 +189,12 @@ Immediate means eligible for fetching, subject to queue/lock/worker availability
 instant completion. Positive retry delays retain native ETA scheduling. Transaction boundaries,
 reference-only payloads, authorization and effect/retry safety remain unchanged. Regression tests
 include a host clock converter five seconds ahead and unchanged positive retry delays.
+
+## Manual user-presence acquisition — 6 November 2026
+
+The explicit local composition registers otm.required_user_check on the existing workspace queue.
+Its UUID-only job claims/fences a persisted check, releases all DB locks for simulated provider
+reads, then rechecks grant/context and seals per-subject immutable results. Native task success is
+separate from account presence; no automatic provider fallback, daily schedule or email is added.
+The 30-second bound rejects late returned results and is not a network cancellation timeout.
+See [authority, attempts and all persisted fields](user-presence-checks.md). Local qualification and the main-preview upgrade pass; [the receipt](../history/manual-presence-checkpoint-2026-11-06.md) records separate complete lanes and preservation.

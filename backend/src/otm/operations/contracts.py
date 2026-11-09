@@ -11,6 +11,7 @@ from otm.contracts import Contract, Text, UtcInstant
 from otm.financial.contracts import CostIntent
 from otm.providers.inspection_contracts import InspectionTarget, TenancyOcid
 from otm.tenancies.contracts import OrganizationIntent
+from otm.tenancies.presence_contracts import PresenceCheckIntent
 
 OperationState = Literal[
     "queued", "running", "waiting", "needs_attention", "succeeded", "cancelled", "failed"
@@ -86,6 +87,7 @@ class IntentEventData(Contract):
         | ConfigurationIntent
         | ConfigurationCheckIntent
         | CostIntent
+        | PresenceCheckIntent
     )
     actor: ActorIdentity
 

@@ -332,6 +332,7 @@ def association_view(state, link):
         compartment_ocid=link["compartment_ocid"],
         compartment_name=link["compartment_name"],
         cleanup_required=link["cleanup_required"],
+        user_ocid=link["user_ocid"],
         operation_id=link["operation_id"],
         actions=actions,
     )
@@ -574,7 +575,7 @@ def person_workflow(state, identifier, *, mode, review_id=None):
         ):
             actions = ["reonboard"]
         elif person.absence_review or control["directory_status"] == "outside":
-            actions = ["offboard_person"]
+            actions = [] if person.email in state.supplied else ["offboard_person"]
             if person.email in state.supplied:
                 actions.append("mark_returned")
             actions.append("merge")
@@ -582,6 +583,8 @@ def person_workflow(state, identifier, *, mode, review_id=None):
             actions = ["create_tenancy", "import_tenancy", "join_shared"]
             if not associations:
                 actions += ["no_tenancy_required", "merge"]
+                if control["setup_required"]:
+                    actions.append("keep_without_tenancy")
     if not control["pending_operation_id"] and not review:
         available = {choice for association in associations for choice in association.actions}
         actions.extend(
@@ -603,7 +606,15 @@ def person_workflow(state, identifier, *, mode, review_id=None):
             a
             for a in actions
             if a
-            in {"ignore", "resolve", "merge", "reonboard", "mark_returned", "no_tenancy_required"}
+            in {
+                "ignore",
+                "resolve",
+                "merge",
+                "reonboard",
+                "mark_returned",
+                "no_tenancy_required",
+                "keep_without_tenancy",
+            }
             or (a == "offboard_person" and not associations)
         ]
     setup = {

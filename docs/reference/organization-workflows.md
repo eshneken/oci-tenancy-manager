@@ -50,22 +50,36 @@ This tenancy exemption also applies to the configured organization root: it does
 reporting boundary. Root offboarding and identity merge remain prohibited; see the root-specific
 validation checkpoint below. An exempt root remains in the source graph and is visible through
 Include excluded profiles, independently of its absence from the normal managed-person list.
-Manual Re-onboard requires a source-present unassociated exempt/offboarded person and opens a new
-setup episode. A completed absence-related offboarding records its capture boundary. If offboarding happened
-while the employee was present, a later qualified complete omission establishes that boundary. A
-subsequent qualified complete source containing the identity can open onboarding again; continuous
-presence or partial feeds cannot fabricate this absence/return sequence. Old tenancy/member
-relationships are not restored. An outside person with retained associations requires an explicit
-Mark returned decision; source reappearance alone does not clear that decision.
+Manual Re-onboard remains an explicit option for a source-present, unassociated exempt/offboarded
+person. Automatic directory return is narrower: a newly **applied fresh feed** containing an already
+offboarded person's actual employee row restores that stable identity to included. Full and partial
+feeds can supply positive presence; no intervening absence cycle is required. If onboarding is
+needed, one new setup episode is opened. Repeated later presence does not keep replacing that episode.
+Actual employee rows are resolved through canonical aliases to stable person UUIDs before return matching. org_person.email remains the immutable original anchor across merges; comparing that old anchor directly with a current renamed-email row would miss a valid return and is not the matching rule. Existing relationships, users and tenancies are never resurrected. Exempt, merged or outside people
+and people reserved by pending work are not silently restored; retained outside obligations still
+require the existing explicit Mark returned decision.
 
+The capture must be strictly newer than the predecessor's source capture (or publication time when
+that source time is absent) and any recorded removed_capture_at. Legacy offboarded records with a
+null removed_capture_at use that predecessor boundary; they do not need an invented omission.
+Reference-only profiles, staged/rejected/stale/duplicate/replayed feeds and configuration-only
+reclassification cannot trigger return, refresh census clocks or create onboarding episodes.
+Partial omission still cannot prove anyone else's departure.
 
-For an already offboarded identity, `qualified_return_history` settles the previous absence flag and
-its episode key only on an evaluation-only predecessor copy. It requires an otherwise qualified new
-census, a known source capture strictly later than `removed_capture_at`, and that person's actual
-incoming employee row. Reconciliation then builds the new immutable applied snapshot from that
-working copy so an old sticky absence does not block the fresh onboarding episode. The original
-predecessor and its absence evidence remain unchanged. Partial, stale, undated, continuously present
-or merely referenced identities cannot use this path; exempt/outside people are not silently returned.
+For a genuinely returning already-offboarded identity, qualified_return_history settles its handled
+absence only on an evaluation copy before building a new immutable applied snapshot. The original
+source, predecessor, absence evidence and decision/audit history remain unchanged. A person whose
+absence decision is still unresolved and who was not offboarded does not gain this automatic
+settlement. Return does not settle leader/designee/mapping defects merely by restoring directory
+visibility; those conditions retain their independent actual-repair rules.
+
+Only explicit Offboard employee may offboard a person, and current actual employee-row presence
+makes that action unavailable/refused. Root offboarding remains forbidden. Standalone tenancy
+termination, Remove shared member and Transfer owner preserve every affected person's managed
+status and independent absence reviews even when no associations remain and even when the person is absent. This includes the underlying absence flags/working-reclassification decisions, not only keeping a review row open. For an included source-present person losing their final association, existing setup
+flags may record a pending onboarding requirement/episode for the next organization reconciliation;
+this is not offboarding and still honors independent absence/mapping eligibility guards.
+
 
 The actionable inbox holds setup, absence, LOB mapping/leader, designee and override reviews.
 The adjacent Informational & history tab defaults to change records and still-open source warnings
@@ -73,8 +87,7 @@ for the latest applied feed. Completed actionable decisions and resolved source 
 in that default scope. Show all history switches the same tab to all retained nonactionable records
 and completed actionable decisions through the existing category=history API selection. Nothing is
 deleted or reclassified. Cases retain first/last/resolved dates.
-Partial omission does not prove a missing-manager warning corrected. Absence/setup decisions do not
-close merely because another feed arrives. A corrected LOB_MAPPING_REVIEW is different: once that
+Partial omission does not prove a missing-manager warning corrected. Unresolved absence/setup decisions do not close merely because another feed arrives; the handled-absence return of an already-offboarded identity described above is the explicit exception. A corrected LOB_MAPPING_REVIEW is different: once that
 condition is no longer active and its stable person has valid current accountability, reconciliation
 closes it automatically with resolution=mapping_corrected and a resolved timestamp. The historical
 row remains; a later unsuppressed mapping defect opens a fresh episode. No second manual Resolve is
@@ -108,7 +121,7 @@ supply an actor, workspace, arbitrary SDK arguments or a publishable candidate.
 The request UUID is scoped to workspace and verified actor. Exact committed replay returns its
 receipt before stale-preview checks; changed input under that key conflicts. Application-only
 receipts live in immutable decision evidence; simulated lifecycle receipts use the existing operation
-request uniqueness. The UI retains uncertain-request identity only for its current dialog attempt;
+request uniqueness. New destructive admissions additionally require explicit consent, while authenticated exact historical replay is checked before that new guard. The UI retains uncertain-request identity only for its current dialog attempt;
 this does not promise reload-durable recovery memory. Check the recorded result before starting a
 new action after uncertainty.
 
@@ -124,7 +137,7 @@ Delete/Transfer/Keep; shared owners Transfer/Keep; shared members Remove/Keep. A
 with other associations cannot be deleted through this flow. Transfer needs a current eligible
 source-present managed recipient. Manager/shared confirmations are explicit; root/parent,
 unregistered/wrong-parent and unsupported targets are refused. Empty registry is not proof of no
-real OCI assets: zero-association offboarding requires explicit confirmation.
+real OCI assets: zero-association offboarding requires its explicit confirmation as well as universal destructive consent. Offboard employee is hidden/refused while an actual current employee row is present.
 
 The queue receives only the immutable operation UUID. `otm.organization_action` uses the same scoped
 native queue and foreground worker as inspection, with no automatic task retry. Dispatch validates
@@ -136,8 +149,7 @@ exactly-once OCI execution. An exception rolls back that local unit and attempts
 failure publication. A native task returning is not proof of business success.
 
 Verified simulation activates pending bindings, retires selected links and records the simulated
-outcome. Last association removal can complete directory offboarding; Keep or unfinished obligations
-retain the person. Shared user/member cleanup preserves resources and compartments, records known
+outcome. Standalone deletion/member removal/ownership transfer never offboard the person or settle independent absence work. Only explicit offboarding changes directory status: completed zero-obligation work may become offboarded; retained obligations remain outside and tracked. Shared user/member cleanup preserves resources and compartments, records known
 scope/owner guidance and does not gate completion on manual resource cleanup. Unknown scope remains
 unknown. A simulated terminated registry row is excluded from current inventory but retained in
 history. Real V1 deletion, once separately qualified, completes at verified termination initiation
@@ -199,7 +211,7 @@ There is no second audit store, worker engine or per-screen database cache. Loca
 | `directory_status` | included/exempt/offboarded/outside/merged; managed status independent of immutable source history. |
 | `setup_required` | Durable pending onboarding requirement, not proof of zero OCI resources. |
 | `setup_episode_id` | UUID identifying a particular setup requirement across repeated feeds. |
-| `removed_capture_at` | Qualified absence/offboarding capture boundary used to detect a later eligible return; nullable. |
+| `removed_capture_at` | Capture boundary retained by explicit offboarding; nullable for legacy controls. Fresh actual-row return compares this and the prior source/publication boundary. It is not an absence-cycle prerequisite or changed by standalone association cleanup. |
 | `pending_operation_id` | Same-workspace accepted lifecycle operation reserving the person; nullable. |
 
 ### org_recommendation
@@ -291,19 +303,21 @@ Exact org applied/proposed heads, trusted configuration and registry fence from 
 
 One selected existing obligation/action and explicit transfer recipient.
 
-`association_id`, `action`, `recipient_person_id`.
+`association_id`, `action`, `recipient_person_id`, `former_owner_disposition` (four fields).
 
 ### OrganizationAction
 
 Request identity + exact context/person/review/tenancy/operation IDs; bounded new/import/shared-compartment inputs; complete association plan and explicit warnings. No actor/workspace/SDK fields.
 
-`client_request_key`, `context`, `action`, `person_id`, `review_id`, `tenancy_id`, `operation_id`, `name`, `tenancy_kind`, `home_region`, `import_ocid`, `parent_compartment_ocid`, `compartment_name`, `existing_compartment_ocid`, `recipient_person_id`, `partner_person_id`, `plan`, `confirm_no_associations`, `confirm_manager`, `confirm_shared`.
+`client_request_key`, `context`, `action`, `person_id`, `review_id`, `tenancy_id`, `operation_id`, `name`, `tenancy_kind`, `home_region`, `import_ocid`, `parent_compartment_ocid`, `compartment_name`, `existing_compartment_ocid`, `recipient_person_id`, `former_owner_disposition`, `partner_person_id`, `plan`, `confirm_destructive`, `confirm_no_associations`, `confirm_manager`, `confirm_shared`.
+
+OrganizationAction has 22 fields. confirm_destructive defaults false and is omitted when false to preserve historical hashes; new destructive admissions require true, except standalone transfer_owner with validated keep_member. Transfer/remove and all offboard/delete/member-remove/merge actions retain destructive consent. It is an acknowledgment, not a provider privilege or new stored column.
 
 ### FrozenAssociation
 
 Server-captured registered target/role/revision, personal user/compartment and transfer bindings; immutable intent, not browser authority.
 
-`person_id`, `person_was_manager`, `id`, `tenancy_id`, `tenancy_revision`, `role`, `action`, `tenancy_ocid`, `parent_tenancy_ocid`, `recipient_person_id`, `new_association_id`, `recipient_user_ocid`, `recipient_compartment_ocid`, `recipient_compartment_name`, `recipient_parent_compartment_ocid`, `user_ocid`, `compartment_ocid`.
+`person_id`, `person_was_manager`, `id`, `tenancy_id`, `tenancy_revision`, `role`, `action`, `former_owner_disposition`, `tenancy_ocid`, `parent_tenancy_ocid`, `recipient_person_id`, `new_association_id`, `recipient_user_ocid`, `recipient_compartment_ocid`, `recipient_compartment_name`, `recipient_parent_compartment_ocid`, `user_ocid`, `compartment_ocid`.
 
 ### LifecycleTarget
 
@@ -340,7 +354,7 @@ receipt; it cannot be used as proof that they were inspected or deleted.
 
 ### ReviewQuery
 
-Six independent category/search/sort/direction/page controls; search at most128characters and page
+Six independent category/search/sort/direction/page controls; search at most 128characters and page
 size10/25/50. category accepts actionable (default), informational or history. Informational is a
 query selection spanning stored change records and open informational warnings, not a new persisted
 category or synonym for all history. The Actionable tab uses actionable; Informational & history uses
@@ -385,7 +399,7 @@ Stable person identity with current version name/email or historical original-an
 
 Existing membership/tenancy fields, pending operation, cleanup context and server-calculated allowed choices.
 
-`id`, `person_id`, `tenancy_id`, `tenancy_name`, `tenancy_kind`, `tenancy_status`, `role`, `status`, `compartment_ocid`, `compartment_name`, `cleanup_required`, `operation_id`, `actions`.
+`id`, `person_id`, `tenancy_id`, `tenancy_name`, `tenancy_kind`, `tenancy_status`, `role`, `status`, `compartment_ocid`, `compartment_name`, `cleanup_required`, `user_ocid`, `operation_id`, `actions` (14 fields).
 
 ### TenancyView
 
@@ -438,7 +452,7 @@ current list; browser-supplied option lists are never trusted. No selected/defau
 
 ### TenancyQuery
 
-Literal directory search/sort/direction/paging, at most128characters and page size10/25/50.
+Literal directory search/sort/direction/paging, at most 128characters and page size10/25/50.
 The visible Shared tenancies only checkbox maps to `shared_only` (defaultfalse), applied to registered
 `kind=shared` before paging and combined with search/sort. Toggling restarts page one, preserving
 search/sort. Inventory cards still count all current tenancies, independent of this shortcut.
@@ -829,3 +843,131 @@ remains the canonical organization key. Environment routing does not merge peopl
 change owner/manager links. [Complete route/notification map](lifecycle-email.md) ·
 [Settings and release gate](application-settings.md). No actual OCI activation/invitation contact
 behavior is qualified by local contact preview or SMTP capture.
+
+## Destructive consent and directory-return correction — source checkpoint
+
+Local qualification, all independent reviews and the preserved-data main-preview update pass.
+The parallel preview remains unchanged; see the [final receipt](../history/employee-restoration-consent-checkpoint-2026-11-06.md).
+There is no table/column migration and no automatic infrastructure restoration.
+
+New POST /api/organization/actions admissions require confirm_destructive=true for exactly:
+offboard_person, delete_tenancy, remove_member, transfer_owner/remove and merge. The 7 November
+validated transfer_owner/keep_member path uses neutral confirmation instead. False is the default and
+is excluded from canonical serialization, preserving pre-consent request hashes. An authenticated
+exact committed replay returns its original receipt before the new consent guard; this does not
+permit a new unconfirmed operation or bypass current session/grant authority. Missing consent on a
+new destructive request yields DESTRUCTIVE_CONFIRMATION_REQUIRED before mutation or enqueue.
+
+The native employee dialog presents the exact person, selected tenancy/recipient/merge partner and
+full association plan, with a required consequence acknowledgment. Consent resets on action,
+target/recipient/partner, plan or preview-context changes and is unavailable during preview refresh.
+Manager/shared warnings and zero-association offboard confirmation are additional requirements,
+not substitutes. Whole-tenancy DELETE admission keeps its existing explicit confirm_deletion
+contract and impact review; it is not a reason to add an unrecognized field to that separate API.
+Only an actually absent employee can be explicitly offboarded. These rules do not relax root,
+parentage, pending-work, association or identity-merge guards.
+
+Fixed confirmation failures return safe HTTP409 codes DESTRUCTIVE_CONFIRMATION_REQUIRED or
+PERSON_NOT_ABSENT as applicable; unknown error text remains hidden by the existing allowlist.
+
+Verified association cleanup can mark a source-present zero-link person as needing onboarding.
+The restricted worker therefore receives UPDATE only on the existing setup_required and
+setup_episode_id columns in addition to its prior directory-control grants. It receives no
+new identity-key/email, table-wide UPDATE, administrator, credential or history-rewrite grant.
+The role installer applies these grants idempotently; no data migration/backfill is performed.
+
+## Keep in organization without a tenancy
+
+An administrator can accept a new employee into the normal Organization directory without
+provisioning anything. Select **Keep in organization without a tenancy** in the employee or
+onboarding-review dialog, then **Keep in organization**. This closes that onboarding episode
+immediately; it creates no operation, OCI resource, identity, credential or tenancy association.
+The employee remains visible with zero tenancies, just like an initial-census employee. Later,
+open their employee record to create/import a tenancy or add them to a shared tenancy.
+
+This differs from **No tenancy required**, which explicitly exempts the employee and excludes
+them from the normal managed directory until re-onboarded. Keeping an employee instead retains
+directory_status=included and clears only setup_required; setup_episode_id and immutable history
+remain. Repeated ordinary feeds and metadata changes do not reopen the accepted setup episode.
+A later genuine departure/return or verified association cleanup can create new work as usual.
+
+Admission requires a currently present actual employee row, an included profile, an active setup
+episode, no tenancy associations and no pending operation. Exempt/merged/absent profiles and
+stale previews cannot use this action. It is available without a cloud provider. Mapping/role
+repair and absence work remain independent: only TENANCY_SETUP_REVIEW is closed. Standard
+authentication, context, audited decision and exact request-replay guards remain in force.
+There are no new tables, columns or directory statuses; keep_without_tenancy extends the action enum.
+
+## Add a member from a shared tenancy
+
+On an active shared tenancy, **Current members → Add member** searches the existing Organization
+directory by name or email (at least two characters, at most 128). Up to 25 directory matches load
+before excluding current/pending/removing members and absent, excluded or pending profiles; refine
+the search if needed. **Continue** opens the existing employee action preview with **Add to shared
+tenancy** and this tenancy preselected. Choose create-under-parent or an existing compartment,
+then submit the normal asynchronous workflow. The chooser does not mutate employees or grant
+access. The server's fresh preview/admission guards remain authoritative. Individual/inactive
+tenancies do not expose this shortcut; known pending tenancy work disables it.
+
+## Explicit former-owner disposition — 7 November 2026
+
+Standalone transfer requires a new owner and an explicit former-owner choice; no choice is preselected.
+**Keep as a member** is shared-only, retains the same old association UUID and user/compartment IDs,
+and changes its role to member. Existing group memberships and permissions, including admin rights,
+remain unchanged. The replacement's existing bound identity is reused when present. This is a neutral
+accountability confirmation; it does not require destructive consent. Shared-impact confirmation
+still applies. An eligible replacement without an existing membership follows normal replacement
+identity establishment; retaining the former owner does not remove or reconfigure their identity.
+
+**Remove from tenancy** is available for shared and individual transfers. The existing queued transfer
+operation freezes exact owner/recipient/child/user bindings. Its provider establishes/verifies the
+replacement before removal; group membership retirement and exact user deletion require independent
+matching readback before registry publication. Existing operation steps remove_member_groups and
+delete_member_user expose the effects as Remove user group memberships and Delete tenancy user.
+There is no second coordinator or child-operation table. A completed removal retires the old link
+and keeps manual cleanup flagged even when compartment scope is not recorded.
+
+New removal admissions require confirm_destructive=true; offboard/delete/member-remove/merge
+requirements remain intact. Keep exemption is derived only from transfer_owner plus validated
+keep_member. Offboarding remains destructive; per-transfer choices default to remove at new admission
+and may retain a member only in a shared tenancy. An absent employee with a retained association
+remains outside and tracked; complete removal can finish explicit offboarding. Standalone transfer
+never removes an employee from the directory. Source-present last-association removal can produce
+a new onboarding episode; no terminated access is automatically recreated.
+
+Missing/reused personal identities, protected canonical automation/recovery bindings and changed
+recipient IDs are blocked before writes. Failed or uncertain removal retains pending obligations;
+attempted identity writes stay effect_knowledge=unknown until verified. The simulator qualifies only
+local behavior, not actual OCI permissions or deletion ordering. Real-provider qualification remains
+in the manual manifest. Every OCI operation remains behind the lifecycle facade.
+
+### Compatibility and storage
+
+OrganizationAction.former_owner_disposition, AssociationChoice.former_owner_disposition and
+FrozenAssociation.former_owner_disposition are optional keep_member/remove values with omitted-None
+serialization. Historical request/intent bytes and exact authenticated replays remain compatible.
+Dispatch never turns an absent legacy frozen choice into removal: accepted legacy transfers retain
+their original mapping behavior. Only new offboard admissions apply their remove default.
+
+AssociationView.user_ocid is a read-only projection of the existing membership column, displayed
+outside optional help for exact removal review. UI clients never supply a user OCID as authority.
+Existing role/status/revision, user/compartment IDs, cleanup_required, immutable intent/outcome
+evidence and removal-step records support this flow. The worker's scoped membership UPDATE grant
+adds role; no table/column/migration or broad privilege is added.
+
+FORMER_OWNER_DISPOSITION_REQUIRED, RETAIN_MEMBER_REQUIRES_SHARED_TENANCY and
+EXACT_PERSONAL_IDENTITY_REQUIRED are bounded admission errors. Old absent fields are replayable but
+do not authorize new unreviewed transfers. Choice, target, recipient, plan and preview changes reset
+shared and destructive acknowledgments in the UI, with independent server admission checks.
+
+### Manual cleanup responsibilities
+
+An expandable default-closed panel lists review of the person's resources in assigned/shared
+compartments, preservation/transfer of needed work, manual deletion of an empty dedicated compartment
+only, and review/removal/transfer of additional manually created accounts and credentials. Preserve
+other members' resources and shared/system/service/recovery identities. OTM removes only the recorded
+personal identity/groups and neither deletes these other objects nor verifies manual cleanup.
+
+Critical consequences, the exact recorded identity and checkbox remain visible outside help.
+After removal, tenancy details retain the affected person's name and known compartment or explicit
+Scope not recorded, plus the same instructions. The guide applies to individual owner removal too.

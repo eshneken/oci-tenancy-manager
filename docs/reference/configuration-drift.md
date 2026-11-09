@@ -27,8 +27,9 @@ without editing historical records.
 Checks never call the apply path, change baseline/override assignments, advance last-verified heads,
 repair objects or modify configuration_observation. They write operation/step/audit/check evidence
 only. Daily drift scheduling is explicitly deferred until staging/Kubernetes deployment (5 November
-2026); no local drift CronJob or simulator controls are added. Repair, emails, access-health checks
-and production deployment remain separate work. No Repair, dismiss/delete/acknowledgment or automatic mutation is introduced.
+2026); no local drift CronJob or simulator controls are added. Repair is now a separate [explicit selected-object flow](configuration-repair.md); checks remain
+read-only. Emails, access-health checks and production deployment remain separate work. There is no
+automatic mutation or dismiss/delete/acknowledgment of findings.
 
 ## Screens and API
 

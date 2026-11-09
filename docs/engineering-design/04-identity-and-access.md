@@ -6,6 +6,11 @@
 
 ## Current proposed data model — 21 October 2026
 
+**7 November selected refinement:** [Chapter22](22-credential-security-lifecycles.md) limits the
+standing recovery-only MFA exemption to approved configurable console source CIDRs. It replaces the
+temporary-exception proposal, keeps D40 first-disclosure password rotation and adds 30-day automation
+key retirement. No additional recovery account or TOTP broker; implementation/live qualification pending.
+
 [Chapter11](11-production-data-model.md#identity-access-and-credential-model) specifies access
 contexts, credential heads/immutable Vault references, access assignments, human grants and SSO
 sessions; shared binding/check records distinguish OCI OCIDs from SCIM/relationship IDs. No secrets
@@ -451,3 +456,12 @@ pointer. Exact staged candidates and API signing-key version/fingerprint checks 
 rotation or an unexpected CURRENT change in an active exposure window blocks disclosure pending
 reconciliation. Database restore follows [the simple manual procedure](17-recovery-and-release.md),
 including revoked restored app sessions; the external recovery coordinator/journal is withdrawn.
+
+
+## Internal presence boundary — 6 November 2026
+
+The [implemented required-user presence foundation](../reference/required-user-presence.md)
+provides closed exact-subject reads and result pairing for automation/recovery users. It does not
+yet persist permanent account bindings, acquire durable checks or add an access screen. Present
+is not proof of usable signing, privileges, console access, MFA or recovery readiness. All broader
+access/credential workflows above retain their implementation and qualification requirements.

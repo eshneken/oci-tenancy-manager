@@ -1,4 +1,4 @@
-"""Pure local managed-object simulator; no OCI client, key, credential or network fallback."""
+"""Managed-configuration contracts and pure recipe/scope helpers; no concrete provider imports."""
 
 import json
 from hashlib import sha256
@@ -19,6 +19,16 @@ class ConfigurationFacade(Protocol):
 
     # Observe stored provider state independently of the desired recipe.
     def read(self, target, category, stored): ...
+
+
+# Check common configured scope without assuming an SDK, credential source or synthetic identity.
+def require_configuration_target(target, policy):
+    if (
+        target.parent_tenancy_ocid != policy.parent_tenancy_ocid
+        or target.organization_id != policy.organization_id
+        or target.tenancy_ocid == policy.parent_tenancy_ocid
+    ):
+        raise ValueError("REGISTERED_CHILD_REQUIRED")
 
 
 # Resolve one deterministic OTM object per category without touching unrelated owner resources.
@@ -48,57 +58,7 @@ def desired_objects(target, baseline):
     }
 
 
-# Identities and object ownership remain fixed across simulator writes, retries and process
-# restarts.
-class SimulatedConfigurationFacade:
-    # Trusted policy is the same parent/workspace authority used at admission and dispatch.
-    def __init__(self, policy):
-        self.policy = policy
-
-    # Reject non-child or mismatched scope before any local simulated mutation.
-    def require_target(self, target):
-        if (
-            target.parent_tenancy_ocid != self.policy.parent_tenancy_ocid
-            or target.organization_id != self.policy.organization_id
-            or target.tenancy_ocid == self.policy.parent_tenancy_ocid
-            or not target.tenancy_ocid.startswith("ocid1.tenancy.oc1..otmsim")
-        ):
-            raise ValueError("REGISTERED_CHILD_REQUIRED")
-
-    # Only the four exact OTM logical objects can be changed; arbitrary external IDs are rejected.
-    def apply(self, target, desired, previous):
-        self.require_target(target)
-        if previous and previous.object_ocid != desired.object_ocid:
-            raise ValueError("MANAGED_BINDING_CHANGED")
-        return desired
-
-    # Read only supplied fake-cloud state; retained bindings remain independent of observations.
-    def observe(self, target, category, stored):
-        from otm.configuration.observations import decode_observation
-
-        self.require_target(target)
-        if stored is None:
-            # No retained binding/coverage proof means unknown, never authorized absence.
-            raise ValueError("UNBOUND_OBJECT")
-        observed = decode_observation(stored)
-        if observed.binding.category != category:
-            raise ValueError("MANAGED_CATEGORY_CHANGED")
-        return observed
-
-    # Existing apply/readback paths use the same independent observation, including strict failures.
-    def read(self, target, category, stored):
-        result = self.observe(target, category, stored)
-        if result.state != "present" or result.observed is None:
-            raise ValueError("MANAGED_OBJECT_UNAVAILABLE")
-        if (
-            result.observed.category != category
-            or result.observed.object_ocid != result.binding.object_ocid
-        ):
-            raise ValueError("MANAGED_BINDING_CHANGED")
-        return result.observed
-
-
-# Apply/readback one child while retaining partial simulator state and verified category prefixes.
+# Apply/readback through the injected capability, retaining partial state and verified prefixes.
 def configure_target(target, baseline, facade, stored):
     objects = dict(stored or {})
     desired = desired_objects(target, baseline)

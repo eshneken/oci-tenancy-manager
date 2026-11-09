@@ -40,6 +40,8 @@ Follow [the UI/UX review policy](docs/ui-ux-review-policy.md) and the approved [
 Ask the reviewer to check the whole affected flow, shared components, both pages and responsive
 layouts. Fix material findings and re-verify before finishing UI work. Preserve the user's live
 data; use read-only inspection or an isolated workspace for mutating browser scenarios.
+Apply the button emphasis roles in DESIGN.md across all screens; the UI reviewer must flag
+inconsistent routine-action coloring before slice completion.
 Keep interface guidance, empty states and errors independent of any particular organization.
 Real employee names and configured LOB labels belong in data, not hardcoded instructional copy.
 
@@ -146,3 +148,20 @@ protection, PR-only master merges, no force pushes and no branch deletion remain
 Do not use initial-bootstrap or backup-push authorization for routine direct master updates or
 bypasses. Keep commit metadata publication-safe and use the configured GitHub no-reply identity.
 Update docs/README.md and affected section indexes with documentation structure changes.
+
+
+## Local development checkpoints — 7 November 2026
+
+The user approved batching related internal slices until a coherent end-user-verifiable UI flow.
+During those internal slices, run focused unit/static/contract checks and keep both complete-source
+unit-only coverage gates at 95% or higher. Add PostgreSQL and Playwright cases alongside the code,
+but defer executing integration suites until the UI checkpoint. Then run the complete required
+PostgreSQL/native-worker/SMTP/Playwright suite and address every failure before declaring the flow
+qualified, updating a saved preview or merging. Do not publish partial API/frontend/worker snapshots.
+Independent documentation/security reviews continue during relevant work; final UI review includes
+the complete flow and responsive screens. Incomplete internal slices are not integration-qualified.
+
+The aggregate integration-runner timeout is now 900 seconds (15 minutes), explicitly approved by
+the user. Individual test/browser/I/O limits, all assertions, no-skip completeness checks, separate
+95% coverage gates and protected-master requirements remain unchanged. Every CI build still runs
+all required suites; this local cadence does not authorize CI path filters, optional checks or bypasses.

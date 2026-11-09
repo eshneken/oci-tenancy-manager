@@ -148,6 +148,20 @@
       "title": "Preview Hash",
       "type": "string"
     },
+    "repair_categories": {
+      "default": [],
+      "items": {
+        "enum": [
+          "policy",
+          "quota",
+          "budget",
+          "tags"
+        ],
+        "type": "string"
+      },
+      "title": "Repair Categories",
+      "type": "array"
+    },
     "tenancy_id": {
       "anyOf": [
         {

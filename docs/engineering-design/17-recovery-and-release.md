@@ -8,6 +8,11 @@
 
 ## Accepted boundary
 
+The [7 November security refinement](22-credential-security-lifecycles.md) selects a standing
+recovery-only MFA exemption with configurable console CIDRs and 30-day key retirement. It preserves
+D54 CURRENT password lookup, exact API-key version/fingerprint resolution and same-account manual
+restore; reconcile actual network policy and outstanding rotation effects before resuming.
+
 Normal password retrieval uses the tenancy's **stable Vault secret OCID and `CURRENT` version**.
 PostgreSQL records workflow/audit information; an old database version pointer does not select an
 old password. Database disaster recovery is a documented administrator procedure. V1 does not add

@@ -89,7 +89,9 @@ email-capable acceptance rather than deliver to an original employee address.
 
 ## 4. Observe a durable lifecycle notice
 
-Use synthetic permitted create/import work in an isolated review installation. Only durable
+Use synthetic permitted create/import work in an isolated review installation. Deletion,
+shared-membership, ownership transfer and offboarding use the same delivery panel when their
+execution requires review or fails. Routine success remains silent. Only durable
 administrator-action/known-failure states produce lifecycle notices, to the current responsible
 administrator; ordinary view/poll/progress/success must not send. Do not invent a second saved admin
 to test takeover. Multi-admin/creator-revocation scenarios belong to prepared disposable fixtures.
@@ -126,15 +128,26 @@ SMTP/browser fixtures cover these conditions:
 
 ## 6. Exercise both offline release paths
 
-These commands parse nonsecret example files only, without SMTP/OCI/Vault/deployment credentials.
-The expected environment must come from the trusted deployment target, not be copied from the
-candidate file in a real pipeline. Run the independent gate for both release kinds.
+The tracked hosted templates intentionally omit operational recovery-console networks. Validating
+those templates directly is expected to return RELEASE_SETTINGS_REJECTED. First supply the approved
+comma-separated CIDRs through the protected operator environment variable
+`OTM_RECOVERY_CONSOLE_ALLOWED_CIDRS`, then render private candidates as described in the
+[recovery-console guide](../reference/recovery-console-verification.md#private-candidate-rendering).
+Never put actual ranges in commands, repository files, logs or CI artifacts.
+
+These offline commands require no OCI/Vault/SMTP credentials and perform no deployment. Use unused
+output filenames: the renderer exclusively creates owner-only files and refuses existing paths.
+The expected environment comes from the trusted deployment target, not the candidate itself.
 
 ```sh
-uv run --project backend otm-validate-release --config backend/config/staging.application.toml --expected-environment staging --release-kind application
-uv run --project backend otm-validate-release --config backend/config/staging.application.toml --expected-environment staging --release-kind configuration
-uv run --project backend otm-validate-release --config backend/config/production.application.toml --expected-environment production --release-kind application
-uv run --project backend otm-validate-release --config backend/config/production.application.toml --expected-environment production --release-kind configuration
+umask 077
+mkdir -p .local-dev/release-candidates
+uv run --project backend otm-validate-release --config backend/config/staging.application.toml --expected-environment staging --release-kind configuration --render-recovery-console-from-env .local-dev/release-candidates/staging.application.toml
+uv run --project backend otm-validate-release --config backend/config/production.application.toml --expected-environment production --release-kind configuration --render-recovery-console-from-env .local-dev/release-candidates/production.application.toml
+uv run --project backend otm-validate-release --config .local-dev/release-candidates/staging.application.toml --expected-environment staging --release-kind application
+uv run --project backend otm-validate-release --config .local-dev/release-candidates/staging.application.toml --expected-environment staging --release-kind configuration
+uv run --project backend otm-validate-release --config .local-dev/release-candidates/production.application.toml --expected-environment production --release-kind application
+uv run --project backend otm-validate-release --config .local-dev/release-candidates/production.application.toml --expected-environment production --release-kind configuration
 ```
 
 Examples intentionally keep hosted notifications disabled and contain synthetic placeholders; a
@@ -145,7 +158,8 @@ application origin. Do not temporarily weaken a live production file to run a ne
 
 The application and configuration deployment paths must each run this gate before delivery/OCI
 credentials or apply, with their proper candidate/deployed-compatible schema and normal environment
-lock. No GitHub Actions or hosted deployment is installed by this runbook.
+lock. Hosted checkpoint CI is established. OCI application/configuration delivery pipelines remain
+implementation work; this runbook does not install or qualify a hosted deployment.
 
 ## Remaining qualification
 
@@ -161,3 +175,15 @@ upgrades are recorded in the final local checkpoint below. This is a local insta
 ## Final local checkpoint — 4 November 2026
 
 See the validation record (private historical evidence; not distributed). The 1,421-test full suite passed with no failures/errors/skips; separate backend/frontend unit coverage exceeds 95%. Reviews are complete. Both saved local instances are on 0020 with every existing row preserved, and use separate loopback capture mailboxes. Hosted CI wiring, live OCI contacts and production secret/SMTP qualification remain later work. Earlier source-checkpoint pending labels above describe the pre-qualification snapshot.
+
+
+## Additional lifecycle notices
+
+The [parity reference](../reference/lifecycle-email.md#lifecycle-notice-parity--6-november-2026)
+uses the same responsible-only routing and outbox. There is no new saved-preview failure switch
+or reason to damage a tenancy merely to generate a notice. For a single email-less recovery
+admin, missing test routing records a blocked notice rather than sending to another person.
+With the deliberate local capture configuration above, an accepted notice can use the test
+mailbox without inventing an original address. Normal successful deletion/membership work does
+not email. Negative cases are exercised automatically in disposable fixtures; live provider
+failures and staging isolation remain on the manual manifest.

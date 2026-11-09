@@ -19,6 +19,7 @@ Action = Literal[
     "remove_member",
     "transfer_owner",
     "no_tenancy_required",
+    "keep_without_tenancy",
     "ignore",
     "resolve",
     "merge",
@@ -26,6 +27,18 @@ Action = Literal[
     "mark_returned",
     "cancel_simulation",
 ]
+
+
+# These person commands remove access, ownership or stable identity; local review decisions do not.
+DESTRUCTIVE_ACTIONS = frozenset(
+    {
+        "offboard_person",
+        "delete_tenancy",
+        "remove_member",
+        "transfer_owner",
+        "merge",
+    }
+)
 
 
 # A preview binds decisions to both organization heads, configuration and registry changes.
@@ -41,12 +54,18 @@ class AssociationChoice(Contract):
     association_id: UUID
     action: Literal["delete", "transfer", "remove", "keep"]
     recipient_person_id: UUID | None = None
+    # Omit absent historical choices so committed request/intent hashes remain unchanged.
+    former_owner_disposition: Literal["keep_member", "remove"] | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
 
     # A transfer is explicit and never inferred from the reporting chain or tenancy name.
     @model_validator(mode="after")
     def transfer_target(self):
         if (self.action == "transfer") != (self.recipient_person_id is not None):
             raise ValueError("TRANSFER_RECIPIENT_REQUIRED")
+        if self.action != "transfer" and self.former_owner_disposition is not None:
+            raise ValueError("FORMER_OWNER_DISPOSITION_REQUIRES_TRANSFER")
         return self
 
 
@@ -83,8 +102,23 @@ class OrganizationAction(Contract):
         return self
 
     recipient_person_id: UUID | None = None
+    # A new standalone transfer must choose explicitly; absence is retained only for old replay.
+    former_owner_disposition: Literal["keep_member", "remove"] | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
+
+    # A transfer choice cannot silently alter unrelated person actions.
+    @model_validator(mode="after")
+    def owner_disposition_scope(self):
+        if self.action != "transfer_owner" and self.former_owner_disposition is not None:
+            raise ValueError("FORMER_OWNER_DISPOSITION_REQUIRES_TRANSFER")
+        return self
+
     partner_person_id: UUID | None = None
     plan: Annotated[tuple[AssociationChoice, ...], Field(max_length=100)] = ()
+    # Omitted false preserves pre-consent request hashes for exact historical replay.
+    # New destructive admissions require true; it never substitutes for target-specific warnings.
+    confirm_destructive: bool = Field(default=False, exclude_if=lambda value: value is False)
     confirm_no_associations: bool = False
     confirm_manager: bool = False
     confirm_shared: bool = False
@@ -99,6 +133,10 @@ class FrozenAssociation(Contract):
     tenancy_revision: Annotated[int, Field(ge=1)]
     role: Literal["owner", "member"]
     action: Literal["delete", "transfer", "remove", "keep"]
+    # None preserves the behavior of already-accepted legacy transfers; never default at dispatch.
+    former_owner_disposition: Literal["keep_member", "remove"] | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
     tenancy_ocid: TenancyOcid
     parent_tenancy_ocid: TenancyOcid
     recipient_person_id: UUID | None = None
@@ -109,6 +147,13 @@ class FrozenAssociation(Contract):
     recipient_parent_compartment_ocid: str | None = None
     user_ocid: str | None = None
     compartment_ocid: str | None = None
+
+    # Removal is exact and explicit; a legacy transfer never acquires new destructive effects.
+    @property
+    def removes_identity(self):
+        return self.action == "remove" or (
+            self.action == "transfer" and self.former_owner_disposition == "remove"
+        )
 
 
 # A generic display target supports person-wide operations without inventing a tenancy OCID.
@@ -137,7 +182,15 @@ class OrganizationIntent(Contract):
     pending_tenancy_id: UUID | None = None
     pending_association_id: UUID | None = None
     # Existing accepted intents retain the original one-step simulator when this is absent.
-    onboarding_version: Literal[1, 2] | None = None
+    onboarding_version: Literal[1, 2, 3] | None = None
+    # New opted-in captures may register a simulated connection; absence preserves legacy bytes.
+    presence_connection_contract: Literal["simulated-user-presence-1"] | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
+    # New setup freezes the desired security revision without putting private networks in intent.
+    recovery_console_fingerprint: Annotated[str, Field(pattern=r"^[a-f0-9]{64}$")] | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
     # Full immutable publication snapshot; absent only for previously accepted local operations.
     baseline: BaselineVersion | None = None
     # The initiating verified mailbox is frozen separately from ownership; local testing may
@@ -160,12 +213,16 @@ class OrganizationIntent(Contract):
     # New setup graphs cannot silently omit configuration or reuse a legacy action boundary.
     @model_validator(mode="after")
     def baseline_setup_required(self):
-        if self.onboarding_version == 2 and (
+        if self.onboarding_version in {2, 3} and (
             self.action not in {"create_tenancy", "import_tenancy"}
             or self.baseline is None
             or self.baseline.published_at is None
         ):
             raise ValueError("PUBLISHED_ONBOARDING_BASELINE_REQUIRED")
+        if self.recovery_console_fingerprint is not None and self.onboarding_version != 3:
+            raise ValueError("RECOVERY_CONSOLE_REQUIRES_FRESH_CAPTURE")
+        if self.presence_connection_contract is not None and self.onboarding_version != 3:
+            raise ValueError("PRESENCE_CONNECTION_REQUIRES_FRESH_CAPTURE")
         return self
 
 

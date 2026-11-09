@@ -550,3 +550,13 @@ and real OCI reads remain separate implementation/qualification.
 [Exact runtime fields and limits](../reference/configuration-drift.md) ·
 [Implemented local ER](../architecture/diagrams/configuration-drift-implemented.mmd) ·
 [Disposable-fixture manual review](../how-to/configuration-drift-runbook.md).
+
+
+## Selected repair implementation — 6 November 2026
+
+The [implemented repair guide](../reference/configuration-repair.md) maps selected categories,
+source check, assignment/observation hashes and exact bindings into immutable configuration-update
+intent JSON. Existing operation/step/check/audit tables support explicit preview, queued selected
+writes and all-four verification; there is no new desired revision or table. This is a local
+simulator boundary, not qualification of the larger proposed live-OCI binding inventory above.
+Daily scheduling stays deferred until staging/Kubernetes.

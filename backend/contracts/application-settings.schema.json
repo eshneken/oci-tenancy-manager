@@ -237,6 +237,25 @@
       "title": "NotificationSettings",
       "type": "object"
     },
+    "RecoveryConsoleSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed_cidrs": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 64,
+          "minItems": 1,
+          "title": "Allowed Cidrs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "allowed_cidrs"
+      ],
+      "title": "RecoveryConsoleSettings",
+      "type": "object"
+    },
     "SessionCleanupSettings": {
       "additionalProperties": false,
       "properties": {
@@ -387,6 +406,17 @@
         "tls_mode": "local",
         "username": null
       }
+    },
+    "recovery_console": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RecoveryConsoleSettings"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "schema_version": {
       "maximum": 1,

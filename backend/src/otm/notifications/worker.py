@@ -7,7 +7,7 @@ import procrastinate
 from sqlalchemy import select, update
 
 from otm.email_policy import EmailPolicyBlocked
-from otm.notifications.contracts import CostFailureNotice, Envelope
+from otm.notifications.contracts import CostFailureNotice, Envelope, RequiredUserMissingNotice
 from otm.notifications.service import decode_intent, record_evidence
 from otm.operations.contracts import canonical_hash
 from otm.operations.responsibility import execution_authority
@@ -65,11 +65,13 @@ class NotificationDeliveryWorker:
         *,
         application_origin=None,
         cost_context_loader=None,
+        presence_context_loader=None,
     ):
         self.engine, self.workspace, self.clock = engine, workspace, clock
         self.policy_loader, self.transport, self.enqueuer = policy_loader, transport, enqueuer
         self.application_origin = application_origin
         self.cost_context_loader = cost_context_loader
+        self.presence_context_loader = presence_context_loader
 
     # A committed sending head precedes all SMTP; a crash/replayed sending head becomes unknown.
     def run(self, identifier):
@@ -182,6 +184,22 @@ class NotificationDeliveryWorker:
                 safe_code=None,
                 at=at,
             )
+            if isinstance(intent, RequiredUserMissingNotice):
+                purpose = "Automation" if intent.purpose == "automation" else "Recovery"
+                return Envelope(
+                    notification_id=identifier,
+                    recipient=recipient,
+                    subject="Required tenancy user is missing",
+                    body="A qualified presence check found the required "
+                    f"{purpose.lower()} user missing.\n\n"
+                    + (
+                        f"Review tenancy: {intent.application_origin}/tenancies/"
+                        f"{intent.tenancy_id}#required-users\n"
+                        if intent.application_origin
+                        else "Sign in and open the tenancy's Required users section.\n"
+                    )
+                    + "This notice does not verify permissions or perform a repair.\n",
+                ), attempt
             if isinstance(intent, CostFailureNotice):
                 return Envelope(
                     notification_id=identifier,
@@ -195,9 +213,9 @@ class NotificationDeliveryWorker:
             return Envelope(
                 notification_id=identifier,
                 recipient=recipient,
-                subject="Tenancy setup requires your attention"
+                subject="Tenancy operation requires your attention"
                 if intent.event == "action_required"
-                else "Tenancy setup failed",
+                else "Tenancy operation failed",
                 body=f"An OCI Tenancy Manager operation requires review.\n\nOperation: {op['id']}\n"
                 f"Stage: {intent.stage}\n\n"
                 + (
@@ -210,9 +228,13 @@ class NotificationDeliveryWorker:
     # Reuse the same exact authority, assignment, route and transport fences at both send
     # boundaries.
     def _context_issue(self, connection, row, op, intent):
+        if isinstance(intent, RequiredUserMissingNotice):
+            from otm.tenancies.presence_alerts import delivery_issue
+
+            return delivery_issue(self, connection, row, op, intent)
         if isinstance(intent, CostFailureNotice):
             return self._cost_context_issue(connection, row, op, intent)
-        frozen = load_intent(connection, op)
+        frozen = load_intent(connection, op, onboarding_only=False)
         authority_id, authority_revision, _ = execution_authority(connection, op, frozen)
         if (
             intent.responsible_subject != op["responsible_actor_subject"]

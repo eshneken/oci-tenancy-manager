@@ -14,7 +14,7 @@ from test_organization_workflows_postgres import action, complete_setup, workflo
 from otm.configuration.rollout import ConfigurationRollouts
 from otm.configuration.rollout_contracts import ConfigurationUpdate
 from otm.configuration.rollout_worker import ConfigurationUpdateWorker
-from otm.providers.configuration import SimulatedConfigurationFacade
+from otm.providers.configuration_simulator import SimulatedConfigurationFacade
 from otm.storage.enqueue import CONFIGURATION_TASK, InspectionEnqueuer, workspace_queue
 from otm.storage.organization import OrganizationConflict
 from otm.storage.tables import administrator, audit_event, operation, operation_step, tenancy
@@ -261,7 +261,7 @@ def test_unicode_recipe_round_trip(workflow_case):
 
     from otm.configuration.contracts import PublishBaseline, SaveBaselineDraft
     from otm.configuration.service import BaselineAuthoring
-    from otm.providers.baseline import SimulatedBaselineQualifier
+    from otm.providers.baseline_simulator import SimulatedBaselineQualifier
 
     c = workflow_case
     identifier = children(c, 1)[0]

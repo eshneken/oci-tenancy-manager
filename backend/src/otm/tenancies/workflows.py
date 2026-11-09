@@ -27,6 +27,7 @@ from otm.storage.tables import (
     tenancy_membership,
 )
 from otm.tenancies.contracts import (
+    DESTRUCTIVE_ACTIONS,
     ActionReceipt,
     AssociationChoice,
     FrozenAssociation,
@@ -68,10 +69,13 @@ class OrganizationWorkflows:
         cost_collections=None,
         mail_policy=None,
         notifications=None,
+        recovery_console=None,
     ):
         self.store, self.enqueuer, self.policy, self.facade = store, enqueuer, policy, facade
         self.mail_policy, self.notifications = mail_policy, notifications
+        self.recovery_console = recovery_console
         self.configuration_checks = configuration_checks
+        self.presence_checks = None
         self.cost_collections = cost_collections
         self.policy_loader = policy_loader
         self.mode = "simulated" if policy and facade and enqueuer else "unavailable"
@@ -182,6 +186,25 @@ class OrganizationWorkflows:
                         )
                     }
                 )
+            if self.presence_checks:
+                from otm.tenancies.presence_summary import summaries
+
+                users = summaries(
+                    self.presence_checks,
+                    connection,
+                    workspace,
+                    tuple(state.tenancies[item.id] for item in directory.items),
+                )
+                directory = directory.model_copy(
+                    update={
+                        "items": tuple(
+                            item.model_copy(
+                                update={"required_users": users.get(item.id, item.required_users)}
+                            )
+                            for item in directory.items
+                        )
+                    }
+                )
             return directory
 
     # Details retain removed membership/compartment cleanup evidence as well as active
@@ -202,7 +225,7 @@ class OrganizationWorkflows:
                         audit_event.c.kind == "operation_intent",
                     )
                 ).scalar_one_or_none()
-                if candidate and candidate["intent"].get("onboarding_version") in {1, 2}:
+                if candidate and candidate["intent"].get("onboarding_version") in {1, 2, 3}:
                     onboarding_id = row["operation_id"]
             config_operation = row["operation_id"] or row.get("last_operation_id")
             cost = (
@@ -211,6 +234,13 @@ class OrganizationWorkflows:
                 else None
             )
             view = tenancy_view(state, row)
+            if self.presence_checks:
+                from otm.tenancies.presence_summary import summaries
+
+                users = summaries(self.presence_checks, connection, workspace, (row,))
+                view = view.model_copy(
+                    update={"required_users": users.get(identifier, view.required_users)}
+                )
             if cost is not None:
                 view = view.model_copy(update={"costs": cost})
             return TenancyDetail(
@@ -236,6 +266,34 @@ class OrganizationWorkflows:
                 if self.facade and row["status"] == "active"
                 else (),
             )
+
+    # Authenticate the current workspace before reading stored identities; no provider or job runs.
+    def required_users(self, principal, identifier):
+        from otm.tenancies.required_users import required_user_records
+
+        workspace = self.store._principal(principal)
+        with read_snapshot(self.store.engine) as connection:
+            child = (
+                connection.execute(
+                    select(tenancy).where(
+                        tenancy.c.workspace_id == workspace,
+                        tenancy.c.id == identifier,
+                    )
+                )
+                .mappings()
+                .one_or_none()
+            )
+            if child is None:
+                raise OrganizationConflict("TENANCY_NOT_FOUND")
+            try:
+                directory = required_user_records(connection, workspace, child)
+                return (
+                    self.presence_checks.project(connection, workspace, child, directory)
+                    if self.presence_checks
+                    else directory
+                )
+            except ValueError:
+                raise RuntimeError("REQUIRED_USER_RECORDS_UNAVAILABLE") from None
 
     # Supplement inventory with the same immutable evidence projection as Configuration drift.
     def _check_view(self, view, check):
@@ -355,8 +413,7 @@ class OrganizationWorkflows:
                         role=item.role,
                         is_manager=person.known_manager,
                         other_tenancy_count=other,
-                        leaves_directory=other == 0
-                        and person.email != state.config.policy.root_email,
+                        leaves_directory=False,
                     )
                 )
             return TenancyDeletionPreview(
@@ -600,6 +657,13 @@ class OrganizationWorkflows:
             )
             if command.action not in preview.actions:
                 raise OrganizationConflict("ORGANIZATION_ACTION_UNAVAILABLE")
+            # Accepted retries return above; every new destructive admission needs explicit consent.
+            destructive = command.action in DESTRUCTIVE_ACTIONS and not (
+                command.action == "transfer_owner"
+                and command.former_owner_disposition == "keep_member"
+            )
+            if destructive and not command.confirm_destructive:
+                raise OrganizationConflict("DESTRUCTIVE_CONFIRMATION_REQUIRED")
             person = state.people[command.person_id]
             review = next((r for r in state.reviews if r["id"] == command.review_id), None)
             config = state.config
@@ -614,6 +678,7 @@ class OrganizationWorkflows:
                 "ignore",
                 "resolve",
                 "no_tenancy_required",
+                "keep_without_tenancy",
                 "reonboard",
                 "mark_returned",
             } or (command.action == "offboard_person" and not links):
@@ -652,7 +717,16 @@ class OrganizationWorkflows:
 
     # Close related onboarding/absence/LOB cases only for the explicitly decided stable identity.
     def _close_related(
-        self, connection, state, identifiers, action, at, operation_id=None, *, include_lob=False
+        self,
+        connection,
+        state,
+        identifiers,
+        action,
+        at,
+        operation_id=None,
+        *,
+        include_lob=False,
+        include_absence=True,
     ):
         connection.execute(
             update(org_recommendation)
@@ -661,7 +735,8 @@ class OrganizationWorkflows:
                 org_recommendation.c.person_id.in_(identifiers),
                 org_recommendation.c.status == "open",
                 org_recommendation.c.kind.in_(
-                    ("TENANCY_SETUP_REVIEW", "PERSON_ABSENCE_REVIEW")
+                    ("TENANCY_SETUP_REVIEW",)
+                    + (("PERSON_ABSENCE_REVIEW",) if include_absence else ())
                     + (("LOB_MAPPING_REVIEW",) if include_lob else ())
                 ),
             )
@@ -675,8 +750,26 @@ class OrganizationWorkflows:
         # A tenancy exemption preserves the source graph; offboarding the boundary is forbidden.
         if action == "offboard_person" and person.email == state.config.policy.root_email:
             raise OrganizationConflict("ORGANIZATION_ROOT_PROTECTED")
+        if action == "offboard_person" and person.email in state.supplied:
+            raise OrganizationConflict("PERSON_NOT_ABSENT")
         if action == "ignore" and (review is None or review["kind"] != "LOB_MAPPING_REVIEW"):
             raise OrganizationConflict("IGNORE_REQUIRES_LOB_REVIEW")
+        if action == "keep_without_tenancy":
+            # This accepts one setup episode, never an exemption, absence or nomination repair.
+            if (
+                links
+                or not state.eligible(person.id)
+                or not state.controls[person.id]["setup_required"]
+                or (review is not None and review["kind"] != "TENANCY_SETUP_REVIEW")
+            ):
+                raise OrganizationConflict("ORGANIZATION_ACTION_UNAVAILABLE")
+            connection.execute(
+                update(org_person)
+                .where(org_person.c.workspace_id == state.workspace, org_person.c.id == person.id)
+                .values(setup_required=False)
+            )
+            self._close_related(connection, state, (person.id,), action, at, include_absence=False)
+            return state.config
         config = (
             self._decide(state.config, state, review, person, action, actor, at)
             if review and review["kind"] != "TENANCY_SETUP_REVIEW"
@@ -689,7 +782,9 @@ class OrganizationWorkflows:
             values = dict(
                 directory_status="exempt" if action == "no_tenancy_required" else "offboarded",
                 setup_required=False,
-                removed_capture_at=state.head.source_captured_at if person.absence_review else None,
+                removed_capture_at=state.head.source_captured_at
+                if action == "offboard_person"
+                else None,
             )
             self._close_related(connection, state, (person.id,), action, at, include_lob=True)
         elif action == "reonboard":
@@ -927,6 +1022,7 @@ class OrganizationWorkflows:
                     association_id=link["id"],
                     action=action,
                     recipient_person_id=command.recipient_person_id,
+                    former_owner_disposition=command.former_owner_disposition,
                 ),
             )
         frozen = []
@@ -953,6 +1049,22 @@ class OrganizationWorkflows:
                 or not state.eligible(choice.recipient_person_id)
             ):
                 raise OrganizationConflict("CURRENT_TRANSFER_RECIPIENT_REQUIRED")
+            disposition = choice.former_owner_disposition
+            if choice.action == "transfer":
+                if command.action == "offboard_person" and disposition is None:
+                    disposition = "remove"
+                if disposition is None:
+                    raise OrganizationConflict("FORMER_OWNER_DISPOSITION_REQUIRED")
+                if disposition == "keep_member" and row["kind"] != "shared":
+                    raise OrganizationConflict("RETAIN_MEMBER_REQUIRES_SHARED_TENANCY")
+                if disposition == "remove" and (
+                    not link["user_ocid"]
+                    or any(
+                        other["id"] != link["id"] and other["user_ocid"] == link["user_ocid"]
+                        for other in state.associations(tenant=row["id"])
+                    )
+                ):
+                    raise OrganizationConflict("EXACT_PERSONAL_IDENTITY_REQUIRED")
             if choice.action == "delete" and person.known_manager and not command.confirm_manager:
                 raise OrganizationConflict("MANAGER_CONFIRMATION_REQUIRED")
             if row["kind"] == "shared" and choice.action != "keep" and not command.confirm_shared:
@@ -972,6 +1084,7 @@ class OrganizationWorkflows:
                     tenancy_revision=row["revision"],
                     role=link["role"],
                     action=choice.action,
+                    former_owner_disposition=disposition,
                     tenancy_ocid=row["tenancy_ocid"],
                     parent_tenancy_ocid=row["parent_tenancy_ocid"],
                     recipient_person_id=choice.recipient_person_id,
@@ -1138,7 +1251,13 @@ class OrganizationWorkflows:
             action=command.action,
             baseline=baseline,
             whole_tenancy_deletion=deletion_plan is not None,
-            onboarding_version=2
+            presence_connection_contract="simulated-user-presence-1"
+            if command.action in {"create_tenancy", "import_tenancy"}
+            else None,
+            recovery_console_fingerprint=self.recovery_console.fingerprint
+            if command.action in {"create_tenancy", "import_tenancy"} and self.recovery_console
+            else None,
+            onboarding_version=3
             if command.action in {"create_tenancy", "import_tenancy"}
             else None,
             activation_email=contacts.activation.effective_email
@@ -1309,10 +1428,22 @@ class OrganizationWorkflows:
                 .values(pending_operation_id=key)
             )
         else:
+            # Association cleanup does not settle the independent employee absence decision.
             self._close_related(
-                connection, state, (person.id,), command.action, at, operation_id=key
+                connection,
+                state,
+                (person.id,),
+                command.action,
+                at,
+                operation_id=key,
+                include_absence=command.action
+                not in {"delete_tenancy", "remove_member", "transfer_owner"},
             )
-        if review and review["kind"] == "PERSON_ABSENCE_REVIEW":
+        if (
+            review
+            and review["kind"] == "PERSON_ABSENCE_REVIEW"
+            and command.action == "offboard_person"
+        ):
             config = self._decide(
                 state.config, state, review, person, command.action, principal.actor, at
             )

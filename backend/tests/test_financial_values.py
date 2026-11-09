@@ -20,7 +20,8 @@ from otm.financial.contracts import (
 )
 from otm.financial.normalization import month_bounds, normalize, project, snapshot_order
 from otm.operations.contracts import canonical_hash
-from otm.providers.budget import BudgetReadUnavailable, SimulatedBudgetFacade
+from otm.providers.budget import BudgetReadUnavailable
+from otm.providers.budget_simulator import SimulatedBudgetFacade
 from otm.providers.configuration import desired_objects
 
 NOW = datetime(2026, 11, 5, 12, tzinfo=UTC)

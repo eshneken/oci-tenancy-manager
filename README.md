@@ -11,6 +11,7 @@ The implemented local application includes Organization intake/mapping/reviews, 
 Tenancies, guided onboarding and deletion, immutable administrative Audit History and CSV export,
 Operations, administrator responsibility takeover, baseline publication/overrides/updates, read-only
 configuration-drift checks, and lifecycle email with safe nonproduction routing and local capture.
+[Manual required-user presence checks](docs/reference/user-presence-checks.md) are locally qualified; the main preview is upgraded with existing data preserved. The [dated receipt](docs/history/manual-presence-checkpoint-2026-11-06.md) distinguishes simulation, separate test lanes and the unchanged parallel preview.
 Real OCI integration, corporate SSO and managed-service deployment remain separately unqualified.
 Daily drift scheduling is deferred until staging/Kubernetes deployment. All five hosted CI jobs and
 administrator-enforced protected `master` are verified at baseline `db08b3b`; development uses

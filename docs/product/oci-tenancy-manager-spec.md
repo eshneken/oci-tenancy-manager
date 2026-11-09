@@ -392,6 +392,16 @@ appropriate owner/member relationship; a completed onboarding decision never lim
 one tenancy. **No tenancy required** is permitted only without active associations and hides the
 person from the managed directory while retaining source/reporting and history.
 
+Alternatively, **Keep in organization without a tenancy** accepts the current onboarding episode
+without an exemption or provisioning. The person remains normally visible with zero tenancies;
+ordinary feeds do not reopen the same setup review. Later create/import/shared-membership actions
+remain available from the employee record. Independent mapping, role and departure reviews are
+unaffected. See the [implemented contract](../reference/organization-workflows.md#keep-in-organization-without-a-tenancy).
+
+Administrators can also start **Add member** from an active shared tenancy's Current members
+section. An employee picker opens the existing add-to-shared-tenancy preview with that child
+preselected; the same compartment/access admission checks and asynchronous workflow apply.
+
 D21 A, accepted 20 October: adding a shared member provisions an explicitly selected access profile.
 Compartment-scoped access is the default; full tenancy administration is an explicit alternative.
 Owner full administration remains unchanged. Preview exact scope/dependencies, freeze the selected
@@ -408,7 +418,9 @@ failure; no automatic compartment deletion compensates for failed setup or follo
 
 Ownership transfer establishes and verifies replacement administration before publishing the new
 accountable owner. D22 A, accepted 20 October, requires an explicit choice for the previous owner:
-Remove access or Remain a member with a selected D21 profile. Offboarding defaults to Remove. A
+Remove from tenancy or Keep as a member (shared only). The 7 November clarification preserves
+existing identities and all permissions for Keep rather than applying a different D21 profile.
+Offboarding defaults to Remove at new admission. A
 transfer must not silently retain or revoke their access. Partial access cleanup remains visible and prevents
 prematurely completing their offboarding. No resources or other members are deleted by transfer.
 
@@ -439,24 +451,33 @@ per-target safeguards/results remain independent. D26 (accepted 20 October 2026)
 action when OCI confirms termination initiation; retire that association then. OTM local acceptance
 alone is insufficient. OTM does not wait for or monitor permanent deletion after 30 days.
 
-After required work **succeeds**, removal of the last association automatically removes the person
-from the managed directory. There is no redundant Resolve/Remove-person action. Kept associations
-retain a visible outside-organization case until further cleanup. That retained status persists
-through source reappearance; **Mark returned to organization** requires current source presence
-and an explicit administrator decision, preserving existing associations. A fully unmanaged,
-source-present person with no associations can use **Re-onboard**. The later adopted return rule
-automatically opens fresh onboarding after qualified absence and a qualified full applied-feed
-return for completed zero-association offboarding. No tenancy is restored or created automatically.
-No tenancy required is an explicit exemption and remains excluded until manual Re-onboard.
-Unchanged-present uploads alone do not create an absence/return cycle; partial, staged or rejected
-feeds cannot authorize automatic return. Pending onboarding is durable across later feeds.
+Only **explicit Offboard employee** for an employee actually absent from the current feed may
+remove that person from the managed directory after the selected required work succeeds. Standalone
+tenancy deletion, member removal and ownership transfer never offboard an employee, even if they are
+absent and no associations remain. Those cleanup actions preserve independent absence decisions.
+Kept associations from explicit offboarding retain a visible outside-organization case, requiring
+an explicit Mark returned decision with current source presence before resuming managed status.
 
-**Organization decision versus execution:** production closes the organizational review only
-when a linked operation is durably accepted. Operation intent, initial job, review closure and
-audit must commit together. The person remains Offboarding while required operations execute;
-failed/ambiguous operations remain visible and resumable in the tenancy operations workflow.
-Only verified successful cleanup removes the last production association and completes directory
-offboarding. A workflow-submission failure leaves the organizational review open.
+A new fresh successfully applied feed containing an offboarded person's actual employee row restores
+their stable directory identity and opens one onboarding episode when needed. Positive rows from a
+partial feed qualify; no intervening absence is required. Canonical current row identities map to
+stable UUIDs, including after a confirmed email/name merge. Repeated uploads do not duplicate setup.
+References alone, stale/replayed/staged/rejected input and configuration-only recalculation cannot
+restore people. Explicit no-tenancy exemptions, merged-away identities and pending operations stay
+protected. Return never restores terminated tenancies, removed memberships, OCI users, access or
+credentials, and never rewrites source/audit history or settles unrelated role repairs.
+
+**Organization decision versus execution:** explicitly selected onboarding/offboarding review closure,
+intent, initial job and audit commit together on durable acceptance. Association retirement waits for
+verified execution; only the explicit offboarding plan changes directory presence. Failures/unknown
+outcomes remain in the workflow, and a submission failure leaves its selected review open.
+
+Destructive person commands (offboard, terminate tenancy, remove member, transfer owner and merge)
+require independent unchecked acknowledgment of the exact target and consequences, in addition to
+applicable manager/shared/zero-association safeguards. Changes to action, targets, plan or preview
+clear consent. Disabled buttons and form guards complement server enforcement. Authenticated exact
+historical request replay precedes new-admission consent checks and cannot repeat destructive effects.
+The tenancy-level delete flow retains its existing explicit deletion confirmation.
 
 The local prototype deliberately skips asynchronous execution: it simulates immediate success,
 persists local registry/disposition changes, closes the review and audits them in one transaction.
@@ -769,9 +790,9 @@ These are proposed release acceptance tests. They do not assert existing functio
 | AC50 | A declared-complete configured feed with required manager-row gaps publishes only eligible partial metadata after graph validation and exposes declared versus assessed completeness. It preserves trusted missing facts/stable identities, creates a durable feed-quality incident/admin alert and produces no census absence conclusions. Coverage uses incoming rows/references rather than retained database profiles; repeated incident alerts deduplicate. Later qualified complete capture is assessed independently; stale, ambiguous, malformed or untrusted input cannot gain eligibility from this fallback. |
 | AC51 | A stable person can own multiple tenancies and belong to multiple shared tenancies. Shared ownership/member roles remain distinct, with one active relationship per person/tenancy and at most one active owner. Explicit identity merges preserve these relationships and historical evidence. |
 | AC52 | Offboarding previews and validates one action for every current active association. Shared member removal cannot delete the tenancy; shared-owner exit requires transfer unless retained; individual deletion cannot silently discard other active members. Unknown/unregistered/wrong-workspace targets are rejected. |
-| AC53 | Explicit successful removal of the last association hides the person from the managed directory without deleting source/reporting identity or history. Baseline/pending profiles with zero tracked associations stay visible until an explicit decision; zero-link offboarding requires confirmation. |
-| AC54 | Qualified absence followed by a qualified full applied-feed return opens fresh durable onboarding after completed zero-association offboarding without restoring old tenancies. No tenancy required exemptions remain excluded until explicit Re-onboard. Unchanged-present uploads without genuine absence, partial/staged/rejected feeds and retained active associations do not trigger duplicate onboarding; retained outside people require Mark returned to organization. |
-| AC55 | Production organizational review closes on durable operation acceptance, not unverified provider completion. Failures/unknown outcomes stay in the tenancy workflow; final association removal waits for verified success. The prototype's immediate simulated completion is labeled and calls no OCI service. |
+| AC53 | Tenancy deletion, member removal and owner transfer never remove employees from the managed directory or settle independent absence reviews, even for absent zero-link people. Only explicitly confirmed offboarding of an actually absent employee changes directory presence after required work succeeds; source/reporting identity and history remain. Zero-link offboarding additionally requires confirmation. |
+| AC54 | A newer fresh applied feed containing an offboarded employee's actual row (full or partial) restores stable directory identity and one onboarding episode as needed, without an intervening absence or restoring infrastructure/access. References, stale/replayed/staged/rejected/config-only input do not restore. Exemptions, merged-away identities and pending operations remain protected; retained outside people require explicit Mark returned. Repeated feeds do not duplicate setup. |
+| AC55 | The explicitly selected onboarding/offboarding review closes on durable operation acceptance; standalone association cleanup preserves independent absence. Retirement waits for verified execution. Destructive person actions require context-bound unchecked UI consent and server enforcement for new admissions; standalone transfer with validated keep_member is a neutral confirmation while offboarding always retains destructive consent; authenticated historical replay remains compatible. Simulated completion is labeled and calls no OCI service. |
 | AC56 | Registry changes, directory state, review closure and audit are atomic and context-bound. Stale/incomplete plans or publication failures leave all unchanged. Legacy simulation bootstrap never invents ownership or guesses an ambiguous deletion; explicit owner assignment repairs ownerless shared tenancies. |
 | AC57 | Configuration opens on immutable baseline history; viewing old versions changes no default, assignment or bulk target. Overrides start from Configuration and tenancy inventory/details against the assigned version. Tenancy alerts link to exact issues or a filtered multi-issue list with stable deep links. Organization → Organization drift contains organization reviews; confirmed configuration-drift navigation excludes healthy/unverifiable observations, version age and pending baseline reviews. Repair queueing cannot clear drift without verification. D31 all-conflict review gating remains enforced. |
 | AC58 | D35 applies one bound OTM policy containing the authored baseline/override block plus visible read-only required statements. Clearing/editing authored content cannot remove required owner/automation/recovery/member obligations. Pin the generated manifest, contributor/profile/template/render versions and binding context; render reproducibly with source provenance. Access-driven root-policy changes create a local configuration revision without publishing a baseline; full drift compares the captured combined list. Stale reviews/unknown writes block unsafe dispatch, and removing one contributor preserves shared requirements. Provider grammar/roles/MFA still require qualification. |
@@ -1251,7 +1272,7 @@ completion, hosted deployment or Git/publication clearance.
 
 ## Whole-child termination scope — 31 October2026
 
-An administrator may delete an individual or shared registered child from its tenancy page, independently of source absence. Every owner/member link is included in the impact preview. Successful termination initiation removes only that tenancy’s associations; other tenancies remain intact and last-link managed-directory removal is evaluated per person. Pending/failing work retains visibility. [Local implementation and limits](../reference/tenancy-deletion.md).
+An administrator may delete an individual or shared registered child from its tenancy page, independently of source absence. Every owner/member link is included in the impact preview. Successful termination initiation removes only that tenancy’s associations; other tenancies and every employee’s directory status remain intact, even for absent people losing their final association. Explicit employee offboarding remains separate. Pending/failing work retains visibility. [Local implementation and limits](../reference/tenancy-deletion.md).
 
 ## Creation inputs clarified — 31 October2026
 
@@ -1469,3 +1490,35 @@ The [implemented cost guide](../reference/cost-visibility.md) delivers the accep
 inventory/cost view through a read-only facade and saved observations. On-demand local refresh is
 implemented in simulation; daily scheduling and OCI response qualification await staging. Historical
 budget reporting and over-budget email/resource actions remain outside V1.
+
+## Manual required-user presence subset — 6 November 2026
+
+The [manual simulated presence check](../reference/user-presence-checks.md) now has a source implementation:
+Check now is an authenticated asynchronous operation against exact registered automation/recovery
+subjects and a selected connection revision. Results/times are independent; current confirmed
+existence is distinct from permissions, credentials and recovery readiness. Permissions remains Not
+checked. Historical unbound records cannot check, errors never imply Missing, and stale/context-
+changed results cannot imply current success. No daily scheduling, email, repair or live OCI
+qualification is included. Local test/review qualification and the main-preview upgrade pass with existing data preserved; the parallel preview is unchanged. [Final receipt](../history/manual-presence-checkpoint-2026-11-06.md). See the
+[manual local review](../how-to/required-users-runbook.md) and pending live manifest.
+
+## Required-user inventory summary — source checkpoint
+
+The [summary projection](../reference/required-users-summary.md) adds compact presence context in
+existing Tenancies Status cells, linking to each exact child's Required users section. It preserves
+per-account evidence and simulation/permission limits. No new column, filter, menu, table, provider
+check, scheduled action or repair is introduced. Local qualification and the preserved-data main update pass for this follow-up; the parallel preview is unchanged. [Final summary receipt](../history/required-users-summary-checkpoint-2026-11-06.md). Prior manual-check qualification retains its earlier scope.
+
+## Ownership transfer clarification — 7 November 2026
+
+A standalone transfer explicitly selects Keep as a member or Remove from tenancy. Keep is shared-only
+and preserves the former owner's identity, mappings and all existing permissions; it changes tracked
+accountability without a privilege downgrade. Remove uses the transfer operation to verify deletion
+of the exact recorded personal user/groups after replacement access is established. Individual
+transfers support removal only. Offboarding defaults to removal but can retain shared membership;
+retained obligations stay tracked. No transfer automatically removes an employee from Organization.
+
+Manual resource, dedicated-empty-compartment and additional-account cleanup is explained in a
+default-closed panel and remains the administrator/current owner's responsibility. Actual warnings,
+identity targets and required acknowledgments remain visible. Failed cleanup cannot claim verified
+removal. See the [implemented flow](../reference/organization-workflows.md#explicit-former-owner-disposition--7-november-2026).

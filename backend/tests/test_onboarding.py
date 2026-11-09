@@ -109,6 +109,12 @@ def test_intent_loading_and_step_evidence(registry):
     record.update(data=historical, data_hash=canonical_hash(historical))
     with pytest.raises(OrganizationConflict, match="NOT_AVAILABLE"):
         flow.load_intent(connection, row)
+    assert (
+        flow.load_intent(connection, row, onboarding_only=False).intent.onboarding_version is None
+    )
+    record["data_hash"] = "0" * 64
+    with pytest.raises(ValueError, match="INVALID_ONBOARDING_INTENT"):
+        flow.load_intent(connection, row, onboarding_only=False)
     connection.execute.return_value.mappings.return_value = [{"step_key": "handoff"}]
     assert flow.step_rows(connection, row)["handoff"]["step_key"] == "handoff"
     event = OnboardingEvidence(step="handoff", outcome="accepted", safe_code="ONBOARDING_ACCEPTED")
@@ -434,3 +440,15 @@ def test_onboarding_http_bounded_commands_and_scoped_reads(registry):
             operation_id=row["id"], state="succeeded", provider_mode="simulated", accepted_at=NOW
         )
         assert client.post(path, json=command).status_code == 200
+
+
+# Optional connection selection stays absent in old intent bytes and cannot alter an older graph.
+def test_presence_marker_preserves_legacy_intent(registry):
+    _, intent, _, _ = case(registry)
+    raw = intent.model_dump()
+    assert "presence_connection_contract" not in raw
+    raw["presence_connection_contract"] = "simulated-user-presence-1"
+    from otm.tenancies.contracts import OrganizationIntent
+
+    with pytest.raises(ValueError, match="PRESENCE_CONNECTION_REQUIRES_FRESH_CAPTURE"):
+        OrganizationIntent.model_validate(raw)

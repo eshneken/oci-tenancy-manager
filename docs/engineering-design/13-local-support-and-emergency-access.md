@@ -7,6 +7,12 @@
 
 ## Current decision and scope
 
+**7 November selected refinement:** [Chapter22](22-credential-security-lifecycles.md) selects a
+standing recovery-only MFA exemption restricted to multiple configurable console source CIDRs.
+D40's first-authorized-disclosure four-hour password rotation remains; the restriction does not
+expire with the password window. The temporary-exception proposal and extra-account requirement
+are withdrawn. Implementation and real provider qualification remain pending.
+
 V1 uses the persistent per-tenancy recovery account for occasional administrator console access.
 There is one human-access flow, not a temporary named-account workflow followed by a second recovery
 workflow. D40 supersedes the named-support portions of D19/D37. Named local support provisioning,

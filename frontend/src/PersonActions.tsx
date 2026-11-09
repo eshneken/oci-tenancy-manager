@@ -1,3 +1,4 @@
+import { CleanupResponsibilities } from "./CleanupResponsibilities";
 import { EmailContactSummary } from "./EmailContacts";
 import { baselineHref } from "./baselineNavigation";
 import { PublishedBaseline } from "./BaselineHistory";
@@ -13,6 +14,7 @@ import type {
 import { followLink } from "./navigation";
 
 type Action = OrganizationAction["action"];
+const destructiveActions = new Set<Action>(["offboard_person", "delete_tenancy", "remove_member", "transfer_owner", "merge"]);
 const labels: Record<Action, string> = {
   create_tenancy: "Create tenancy",
   import_tenancy: "Import tenancy",
@@ -22,6 +24,7 @@ const labels: Record<Action, string> = {
   remove_member: "Remove shared member",
   transfer_owner: "Transfer tenancy ownership",
   no_tenancy_required: "No tenancy required",
+  keep_without_tenancy: "Keep in organization without a tenancy",
   ignore: "Ignore permanently",
   resolve: "Complete review",
   merge: "Merge employee identity",
@@ -30,6 +33,7 @@ const labels: Record<Action, string> = {
   cancel_simulation: "Cancel local simulation",
 };
 const guidance: Record<string, string> = {
+  DESTRUCTIVE_CONFIRMATION_REQUIRED: "Review the action and acknowledge its consequences before continuing.",
   SIMULATION_ALREADY_FINISHED:
     "This simulation has already finished or changed. Reload the preview before making another decision.",
   SHARED_COMPARTMENT_NAME_REQUIRED:
@@ -69,6 +73,7 @@ const guidance: Record<string, string> = {
     "These identities have conflicting organization overrides. Resolve those before merging.",
   ORGANIZATION_ROOT_PROTECTED:
     "The configured organization root cannot be removed from the managed directory.",
+  PERSON_NOT_ABSENT: "This employee is present in the current feed and cannot be offboarded. Reload the preview.",
 };
 
 // Invalidate every related read model after an application decision or durable operation acceptance.
@@ -129,6 +134,7 @@ export function PersonActions({
   const [compartment, setCompartment] = useState("");
   const [compartmentMode,setCompartmentMode]=useState<"create"|"existing">("create");
   const [recipient, setRecipient] = useState("");
+  const [formerOwner, setFormerOwner] = useState<""|"keep_member"|"remove">("");
   const [partner, setPartner] = useState("");
   const [plan, setPlan] = useState<
     Record<
@@ -136,9 +142,11 @@ export function PersonActions({
       {
         action: "" | "delete" | "transfer" | "remove" | "keep";
         recipient: string;
+        formerOwner: ""|"keep_member"|"remove";
       }
     >
   >({});
+  const [consent, setConsent] = useState<string | null>(null);
   const [confirmEmpty, setConfirmEmpty] = useState(false);
   const [confirmManager, setConfirmManager] = useState(false);
   const [confirmShared, setConfirmShared] = useState(false);
@@ -183,8 +191,8 @@ export function PersonActions({
     return () => controller.current?.abort();
   }, []);
   useEffect(() => {
-    const failure = preview.error ?? selectedDetail.error;
-    if (failure instanceof ApiError && [401, 403].includes(failure.status))
+    if ([preview.error, selectedDetail.error].some(
+      failure => failure instanceof ApiError && [401, 403].includes(failure.status)))
       expired();
   }, [preview.error, selectedDetail.error, expired]);
   useEffect(() => {
@@ -198,10 +206,11 @@ export function PersonActions({
     setCompartment(data.person.email.split("@")[0].replaceAll(".", "-"));
     setPlan(
       Object.fromEntries(
-        data.associations.map((a) => [a.id, { action: "", recipient: "" }]),
+        data.associations.map((a) => [a.id, { action: "", recipient: "", formerOwner: "remove" }]),
       ),
     );
     setConfirmEmpty(false);
+    setFormerOwner("");
     setConfirmManager(false);
     setConfirmShared(false);
     requestKey.current = crypto.randomUUID();
@@ -228,6 +237,24 @@ export function PersonActions({
           action,
         ) && target?.tenancy_kind === "shared"),
   );
+  const destructive = action !== "" && destructiveActions.has(action) &&
+    (action !== "transfer_owner" || formerOwner === "remove");
+  const cleanupRequired = action === "remove_member" ||
+    (action === "transfer_owner" && formerOwner === "remove") ||
+    (action === "offboard_person" && data?.associations.some(a =>
+      plan[a.id]?.action === "remove" || (plan[a.id]?.action === "transfer" && plan[a.id]?.formerOwner === "remove")));
+  const validTransfer = action !== "transfer_owner" || Boolean(recipient && formerOwner &&
+    (formerOwner !== "keep_member" || target?.tenancy_kind === "shared") &&
+    (formerOwner !== "remove" || target?.user_ocid));
+  const validPlan = action !== "offboard_person" || Boolean(data?.associations.every(a =>
+    plan[a.id]?.action !== "transfer" || (plan[a.id]?.recipient && plan[a.id]?.formerOwner &&
+      (plan[a.id].formerOwner !== "keep_member" || a.tenancy_kind === "shared") &&
+      (plan[a.id].formerOwner !== "remove" || a.user_ocid))));
+  // Consent is specific to the whole displayed review, not merely to a button or employee.
+  const consentContext = JSON.stringify({personId, reviewId, action, selectedTenancy, recipient,
+    partner, plan, formerOwner, context:data?.context, associations:data?.associations, previewAt:preview.dataUpdatedAt});
+  const acknowledged = consent === consentContext;
+  useEffect(() => { setConsent(null); setConfirmShared(false); }, [consentContext]);
   const provisioning = action === "create_tenancy" || action === "import_tenancy";
   const controls = action !== "" && Boolean(data?.actions.includes(action)) && (!provisioning || Boolean(data?.current_baseline));
 
@@ -243,6 +270,8 @@ export function PersonActions({
     if (!busy && error === guidance.DISTINCT_TENANCY_NAME_REQUIRED)
       nameInput.current?.focus();
   }, [busy, error]);
+
+  useEffect(() => { setFormerOwner(""); }, [selectedTenancy]);
 
   // Any edit starts a different bounded request; unchanged retries preserve the original identity.
   function edited() {
@@ -260,6 +289,7 @@ export function PersonActions({
 
   // Re-fetch an expired preview instead of applying choices to a newer organization implicitly.
   async function reload() {
+    setConsent(null);
     setError("");
     setReceipt(null);
     await preview.refetch();
@@ -294,7 +324,11 @@ export function PersonActions({
     }
     if (["delete_tenancy", "remove_member", "transfer_owner"].includes(action))
       body.tenancy_id = selectedTenancy;
-    if (action === "transfer_owner") body.recipient_person_id = recipient;
+    if (action === "transfer_owner") {
+      if (!validTransfer) throw new Error("Choose the new owner and former-owner disposition.");
+      body.recipient_person_id = recipient;
+      body.former_owner_disposition = formerOwner as "keep_member"|"remove";
+    }
     if (action === "merge") body.partner_person_id = partner;
     if (action === "cancel_simulation")
       body.operation_id = current.pending_operation_id;
@@ -306,9 +340,11 @@ export function PersonActions({
         action: plan[a.id].action as "delete" | "transfer" | "remove" | "keep",
         recipient_person_id:
           plan[a.id].action === "transfer" ? plan[a.id].recipient : null,
+        ...(plan[a.id].action === "transfer" ? {former_owner_disposition:plan[a.id].formerOwner as "keep_member"|"remove"} : {}),
       }));
       body.confirm_no_associations = confirmEmpty;
     }
+    if (destructive) body.confirm_destructive = acknowledged;
     body.confirm_manager = confirmManager;
     body.confirm_shared = confirmShared;
     return body;
@@ -316,7 +352,10 @@ export function PersonActions({
 
   // An accepted workflow is tracked elsewhere; only application-only receipts claim immediate completion.
   async function submit() {
-    if (!data || !controls) return;
+    if (!data || !controls || !validTransfer || !validPlan || busy || preview.isError || preview.isFetching
+      || (destructive && !acknowledged)
+      || (managerWarning && !confirmManager) || (sharedWarning && !confirmShared)
+      || (action === "offboard_person" && data.associations.length === 0 && !confirmEmpty)) return;
     let body: OrganizationAction;
     try {
       body = command(data);
@@ -731,6 +770,7 @@ export function PersonActions({
                       </label>
                     )}
                     {action === "transfer_owner" && (
+                      <>
                       <label>
                         New owner
                         <Select
@@ -750,6 +790,16 @@ export function PersonActions({
                           ))}
                         </Select>
                       </label>
+                      <label>Former owner
+                        <Select required disabled={busy} value={formerOwner} onChange={event => {setFormerOwner(event.target.value as "keep_member"|"remove");edited();}}>
+                          <option value="">Choose what happens to the former owner</option>
+                          {target?.tenancy_kind === "shared" && <option value="keep_member">Keep as a member — retain existing access</option>}
+                          <option value="remove">Remove from tenancy — delete their recorded user</option>
+                        </Select>
+                      </label>
+                      {formerOwner === "keep_member" && <p className="notice">Only accountability changes for the former owner. Their user ID, group memberships, existing permissions (including any administrator access) and compartment mappings remain unchanged. They remain a member of this tenancy.</p>}
+                      {formerOwner === "remove" && <p className="notice">The transfer operation removes the former owner's recorded user and group memberships. Identity to remove: <code className="technical-id">{target?.user_ocid ?? "Not recorded — automated removal is unavailable"}</code>. Resources, compartments and additional accounts are left for manual cleanup.</p>}
+                      </>
                     )}
                     {action === "offboard_person" && (
                       <>
@@ -775,6 +825,7 @@ export function PersonActions({
                                         | "remove"
                                         | "keep",
                                       recipient: "",
+                                      formerOwner: "remove",
                                     },
                                   });
                                   edited();
@@ -796,6 +847,7 @@ export function PersonActions({
                               </Select>
                             </label>
                             {plan[a.id]?.action === "transfer" && (
+                              <>
                               <label>
                                 {"New owner for " + a.tenancy_name}
                                 <Select
@@ -823,6 +875,15 @@ export function PersonActions({
                                   ))}
                                 </Select>
                               </label>
+                              <label>{"Former owner for " + a.tenancy_name}
+                                <Select required disabled={busy} value={plan[a.id].formerOwner} onChange={event=>{setPlan({...plan,[a.id]:{...plan[a.id],formerOwner:event.target.value as "keep_member"|"remove"}});edited();}}>
+                                  <option value="remove">Remove from tenancy — delete their recorded user</option>
+                                  {a.tenancy_kind === "shared" && <option value="keep_member">Keep as a member — retain existing access</option>}
+                                </Select>
+                              </label>
+                              {plan[a.id].formerOwner === "keep_member" && <p className="notice">The former owner's identity, group memberships, permissions (including any administrator access) and compartment mappings remain unchanged. They stay tracked as a member.</p>}
+                              {plan[a.id].formerOwner === "remove" && <p className="notice">Identity to remove: <code className="technical-id">{a.user_ocid ?? "Not recorded — automated removal is unavailable"}</code>. Resources, compartments and additional accounts remain for manual cleanup.</p>}
+                              </>
                             )}
                             {a.compartment_ocid && (
                               <p className="muted">
@@ -849,9 +910,11 @@ export function PersonActions({
                           </label>
                         )}
                         <p className="notice">
-                          The employee leaves the managed directory only after
-                          their last association has been removed. Kept
-                          associations remain mapped outside the organization.
+                          This explicitly offboards the employee. After the selected work
+                          completes, they leave the managed directory if no associations
+                          remain; kept associations stay mapped outside the organization.
+                          A later fresh feed containing their employee row can restore
+                          directory presence, but never deleted tenancies, accounts or access.
                           The tenancy owner reviews the departing user's resources
                           manually. Shared compartments and other members' resources
                           are retained.
@@ -910,6 +973,14 @@ export function PersonActions({
                         another review.
                       </p>
                     )}
+                    {action === "keep_without_tenancy" && (
+                      <p className="notice">
+                        Keep this employee in the organization with no tenancy and close
+                        this onboarding review. You can create or import a tenancy, or add
+                        this employee to a shared tenancy later from their employee record. Routine feed updates
+                        will not reopen this same onboarding review.
+                      </p>
+                    )}
                     {action === "no_tenancy_required" && (
                       <p className="notice">
                         Record that this employee needs no tenancy and close
@@ -942,7 +1013,9 @@ export function PersonActions({
                         termination impact.
                       </label>
                     )}
+                    {cleanupRequired && <><p className="notice">User removal does not clean resources, compartments or additional accounts. Coordinate manual cleanup with the current tenancy owner.</p><CleanupResponsibilities/></>}
                     {sharedWarning && (
+                      <>
                       <label className="workflow-check">
                         <input
                           type="checkbox"
@@ -954,9 +1027,27 @@ export function PersonActions({
                             edited();
                           }}
                         />
-                        I reviewed the shared tenancy impact and manual resource
-                        cleanup responsibilities.
+                        {cleanupRequired ? "I reviewed the shared tenancy impact and manual cleanup responsibilities." : action === "transfer_owner" ? "I reviewed the ownership change and retained access for this shared tenancy." : "I reviewed the shared tenancy impact."}
                       </label>
+                      </>
+                    )}
+                    {destructive && (
+                      <div className="alert destructive-confirmation">
+                        <p><strong>{action === "transfer_owner" ? "Confirm former-owner access removal" : "Review destructive action"}</strong></p>
+                        <p id="workflow-destructive-consequences">
+                          {action === "offboard_person" && <>Offboard {data.person.name} ({data.person.email}) using every association choice shown above. Kept associations remain tracked outside the organization.</>}
+                          {action === "delete_tenancy" && <>Initiate termination of {target?.tenancy_name ?? "the selected tenancy"} and its resources. Remove this tenancy association for {data.person.name} ({data.person.email}); employee directory status is unchanged.</>}
+                          {action === "remove_member" && <>Remove {data.person.name} ({data.person.email}) from {target?.tenancy_name ?? "the selected tenancy"}, including their user account and group access. Resources and compartments remain for manual cleanup. Employee directory status is unchanged.</>}
+                          {action === "transfer_owner" && <>Transfer {target?.tenancy_name ?? "the selected tenancy"} from {data.person.name} ({data.person.email}) to {data.transfer_recipients.find(p=>p.id===recipient)?.name ?? "the selected new owner"} ({data.transfer_recipients.find(p=>p.id===recipient)?.email ?? "choose a recipient"}). Remove the former owner's recorded user and group memberships after establishing the replacement owner. Resources, compartments and additional accounts remain for manual cleanup.</>}
+                          {action === "merge" && <>Merge {data.person.name} ({data.person.email}) with {data.merge_partners.find(p=>p.id===partner)?.name ?? "the selected identity"} ({data.merge_partners.find(p=>p.id===partner)?.email ?? "choose an identity"}). This is a one-way identity remap: the absent identity survives and keeps its tenancy associations.</>}
+                        </p>
+                        <label className="workflow-check">
+                          <input type="checkbox" required disabled={busy || preview.isFetching}
+                            aria-describedby="workflow-destructive-consequences" checked={acknowledged}
+                            onChange={event=>{setConsent(event.target.checked ? consentContext : null);setError("");}} />
+                          <span>I acknowledge the consequences of this action for the identified employee and tenancies.</span>
+                        </label>
+                      </div>
                     )}
                     {error && (
                       <div className="alert" role="alert">
@@ -981,13 +1072,16 @@ export function PersonActions({
                         Cancel
                       </button>
                       <button
-                        className="button primary"
-                        disabled={busy || !controls || !validCreation}
+                        className={destructive ? "button danger" : "button primary"}
+                        disabled={busy || !controls || !validCreation || !validTransfer || !validPlan || preview.isFetching
+                          || (destructive && !acknowledged)
+                          || (managerWarning && !confirmManager) || (sharedWarning && !confirmShared)
+                          || (action === "offboard_person" && data.associations.length === 0 && !confirmEmpty)}
                       >
                         {busy
                           ? "Saving…"
                           : action
-                            ? labels[action]
+                            ? action === "keep_without_tenancy" ? "Keep in organization" : labels[action]
                             : "Continue"}
                       </button>
                     </div>

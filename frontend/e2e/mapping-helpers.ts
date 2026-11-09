@@ -302,6 +302,7 @@ export async function departedMapping(page: Page) {
   await modal
     .getByRole("checkbox", { name: /I verified that no tenancy associations/ })
     .check();
+  await modal.getByRole("checkbox", {name:/I acknowledge the consequences/}).check();
   await modal
     .getByRole("button", { name: "Offboard employee", exact: true })
     .click();

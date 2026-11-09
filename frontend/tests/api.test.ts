@@ -283,6 +283,8 @@ it("transports scoped review/tenancy commands and refuses untrusted error codes"
   );
   await api.tenancy("tenant/id", signal);
   expect(fetch.mock.calls.at(-1)![0]).toBe("/api/tenancies/tenant%2Fid");
+  await api.requiredUsers("tenant/id", signal);
+  expect(fetch.mock.calls.at(-1)![0]).toBe("/api/tenancies/tenant%2Fid/required-users");
   const body = {
     client_request_key: "key",
     context: {
@@ -354,4 +356,15 @@ it("routes override and staged-plan transport through authenticated same-origin 
  await api.configurationPlan(id,signal);expect(fetch.mock.calls.at(-1)![0]).toBe("/api/configuration/plans/"+id);
  await api.reviewConfigurationPlan(id,{expected_revision:2,tenancy_id:key,policy_choice:"keep_override"},signal);expect(fetch.mock.calls.at(-1)![0]).toBe("/api/configuration/plans/"+id+"/reviews");
  expect(fetch.mock.calls.at(-1)![1]).toMatchObject({method:"POST",signal,credentials:"same-origin",cache:"no-store",headers:{"Content-Type":"application/json","X-OTM-Request":"1"}});
+});
+
+// Manual reads send only an opaque replay key through the protected child URL.
+it("posts a scoped required-user check without browser-selected authority", async () => {
+  const fetch = vi.fn().mockResolvedValue({ok:true,status:202,json:async()=>({operation_id:"operation"})});
+  vi.stubGlobal("fetch", fetch);
+  await api.checkRequiredUsers("tenant/id", {client_request_key:"request-key"});
+  expect(fetch).toHaveBeenCalledWith("/api/tenancies/tenant%2Fid/required-users/check", expect.objectContaining({
+    method:"POST", cache:"no-store", credentials:"same-origin",
+    body:JSON.stringify({client_request_key:"request-key"}),
+  }));
 });

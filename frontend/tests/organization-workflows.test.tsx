@@ -67,6 +67,7 @@ const association: AssociationView = {
   compartment_ocid: "ocid1.compartment.oc1..otmsimchild",
   compartment_name: "Employee sandbox",
   cleanup_required: false,
+  user_ocid: "ocid1.user.oc1..otmsimpersonal",
   operation_id: null,
   actions: ["transfer", "keep"],
 };
@@ -375,9 +376,8 @@ describe("Organization action dialogs", () => {
     );
     const first = await screen.findByLabelText("Action for " + tenant.name);
     fireEvent.submit(first.closest("form")!);
-    expect(
-      await screen.findByText("Choose an action for every association."),
-    ).toBeInTheDocument();
+    expect(c.submit).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", {name:"Offboard employee"})).toBeDisabled();
     await userEvent.selectOptions(first, "transfer");
     await userEvent.selectOptions(
       screen.getByLabelText("New owner for " + tenant.name),
@@ -392,6 +392,7 @@ describe("Organization action dialogs", () => {
       screen.getByLabelText(/I reviewed the shared tenancy impact/),
     );
     expect(screen.queryByLabelText(/Reason/)).toBeNull();
+    await userEvent.click(screen.getByLabelText(/I acknowledge the consequences/));
     await userEvent.click(
       screen.getByRole("button", { name: "Offboard employee" }),
     );
@@ -405,6 +406,7 @@ describe("Organization action dialogs", () => {
             association_id: id,
             action: "transfer",
             recipient_person_id: other,
+            former_owner_disposition: "remove",
           },
           {
             association_id: other,
@@ -445,9 +447,11 @@ describe("Organization action dialogs", () => {
           screen.getByLabelText("New owner"),
           other,
         );
+      if(action === "transfer_owner") await userEvent.selectOptions(screen.getByLabelText("Former owner"),"remove");
       await userEvent.click(
         screen.getByLabelText(/I reviewed the shared tenancy impact/),
       );
+      await userEvent.click(screen.getByLabelText(/I acknowledge the consequences/));
       fireEvent.submit(screen.getByLabelText("Tenancy").closest("form")!);
       await screen.findByText("Operation accepted");
       expect(c.submit).toHaveBeenCalledWith(
@@ -490,6 +494,8 @@ describe("Organization action dialogs", () => {
         await userEvent.click(
           screen.getByLabelText(/I verified that no tenancy associations/),
         );
+      if (action === "merge" || action === "offboard_person")
+        await userEvent.click(screen.getByLabelText(/I acknowledge the consequences/));
       fireEvent.submit(control.closest("form")!);
       await screen.findByText(
         action === "cancel_simulation"
@@ -1110,13 +1116,13 @@ it.each([
  ["superseded",false,0,["Not checked"]],
 ] as const)("links independent configuration messages for %s stale=%s confirmed=%s",async(state,stale,confirmed,messages)=>{
  vi.spyOn(api,"tenancies").mockResolvedValue({...inventory,items:[{...tenant,configuration_issue_count:confirmed,configuration_confirmed_issue_count:confirmed,configuration_check_state:state,configuration_check_stale:stale}]});const navigate=vi.fn();mount(<Tenancies identifier={null} expired={vi.fn()} navigate={navigate}/>);
- for(const label of messages){const link=await screen.findByRole("link",{name:`${label} for ${tenant.name}`});expect(link).toHaveAttribute("href",`/configuration/drift/${id}?returnTo=%2Ftenancies`);expect(link).toHaveClass(label==="Not checked"?"configuration-unverified":label==="Checking"?"waiting":"review-open");await userEvent.click(link);}
+ for(const label of messages){const link=await screen.findByRole("link",{name:`Config: ${label.replace(/^Configuration drift/,"Drift")} for ${tenant.name}`});expect(link).toHaveAttribute("href",`/configuration/drift/${id}?returnTo=%2Ftenancies`);expect(link).toHaveClass(label==="Not checked"?"configuration-unverified":label==="Checking"?"waiting":"review-open");await userEvent.click(link);}
  expect(navigate).toHaveBeenCalled();expect(screen.queryByText(/configuration issues/)).toBeNull();
 });
 
 // Healthy or unchecked rows do not acquire a spurious exception indicator.
 it("keeps a fresh matching inventory free of configuration warnings",async()=>{
- vi.spyOn(api,"tenancies").mockResolvedValue({...inventory,items:[{...tenant,configuration_issue_count:0,configuration_confirmed_issue_count:0,configuration_check_state:"matching"}]});mount(<Tenancies identifier={null} expired={vi.fn()} navigate={vi.fn()}/>);await screen.findByText(tenant.name);expect(screen.queryByRole("link",{name:/^(Configuration drift|Not checked|Matching|Check out of date|Unable to verify|Checking).*for/})).toBeNull();
+ vi.spyOn(api,"tenancies").mockResolvedValue({...inventory,items:[{...tenant,configuration_issue_count:0,configuration_confirmed_issue_count:0,configuration_check_state:"matching"}]});mount(<Tenancies identifier={null} expired={vi.fn()} navigate={vi.fn()}/>);await screen.findByText(tenant.name);expect(screen.queryByRole("link",{name:/^Config:.*for/})).toBeNull();
 });
 
 it.each([false,true])("links tenancy check status and preserves its detail return, stale=%s",async(stale)=>{
@@ -1141,4 +1147,180 @@ it.each(["create_tenancy","import_tenancy"] as const)("shows effective contacts 
  expect(contacts).toHaveTextContent("Original contact: "+employee.email);expect(contacts).toHaveTextContent("Test delivery: capture@example.test");
  expect(screen.getByText(employee.email,{selector:"span"})).toBeVisible();expect(within(contacts).queryByRole("textbox")).toBeNull();
  if(action==="create_tenancy")expect(within(contacts).getByText("Activation / bootstrap email")).toBeVisible();else {expect(within(contacts).queryByText("Activation / bootstrap email")).toBeNull();expect(within(contacts).getByText("Bootstrap contact email")).toBeVisible();}
+});
+
+// A presence-only pending check refreshes inventory even when lifecycle and cost jobs are idle.
+it("refreshes stored required-user summaries while checking and stops when complete",async()=>{
+  const read=vi.spyOn(api,"tenancies").mockResolvedValueOnce({...inventory,items:[{...tenant,required_users:{state:"not_checked",checking:true}}]})
+    .mockResolvedValue({...inventory,items:[{...tenant,required_users:{state:"present",checking:false,
+      automation:{state:"present",checked_at:time,operation_id:op},recovery:{state:"present",checked_at:time,operation_id:op}}}]});
+  const c=mount(<Tenancies identifier={null} expired={vi.fn()} navigate={vi.fn()}/>);
+  await screen.findByText("Checking…");
+  await screen.findByRole("link",{name:`Users: 2/2 present for ${tenant.name}`},{timeout:3500});
+  expect(read).toHaveBeenCalledTimes(2);
+  expect(screen.queryByText("Checking…")).not.toBeInTheDocument();
+  c.unmount();
+});
+
+// Revoked directory access hides previously visible user facts while the session is cleared.
+it("hides a retained required-user summary after inventory authorization is lost",async()=>{
+  const read=vi.spyOn(api,"tenancies").mockResolvedValue({...inventory,items:[{...tenant,required_users:{state:"present",
+    automation:{state:"present",checked_at:time,operation_id:op},recovery:{state:"present",checked_at:time,operation_id:op}}}]});
+  const expired=vi.fn();mount(<Tenancies identifier={null} expired={expired} navigate={vi.fn()}/>);
+  await screen.findByRole("link",{name:`Users: 2/2 present for ${tenant.name}`});
+  read.mockRejectedValue(new ApiError(403));
+  await userEvent.click(screen.getByRole("button",{name:/^Refresh$/}));
+  await screen.findByText("Tenancies could not be loaded. Use Refresh to try again.");
+  expect(screen.queryByRole("link",{name:/Users: 2\/2 present/})).not.toBeInTheDocument();
+  expect(expired).toHaveBeenCalled();
+});
+
+
+// Explicit consent blocks click, Enter and script-triggered submit before any destructive API call.
+it.each(["offboard_person", "delete_tenancy", "remove_member", "transfer_owner", "merge"] as const)(
+  "requires independent destructive consent for %s", async action => {
+    const c=dialog({...preview,actions:[action], associations:action==="offboard_person"||action==="merge"?[]:[{...association,tenancy_kind:"individual",actions:["delete","remove","transfer","keep"]}]},action);
+    const control=await screen.findByLabelText("Action");
+    if(action==="offboard_person")await userEvent.click(screen.getByLabelText(/I verified that no tenancy associations/));
+    if(["delete_tenancy","remove_member","transfer_owner"].includes(action))await userEvent.selectOptions(screen.getByLabelText("Tenancy"),id);
+    if(action==="transfer_owner"){await userEvent.selectOptions(screen.getByLabelText("New owner"),other);await userEvent.selectOptions(screen.getByLabelText("Former owner"),"remove");}
+    if(action==="merge")await userEvent.selectOptions(screen.getByLabelText("Matching identity"),other);
+    const ack=screen.getByLabelText(/I acknowledge the consequences/);expect(ack).not.toBeChecked();
+    const button=control.closest("form")!.querySelector<HTMLButtonElement>('button.danger')!;
+    expect(button).toBeDisabled();await userEvent.click(button);await userEvent.keyboard("{Enter}");
+    fireEvent.submit(control.closest("form")!);expect(c.submit).not.toHaveBeenCalled();
+    await userEvent.click(ack);expect(button).toBeEnabled();fireEvent.submit(control.closest("form")!);
+    await waitFor(()=>expect(c.submit).toHaveBeenCalledTimes(1));
+    expect(c.submit.mock.calls[0][0].confirm_destructive).toBe(true);
+  }
+);
+
+// Acknowledgment belongs to the reviewed target/plan and is cleared even on an identical reload.
+it("clears destructive consent on action, target, plan and refreshed preview",async()=>{
+  const another={...association,id:other,tenancy_id:other,tenancy_name:"Other tenancy",actions:["remove","keep"] as AssociationView["actions"]};
+  const c=dialog({...preview,actions:["remove_member","offboard_person"],associations:[{...association,actions:["remove","keep"]},another]},"remove_member");
+  const action=await screen.findByLabelText("Action");
+  await userEvent.selectOptions(screen.getByLabelText("Tenancy"),id);
+  const ack=()=>screen.getByLabelText(/I acknowledge the consequences/);
+  await userEvent.click(ack());await userEvent.selectOptions(screen.getByLabelText("Tenancy"),other);expect(ack()).not.toBeChecked();
+  await userEvent.click(ack());await userEvent.selectOptions(action,"offboard_person");expect(ack()).not.toBeChecked();
+  await userEvent.click(ack());await userEvent.selectOptions(screen.getByLabelText("Action for "+tenant.name),"keep");expect(ack()).not.toBeChecked();
+  await userEvent.click(ack());await c.client.invalidateQueries({queryKey:["person-workflow"]});
+  await waitFor(()=>expect(ack()).not.toBeChecked());expect(c.submit).not.toHaveBeenCalled();
+});
+
+
+// A simultaneous generic preview failure must not mask authorization loss in compartment discovery.
+it("expires when either required query loses authorization", async()=>{
+  const c=dialog(preview,"join_shared");
+  vi.mocked(api.tenancy).mockRejectedValue(new ApiError(401));
+  await userEvent.selectOptions(await screen.findByLabelText("Shared tenancy"),id);
+  await waitFor(()=>expect(c.expired).toHaveBeenCalled());
+  c.expired.mockClear();vi.mocked(api.personWorkflow).mockRejectedValue(new ApiError(503));
+  await c.client.invalidateQueries({queryKey:["person-workflow"]});
+  await waitFor(()=>expect(c.expired).toHaveBeenCalled());expect(c.submit).not.toHaveBeenCalled();
+});
+
+// Changing the recipient or identity pair always invalidates prior destructive consent.
+it.each(["transfer_owner","merge"] as const)("clears consent on %s recipient change", async action=>{
+  dialog({...preview,actions:[action],associations:[{...association,actions:["transfer","keep"]}],
+    transfer_recipients:[recipient,{id:op,name:"Another owner",email:"another@example.test"}],
+    merge_partners:[recipient,{id:op,name:"Another identity",email:"another@example.test"}]},action);
+  await screen.findByLabelText("Action");
+  if(action==="transfer_owner")await userEvent.selectOptions(screen.getByLabelText("Tenancy"),id);
+  const field=screen.getByLabelText(action==="merge"?"Matching identity":"New owner");
+  await userEvent.selectOptions(field,other);
+  if(action==="transfer_owner")await userEvent.selectOptions(screen.getByLabelText("Former owner"),"remove");
+  const ack=screen.getByLabelText(/I acknowledge the consequences/);await userEvent.click(ack);
+  await userEvent.selectOptions(field,op);expect(ack).not.toBeChecked();
+  await userEvent.selectOptions(field,other);expect(ack).not.toBeChecked();
+});
+
+// Keeping an employee closes onboarding without an exemption, cloud job or destructive consent.
+it("keeps an employee in the normal directory without provisioning",async()=>{
+ const c=dialog({...preview,actions:[...preview.actions,"keep_without_tenancy"]},"keep_without_tenancy");
+ c.submit.mockResolvedValue({operation_id:null,state:"succeeded",provider_mode:"application",accepted_at:time});
+ await screen.findByRole("button",{name:/^Keep in organization$/});
+ expect(screen.queryByRole("checkbox")).toBeNull();
+ await userEvent.click(screen.getByRole("button",{name:/^Keep in organization$/}));
+ await screen.findByText("Decision saved",{exact:true});
+ expect(c.submit).toHaveBeenCalledTimes(1);
+ expect(c.submit.mock.calls[0][0].action).toBe("keep_without_tenancy");
+ expect(screen.queryByRole("link",{name:"View operation"})).toBeNull();
+});
+
+// The tenancy shortcut is available only on active shared tenancies, with busy work protected.
+it.each([
+ ["shared","active",false,true,false], ["shared","active",true,true,true],
+ ["individual","active",false,false,false], ["shared","terminated",false,false,false],
+] as const)("gates the add-member shortcut for %s/%s busy=%s",async(kind,status,busy,visible,disabled)=>{
+ vi.spyOn(api,"tenancy").mockResolvedValue({...detail,tenancy:{...tenant,kind,status,has_pending_operation:busy}});
+ mount(<Tenancies identifier={id} expired={vi.fn()} navigate={vi.fn()}/>);
+ await screen.findByText("Accountability & registration");
+ const button=screen.queryByRole("button",{name:"Add member"});
+ if(visible){expect(button).toBeVisible();expect(button).toHaveClass("secondary");if(disabled)expect(button).toBeDisabled();else expect(button).toBeEnabled();}
+ else expect(button).toBeNull();
+});
+
+// Retaining an owner is an explicit, neutral mapping choice, never silent privilege reduction.
+it("keeps the former owner's identity without destructive consent",async()=>{
+ const c=dialog({...preview,actions:["transfer_owner"],associations:[{...association,actions:["transfer","keep"]}]},"transfer_owner");
+ await userEvent.selectOptions(await screen.findByLabelText("Tenancy"),id);
+ await userEvent.selectOptions(screen.getByLabelText("New owner"),other);
+ expect(screen.getByLabelText("Former owner")).toHaveValue("");
+ fireEvent.submit(screen.getByLabelText("Action").closest("form")!);expect(c.submit).not.toHaveBeenCalled();
+ await userEvent.selectOptions(screen.getByLabelText("Former owner"),"keep_member");
+ expect(screen.getByText(/including any administrator access/)).toBeVisible();
+ expect(screen.queryByText("Review destructive action")).toBeNull();
+ expect(screen.queryByLabelText(/I acknowledge the consequences/)).toBeNull();
+ await userEvent.click(screen.getByLabelText(/I reviewed the ownership change and retained access/));
+ const submit=screen.getByRole("button",{name:"Transfer tenancy ownership"});expect(submit).toHaveClass("primary");
+ await userEvent.click(submit);await screen.findByText("Operation accepted");
+ expect(c.submit.mock.calls[0][0]).toMatchObject({action:"transfer_owner",former_owner_disposition:"keep_member",recipient_person_id:other});
+ expect(c.submit.mock.calls[0][0].confirm_destructive).toBeUndefined();
+});
+
+// Changing retention/removal invalidates both target-specific and destructive acknowledgments.
+it("reviews explicit identity removal and makes cleanup instructions optional",async()=>{
+ const c=dialog({...preview,actions:["transfer_owner"],associations:[{...association,actions:["transfer","keep"]}]},"transfer_owner");
+ await userEvent.selectOptions(await screen.findByLabelText("Tenancy"),id);
+ await userEvent.selectOptions(screen.getByLabelText("New owner"),other);
+ const choice=screen.getByLabelText("Former owner");await userEvent.selectOptions(choice,"remove");
+ expect(screen.getByText(/Confirm former-owner access removal/)).toBeVisible();
+ const summary=screen.getByText("Manual cleanup responsibilities",{selector:"summary"});
+ expect(summary.closest("details")).not.toHaveAttribute("open");
+ await userEvent.click(summary);expect(screen.getByText(/If a dedicated compartment was created/)).toBeVisible();
+ expect(screen.getByText(/Review additional users, API keys/)).toBeVisible();
+ await userEvent.click(screen.getByLabelText(/I reviewed the shared tenancy impact/));
+ await userEvent.click(screen.getByLabelText(/I acknowledge the consequences/));
+ await userEvent.selectOptions(choice,"keep_member");
+ await userEvent.selectOptions(choice,"remove");
+ expect(screen.getByLabelText(/I acknowledge the consequences/)).not.toBeChecked();
+ expect(screen.getByLabelText(/I reviewed the shared tenancy impact/)).not.toBeChecked();
+ fireEvent.submit(screen.getByLabelText("Action").closest("form")!);expect(c.submit).not.toHaveBeenCalled();
+});
+
+// The offboarding variant also fails closed when its exact outgoing identity is unavailable.
+it("blocks offboard-transfer removal without a bound identity",async()=>{
+ const c=dialog({...preview,source_present:false,actions:["offboard_person"],associations:[{...association,user_ocid:null,actions:["transfer","keep"]}]},"offboard_person");
+ await userEvent.selectOptions(await screen.findByLabelText("Action for "+tenant.name),"transfer");
+ await userEvent.selectOptions(screen.getByLabelText("New owner for "+tenant.name),other);
+ expect(screen.getByText(/Not recorded — automated removal is unavailable/)).toBeVisible();
+ await userEvent.click(screen.getByLabelText(/I reviewed the shared tenancy impact/));
+ await userEvent.click(screen.getByLabelText(/I acknowledge the consequences/));
+ expect(screen.getByRole("button",{name:"Offboard employee"})).toBeDisabled();
+ fireEvent.submit(screen.getByLabelText("Action").closest("form")!);expect(c.submit).not.toHaveBeenCalled();
+ await userEvent.selectOptions(screen.getByLabelText("Former owner for "+tenant.name),"keep_member");
+ expect(screen.getByText(/including any administrator access/)).toBeVisible();
+ expect(screen.getByText("Review destructive action")).toBeVisible();
+});
+
+// Individual-tenancy removal has the same resource/account cleanup explanation as shared removal.
+it("shows cleanup responsibilities for individual owner transfer",async()=>{
+ dialog({...preview,actions:["transfer_owner"],associations:[{...association,tenancy_kind:"individual",actions:["transfer","keep"]}]},"transfer_owner");
+ await userEvent.selectOptions(await screen.findByLabelText("Tenancy"),id);
+ await userEvent.selectOptions(screen.getByLabelText("New owner"),other);
+ expect(screen.queryByRole("option",{name:/Keep as a member/})).toBeNull();
+ await userEvent.selectOptions(screen.getByLabelText("Former owner"),"remove");
+ expect(screen.getByText("Manual cleanup responsibilities",{selector:"summary"})).toBeVisible();
 });

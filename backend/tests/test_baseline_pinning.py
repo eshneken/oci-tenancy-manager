@@ -99,6 +99,7 @@ def test_admission_pin_and_legacy_intent(registry):
     assert frozen.intent.baseline == baseline
     legacy = dict(event["data"])
     legacy["intent"] = {key: value for key, value in legacy["intent"].items() if key != "baseline"}
+    legacy["intent"].pop("presence_connection_contract", None)
     legacy["intent"]["onboarding_version"] = 1
     assert IntentEventData.model_validate_json(json.dumps(legacy)).intent.baseline is None
 

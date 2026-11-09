@@ -509,6 +509,12 @@ input {
   gap: 18px;
   padding: 20px;
 }
+.tenancy-members-toolbar {
+  align-items: center;
+}
+.tenancy-members-toolbar h2 {
+  margin: 0;
+}
 .search-field {
   min-width: 0;
   max-width: 350px;
@@ -1701,7 +1707,7 @@ dialog p {
 .tenancy-status-info:not([data-tooltip-dismissed]):hover .tenancy-created-tooltip,
 .tenancy-status-info:not([data-tooltip-dismissed]):focus-within .tenancy-created-tooltip { visibility: visible; }
 .tenancy-overrides h2 { margin-top: 0; }
-.tenancy-overrides .tenancy-override-actions { margin-bottom: 0; }
+.tenancy-overrides .tenancy-override-actions { margin: 0; }
 
 /* Bounded role names stay intact while the membership table scrolls on narrow screens. */
 .tenancy-member-role { white-space: nowrap; min-width: 5rem; }
@@ -1777,3 +1783,69 @@ dialog p {
 /* Paired root identity fields share a row and stack naturally on small screens. */
 .mapping-root-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 1rem; margin-top: 1rem; }
 .mapping-root-fields label { display: grid; gap: .5rem; min-width: 0; }
+
+
+/* Required identities are neutral records, never green access-health confirmations. */
+.required-users-heading { margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.required-users-heading h2 { margin:0; }
+.required-users-heading .button { min-height:44px; }
+.required-users-grid { align-items:start; list-style:none; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; padding:0; margin:20px 0 0; }
+.required-user-card { min-width:0; padding:18px; border:1px solid #d4deea; border-radius:3px; background:#f8fafc; }
+.required-user-card h3 { margin:0 0 16px; font-size:16px; line-height:1.4; }
+.required-user-facts { margin:0; display:grid; gap:12px; }
+.required-user-facts dt { color:#5b6877; font-size:12px; margin-bottom:4px; }
+.required-user-facts dd { margin:0; overflow-wrap:anywhere; }
+.required-user-state { background:#e8eef6; color:#33465e; }
+.required-user-details { margin-top:16px; border-top:1px solid #d4deea; }
+.required-user-details summary { min-height:44px; padding:12px 0; cursor:pointer; font-weight:600; }
+.required-user-details .required-user-facts { padding:8px 0 0; }
+@media(max-width:900px) { .required-users-grid { grid-template-columns:minmax(0,1fr); } }
+
+.required-users-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.required-users .presence-missing{background:#fee2e2;color:#991b1b}@media(max-width:420px){.required-users-actions{width:100%}.required-users-actions>.button{flex:1 1 100%}}
+
+/* Keep the hidden accessible description inside the horizontally scrolling table. */
+.required-users-inventory{position:relative;display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:6px}.required-users-inventory-link{max-width:100%;white-space:normal;overflow-wrap:anywhere}.required-users-inventory .muted{font-size:12px}#required-users-title{scroll-margin-top:24px}
+
+/* Optional procedures stay compact; required fields, consent and live warnings remain outside. */
+.operator-instructions { margin-block:16px; border:1px solid #d7dfe7; border-radius:3px; background:#fff; min-width:0; }
+.operator-instructions > summary { min-height:44px; padding:12px 16px; cursor:pointer; font-weight:600; overflow-wrap:anywhere; }
+.operator-instructions[open] > summary { border-bottom:1px solid #d7dfe7; }
+.operator-instructions-body { padding:16px; overflow-wrap:anywhere; }
+.operator-instructions-body > :last-child { margin-bottom:0; }
+
+/* Keep laptop summaries paired without constraining a panel that is shown alone. */
+.tenancy-summary-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; margin-block:24px; align-items:stretch; }
+.tenancy-summary-grid > .operation-panel { min-width:0; margin:0; }
+.tenancy-summary-grid > .operation-panel:only-child { grid-column:1 / -1; }
+
+/* Compact status pairs; long identifiers and dated evidence retain a full readable row. */
+.required-user-card > .required-user-facts { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.required-user-card > .required-user-facts > div { min-width:0; }
+.required-user-fact-wide { grid-column:1 / -1; }
+@media(max-width:1000px) {
+  .tenancy-summary-grid { grid-template-columns:minmax(0,1fr); }
+}
+@media(max-width:700px) {
+  .required-user-card > .required-user-facts { grid-template-columns:minmax(0,1fr); }
+}
+
+/* Dated check links form one compact footer after all status badges, before identity details. */
+.required-user-checks { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin:16px 0 0; padding-top:12px; border-top:1px solid #d4deea; }
+.required-user-checks > div { min-width:0; display:flex; flex-direction:column; }
+.required-user-checks dt { color:#5b6877; font-size:12px; margin-bottom:4px; }
+.required-user-checks dd { margin:auto 0 0; overflow-wrap:anywhere; }
+@media(max-width:700px) { .required-user-checks { grid-template-columns:minmax(0,1fr); } }
+
+/* Recovery uses six tracks: three short overview facts, then two wider policy controls. */
+.required-user-card > .required-recovery-facts { grid-template-columns:repeat(6,minmax(0,1fr)); }
+.required-recovery-facts > div:not(.required-user-fact-wide) { grid-column:span 3; }
+.required-recovery-facts > div.required-user-overview-fact { grid-column:span 2; }
+@media(max-width:700px) {
+  .required-user-card > .required-recovery-facts { grid-template-columns:minmax(0,1fr); }
+  .required-user-card > .required-recovery-facts > div { grid-column:1 / -1; }
+}
+/* Compact paired headers give both actions the same second row before their titles compress. */
+@media(min-width:1001px) and (max-width:1150px) {
+  .tenancy-summary-grid .cost-panel-heading { display:grid; grid-template-columns:minmax(0,1fr); }
+  .tenancy-summary-grid .cost-panel-heading > :not(h2) { justify-self:end; }
+}

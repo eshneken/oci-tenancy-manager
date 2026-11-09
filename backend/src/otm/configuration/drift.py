@@ -71,10 +71,18 @@ def check_rows(connection, workspace, identifier=None):
     query = (
         select(
             tenancy,
+            operation.c.state.label("reserved_operation_state"),
             baseline_version.c.version_number.label("assigned_version"),
             tenancy_configuration.c.policy_override_statements,
             tenancy_configuration.c.quota_override_statements,
             tenancy_configuration.c.monthly_budget_override_amount,
+        )
+        .outerjoin(
+            operation,
+            and_(
+                operation.c.workspace_id == tenancy.c.workspace_id,
+                operation.c.id == tenancy.c.operation_id,
+            ),
         )
         .outerjoin(
             baseline_version,

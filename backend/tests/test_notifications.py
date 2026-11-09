@@ -1,5 +1,6 @@
 """Offline delivery qualification across authority, routing, durable heads and SMTP uncertainty."""
 
+import json
 import smtplib
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
@@ -203,7 +204,7 @@ def test_stager_duplicate_and_non_notice_states(notice):
                 )
                 is None
             )
-        c.frozen.intent.action = "delete_tenancy"
+        c.frozen.intent.action = "no_tenancy_required"
         assert LifecycleNotifier(c.policy, c.queue).stage(c.connection, c.operation, AT) is None
     c.queue.enqueue.assert_not_called()
 
@@ -581,3 +582,109 @@ def test_stager_local_missing_override_blocks_original(notice):
         if getattr(call.args[0], "is_insert", False)
     )
     assert inserted.compile().params["state"] == "blocked"
+
+
+# Supported cloud lifecycle actions retain the same responsible-only routing and frozen intent.
+@pytest.mark.parametrize(
+    "action",
+    ["join_shared", "remove_member", "transfer_owner", "offboard_person", "delete_tenancy"],
+)
+@pytest.mark.parametrize("state", ["needs_attention", "failed"])
+def test_non_onboarding_lifecycle_notices(notice, action, state):
+    c = notice
+    c.frozen.intent = SimpleNamespace(action=action, onboarding_version=None)
+    c.operation.update(state=state, stage="Review lifecycle operation", wait_reason=None)
+    c.connection.execute.return_value.mappings.return_value.all.return_value = []
+    c.connection.execute.return_value.mappings.return_value.one_or_none.return_value = c.grant
+    c.connection.scalar.return_value = None
+    p = stager_patches(c)
+    with (
+        p[0],
+        p[1] as read,
+        p[2],
+        patch("otm.notifications.service.latest_claim", return_value=None),
+    ):
+        identifier = LifecycleNotifier(c.policy, c.queue).stage(c.connection, c.operation, AT)
+        read.assert_called_once_with(c.connection, c.operation, onboarding_only=False)
+    c.queue.enqueue.assert_called_once_with(c.connection, identifier)
+    data = next(
+        call.args[0].compile().params["intent"]
+        for call in c.connection.execute.call_args_list
+        if getattr(call.args[0], "is_insert", False)
+    )
+    intent = NotificationIntent.model_validate_json(json.dumps(data))
+    assert intent.administrator_id == c.grant["id"]
+    assert intent.original_recipient == c.grant["email"]
+    assert intent.delivery_recipient == "capture@example.test"
+    assert intent.event == ("terminal_failure" if state == "failed" else "action_required")
+
+
+# Local organization decisions and legacy unguided onboarding never become email-capable handoffs.
+@pytest.mark.parametrize(
+    "action,version",
+    [
+        ("ignore", None),
+        ("resolve", None),
+        ("merge", None),
+        ("reonboard", None),
+        ("mark_returned", None),
+        ("cancel_simulation", None),
+        ("create_tenancy", None),
+        ("import_tenancy", None),
+    ],
+)
+def test_unrelated_or_legacy_actions_do_not_stage(notice, action, version):
+    c = notice
+    c.frozen.intent = SimpleNamespace(action=action, onboarding_version=version)
+    with (
+        patch("otm.notifications.service.require_transaction"),
+        patch("otm.notifications.service.load_intent", return_value=c.frozen),
+    ):
+        assert LifecycleNotifier(c.policy, c.queue).stage(c.connection, c.operation, AT) is None
+    c.queue.enqueue.assert_not_called()
+    c.connection.execute.assert_not_called()
+
+
+# Non-onboarding mail reads the same authenticated intent while keeping every send-time fence.
+def test_non_onboarding_delivery_authenticates_original_intent(notice):
+    c = notice
+    c.frozen.intent = SimpleNamespace(action="delete_tenancy", onboarding_version=None)
+    p = context_patches(c)
+    with p[0] as read, p[1]:
+        assert c.worker._context_issue(c.connection, c.row, c.operation, c.intent) is None
+        read.assert_called_once_with(c.connection, c.operation, onboarding_only=False)
+    with (
+        patch.object(c.worker, "_locked", return_value=(c.row, c.operation)),
+        patch.object(c.worker, "_context_issue", return_value=None),
+        patch("otm.notifications.worker.record_evidence"),
+    ):
+        envelope, _ = c.worker._prepare(c.row["id"])
+    assert envelope.subject == "Tenancy operation requires your attention"
+    assert str(c.operation["id"]) in envelope.body and c.operation["stage"] in envelope.body
+
+
+# Only explicitly implemented human waits notify; provider waits and routine work remain silent.
+@pytest.mark.parametrize(
+    "state,reason",
+    [
+        ("queued", None),
+        ("running", None),
+        ("succeeded", None),
+        ("cancelled", None),
+        ("waiting", None),
+        ("waiting", "provider_reconciliation"),
+        ("waiting", "provider_retry"),
+    ],
+)
+def test_no_nonhuman_lifecycle_notice(notice, state, reason):
+    c = notice
+    c.frozen.intent = SimpleNamespace(action="delete_tenancy", onboarding_version=None)
+    c.operation.update(state=state, wait_reason=reason)
+    with (
+        patch("otm.notifications.service.require_transaction"),
+        patch("otm.notifications.service.load_intent", return_value=c.frozen),
+        patch.object(LifecycleNotifier, "_supersede") as supersede,
+    ):
+        assert LifecycleNotifier(c.policy, c.queue).stage(c.connection, c.operation, AT) is None
+        supersede.assert_called_once_with(c.connection, c.operation, AT)
+    c.queue.enqueue.assert_not_called()

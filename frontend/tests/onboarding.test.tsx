@@ -125,9 +125,13 @@ describe("Guided tenancy setup", () => {
   });
 
   // OCI guidance distinguishes request/tenancy IDs and public-key upload from key generation.
-  it("provides documented child-console steps without asking for private credentials", async () => {
-    mount();
-    await screen.findByRole("heading", { name: "OCI administrator checklist" });
+  it("provides optional child-console steps without hiding handoff controls", async () => {
+    const c=mount();
+    const checklist=await screen.findByText("OCI administrator checklist",{selector:"summary"});
+    expect(checklist.closest("details")).not.toHaveAttribute("open");
+    expect(screen.getByText(/A work-request ID is not a tenancy OCID/)).not.toBeVisible();
+    expect(screen.getByLabelText("Tenancy OCID")).toBeVisible();
+    await userEvent.click(checklist);
     expect(screen.getByText(/A work-request ID is not a tenancy OCID/)).toBeInTheDocument();
     expect(screen.getByText(/Domain roles and the OCI Administrators group are separate grants/)).toBeInTheDocument();
     expect(screen.getByText(/Do not generate a different key pair/)).toBeInTheDocument();
@@ -139,6 +143,11 @@ describe("Guided tenancy setup", () => {
     }
     expect(screen.getByRole("link", { name: "Assign the domain role" })).toHaveAttribute("href", "https://docs.oracle.com/en-us/iaas/Content/Identity/users/assign-users-roles.htm");
     expect(screen.queryByLabelText(/password|private key|MFA code/i)).toBeNull();
+    await userEvent.click(checklist);
+    expect(checklist.closest("details")).not.toHaveAttribute("open");
+    expect(screen.getByLabelText("Tenancy OCID")).toBeVisible();
+    expect(screen.getByRole("button",{name:"Use simulated handoff"})).toBeVisible();
+    expect(c.write).not.toHaveBeenCalled();
   });
 
   // Start requires explicit consent to the exact verified cleanup targets after a reload-safe preview.
@@ -179,6 +188,7 @@ describe("Guided tenancy setup", () => {
     expect(c.write).toHaveBeenCalledWith(identifier, expect.objectContaining({
       handoff: { ...handoff, activation_user_ocid: null },
     }), expect.any(AbortSignal));
+    await userEvent.click(screen.getByText("OCI administrator checklist",{selector:"summary"}));
     await userEvent.click(screen.getByText("Oracle transfer procedures"));
     expect(screen.getByRole("link", { name: "Transfer a created child (approval uses the CLI)" })).toBeVisible();
     expect(screen.queryByRole("link", { name: "Oracle activation guide" })).toBeNull();
