@@ -25,7 +25,7 @@ organization, delete a tenancy or change OCI. Use an employee designated for you
    users Present, and both recovery-policy controls **Verified in simulation**. Automation administrator assignments are now checked separately; broader effective
    permissions and password readiness remain unverified; no password-disclosure button is added.
    Import uses the same exact-source validation; it does not trust a matching user name.
-5. Check the separately labeled presence/policy dates and follow **View policy check** into Operations.
+5. Check the separately labeled presence/policy dates and follow the **Policy checked (UTC)** date link into Operations.
    Completion means the read finished; individual results remain on the tenancy. No configured
    source-network list appears in the operation or ordinary audit/CSV projections.
 6. Navigate away and return, then reload the browser. The dated stored results should persist without

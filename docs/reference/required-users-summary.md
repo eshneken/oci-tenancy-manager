@@ -9,7 +9,8 @@ Inventory configuration badges now use a separate Config: prefix (for example Co
 Config: Unable to verify and Config: Drift · 1 category), while this link uses Users:. Their accessible
 names match their visible prefixes. Configuration labels inside detail retain their section context.
 The badge describes existence in the selected local simulator, not permissions, usable credentials,
-MFA or recovery readiness. Its description explicitly says simulation and Permissions are not checked.
+MFA or recovery readiness. Its description explicitly scopes this badge to simulated existence. Separate assignment and
+recovery-policy indicators do not imply password readiness or all effective permissions.
 
 ## Complete field map
 
@@ -24,14 +25,19 @@ Not checked default until enriched. It is not an independently writable registry
 | automation | Existing four-field UserPresenceView for the exact automation subject. Independent default not_checked/null/false/null. |
 | recovery | Existing four-field UserPresenceView for the exact recovery subject, with the same independent defaults. |
 | checking | True when a queued/running required_user_check has a valid immutable intent and the same current context hash. False by default; pending work never becomes a positive existence result. |
+| recovery_console | Independent derived RecoveryConsoleView from sealed recovery policy evidence; defaults not_checked. Same projection as detail, not inferred from account presence. |
+| administrator_access | Automation AdministratorAccessView: group, domain_role, stale, checked_at, operation_id; default not_checked without retained proof. |
+| recovery_administrator_access | Independent recovery AdministratorAccessView with the same five fields/defaults; never substitutes for automation assignments or credential readiness. |
 | UserPresenceView.state, on each subject | not_checked/present/missing/unknown from that subject's validated observation. The aggregate names unknown as unavailable; it does not change the per-user result. |
 | checked_at, on each subject | That observation's captured_at, nullable. Exposed in the title/accessible description in UTC; never copied from aggregate completion or the other account. |
 | stale, on each subject | The shared server UTC age rule: stale at 24 hours or for a future timestamp. No independent summary freshness threshold is introduced. |
 | operation_id, on each subject | Exact retained check UUID, nullable; provenance stays available in the expanded Required users cards. |
 
-RequiredUsersSummary has four fields: state, automation, recovery and checking. Each of the two
-nested UserPresenceView values has four fields; their model is reused, not a new observation schema.
-The [22-field Required users directory](required-users-screen.md) is unchanged. All 75 generated
+RequiredUsersSummary now has seven fields: state, automation, recovery, checking, recovery_console,
+administrator_access and recovery_administrator_access. Each nested UserPresenceView still has
+four fields; its existence model is reused rather than replaced. The
+[required-user directory](required-users-screen.md), [assignment field map](administrator-assignments.md)
+and [recovery-policy field map](recovery-console-verification.md) describe the independent extensions. All 75 generated
 public schema files remain the same inventory; nested tenancy schemas/types reflect the additive
 field. Python validation remains authoritative.
 

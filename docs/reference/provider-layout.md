@@ -63,3 +63,7 @@ Not checked. Legacy unbound/unconfigured children cannot check. Simulation recon
 producer fixtures and does not verify live OCI. Assignments/profiles are deferred until separately
 needed for privileges/repair; no credential IDs are fabricated. Daily scheduling, emails, credential
 custody, readiness and repair remain outside this checkpoint. Local simulation qualification and the main-preview upgrade pass; the parallel preview is unchanged. [Final receipt](../history/manual-presence-checkpoint-2026-11-06.md).
+
+Current user-facing terminology and independently implemented assignment checks are described in
+[Required users](required-users-screen.md) and the [assignment field map](administrator-assignments.md).
+The extraction checkpoint itself did not add those later capabilities.

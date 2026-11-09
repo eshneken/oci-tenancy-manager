@@ -91,7 +91,8 @@ other privileged caches. No private preview survives into another administrator'
 
 ## Directory/consent correction — source checkpoint
 
-Qualification/reviews and preview updates are pending for the correction above. Existing
+Local qualification, independent reviews and preserved-preview publication pass for the
+[completed correction](../history/employee-restoration-consent-checkpoint-2026-11-06.md). Real OCI remains unqualified. Existing
 TenancyDeletionCommand still has seven fields and requires confirm_deletion with manager/shared
 impact acknowledgments. Its preview change is semantic only: DeletionPerson.leaves_directory is
 always false. Person-centric OrganizationAction deletion separately requires the new explicit

@@ -128,15 +128,26 @@ SMTP/browser fixtures cover these conditions:
 
 ## 6. Exercise both offline release paths
 
-These commands parse nonsecret example files only, without SMTP/OCI/Vault/deployment credentials.
-The expected environment must come from the trusted deployment target, not be copied from the
-candidate file in a real pipeline. Run the independent gate for both release kinds.
+The tracked hosted templates intentionally omit operational recovery-console networks. Validating
+those templates directly is expected to return RELEASE_SETTINGS_REJECTED. First supply the approved
+comma-separated CIDRs through the protected operator environment variable
+`OTM_RECOVERY_CONSOLE_ALLOWED_CIDRS`, then render private candidates as described in the
+[recovery-console guide](../reference/recovery-console-verification.md#private-candidate-rendering).
+Never put actual ranges in commands, repository files, logs or CI artifacts.
+
+These offline commands require no OCI/Vault/SMTP credentials and perform no deployment. Use unused
+output filenames: the renderer exclusively creates owner-only files and refuses existing paths.
+The expected environment comes from the trusted deployment target, not the candidate itself.
 
 ```sh
-uv run --project backend otm-validate-release --config backend/config/staging.application.toml --expected-environment staging --release-kind application
-uv run --project backend otm-validate-release --config backend/config/staging.application.toml --expected-environment staging --release-kind configuration
-uv run --project backend otm-validate-release --config backend/config/production.application.toml --expected-environment production --release-kind application
-uv run --project backend otm-validate-release --config backend/config/production.application.toml --expected-environment production --release-kind configuration
+umask 077
+mkdir -p .local-dev/release-candidates
+uv run --project backend otm-validate-release --config backend/config/staging.application.toml --expected-environment staging --release-kind configuration --render-recovery-console-from-env .local-dev/release-candidates/staging.application.toml
+uv run --project backend otm-validate-release --config backend/config/production.application.toml --expected-environment production --release-kind configuration --render-recovery-console-from-env .local-dev/release-candidates/production.application.toml
+uv run --project backend otm-validate-release --config .local-dev/release-candidates/staging.application.toml --expected-environment staging --release-kind application
+uv run --project backend otm-validate-release --config .local-dev/release-candidates/staging.application.toml --expected-environment staging --release-kind configuration
+uv run --project backend otm-validate-release --config .local-dev/release-candidates/production.application.toml --expected-environment production --release-kind application
+uv run --project backend otm-validate-release --config .local-dev/release-candidates/production.application.toml --expected-environment production --release-kind configuration
 ```
 
 Examples intentionally keep hosted notifications disabled and contain synthetic placeholders; a
@@ -147,7 +158,8 @@ application origin. Do not temporarily weaken a live production file to run a ne
 
 The application and configuration deployment paths must each run this gate before delivery/OCI
 credentials or apply, with their proper candidate/deployed-compatible schema and normal environment
-lock. No GitHub Actions or hosted deployment is installed by this runbook.
+lock. Hosted checkpoint CI is established. OCI application/configuration delivery pipelines remain
+implementation work; this runbook does not install or qualify a hosted deployment.
 
 ## Remaining qualification
 

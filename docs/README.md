@@ -146,3 +146,7 @@ records the compact three-fact layout and aligned cost/override header actions.
 The [Recovery overview and matching header actions checkpoint](history/check-date-footer-local-session-checkpoint-2026-11-09.md#recovery-overview-and-matching-header-actions) records final responsive qualification and unchanged data/settings.
 
 - [Recovery assignments UI checkpoint](history/recovery-assignments-checkpoint-2026-11-09.md): independent recovery group/role results and compact permission summary.
+
+The backend [implementation overview](../backend/README.md) and current required-user field dictionaries
+were reconciled during the whole-milestone publication audit. Historical checkpoint counts retain
+their original scope; current application metadata contains 25 OTM tables through migration 0025.

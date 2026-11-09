@@ -52,7 +52,7 @@ Missing/routing/delivery is exercised by disposable automated tests, without pro
   again. Do not interpret a request error as proof that no operation was accepted.
 - A failed record refresh explicitly labels retained data. Expired/unauthorized access hides facts
   and requires sign-in. No provider work runs on GET.
-- Review desktop/tablet/mobile widths and keyboard focus: cards align, stack below 700px, long
+- Review desktop/tablet/mobile widths and keyboard focus: cards align, stack at 900px and below (inner facts/date footers at 700px and below), long
   IDs remain contained and the Refresh user data/disclosure/source links stay reachable.
 - Optional, only for a disposable simulated child: initiate deletion through the existing guard.
   Reopen its saved detail URL; retained retired identities are history, and Refresh user data is disabled.
