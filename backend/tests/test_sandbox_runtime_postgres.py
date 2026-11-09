@@ -328,7 +328,9 @@ def run_browser_runtime(c, script, extra=None):
             env=browser_env,
             capture_output=True,
             text=True,
-            timeout=180,
+            # The simulation journey retains its existing 210s Playwright deadline; allow
+            # startup/cleanup overhead here without extending any other browser journey.
+            timeout=240 if script == "e2e/simulation.spec.ts" else 180,
         )
         output = result.stdout + result.stderr + (c.root / "browser-worker.log").read_text()
         for private in (
