@@ -1126,9 +1126,19 @@ column, migration, privilege qualification, live OCI adapter or identity repair 
 ## Recovery security implementation sequence — 7 November 2026
 
 The [current source and qualified read-only UI checkpoint](../reference/recovery-console-verification.md)
-record the approved chapter22 progress without claiming a working disclosure flow. Batch settings/typed
+record the approved chapter 22 progress without claiming a working disclosure flow. Batch settings/typed
 policy evidence, setup and ongoing validation, UI/guarded propagation, password custody/rotation and
 30-day key retirement into coherent working checkpoints. Reuse current operation/audit/storage
 boundaries; do not introduce a parallel coordinator or infer readiness from presence. Run focused
 units/static checks internally and the complete integration suite at the end-user UI checkpoint.
 No saved preview or real provider is enabled from a library-only result.
+
+
+## Narrow recovery-network repair source checkpoint — 9 November 2026
+
+[The implemented field map/runbook](../reference/recovery-network-repair.md) adds one conditional
+perimeter-only operation in the explicit simulator. Migration 0026 extends operation/audit/step
+constraint branches; it adds no table or column. Exact source/desired/preview hashes live in typed
+immutable intent; scoped authority/compare token is durable step evidence before dispatch. Unknown
+writes remain held without retry. Full PostgreSQL/native/browser qualification, responsive review and preserved main-preview
+publication pass in the [final receipt](../history/recovery-network-repair-checkpoint-2026-11-09.md). Real OCI and credential flows remain pending.

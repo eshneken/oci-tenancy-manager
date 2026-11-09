@@ -145,6 +145,19 @@ def create_local_application():
             if workflow.policy
             else None,
         )
+        from otm.providers.recovery_network_simulator import simulated_network_repair
+        from otm.storage.enqueue import RECOVERY_NETWORK_TASK
+        from otm.tenancies.recovery_network import RecoveryNetworkRepairs
+
+        workflow.recovery_network_repairs = RecoveryNetworkRepairs(
+            workflow.presence_checks,
+            simulated_network_repair,
+            InspectionEnqueuer(
+                queue=workspace_queue(settings.local_auth.workspace_id), task=RECOVERY_NETWORK_TASK
+            )
+            if workflow.policy
+            else None,
+        )
 
         from otm.financial.service import CostCollections
         from otm.storage.enqueue import COST_TASK

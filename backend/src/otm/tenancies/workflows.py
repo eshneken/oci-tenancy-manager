@@ -76,6 +76,7 @@ class OrganizationWorkflows:
         self.recovery_console = recovery_console
         self.configuration_checks = configuration_checks
         self.presence_checks = None
+        self.recovery_network_repairs = None
         self.cost_collections = cost_collections
         self.policy_loader = policy_loader
         self.mode = "simulated" if policy and facade and enqueuer else "unavailable"

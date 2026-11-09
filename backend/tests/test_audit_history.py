@@ -39,6 +39,21 @@ def event(kind="local_sign_in_succeeded", operator=False):
         display_name=None if operator else "Example administrator",
     )
     data = {"private_marker": "must-not-escape"}
+    if kind == "recovery_network_outcome":
+        from test_user_presence_check_units import case
+
+        from otm.tenancies.recovery_network_contracts import RecoveryNetworkEvidence
+
+        sample = case()
+        data = RecoveryNetworkEvidence(
+            operation_id=uuid4(),
+            tenancy_id=sample.snapshot.tenancy_id,
+            snapshot=sample.snapshot,
+            effect="none",
+            state="blocked",
+            safe_code="RECOVERY_NETWORK_BLOCKED",
+            checked_at=NOW,
+        ).model_dump(mode="json")
     if kind == "required_user_check_outcome":
         from test_user_presence_check_units import case
 
@@ -186,7 +201,9 @@ def event(kind="local_sign_in_succeeded", operator=False):
         workspace_id="audit-org",
         at=NOW,
         kind=kind,
-        actor_subject="otm-worker:user-presence"
+        actor_subject="otm-worker:recovery-network"
+        if kind == "recovery_network_outcome"
+        else "otm-worker:user-presence"
         if kind == "required_user_check_outcome"
         else "otm-worker:costs"
         if kind == "cost_collection_outcome"
@@ -201,7 +218,9 @@ def event(kind="local_sign_in_succeeded", operator=False):
         else "otm-worker:inspection"
         if worker
         else actor.key,
-        actor_snapshot={"kind": "worker", "subject": "user-presence"}
+        actor_snapshot={"kind": "worker", "subject": "recovery-network"}
+        if kind == "recovery_network_outcome"
+        else {"kind": "worker", "subject": "user-presence"}
         if kind == "required_user_check_outcome"
         else {"kind": "worker", "subject": "costs"}
         if kind == "cost_collection_outcome"
@@ -267,6 +286,8 @@ def test_public_projection_all_kinds(kind):
     )
     if kind == "local_sign_in_failed":
         assert result.actor_name is None
+    elif kind == "recovery_network_outcome":
+        assert result.actor_name == "Recovery network worker"
     elif kind == "required_user_check_outcome":
         assert result.actor_name == "User presence worker"
     elif kind == "cost_collection_outcome":
@@ -284,7 +305,9 @@ def test_public_projection_all_kinds(kind):
     else:
         assert result.actor_name == "Example administrator"
     assert result.safe_code == (
-        "USER_PRESENCE_CHECK_COMPLETE"
+        "RECOVERY_NETWORK_BLOCKED"
+        if kind == "recovery_network_outcome"
+        else "USER_PRESENCE_CHECK_COMPLETE"
         if kind == "required_user_check_outcome"
         else "COST_READ_COMPLETE"
         if kind == "cost_collection_outcome"

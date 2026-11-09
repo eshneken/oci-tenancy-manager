@@ -329,7 +329,9 @@ function OperationList({
                           </span>
                           {simulationIssue(operation) && (
                             <p className="operation-issue-note">
-                              {operation.kind === "organization_action"
+                              {operation.kind === "recovery_network_repair"
+                                ? "Repair effect is unverified. Review the operation for independent reconciliation; do not retry the write."
+                                : operation.kind === "organization_action"
                                 ? "Local workflow is blocked. Review the employee or tenancy record."
                                 : "Simulation ended with an issue. No action is required."}
                             </p>
@@ -516,6 +518,7 @@ function OperationDetail({
     configuration_outcome: "Configuration verification",
     cost_collection_outcome: "Cost collection result",
     required_user_check_outcome: "User presence check result",
+    recovery_network_outcome: "Recovery network repair result",
     configuration_check_outcome: "Configuration check result",
     configuration_retry: "Configuration retry",
     operation_responsibility_changed: "Operation responsibility changed",
@@ -572,7 +575,7 @@ function OperationDetail({
             </div>
             {simulationIssue(operation) && (
               <p className="notice" role="status">
-                {operation.kind === "cost_collection" ? "Cost reads exhausted retries or their collection context changed. Open the tenancy to retry eligible current-month reads. No tenancy settings were changed." : operation.kind === "configuration_check" ? "The read-only check did not complete. Review configuration checks; no tenancy settings were changed." : operation.kind === "configuration_update"
+                {operation.kind === "recovery_network_repair" ? "The network repair has an uncertain effect. The tenancy remains reserved until independent reconciliation. Do not retry the write or start another repair." : operation.kind === "cost_collection" ? "Cost reads exhausted retries or their collection context changed. Open the tenancy to retry eligible current-month reads. No tenancy settings were changed." : operation.kind === "configuration_check" ? "The read-only check did not complete. Review configuration checks; no tenancy settings were changed." : operation.kind === "configuration_update"
                   ? "Baseline update is blocked. Open its configuration progress to review incomplete tenancies and available retries."
                   : operation.kind !== "inspect_import"
                   ? "Local workflow is blocked. Review the employee or tenancy record; pending associations remain until handled."
@@ -581,7 +584,7 @@ function OperationDetail({
             )}
             {operation.state === "succeeded" && (
               <p className="notice">
-                {operation.kind === "required_user_check" ? "Simulated user check completed. Review the tenancy for presence, automation and recovery administrator assignments and recovery-policy results; completion does not establish recovery readiness. Password readiness and all effective permissions were not checked." : operation.kind === "cost_collection" ? "Cost collection completed in local simulation. Review each tenancy for partial or unqualified source data; no OCI resources were changed." : operation.kind === "configuration_check" ? "Read-only configuration check completed. Review its results for differences or categories that could not be verified; completion does not mean the configuration matches." : operation.kind === "configuration_update" ? "Baseline update verified in local simulation; no OCI resources were changed." : operation.kind === "organization_action"
+                {operation.kind === "recovery_network_repair" ? "Approved recovery networks verified in simulation. Review the separately dated user checks; no OCI resources or credentials were changed." : operation.kind === "required_user_check" ? "Simulated user check completed. Review the tenancy for presence, automation and recovery administrator assignments and recovery-policy results; completion does not establish recovery readiness. Password readiness and all effective permissions were not checked." : operation.kind === "cost_collection" ? "Cost collection completed in local simulation. Review each tenancy for partial or unqualified source data; no OCI resources were changed." : operation.kind === "configuration_check" ? "Read-only configuration check completed. Review its results for differences or categories that could not be verified; completion does not mean the configuration matches." : operation.kind === "configuration_update" ? "Baseline update verified in local simulation; no OCI resources were changed." : operation.kind === "organization_action"
                   ? "Local lifecycle simulation completed. Registry changes are verified; no OCI resources were changed."
                   : "Inspection completed successfully. This tenancy has not been adopted by this inspection."}
                 {operation.kind !== "configuration_check" && operation.result_tenancy_id && (

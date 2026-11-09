@@ -63,6 +63,15 @@ const detail: OperationDetail = {
   events_limited: false,
 };
 
+// Security writes retain uncertainty guidance and never inherit read-only 'no action' wording.
+it.each(["succeeded","needs_attention"] as const)("describes %s network repair history accurately",async(state)=>{
+ vi.spyOn(api,"operation").mockResolvedValue({...detail,operation:{...row,kind:"recovery_network_repair",state}});
+ mount(<Operations operationId={id} expired={vi.fn()} navigate={vi.fn()}/>);
+ if(state==="succeeded")expect(await screen.findByText(/Approved recovery networks verified in simulation/)).toBeVisible();
+ else expect(await screen.findByText(/tenancy remains reserved until independent reconciliation/)).toBeVisible();
+ expect(screen.queryByText(/Simulation ended with an issue. No action is required/)).not.toBeInTheDocument();
+});
+
 // Keep optional sandbox discovery explicitly unavailable in read-only list scenarios.
 beforeEach(() => {
   vi.spyOn(api, "inspectionSandbox").mockRejectedValue(new ApiError(404));

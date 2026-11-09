@@ -54,3 +54,5 @@ Private original feeds, raw evidence, screenshots and machine-specific paths are
 The [Recovery/header refinement](check-date-footer-local-session-checkpoint-2026-11-09.md#recovery-overview-and-matching-header-actions) extends that same UI checkpoint with a readable tablet layout and matching panel actions.
 
 - [Recovery assignments UI checkpoint](recovery-assignments-checkpoint-2026-11-09.md): independent recovery group/role results and compact permission summary.
+
+- [Recovery-network repair checkpoint — 9 November 2026](recovery-network-repair-checkpoint-2026-11-09.md): 430 final integration cases, guarded conditional repair and preserved main data/settings.

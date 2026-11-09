@@ -1,6 +1,6 @@
 # 22: recovery console CIDR boundary and scheduled API-key rotation
 
-7 November 2026 | User-selected V1 design | Local read-only policy UI qualified; remaining credential flows and live OCI qualification pending
+7 November 2026 | User-selected V1 design | Local policy checks and perimeter-only repair qualified; remaining credential flows and live OCI qualification pending
 
 [Design hub](README.md) · [Administrator access](13-local-support-and-emergency-access.md) ·
 [Credential model](11-production-data-model.md#identity-access-and-credential-model) ·
@@ -316,3 +316,18 @@ and domain administrator role grants independently of automation grants and reco
 Assigned means those two simulated assignments only. It does not implement password retrieval,
 Vault custody, a recovery signer fallback, or the durable four-hour rotation flow. Credential
 disclosure remains unavailable until custody and rotation qualify together.
+
+
+### Perimeter-only repair source subset — 9 November 2026
+
+[Guarded recovery-network repair](../reference/recovery-network-repair.md) is locally qualified in simulation,
+with preserved main publication recorded in the [final receipt](../history/recovery-network-repair-checkpoint-2026-11-09.md). Real OCI remains pending. It replaces only the retained perimeter's CIDR list
+under exact scoped authority and a conditional compare token, preserving all rules and the standing
+exact-user exemption. The latest sealed policy observation pins actual before-state; setup/last-repair capture authenticates
+ownership/bindings rather than freezing networks forever. Fresh preview and first worker authority
+must match that observation; preview counts come from fresh authority. Unrefreshed third states,
+changed before-state or a changed persisted compare token block dispatch. Preview exposes counts/hashes only; explicit unchecked acknowledgment is
+required. Readback must verify networks and unchanged surrounding policy. Applied-but-superseded
+capture is retained without current readiness; unknown writes remain held without automatic retry.
+No assignment repair, MFA/rule edits, user recreation, password custody/rotation or fleet rollout is
+implemented by this subset. Migration 0026 extends existing constraints with zero new tables.

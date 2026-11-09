@@ -182,6 +182,22 @@ def run_worker(*, once=False):
             ),
             queue,
         )
+        from otm.operations.runner import register_recovery_network_task
+        from otm.providers.recovery_network_simulator import simulated_network_repair
+        from otm.tenancies.recovery_network_worker import RecoveryNetworkWorker
+
+        register_recovery_network_task(
+            native,
+            RecoveryNetworkWorker(
+                engine,
+                policy.workspace_id,
+                clock,
+                organization_policy,
+                recovery_console_policy,
+                simulated_network_repair,
+            ),
+            queue,
+        )
         from otm.financial.worker import CostCollectionWorker
         from otm.providers.budget_simulator import SimulatedBudgetFacade
         from otm.storage.enqueue import COST_TASK, InspectionEnqueuer

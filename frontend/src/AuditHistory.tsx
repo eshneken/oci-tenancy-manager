@@ -58,6 +58,7 @@ function eventLabel(kind: AuditEntry["kind"]) {
     cost_refresh_requested: "Cost refresh requested",
     cost_collection_outcome: "Cost collection result",
     required_user_check_outcome: "User presence check result",
+    recovery_network_outcome: "Recovery network repair result",
     configuration_check_outcome: "Configuration check result",
     configuration_retry: "Configuration retry",
     operation_responsibility_changed: "Operation responsibility changed",

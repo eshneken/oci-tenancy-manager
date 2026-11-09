@@ -677,6 +677,7 @@ def test_worker_source_and_simulator_scope():
         c.connection.execute.side_effect = [
             result(dict(created_operation_id=uuid4(), source_evidence_event_id=uuid4())),
             result({**source, "data_hash": "wrong"} if invalid else source),
+            result(None),
         ]
         if invalid:
             with pytest.raises(ValueError):

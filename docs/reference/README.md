@@ -64,3 +64,7 @@ and [presence checks](user-presence-checks.md#retained-results-after-membership-
 - [Recovery console checks](recovery-console-verification.md): private settings, exact setup capture and qualified independent policy/presence UI; custody/rotation remain pending.
 
 - [Required-user administrator assignments](administrator-assignments.md): separate exact group/role checks and persistent detail/inventory results.
+
+- [Repair approved recovery networks](recovery-network-repair.md): exact conditional perimeter update, consent, private evidence and manual steps; local qualification/main publication pass, live OCI pending.
+
+- [Recovery-network repair qualification](../history/recovery-network-repair-checkpoint-2026-11-09.md): final local gates and main-only preservation.

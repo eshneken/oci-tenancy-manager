@@ -137,7 +137,7 @@ Daily scheduled checks remain deferred until staging/Kubernetes qualification. S
 
 ## Credential security lifecycles
 
-Status: **Pending**. The [selected chapter22 design](../engineering-design/22-credential-security-lifecycles.md)
+Status: **Pending**. The [selected chapter 22 design](../engineering-design/22-credential-security-lifecycles.md)
 requires disposable-child qualification with synthetic identities and separately approved live mutations.
 Use private approved source ranges, never publish operational CIDRs/secrets in receipts or CI artifacts.
 
@@ -185,3 +185,20 @@ verified. Qualify coherent shared group facts, recovery identity replacement, cr
 substitution, stale connection/attempt publication, denied/partial coverage and persisted reload.
 Recovery Assigned must never by itself authorize password disclosure or imply console readiness.
 These cases remain pending real OCI; local fixtures do not qualify the live APIs.
+
+
+## Recovery network repair qualification
+
+All cases remain **Pending**. Local simulated repair is not provider/sign-in qualification.
+
+| Live case | Required evidence | Status |
+| --- | --- | --- |
+| Exact conditional authority | Prove the automation signer can replace this owned perimeter; qualify exact domain/SCIM IDs, ownership and provider compare-token semantics. Presence/group membership is insufficient. | Pending |
+| Narrow replacement and access | From confirmed network-only drift, preserve exact user/group, MFA exemption, application, policy and ordered allow/deny rules; verify allowed IPv4/IPv6 sources and denial elsewhere, including fallback rules. Never remove restrictions first. | Pending |
+| Concurrent owner/operator edit | First edit networks externally, run a fresh complete check and qualify repair against that sealed actual state without rewriting setup. An unrefreshed third state or changed perimeter/rules after preview/admission must block; reject changed compare tokens or retain unknown effects without overwriting unrelated changes. | Pending |
+| Readback and interruption | Qualify independent complete readback, propagation, lost write responses and process interruption. Unknown effects hold the operation; no blind duplicate write. | Pending |
+| Desired/authority/lifecycle changes | Replace desired policy, signer, bound identity or child lifecycle during work. No stale write or obsolete readiness; retain known applied-but-superseded evidence when necessary. | Pending |
+| Privacy and later checks | No CIDRs/rules in public responses/exports/errors; separate dated user/policy refresh reads actual applied facts. No password or credential action follows repair. | Pending |
+
+Use only an approved disposable child. This flow does not qualify assignment repair, user recreation,
+password custody, rotation or fleet rollout. See the [current source field map](../reference/recovery-network-repair.md).

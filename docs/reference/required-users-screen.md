@@ -101,8 +101,10 @@ real account discovery and cannot qualify SDK/network failures or actual authori
 
 See the [manual local runbook](../how-to/required-users-runbook.md) and
 [pending real OCI manifest](../how-to/real-oci-test-manifest.md). Privilege, credential custody,
-readiness and repair remain separate future work; presence-only reads do not require fabricated
-assignment/profile tables.
+readiness and broader identity/assignment repair remain separate future work.
+[Perimeter-only network repair](recovery-network-repair.md) is locally qualified through a separate
+explicit command, with preserved main publication in the [final receipt](../history/recovery-network-repair-checkpoint-2026-11-09.md). Real OCI remains pending.
+Refresh stays read-only and presence reads require no fabricated assignment/profile tables.
 
 ## Inventory summary — source checkpoint
 

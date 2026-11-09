@@ -1,21 +1,17 @@
 """Fenced user-presence reads release database locks before any provider work."""
 
-import json
 from datetime import timedelta
 from uuid import uuid4
 
 from sqlalchemy import select, update
 
-from otm.operations.contracts import canonical_hash
 from otm.providers.required_user import paired_observation
 from otm.providers.required_user_contracts import (
     InspectRequiredUser,
     RequiredUserReadContext,
 )
-from otm.storage.tables import administrator, audit_event, operation, org_workspace, tenancy
+from otm.storage.tables import administrator, operation, org_workspace, tenancy
 from otm.storage.tables import user_presence_check as checks
-from otm.storage.tables import user_presence_connection as connections
-from otm.tenancies.onboarding_contracts import OnboardingEvidence
 from otm.tenancies.presence_context import capture_snapshot
 from otm.tenancies.presence_records import decode_intent, operation_rows, seal, unknown
 
@@ -260,40 +256,11 @@ class UserPresenceWorker:
             == intent.snapshot
         )
 
-    # Producer evidence is independently authenticated; current expected user IDs never seed facts.
+    # Shared source authentication preserves exact setup/repair evidence for every read and repair.
     def source(self, connection, snapshot):
-        binding = (
-            connection.execute(
-                select(connections).where(
-                    connections.c.workspace_id == self.workspace,
-                    connections.c.tenancy_id == snapshot.tenancy_id,
-                    connections.c.id == snapshot.connection_id,
-                )
-            )
-            .mappings()
-            .one()
-        )
-        event = (
-            connection.execute(
-                select(audit_event).where(
-                    audit_event.c.workspace_id == self.workspace,
-                    audit_event.c.operation_id == binding["created_operation_id"],
-                    audit_event.c.id == binding["source_evidence_event_id"],
-                    audit_event.c.kind == "onboarding_outcome",
-                )
-            )
-            .mappings()
-            .one()
-        )
-        evidence = OnboardingEvidence.model_validate_json(json.dumps(event["data"]))
-        if (
-            canonical_hash(event["data"]) != event["data_hash"]
-            or evidence.step != "capture_required_users"
-            or evidence.outcome != "verified"
-            or evidence.required_users is None
-        ):
-            raise ValueError("PRESENCE_SOURCE_INVALID")
-        return evidence.required_users
+        from otm.tenancies.presence_source import load_presence_source
+
+        return load_presence_source(connection, snapshot)
 
     # Persist attempt identity before dispatch, then release the transaction and all row locks.
     def begin(self, identifier):

@@ -70,6 +70,7 @@ from otm.tenancies.contracts import ActionReceipt, OrganizationAction
 from otm.tenancies.deletion import TenancyDeletionCommand, TenancyDeletionPreview
 from otm.tenancies.onboarding_contracts import OnboardingCommand, OnboardingView
 from otm.tenancies.presence_contracts import PresenceCheckRequest
+from otm.tenancies.recovery_network_contracts import RecoveryNetworkPreview, RecoveryNetworkRequest
 from otm.tenancies.required_users import RequiredUsersDirectory
 from otm.tenancies.views import (
     PersonWorkflow,
@@ -86,6 +87,8 @@ ROOT = Path(__file__).resolve().parents[1]
 # Export implemented auth, history, branding and operation contracts, not design-only APIs.
 def contracts() -> dict[str, dict]:
     return {
+        "recovery-network-preview.schema.json": RecoveryNetworkPreview.model_json_schema(),
+        "recovery-network-request.schema.json": RecoveryNetworkRequest.model_json_schema(),
         "cost-refresh-request.schema.json": CostRefreshRequest.model_json_schema(),
         "cost-refresh-receipt.schema.json": CostRefreshReceipt.model_json_schema(),
         "cost-view.schema.json": CostView.model_json_schema(),

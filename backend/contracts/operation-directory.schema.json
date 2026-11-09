@@ -55,7 +55,8 @@
             "configuration_update",
             "configuration_check",
             "cost_collection",
-            "required_user_check"
+            "required_user_check",
+            "recovery_network_repair"
           ],
           "title": "Kind",
           "type": "string"

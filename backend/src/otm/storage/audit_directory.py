@@ -35,6 +35,7 @@ from otm.storage.tables import administrator, audit_event, tenancy
 from otm.tenancies.contracts import OrganizationActionOutcome
 from otm.tenancies.onboarding_contracts import OnboardingEvidence
 from otm.tenancies.presence_contracts import PresenceCheckEvidence
+from otm.tenancies.recovery_network_contracts import RecoveryNetworkEvidence
 
 AUTHENTICATION = ("local_sign_in_succeeded", "local_sign_in_failed", "session_logged_out")
 ADMINISTRATION = (
@@ -53,6 +54,7 @@ OPERATIONS = (
     "configuration_check_outcome",
     "cost_collection_outcome",
     "required_user_check_outcome",
+    "recovery_network_outcome",
     "cost_refresh_requested",
     "operation_intent",
     "inspection_dispatch",
@@ -76,6 +78,7 @@ ORGANIZATION = (
 def actor_expression():
     return case(
         (audit_event.c.kind == "required_user_check_outcome", "User presence worker"),
+        (audit_event.c.kind == "recovery_network_outcome", "Recovery network worker"),
         (audit_event.c.kind == "cost_collection_outcome", "Cost collection worker"),
         (audit_event.c.kind == "local_sign_in_failed", None),
         (
@@ -160,6 +163,9 @@ def entry(row):
     if kind == "cost_refresh_requested":
         receipt = CostRefreshReceipt.model_validate_json(json.dumps(row["data"]["receipt"]))
         summary = f"Cost refresh: {receipt.accepted_count} queued, {receipt.joined_count} joined"
+    if kind == "recovery_network_outcome":
+        proof = RecoveryNetworkEvidence.model_validate_json(json.dumps(row["data"]))
+        summary = "Recovery network repair: " + proof.state
     if kind == "required_user_check_outcome":
         proof = PresenceCheckEvidence.model_validate_json(json.dumps(row["data"]))
         summary = "Read-only user presence check: " + proof.state
@@ -191,6 +197,13 @@ def entry(row):
         }:
             raise ValueError("INVALID_AUDIT_ACTOR")
         actor_name = "Email delivery worker"
+    elif kind == "recovery_network_outcome":
+        if row["actor_subject"] != "otm-worker:recovery-network" or row["actor_snapshot"] != {
+            "kind": "worker",
+            "subject": "recovery-network",
+        }:
+            raise ValueError("INVALID_AUDIT_ACTOR")
+        actor_name = "Recovery network worker"
     elif kind == "required_user_check_outcome":
         if row["actor_subject"] != "otm-worker:user-presence" or row["actor_snapshot"] != {
             "kind": "worker",
@@ -262,7 +275,9 @@ def entry(row):
     )
     outcome = (
         (
-            PresenceCheckEvidence
+            RecoveryNetworkEvidence
+            if kind == "recovery_network_outcome"
+            else PresenceCheckEvidence
             if kind == "required_user_check_outcome"
             else ConfigurationOutcome
             if kind == "configuration_outcome"
@@ -278,6 +293,7 @@ def entry(row):
         in {
             "inspection_outcome",
             "required_user_check_outcome",
+            "recovery_network_outcome",
             "configuration_outcome",
             "configuration_retry",
             "organization_action_outcome",
@@ -355,7 +371,7 @@ def resource_context(connection, workspace, rows):
             continue
         resources = []
         wanted = set()
-        if intent.kind == "required_user_check":
+        if intent.kind in {"required_user_check", "recovery_network_repair"}:
             wanted = {intent.snapshot.tenancy_id}
         elif intent.kind in {"configuration_update", "configuration_check", "cost_collection"}:
             wanted = {

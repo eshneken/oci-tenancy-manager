@@ -14,6 +14,7 @@ from otm.tenancies.contracts import ActionReceipt, OrganizationAction
 from otm.tenancies.deletion import TenancyDeletionCommand, TenancyDeletionPreview
 from otm.tenancies.onboarding_contracts import OnboardingCommand, OnboardingView
 from otm.tenancies.presence_contracts import PresenceCheckRequest
+from otm.tenancies.recovery_network_contracts import RecoveryNetworkPreview, RecoveryNetworkRequest
 from otm.tenancies.required_users import RequiredUsersDirectory
 from otm.tenancies.views import (
     PersonWorkflow,
@@ -29,6 +30,9 @@ from otm.tenancies.views import (
 PUBLIC_CONFLICTS = frozenset(
     {
         "REQUIRED_USERS_CHECK_UNAVAILABLE",
+        "RECOVERY_NETWORK_REPAIR_BLOCKED",
+        "RECOVERY_NETWORK_CONFIRMATION_REQUIRED",
+        "RECOVERY_NETWORK_PREVIEW_CHANGED",
         "RESPONSIBILITY_PREVIEW_CHANGED",
         "EMAIL_CONTACT_CONFIGURATION_REQUIRED",
         "PUBLISHED_BASELINE_REQUIRED",
@@ -279,6 +283,35 @@ def workflow_router(service):
         )
 
     # A foreign tenancy is indistinguishable from an unknown local identifier.
+    @router.get(
+        "/api/tenancies/{identifier}/recovery-network-preview",
+        response_model=RecoveryNetworkPreview,
+    )
+    def recovery_network_preview(identifier: UUID, request: Request):
+        if service.recovery_network_repairs is None:
+            return JSONResponse({"code": "RECOVERY_NETWORK_REPAIR_BLOCKED"}, status_code=409)
+        return guarded(lambda: service.recovery_network_repairs.preview(request.user, identifier))
+
+    # Explicit security-change consent and an exact preview are required even for direct API calls.
+    @router.post(
+        "/api/tenancies/{identifier}/recovery-network-repair",
+        response_model=ActionReceipt,
+        status_code=202,
+    )
+    async def recovery_network_repair(identifier: UUID, request: Request):
+        from otm.configuration.rollout_http import bounded_command
+
+        command = await bounded_command(request, RecoveryNetworkRequest, 4096)
+        if isinstance(command, JSONResponse):
+            return command
+        if service.recovery_network_repairs is None:
+            return JSONResponse({"code": "RECOVERY_NETWORK_REPAIR_BLOCKED"}, status_code=409)
+        return await run_in_threadpool(
+            guarded,
+            lambda: service.recovery_network_repairs.start(request.user, identifier, command),
+        )
+
+    # Detail remains a retained database projection, never a provider or credential action.
     @router.get("/api/tenancies/{identifier}", response_model=TenancyDetail)
     def detail(identifier: UUID, request: Request):
         return guarded(lambda: service.tenancy_detail(request.user, identifier))

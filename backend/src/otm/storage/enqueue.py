@@ -10,6 +10,7 @@ from otm.storage.transaction import require_transaction
 
 INSPECTION_TASK = "otm.inspect_import"
 PRESENCE_TASK = "otm.required_user_check"
+RECOVERY_NETWORK_TASK = "otm.recovery_network_repair"
 COST_TASK = "otm.cost_collection"
 CONFIGURATION_CHECK_TASK = "otm.configuration_check"
 CONFIGURATION_TASK = "otm.configuration_update"
@@ -29,6 +30,7 @@ class InspectionEnqueuer:
     def __init__(self, queue: str = OPERATIONS_QUEUE, *, task: str = INSPECTION_TASK):
         if task not in {
             PRESENCE_TASK,
+            RECOVERY_NETWORK_TASK,
             COST_TASK,
             INSPECTION_TASK,
             ORGANIZATION_TASK,

@@ -2180,3 +2180,47 @@ exact recovery SCIM identity/domain binding and separate observed group/applicat
 `RequiredUsersSummary.recovery_administrator_access` supplies the recovery inventory warning.
 Existing audit/check rows retain these fields; no new table, migration or index is required.
 Historical omitted bytes stay stable, and source capture is never backfilled from presence.
+
+
+## Recovery-network repair: existing-record linkage — 9 November 2026
+
+The [source-implemented field map](../reference/recovery-network-repair.md#fields-and-existing-storage)
+adds operation kind `recovery_network_repair`, step command of the same name with
+`recovery_network:{tenancy UUID}`, and audit kind `recovery_network_outcome`. Migration 0026 extends
+existing CHECK constraints only. There are still **25 OTM application tables**, excluding the separately
+owned runner tables; no new table, column, foreign-key relationship or competing ER is introduced.
+Full local UI/integration qualification and preserved main publication of this subset pass; real OCI remains pending.
+
+- Existing immutable operation-intent audit JSON carries `RecoveryNetworkIntent`: contract/kind,
+  workspace/admin/authorization revision, exact `PresenceSnapshot`, source check operation UUID
+  (`source_check_id`), producer ownership/binding `source_hash`, desired fingerprint, latest sealed actual-check
+  `observed_fingerprint`, `preview_hash`, exact
+  target and `expires_at`. The source ID refers to the operation, not the physical check-row UUID.
+- The existing operation step records attempt identity and, before possible dispatch, private
+  `RecoveryNetworkAuthority` in `inputs`: exact command/context/subject/resource bindings/desired
+  policy, observation time/facts, scoped replace permission, conditional-update/ownership proof and
+  opaque compare token. Both preview and first worker authority must match the sealed source check’s actual-before
+  fingerprint. Setup/last-repair facts authenticate ownership and bindings, not current networks.
+  A changed refreshed token or before-state blocks the write rather than
+  substituting unrecorded authority. The step/operation effect becomes unknown before possible send.
+- Existing `recovery_network_outcome` audit JSON and step `last_outcome`/evidence reference carry
+  `RecoveryNetworkEvidence`: operation/tenancy/snapshot, effect/state/safe code, checked time and
+  optional private capture. Only known verified or applied-but-superseded outcomes retain capture;
+  unknown remains held, with no automatic duplicate write. Public projections expose safe fields.
+- Existing child `operation_id` reserves the target. Known outcomes release it; uncertain effects
+  retain it. Existing native transaction enqueue and operation/step/audit history own execution.
+- Subsequent simulated reads recover the latest known applied private capture by joining the repair’s
+  immutable source-check operation UUID to existing `otm_user_presence_check.acquisition_sequence`.
+  This monotonic source order avoids timestamp/UUID ties without another ordering table. Scope and
+  hashes remain validated; applied older desired revisions do not certify current desired readiness.
+- Separate required-user refresh writes its own dated existing check/outcome. Repair does not rewrite
+  prior presence/assignment/policy observations or fabricate a newly passing check at GET time.
+
+This perimeter-only model does not add MFA/rule editing, assignment repair, user recreation, Vault
+custody, password disclosure/rotation, key retirement or fleet rollout. Those remain separately scoped.
+
+The before-state correction adds no field or relationship: existing `observed_fingerprint` is sourced
+from the latest sealed policy check, whereas `source_hash` still pins producer ownership/binding
+provenance. Fresh actual authority supplies preview network counts. Independently observed external
+network edits are repairable after refresh; unrefreshed third states or post-admission changes block.
+The [final local receipt](../history/recovery-network-repair-checkpoint-2026-11-09.md) records430 complete integration cases and preserved main publication. Real OCI, broader repair and credential flows remain pending.

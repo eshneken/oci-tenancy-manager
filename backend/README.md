@@ -117,7 +117,7 @@ use the same services through guarded directory/revocation HTTP routes; see the 
 
 ## Generated contracts and local state
 
-The frontend derives public TypeScript contracts from authoritative backend models; Python validation remains authoritative. The current schema has 25 OTM application tables through migration 0025, excluding separately owned native job-queue tables. Generated contracts are checked against the current Python models; earlier checkpoint counts on this page are historical.
+The frontend derives public TypeScript contracts from authoritative backend models; Python validation remains authoritative. The current schema has 25 OTM application tables through migration 0026, excluding separately owned native job-queue tables. Generated contracts are checked against the current Python models; earlier checkpoint counts on this page are historical.
 
 The launcher owns separate persistent laptop state under ignored `.local-dev/application/`; the
 organization prototype is untouched. Database owner and runtime credentials are separate, but the
@@ -226,7 +226,7 @@ The [lifecycle email guide](../docs/reference/lifecycle-email.md) maps responsib
 transfer and offboarding),
 immutable contact/policy/profile/origin evidence and bounded SMTP delivery knowledge. One outbox
 table brought the lifecycle-email checkpoint through 0020 to 20 application tables; later presence
-checkpoints bring current OTM metadata to 25 through 0025. Both release kinds use the offline
+checkpoints bring current OTM metadata to 25 through 0026. Both release kinds use the offline
 otm-validate-release gate against a trusted expected environment. Hosted checkpoint CI is installed;
 staging/production OCI delivery and infrastructure qualification remain pending.
 [Local capture runbook](../docs/how-to/lifecycle-email-runbook.md). Local capture and saved-instance
@@ -235,3 +235,7 @@ qualification pass; OCI/Vault/production-SMTP and uncontrolled provider mail rem
 [Current-month cost visibility](../docs/reference/cost-visibility.md) adds coherent stored Budget reads,
 bounded worker retries and the consolidated Tenancies dashboard behind an explicitly simulated facade.
 Daily scheduling and live OCI qualification remain staging work.
+
+The [recovery-network repair source subset](../docs/reference/recovery-network-repair.md) reuses existing operations, steps, audit and checks. Migration0026 extends CHECK-constraint branches only; the 25 OTM tables are unchanged. Full local UI/integration qualification and preserved main-preview publication pass; live OCI remains pending.
+
+- [Recovery-network repair final checkpoint](../docs/history/recovery-network-repair-checkpoint-2026-11-09.md):430 complete integration cases, independent reviews and preserved main data/settings.

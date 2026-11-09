@@ -1,0 +1,66 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "current_network_count": {
+      "maximum": 64,
+      "minimum": 1,
+      "title": "Current Network Count",
+      "type": "integer"
+    },
+    "desired_fingerprint": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Desired Fingerprint",
+      "type": "string"
+    },
+    "desired_network_count": {
+      "maximum": 64,
+      "minimum": 1,
+      "title": "Desired Network Count",
+      "type": "integer"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    },
+    "observed_fingerprint": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Observed Fingerprint",
+      "type": "string"
+    },
+    "preview_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Preview Hash",
+      "type": "string"
+    },
+    "provider_mode": {
+      "const": "simulated",
+      "default": "simulated",
+      "title": "Provider Mode",
+      "type": "string"
+    },
+    "tenancy_id": {
+      "format": "uuid",
+      "title": "Tenancy Id",
+      "type": "string"
+    },
+    "tenancy_name": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Tenancy Name",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenancy_id",
+    "tenancy_name",
+    "preview_hash",
+    "desired_fingerprint",
+    "observed_fingerprint",
+    "current_network_count",
+    "desired_network_count",
+    "expires_at"
+  ],
+  "title": "RecoveryNetworkPreview",
+  "type": "object"
+}

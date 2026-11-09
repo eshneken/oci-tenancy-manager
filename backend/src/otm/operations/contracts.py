@@ -12,6 +12,7 @@ from otm.financial.contracts import CostIntent
 from otm.providers.inspection_contracts import InspectionTarget, TenancyOcid
 from otm.tenancies.contracts import OrganizationIntent
 from otm.tenancies.presence_contracts import PresenceCheckIntent
+from otm.tenancies.recovery_network_contracts import RecoveryNetworkIntent
 
 OperationState = Literal[
     "queued", "running", "waiting", "needs_attention", "succeeded", "cancelled", "failed"
@@ -88,6 +89,7 @@ class IntentEventData(Contract):
         | ConfigurationCheckIntent
         | CostIntent
         | PresenceCheckIntent
+        | RecoveryNetworkIntent
     )
     actor: ActorIdentity
 

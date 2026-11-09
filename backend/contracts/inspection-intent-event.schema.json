@@ -1832,6 +1832,90 @@
       "title": "PresenceSnapshot",
       "type": "object"
     },
+    "RecoveryNetworkIntent": {
+      "additionalProperties": false,
+      "properties": {
+        "administrator_id": {
+          "format": "uuid",
+          "title": "Administrator Id",
+          "type": "string"
+        },
+        "authorization_revision": {
+          "format": "uuid",
+          "title": "Authorization Revision",
+          "type": "string"
+        },
+        "contract_version": {
+          "const": "recovery-network-repair-1",
+          "default": "recovery-network-repair-1",
+          "title": "Contract Version",
+          "type": "string"
+        },
+        "desired_fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Desired Fingerprint",
+          "type": "string"
+        },
+        "expires_at": {
+          "format": "date-time",
+          "title": "Expires At",
+          "type": "string"
+        },
+        "kind": {
+          "const": "recovery_network_repair",
+          "default": "recovery_network_repair",
+          "title": "Kind",
+          "type": "string"
+        },
+        "observed_fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Observed Fingerprint",
+          "type": "string"
+        },
+        "preview_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Preview Hash",
+          "type": "string"
+        },
+        "snapshot": {
+          "$ref": "#/$defs/PresenceSnapshot"
+        },
+        "source_check_id": {
+          "format": "uuid",
+          "title": "Source Check Id",
+          "type": "string"
+        },
+        "source_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Source Hash",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/ConfigurationOperationTarget"
+        },
+        "workspace_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Workspace Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "administrator_id",
+        "authorization_revision",
+        "snapshot",
+        "source_check_id",
+        "source_hash",
+        "desired_fingerprint",
+        "observed_fingerprint",
+        "preview_hash",
+        "target",
+        "expires_at"
+      ],
+      "title": "RecoveryNetworkIntent",
+      "type": "object"
+    },
     "RequiredUserTarget": {
       "additionalProperties": false,
       "properties": {
@@ -2120,6 +2204,9 @@
         },
         {
           "$ref": "#/$defs/PresenceCheckIntent"
+        },
+        {
+          "$ref": "#/$defs/RecoveryNetworkIntent"
         }
       ],
       "title": "Intent"

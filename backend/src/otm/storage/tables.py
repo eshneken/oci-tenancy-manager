@@ -55,7 +55,7 @@ operation = Table(
     ),
     CheckConstraint(
         "kind IN ('inspect_import','organization_action"
-        "','configuration_update','configuration_check','cost_collection','required_user_check')",
+        "','configuration_update','configuration_check','cost_collection','required_user_check','recovery_network_repair')",
         name="ck_operation_kind",
     ),
     CheckConstraint(
@@ -108,7 +108,7 @@ audit_event = Table(
         "((kind='operation_intent' AND intent_revision IS NOT NULL AND intent_revision>=1) "
         "OR (kind IN ('inspection_dispatch','inspection_outcome','organization_action_out"
         "come','onboarding_action','onboarding_outcome','configuration_outcome',"
-        "'configuration_retry','configuration_check_outcome','cost_collection_outcome','required_user_check_outcome','operation_responsibility_changed',"
+        "'configuration_retry','configuration_check_outcome','cost_collection_outcome','required_user_check_outcome','recovery_network_outcome','operation_responsibility_changed',"
         "'email_delivery') "
         "AND intent_revision IS NULL))) "
         "OR (kind IN ('administrator_revoked','administrator_bootstrapped',"
@@ -186,7 +186,9 @@ operation_step = Table(
         "OR (command_kind='configuration_check' AND ste"
         "p_key ~ '^configuration_check:[0-9a-f-]{36}$') "
         "OR (command_kind='cost_collection' AND step_key ~ '^cost:[0-9a-f-]{36}$') "
-        "OR (command_kind='required_user_check' AND step_key ~ '^required_users:[0-9a-f-]{36}$')",
+        "OR (command_kind='required_user_check' AND step_key ~ '^required_users:[0-9a-f-]{36}$') "
+        "OR (command_kind='recovery_network_repair' "
+        "AND step_key ~ '^recovery_network:[0-9a-f-]{36}$')",
         name="ck_inspection_step_kind",
     ),
     CheckConstraint(
@@ -200,7 +202,9 @@ operation_step = Table(
         "(command_kind IN ('inspect_tenancy','configur"
         "ation_check','cost_collection','required_user_check') AND effect_knowledge='none') OR "
         "(command_kind IN ('organization_action','onboarding','configuration_update') "
-        "AND effect_knowledge IN ('none','known'))",
+        "AND effect_knowledge IN ('none','known')) OR "
+        "(command_kind='recovery_network_repair' "
+        "AND effect_knowledge IN ('none','known','unknown'))",
         name="ck_inspection_read_only",
     ),
     ForeignKeyConstraint(

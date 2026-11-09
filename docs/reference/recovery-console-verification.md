@@ -31,8 +31,10 @@ Inventory links confirmed recovery-policy drift or out-of-date evidence to this 
 raw rule lists or passwords appear in these public projections. Verified in simulation describes
 only the selected local fixture; it never grants password disclosure or claims live console access.
 
-This checkpoint has no policy repair/distribution writer, password-disclosure endpoint, Vault store,
-rotation scheduler or API-key rotation. These remain subsequent parts of the accepted milestone.
+The read-only checkpoint is now followed by [perimeter-only recovery-network repair](recovery-network-repair.md),
+locally qualified with preserved main-preview publication in the [final receipt](../history/recovery-network-repair-checkpoint-2026-11-09.md). Real OCI remains pending.
+Refresh remains read-only. Fleet distribution, broader repairs, password disclosure, Vault custody,
+rotation scheduling and API-key rotation remain subsequent parts of the accepted milestone.
 Configuration Drift continues to describe baseline-managed root objects; recovery console controls
 have their own independent Required users projection rather than being counted as root-policy drift.
 
@@ -105,7 +107,7 @@ current desired revision; this internal result alone is not a durable readiness 
 | Strict settings/private renderer and typed policy evaluator | Implemented and qualified with the complete UI checkpoint |
 | Exact setup/import plus current policy observations | Implemented in explicit simulator; legacy stays unverified, replacement identities cannot inherit old proof; full recreation writer pending |
 | UI/manual refresh and recovery-policy drift | Implemented alongside independent presence, with safe inventory links; complete integration and responsive visual qualification passed |
-| Guarded repair and policy propagation | Pending; no automatic writer or claim of fleet enforcement |
+| Guarded repair and policy propagation | Perimeter-only conditional repair passes local qualification and preserved main publication; real OCI, broader repairs and fleet propagation remain pending. |
 | Password custody, disclosure and scheduled four-hour rotation | Pending; preserve D40 first-attempt clock and D54 CURRENT, audit/notices before disclosure and unknown-write holds |
 | Thirty-day automation-key retirement | Pending, retained in this milestone plan; creation-based age, independent signer verification, bounded drain and verified old-key removal |
 | UI checkpoint qualification | Passed:402 complete integration cases, independent reviews and main-only preserved publication; live OCI qualification still pending |

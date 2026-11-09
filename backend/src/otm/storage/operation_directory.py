@@ -36,6 +36,7 @@ from otm.tenancies.contracts import OrganizationActionOutcome
 from otm.tenancies.labels import ACTION_LABELS
 from otm.tenancies.onboarding_contracts import OnboardingEvidence
 from otm.tenancies.presence_contracts import PresenceCheckEvidence
+from otm.tenancies.recovery_network_contracts import RecoveryNetworkEvidence
 
 
 # Convert stored timestamps to UTC without substituting a retrieval time for missing evidence.
@@ -111,6 +112,7 @@ class SqlOperationDirectory:
                 "configuration_check",
                 "cost_collection",
                 "required_user_check",
+                "recovery_network_repair",
             }
             else None,
             guided_onboarding=frozen.intent.kind == "organization_action"
@@ -118,6 +120,8 @@ class SqlOperationDirectory:
             target_tenancy_ocid=frozen.intent.target.tenancy_ocid,
             title=ACTION_LABELS[frozen.intent.action]
             if frozen.intent.kind == "organization_action"
+            else "Repair approved recovery networks"
+            if frozen.intent.kind == "recovery_network_repair"
             else "Check required users"
             if frozen.intent.kind == "required_user_check"
             else "Refresh current month costs"
@@ -141,6 +145,7 @@ class SqlOperationDirectory:
                 "configuration_check",
                 "cost_collection",
                 "required_user_check",
+                "recovery_network_repair",
             }
             else None,
         )
@@ -309,7 +314,9 @@ class SqlOperationDirectory:
     def step(self, row):
         outcome = (
             (
-                PresenceCheckEvidence
+                RecoveryNetworkEvidence
+                if row["command_kind"] == "recovery_network_repair"
+                else PresenceCheckEvidence
                 if row["command_kind"] == "required_user_check"
                 else CostEvidence
                 if row["command_kind"] == "cost_collection"
@@ -344,7 +351,9 @@ class SqlOperationDirectory:
             ResponsibilityEvidence.model_validate_json(json.dumps(row["data"]))
         outcome = (
             (
-                PresenceCheckEvidence
+                RecoveryNetworkEvidence
+                if row["kind"] == "recovery_network_outcome"
+                else PresenceCheckEvidence
                 if row["kind"] == "required_user_check_outcome"
                 else CostEvidence
                 if row["kind"] == "cost_collection_outcome"
@@ -367,6 +376,7 @@ class SqlOperationDirectory:
                 "configuration_check_outcome",
                 "cost_collection_outcome",
                 "required_user_check_outcome",
+                "recovery_network_outcome",
                 "configuration_retry",
                 "organization_action_outcome",
                 "onboarding_action",

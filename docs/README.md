@@ -34,7 +34,8 @@ are not competing implementation instructions or proof of real OCI behavior.
 
 [Selected credential security design](engineering-design/22-credential-security-lifecycles.md):
 recovery-only MFA exemption with configurable console CIDRs and 30-day automation-key retirement.
-User-selected design; implementation and live OCI qualification remain pending.
+User-selected design; local policy checks and perimeter-only repair are qualified. Remaining
+credential flows and live OCI qualification remain pending.
 
 Current [manual required-user checks](reference/user-presence-checks.md) connect the internal presence
 boundary, exact identity mappings and one selected simulated connection to asynchronous acquisition
@@ -149,4 +150,10 @@ The [Recovery overview and matching header actions checkpoint](history/check-dat
 
 The backend [implementation overview](../backend/README.md) and current required-user field dictionaries
 were reconciled during the whole-milestone publication audit. Historical checkpoint counts retain
-their original scope; current application metadata contains 25 OTM tables through migration 0025.
+their original scope; current application metadata contains 25 OTM tables through migration 0026.
+
+- [Guarded recovery-network repair](reference/recovery-network-repair.md): qualified simulated conditional perimeter-only repair and preserved main preview; live OCI pending.
+
+The [recovery-network repair source subset](reference/recovery-network-repair.md) reuses existing operations, steps, audit and checks. Migration 0026 extends CHECK-constraint branches only; the 25 OTM tables are unchanged. Full local UI/integration qualification and preserved main-preview publication pass; live OCI remains pending.
+
+- [Recovery-network repair final checkpoint](history/recovery-network-repair-checkpoint-2026-11-09.md): 430 complete integration cases, independent reviews and preserved main data/settings.

@@ -1,4 +1,5 @@
 import type { RequiredUsersDirectory, PresenceCheckRequest } from "./contracts";
+import type {RecoveryNetworkPreview,RecoveryNetworkRequest} from "./contracts";
 import type { CostRefreshReceipt, CostRefreshRequest } from "./contracts";
 import type { EmailPolicyView } from "./contracts";
 import type { ResponsibilityCommand } from "./contracts";
@@ -279,6 +280,14 @@ export const api = {
   // Refresh stored account records only; this route never probes OCI or exposes credentials.
   checkRequiredUsers(id:string, command:PresenceCheckRequest) {
     return request<ActionReceipt>("/api/tenancies/"+encodeURIComponent(id)+"/required-users/check", "POST", command);
+  },
+  // Preview one exact owned perimeter; operational networks never cross this boundary.
+  previewRecoveryNetworks(id:string, signal?:AbortSignal) {
+    return request<RecoveryNetworkPreview>(`/api/tenancies/${encodeURIComponent(id)}/recovery-network-preview`,"GET",undefined,signal);
+  },
+  // Confirm the frozen preview and explicit consent through the ordinary CSRF-protected client.
+  repairRecoveryNetworks(id:string, command:RecoveryNetworkRequest, signal?:AbortSignal) {
+    return request<ActionReceipt>(`/api/tenancies/${encodeURIComponent(id)}/recovery-network-repair`,"POST",command,signal);
   },
   requiredUsers(id: string, signal?: AbortSignal) {
     return request<RequiredUsersDirectory>(

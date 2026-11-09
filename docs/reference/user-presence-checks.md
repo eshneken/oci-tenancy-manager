@@ -8,7 +8,9 @@ existence in that simulator's qualified fixture, not live OCI existence, usable 
 administrative privileges, console access, MFA or recovery readiness. The [assignment extension](administrator-assignments.md) now
 checks both users’ exact group and domain-role assignments separately. The original presence-only checkpoint added no email. The
 [new confirmed-Missing alert slice](required-user-alerts.md) adds scoped notices; daily scheduling,
-repair and password actions remain deferred.
+identity/assignment repair and password actions remain deferred. Separate
+[perimeter-only network repair](recovery-network-repair.md) passes local UI/integration qualification and preserved main publication in the
+[final receipt](../history/recovery-network-repair-checkpoint-2026-11-09.md); real OCI remains pending and refresh itself remains read-only.
 
 ## Recovery-policy extension — 7 November 2026
 
@@ -198,7 +200,9 @@ viewing a page cannot renew them. A newer unavailable result never borrows an ol
 
 New alert-enabled checks now carry optional incident state and may stage confirmed-Missing notices;
 see the [complete alert contract](required-user-alerts.md). This supersedes earlier no-email scope
-only for qualified Missing notifications. Daily scheduling, broader effective-privilege checks and repairs remain deferred; the scoped automation assignment extension is implemented.
+only for qualified Missing notifications. Daily scheduling, broader effective-privilege checks,
+identity/assignment repairs and password actions remain deferred. Scoped assignment checks are
+implemented; the separate perimeter-only repair has the local qualification/publication boundary described above, with real OCI still pending.
 
 ## Compact checked-date presentation — 9 November 2026
 

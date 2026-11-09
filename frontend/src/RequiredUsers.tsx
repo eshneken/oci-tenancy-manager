@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "./api";
 import { followLink } from "./navigation";
 import type { AdministratorAccessView } from "./contracts";
+import {RecoveryNetworkRepair} from "./RecoveryNetworkRepair";
 
 const purposes = { automation: "Automation user", recovery: "Recovery user" };
 const presenceNames = {not_checked:"Not checked", present:"Present", missing:"Missing", unknown:"Unable to verify"};
@@ -150,6 +151,7 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
             {presence.checked_at && <CheckDate label={presence.state === "unknown" ? "Presence last attempt" : "Presence checked"} kind="presence" at={presence.checked_at} operationId={presence.operation_id} navigate={navigate}/>}
             {user.purpose === "recovery" && consolePolicy?.checked_at && <CheckDate label="Policy checked" kind="policy" at={consolePolicy.checked_at} operationId={consolePolicy.operation_id} navigate={navigate}/>}
           </dl>}
+          {user.purpose === "recovery" && <RecoveryNetworkRepair key={tenancyId} tenancyId={tenancyId} eligible={Boolean(data.check_available&&!checking&&presence.state==="present"&&!presence.stale&&consolePolicy?.state==="drift"&&consolePolicy.mfa_exemption==="verified"&&consolePolicy.network_boundary==="drift")} policy={consolePolicy} expired={expired} navigate={navigate}/>}
           {user.identity && <details className="required-user-details">
             <summary>Identity details</summary>
             <dl className="required-user-facts">

@@ -37,6 +37,7 @@ class OperationSummary(Contract):
         "configuration_check",
         "cost_collection",
         "required_user_check",
+        "recovery_network_repair",
     ]
     state: OperationState
     stage: Text
@@ -68,7 +69,7 @@ class OperationStepView(Contract):
     step_key: Annotated[
         str,
         Field(
-            pattern=r"^(inspect_target|apply_lifecycle|handoff|inspect_bootstrap|establish_automation|verify_automation|configure_required|verify_required|retire_temporary|configure_baseline|verify_configured_access|capture_required_users|configuration_check:[0-9a-f-]{36}|required_users:[0-9a-f-]{36}|cost:[0-9a-f-]{36}|(remove_member_groups|delete_member_user):[0-9a-f-]{36}|configuration:[0-9a-f-]{36})$"
+            pattern=r"^(inspect_target|apply_lifecycle|handoff|inspect_bootstrap|establish_automation|verify_automation|configure_required|verify_required|retire_temporary|configure_baseline|verify_configured_access|capture_required_users|configuration_check:[0-9a-f-]{36}|required_users:[0-9a-f-]{36}|recovery_network:[0-9a-f-]{36}|cost:[0-9a-f-]{36}|(remove_member_groups|delete_member_user):[0-9a-f-]{36}|configuration:[0-9a-f-]{36})$"
         ),
     ]
     state: Literal["running", "verified", "needs_attention"]
@@ -93,6 +94,7 @@ class OperationEventView(Contract):
         "configuration_check_outcome",
         "cost_collection_outcome",
         "required_user_check_outcome",
+        "recovery_network_outcome",
     ]
     at: UtcInstant
     safe_code: Text | None
