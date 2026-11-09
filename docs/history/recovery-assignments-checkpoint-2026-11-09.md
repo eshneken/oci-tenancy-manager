@@ -42,9 +42,9 @@ Password custody/disclosure/rotation remain separate unimplemented work.
 
 This is a local simulator UI checkpoint, not live OCI or password-access qualification.
 [Real OCI assignment cases](../how-to/real-oci-test-manifest.md#automation-administrator-assignment-qualification)
-remain pending. The accumulated milestone's remote /ship review is separately blocked by its
-2 MB diff ceiling; no passing release receipt, push or PR is claimed. Split the accumulated
-work into smaller sequential reviewable PRs rather than weaken the review guard.
+remain pending. The initial remote /ship attempt stopped at its 2 MB diff ceiling. The owner subsequently
+authorized the temporary 3 MB input-size exception below so the milestone can remain one PR.
+That authorization does not certify any review, test, remote push or merge result.
 
 
 ## Preserved main preview
@@ -55,3 +55,14 @@ and matching API/worker. Complete contents of all 29 existing public tables are 
 No migration, settings rewrite, session-deadline recalculation, credential-note update or
 organization reset occurred. SPA routes and the unauthenticated required-user boundary pass.
 The parallel preview on 8444 was not upgraded; its frontend fingerprint is unchanged.
+
+
+## Owner-approved whole-milestone review exception
+
+On 9 November 2026 the owner requested relaxing the 2 MB review input-size limit and publishing
+the complete accumulated milestone as one PR. This run may use a temporary 3,000,000-byte
+review ceiling. Restore the tooling’s original 2,000,000-byte setting after the run; this is not
+a permanent repository policy change. No diff truncation or review exclusions are authorized.
+Reviewers may inspect the complete candidate in bounded file groups. All unit/integration,
+95% coverage, documentation, security, UI and protected-master gates remain mandatory.
+This exception does not authorize direct master writes, force pushes, merging or skipped checks.
