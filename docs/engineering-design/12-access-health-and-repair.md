@@ -442,7 +442,8 @@ width without page-level clipping. Final summary qualification and the preserved
 
 The [implemented assignment boundary](../reference/administrator-assignments.md) adds two read-only,
 exact-resource assignment checks to the same required-user operation. It supersedes earlier
-presence-only/no-privilege-check statements only for the automation account's built-in Administrators
+presence-only/no-privilege-check statements for both accounts’ built-in Administrators
 group and domain administrator role assignments. Broader effective privileges, signer validation,
-repairs and recovery-account assignment checks remain deferred. No new access-profile tables,
+and repairs remain deferred. Recovery assignments use the same exact-subject read contract,
+separate capture/result evidence, automation signer and independent dated UI projection. No new access-profile tables,
 policy interpreter, credential fallback or live OCI adapter are required for this slice.

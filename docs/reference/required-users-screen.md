@@ -7,9 +7,10 @@ not establish cloud existence or credentials. Retired record does not assert OCI
 
 **Refresh user data** admits one asynchronous read when a qualified current simulated connection
 and both exact bound users exist. It now includes independent
-[automation administrator assignments](administrator-assignments.md) and
+[required-user administrator assignments](administrator-assignments.md) and
 [recovery console policy checks](recovery-console-verification.md). The automation card shows
-Administrators group and Domain administrator role; only recovery retains Permissions: Not checked.
+Administrators group and Domain administrator role. Recovery summarizes those two assignments
+under Permissions and exposes individual statuses in Identity details.
 These checks do not establish all effective permissions, live OCI access or credential readiness.
 No daily scheduler, repair or password action is added. The
 [confirmed-Missing alert extension](required-user-alerts.md) adds email for account absence;
@@ -151,4 +152,11 @@ Identity record, Presence and Permissions share one laptop row in the Recovery c
 and network controls stay paired below it. Cards stack at 900px and below to keep tablet badge text intact; these facts stack at 700px and below. Automation and the
 compact check-date footer are unchanged. In the neighboring summary panels, Manage overrides now
 sits in the header at the same position as Refresh costs, with coordinated wrapping on compact
-laptop screens. This is presentation only; permissions remain Not checked and no checks/actions change.
+laptop screens. That presentation refinement did not add checks. The [recovery assignment extension](administrator-assignments.md#recovery-extension--9-november-2026)
+now replaces the former Not checked placeholder with a scoped assignment summary after refresh.
+
+
+Recovery Permissions now summarizes separately retained group/role evidence. Its exact two statuses
+remain under Identity details. Assignment, presence and policy dates flow in two columns below the
+overview badges; mobile stacks them. See the [current field map](administrator-assignments.md).
+No password disclosure or all-effective-permissions claim is introduced.

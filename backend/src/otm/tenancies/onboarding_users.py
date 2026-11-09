@@ -34,13 +34,13 @@ def capture_users(facade, intent, discovery):
             or subject.scim_resource_id in temporary_scim_ids
         ):
             raise ValueError("REQUIRED_USER_IDENTITIES_UNVERIFIED")
-    if users.automation_administrator is not None:
-        from otm.providers.administrator_access import assess_assignments
+    from otm.providers.administrator_access import assess_assignments
 
-        capture = users.automation_administrator
-        result = assess_assignments(capture.binding, capture.facts)
-        if result.group != "verified" or result.domain_role != "verified":
-            raise ValueError("ADMINISTRATOR_ASSIGNMENTS_UNVERIFIED")
+    for capture in (users.automation_administrator, users.recovery_administrator):
+        if capture is not None:
+            result = assess_assignments(capture.binding, capture.facts)
+            if result.group != "verified" or result.domain_role != "verified":
+                raise ValueError("ADMINISTRATOR_ASSIGNMENTS_UNVERIFIED")
     if intent.recovery_console_fingerprint is not None:
         # Setup checks exact provider identities before permanent database bindings exist.
         from otm.providers.recovery_console import assess_policy

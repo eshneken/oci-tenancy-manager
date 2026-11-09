@@ -52,6 +52,10 @@ class OnboardingUsers(Contract):
     automation_administrator: AdministratorCapture | None = Field(
         default=None, exclude_if=lambda value: value is None, repr=False
     )
+    # Independent recovery assignment facts are absent from historical setup evidence.
+    recovery_administrator: AdministratorCapture | None = Field(
+        default=None, exclude_if=lambda value: value is None, repr=False
+    )
     workspace_id: Text
     tenancy_ocid: TenancyOcid
     parent_tenancy_ocid: TenancyOcid
@@ -77,12 +81,15 @@ class OnboardingUsers(Contract):
             or self.automation.provider_ocid == self.recovery.provider_ocid
         ):
             raise ValueError("REQUIRED_USER_IDENTITIES_UNVERIFIED")
-        if self.automation_administrator is not None and (
-            self.automation_administrator.binding.domain_ocid != self.domain_ocid
-            or self.automation_administrator.binding.scim_resource_id
-            != self.automation.scim_resource_id
+        for capture, subject in (
+            (self.automation_administrator, self.automation),
+            (self.recovery_administrator, self.recovery),
         ):
-            raise ValueError("ADMINISTRATOR_CAPTURE_SCOPE_INVALID")
+            if capture is not None and (
+                capture.binding.domain_ocid != self.domain_ocid
+                or capture.binding.scim_resource_id != subject.scim_resource_id
+            ):
+                raise ValueError("ADMINISTRATOR_CAPTURE_SCOPE_INVALID")
         if self.recovery_console is not None and (
             self.recovery_console.scim_resource_id != self.recovery.scim_resource_id
             or self.recovery_console.facts.domain_ocid != self.domain_ocid

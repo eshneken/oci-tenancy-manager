@@ -307,3 +307,12 @@ Implementation requires D53 complete-source unit coverage, disposable PostgreSQL
 simulator fault injection, meaningful Playwright flows and D56 review/scans. Live disposable-child
 policy, actual egress, update propagation, API authority, session and signer tests remain separately
 pending. No static/simulator check establishes those provider outcomes.
+
+
+### Read-only recovery assignments — 9 November 2026
+
+[Required-user assignments](../reference/administrator-assignments.md) now inspect recovery group
+and domain administrator role grants independently of automation grants and recovery console policy.
+Assigned means those two simulated assignments only. It does not implement password retrieval,
+Vault custody, a recovery signer fallback, or the durable four-hour rotation flow. Credential
+disclosure remains unavailable until custody and rotation qualify together.

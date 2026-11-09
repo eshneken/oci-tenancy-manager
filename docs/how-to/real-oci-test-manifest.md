@@ -177,3 +177,11 @@ presence, dated persisted list/detail consistency and no provider/list disclosur
 Validate actual SDK authentication and identity-domain administration separately; assignment success
 alone must not authorize credential disclosure, destructive workflows or claim all effective access.
 No live cases in this section have been run by the local simulation slice.
+
+
+Apply the administrator-assignment matrix independently to automation and recovery. Remove only
+one subject’s membership/direct or group role grant and prove the other remains independently
+verified. Qualify coherent shared group facts, recovery identity replacement, cross-purpose
+substitution, stale connection/attempt publication, denied/partial coverage and persisted reload.
+Recovery Assigned must never by itself authorize password disclosure or imply console readiness.
+These cases remain pending real OCI; local fixtures do not qualify the live APIs.

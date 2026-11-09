@@ -5,9 +5,8 @@ Local simulation qualified; main preview upgraded with existing data preserved; 
 Tenancies → a registered child → **Required users** now supports **Refresh user data**. The worker reads
 both exact bound subjects independently through an explicitly selected simulator. Present means
 existence in that simulator's qualified fixture, not live OCI existence, usable signing credentials,
-administrative privileges, console access, MFA or recovery readiness. **Permissions: Not checked**
-remains on recovery only; the [automation assignment extension](administrator-assignments.md) now
-checks its exact group and domain-role assignments separately. The original presence-only checkpoint added no email. The
+administrative privileges, console access, MFA or recovery readiness. The [assignment extension](administrator-assignments.md) now
+checks both users’ exact group and domain-role assignments separately. The original presence-only checkpoint added no email. The
 [new confirmed-Missing alert slice](required-user-alerts.md) adds scoped notices; daily scheduling,
 repair and password actions remain deferred.
 

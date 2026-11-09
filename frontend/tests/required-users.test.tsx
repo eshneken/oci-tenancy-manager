@@ -32,7 +32,7 @@ it("shows both identities and contextual setup links", async () => {
   const c = mount();
   await screen.findByText("otm-automation");
   expect(screen.getAllByText("Recorded", { exact: true })).toHaveLength(2);
-  expect(screen.getAllByText("Not checked", { exact: true })).toHaveLength(7);
+  expect(screen.getAllByText("Not checked", { exact: true })).toHaveLength(9);
   expect(screen.queryByText(/healthy|verified|missing/i)).not.toBeInTheDocument();
   const card = screen.getByRole("heading", { name: "Automation user" }).closest("li")!;
   const details = card.querySelector("details")!;
@@ -134,7 +134,7 @@ it("shows independent current and failed account observations", async()=>{
   expect(await screen.findByText("Present",{exact:true})).toBeVisible();
   expect(screen.getByText("Missing",{exact:true})).toBeVisible();
   expect(screen.getAllByText("Permissions")).toHaveLength(1);
-  expect(screen.getAllByText("Not checked",{exact:true})).toHaveLength(5);
+  expect(screen.getAllByText("Not checked",{exact:true})).toHaveLength(7);
   await userEvent.click(screen.getAllByRole("link",{name:/^View presence check, /})[0]);
   expect(c.navigate).toHaveBeenCalledWith("/operations/"+checkId);
   c.read.mockResolvedValue({...present,users:present.users.map(u=>({...u,presence:{...u.presence!,state:"unknown"}})) as RequiredUsersDirectory["users"]});
@@ -350,4 +350,27 @@ it("shows a date without a link when operation provenance is absent", async () =
   await screen.findAllByText("Presence last attempt (UTC)");
   expect(screen.getAllByText("Nov 9, 2026")).toHaveLength(2);
   expect(screen.queryByRole("link",{name:/^View presence check/})).not.toBeInTheDocument();
+});
+
+// The compact recovery row reports only assignments, with the individual facts behind disclosure.
+it.each([
+  ["verified","verified",false,"Assigned"],
+  ["missing","verified",false,"Missing"],
+  ["verified","missing",false,"Missing"],
+  ["unknown","verified",false,"Unverified"],
+  ["not_checked","not_checked",false,"Not checked"],
+  ["verified","verified",true,"Out of date"],
+] as const)("summarizes recovery assignments %s/%s stale=%s",async(group,domain_role,stale,label)=>{
+  const c=mount({...directory,users:directory.users.map(user=>user.purpose==="recovery"?{...user,administrator_access:{group,domain_role,stale,checked_at:group==="not_checked"?null:"2026-11-09T12:00:00Z",operation_id:group==="not_checked"?null:id}}:user)} as RequiredUsersDirectory);
+  const heading=await screen.findByRole("heading",{name:"Recovery user"});
+  const card=within(heading.closest("li")!);
+  const summary=card.getByLabelText(`Administrator assignments: ${label} (simulation)`);
+  expect(summary).toBeVisible();
+  expect(summary).toHaveAttribute("title",expect.stringContaining("does not establish password readiness"));
+  const disclosure=card.getByText("Identity details");
+  await userEvent.click(disclosure);
+  expect(card.getByText("Administrators group")).toBeVisible();
+  expect(card.getByText("Domain administrator role")).toBeVisible();
+  if(group!=="not_checked")expect(card.getByRole("link",{name:/^View assignment check, /})).toHaveAttribute("href","/operations/"+id);
+  c.client.clear();
 });

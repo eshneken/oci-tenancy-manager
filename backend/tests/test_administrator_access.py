@@ -30,15 +30,23 @@ from otm.tenancies.presence_records import decode_result
 
 
 # Fixtures represent independently retained setup facts rather than inferred expected membership.
-def configured():
+def configured(purpose="automation"):
     c = case()
-    capture = configured_administrator_capture(
-        c.source.domain_ocid, c.source.automation.scim_resource_id, "synthetic"
-    )
-    c.source = c.source.model_copy(update={"automation_administrator": capture})
+    captures = {
+        purpose + "_administrator": configured_administrator_capture(
+            c.source.domain_ocid,
+            getattr(c.source, purpose).scim_resource_id,
+            "synthetic",
+            (c.source.automation.scim_resource_id, c.source.recovery.scim_resource_id),
+        )
+        for purpose in ("automation", "recovery")
+    }
+    c.source = c.source.model_copy(update=captures)
+    capture = captures[purpose + "_administrator"]
+    subject = c.commands[0 if purpose == "automation" else 1]
     c.worker.administrator_inspection_factory = simulated_administrator_inspection
     c.command = InspectAdministratorAccess(
-        context=c.commands[0].context, target=c.commands[0].target, binding=capture.binding
+        context=subject.context, target=subject.target, binding=capture.binding
     )
     return c
 
@@ -227,7 +235,7 @@ def test_contract_guards():
         )
     with pytest.raises(ValueError):
         AdministratorCheck(
-            context=c.command.context,
+            context=c.command.context.model_copy(update={"workspace_id": "foreign"}),
             target=c.commands[1].target,
             checked_at=c.clock(),
             result=AdministratorResult(group="verified", domain_role="verified"),
@@ -268,3 +276,51 @@ def test_publication_fences_assignment_results(fault):
             c.row["id"], check["attempt_id"], c.commands, c.results, assignments=observed
         )
         assert seal.call_args.kwargs["administrator_access"].result.group == "unknown"
+
+
+# Each purpose reads its own capture; exact-subject evidence cannot move between result slots.
+@pytest.mark.parametrize("purpose", ["automation", "recovery"])
+def test_both_purposes_have_independent_provenance(purpose):
+    c = configured(purpose)
+    index = 0 if purpose == "automation" else 1
+    read = c.worker.read_administrator(c.commands[index], c.source)
+    assert read.target == c.command.target and read.result.group == "verified"
+    key = "administrator_access" if index == 0 else "recovery_administrator_access"
+    evidence = c.evidence.model_copy(update={key: read})
+    payload = evidence.model_dump(mode="json")
+    event = {"data": payload, "data_hash": canonical_hash(payload)}
+    assert administrator_view(c.snapshot, c.check, event, c.clock(), purpose).group == "verified"
+    assert administrator_view(
+        c.snapshot, c.check, event, c.clock() + timedelta(days=1), purpose
+    ).stale
+    assert "recovery_administrator_access" not in c.payload
+    payload[key] = read.model_copy(update={"target": c.commands[1 - index].target}).model_dump(
+        mode="json"
+    )
+    with pytest.raises(ValueError, match="ADMINISTRATOR_CHECK_SCOPE_INVALID"):
+        PresenceCheckEvidence.model_validate_json(json.dumps(payload))
+    legacy = c.source.model_copy(update={purpose + "_administrator": None})
+    assert c.worker.read_administrator(c.commands[index], legacy).result.group == "unknown"
+
+
+# Setup rejects a recovery capture paired with the automation account, before retaining evidence.
+def test_recovery_capture_cannot_be_substituted():
+    c = configured()
+    payload = c.source.model_dump(mode="json")
+    payload["recovery_administrator"] = payload["automation_administrator"]
+    with pytest.raises(ValueError, match="ADMINISTRATOR_CAPTURE_SCOPE_INVALID"):
+        OnboardingUsers.model_validate_json(json.dumps(payload))
+
+
+# Both assignment results lose authority when current-context publication fails.
+def test_recovery_publication_fence():
+    c = configured("recovery")
+    observed = c.worker.read_administrator(c.commands[1], c.source)
+    check = c.check | {"state": "reading"}
+    c.worker.locked = Mock(return_value=(c.row, c.frozen, c.child, check))
+    c.worker.current = Mock(return_value=False)
+    with patch("otm.tenancies.presence_worker.seal") as seal:
+        c.worker.finish(
+            c.row["id"], check["attempt_id"], c.commands, c.results, recovery_assignments=observed
+        )
+        assert seal.call_args.kwargs["recovery_administrator_access"].result.group == "unknown"

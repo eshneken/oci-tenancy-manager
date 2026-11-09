@@ -77,8 +77,15 @@ class UserPresenceWorker:
             results.append(result)
         console = self.read_console(commands[1], source, frozen.intent.snapshot)
         assignments = self.read_administrator(commands[0], source)
+        recovery_assignments = self.read_administrator(commands[1], source)
         self.finish(
-            identifier, check["attempt_id"], tuple(commands), tuple(results), console, assignments
+            identifier,
+            check["attempt_id"],
+            tuple(commands),
+            tuple(results),
+            console,
+            assignments,
+            recovery_assignments,
         )
 
     # Missing legacy capture, failed reads and substituted subjects never gain inferred assignments.
@@ -96,7 +103,9 @@ class UserPresenceWorker:
             checked_at=self.clock(),
             result=unknown_result,
         )
-        capture = source.automation_administrator if source else None
+        capture = (
+            getattr(source, subject_command.target.purpose + "_administrator") if source else None
+        )
         if capture is None or self.administrator_inspection_factory is None:
             return fallback
         try:
@@ -344,7 +353,16 @@ class UserPresenceWorker:
             return frozen, check, commands, source
 
     # Late/replayed callbacks never replace a newer attempt or a terminal result.
-    def finish(self, identifier, attempt, commands, results, console=None, assignments=None):
+    def finish(
+        self,
+        identifier,
+        attempt,
+        commands,
+        results,
+        console=None,
+        assignments=None,
+        recovery_assignments=None,
+    ):
         with self.engine.begin() as connection:
             locked = self.locked(connection, identifier)
             if locked is None:
@@ -388,16 +406,21 @@ class UserPresenceWorker:
                         ),
                     }
                 )
-            if assignments is not None and (
+            if (assignments is not None or recovery_assignments is not None) and (
                 not current or clock_invalid or at - check["started_at"] > READ_WINDOW
             ):
                 from otm.providers.administrator_access import AdministratorResult
 
-                assignments = assignments.model_copy(
-                    update={
-                        "checked_at": at,
-                        "result": AdministratorResult(group="unknown", domain_role="unknown"),
-                    }
+                assignments, recovery_assignments = (
+                    item.model_copy(
+                        update={
+                            "checked_at": at,
+                            "result": AdministratorResult(group="unknown", domain_role="unknown"),
+                        }
+                    )
+                    if item is not None
+                    else None
+                    for item in (assignments, recovery_assignments)
                 )
             episodes, opened = None, ()
             if frozen.intent.notice_policy_version == 1:
@@ -416,6 +439,7 @@ class UserPresenceWorker:
                 notice_episodes=episodes,
                 recovery_console=console,
                 administrator_access=assignments,
+                recovery_administrator_access=recovery_assignments,
             )
             if opened and self.notifications is not None:
                 from otm.tenancies.presence_alerts import stage_missing

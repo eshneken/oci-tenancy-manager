@@ -140,7 +140,16 @@ class SimulatedLifecycleFacade:
             domain_ocid=discovery["domain_ocid"],
             recovery_console=capture,
             automation_administrator=configured_administrator_capture(
-                discovery["domain_ocid"], "automation-" + suffix, suffix
+                discovery["domain_ocid"],
+                "automation-" + suffix,
+                suffix,
+                ("automation-" + suffix, "recovery-" + suffix),
+            ),
+            recovery_administrator=configured_administrator_capture(
+                discovery["domain_ocid"],
+                "recovery-" + suffix,
+                suffix,
+                ("automation-" + suffix, "recovery-" + suffix),
             ),
             automation=ObservedRequiredUser(
                 domain_ocid=discovery["domain_ocid"],

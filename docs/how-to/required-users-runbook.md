@@ -13,7 +13,7 @@ Missing/routing/delivery is exercised by disposable automated tests, without pro
    children may say Not recorded; some have Recorded identities but no selected connection.
 3. Refresh user data must be disabled when the required current bindings/connection are absent, with an
    explanation. Do not interpret this as missing cloud users or try to manufacture a connection.
-4. There is one normal Refresh user data action. Page-level Refresh reloads stored results only. Recovery permissions stay Not checked; automation assignment results remain separate from presence. No reset,
+4. There is one normal Refresh user data action. Page-level Refresh reloads stored results only. Assignments stay Not checked before their first refresh; neither user’s presence establishes assignments. No reset,
    repair, password control or invented successful presence result is expected.
 
 ## 2. Create or import a fresh simulated child
@@ -27,12 +27,13 @@ Missing/routing/delivery is exercised by disposable automated tests, without pro
    retain the domain, two permanent identity mappings and selected simulated connection together.
 4. Open the now-active child. Both identity records should say Recorded. Expand Identity details
    with keyboard or mouse: the user OCIDs and SCIM IDs differ, the domain is shared, UTC recording
-   times and View setup operation are available. Assignment results start Not checked until refreshed; Recovery retains Permissions: Not checked.
+   times and View setup operation are available. Assignment results start Not checked until refreshed, including Recovery Permissions.
 5. Select Refresh user data. Refreshing user data… and dated previous results reflect queued/running work. Keep the
    foreground worker running; opening or reloading a page cannot execute the job.
 6. When the check finishes, expect two Present results for the normal authenticated simulated
-   producer fixture. Recovery retains Permissions: Not checked; automation shows separate Administrators group and Domain administrator role results. Each card has its own Presence checked (UTC)
-   date link in the footer. Automation also has an Assignments checked (UTC) date link; recovery has a Policy checked (UTC) date link. These labels establish simulator existence only, not live OCI access.
+   producer fixture. Recovery Permissions shows Assigned; expand Identity details for its separate group/role results.
+   Automation shows separate Administrators group and Domain administrator role results. Each card has its own Presence checked (UTC)
+   date link in the footer. Both also have an Assignments checked (UTC) date link; recovery additionally has a Policy checked (UTC) date link. These labels establish simulator existence only, not live OCI access.
 7. Click the Presence checked date. Verify the actual read-only required-user operation, safe result and retained
    history. Its tenancy context returns to the child. Check operations never offer repair or create
    an actionable attention badge. The setup operation remains a separate provenance link.

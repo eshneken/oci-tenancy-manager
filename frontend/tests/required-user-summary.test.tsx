@@ -46,3 +46,11 @@ it.each([false,true])("shows assignment warning with stale=%s",stale=>{
   render(<RequiredUserSummary id={id} name="Synthetic" status="active" navigate={navigate} summary={{administrator_access:{group:"missing",domain_role:"verified",stale,checked_at:"2026-11-09T12:00:00Z",operation_id:id}}}/>);
   expect(screen.getByRole("link",{name:`Automation assignments ${stale?"out of date":"missing"} for Synthetic`})).toHaveAttribute("href","/tenancies/"+id+"#required-users");
 });
+
+
+// Recovery assignment status uses its own evidence and never replaces the presence-only badge.
+it.each([false,true])("links separate recovery assignment warning stale=%s",stale=>{
+  render(<RequiredUserSummary id={id} name="Synthetic" status="active" navigate={vi.fn()} summary={{state:"not_checked",recovery_administrator_access:{group:"missing",domain_role:"verified",stale}} as RequiredUsersSummary}/>);
+  expect(screen.getByRole("link",{name:`Recovery assignments ${stale?"out of date":"missing"} for Synthetic`})).toHaveAttribute("href","/tenancies/"+id+"#required-users");
+  expect(screen.getByRole("link",{name:"Users: Not checked for Synthetic"})).toBeVisible();
+});

@@ -2168,3 +2168,15 @@ foreign key or migration is introduced; older JSON omits these optional source f
 Checked-date footer formatting (9 November) derives date-only UTC labels from existing `checked_at`
 and exact check links from existing `operation_id` fields. The underlying UTC instants remain intact;
 this presentation refinement adds no stored field, table, index or migration.
+
+
+### Recovery assignment evidence extension — 9 November 2026
+
+The same [assignment field map](../reference/administrator-assignments.md#fields-and-persistence)
+now adds omitted-when-absent `required_users.recovery_administrator` to immutable onboarding JSON
+and `recovery_administrator_access` to immutable required-user outcome JSON. Each carries its own
+exact recovery SCIM identity/domain binding and separate observed group/application/role facts.
+`RequiredUserRecord.administrator_access` is populated for each purpose;
+`RequiredUsersSummary.recovery_administrator_access` supplies the recovery inventory warning.
+Existing audit/check rows retain these fields; no new table, migration or index is required.
+Historical omitted bytes stay stable, and source capture is never backfilled from presence.

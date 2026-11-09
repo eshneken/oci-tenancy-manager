@@ -620,6 +620,9 @@
         "recovery": {
           "$ref": "#/$defs/UserPresenceView"
         },
+        "recovery_administrator_access": {
+          "$ref": "#/$defs/AdministratorAccessView"
+        },
         "recovery_console": {
           "$ref": "#/$defs/RecoveryConsoleView"
         },

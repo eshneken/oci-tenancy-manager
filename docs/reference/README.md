@@ -63,4 +63,4 @@ and [presence checks](user-presence-checks.md#retained-results-after-membership-
 
 - [Recovery console checks](recovery-console-verification.md): private settings, exact setup capture and qualified independent policy/presence UI; custody/rotation remain pending.
 
-- [Automation administrator assignments](administrator-assignments.md): separate exact group/role checks and persistent detail/inventory results.
+- [Required-user administrator assignments](administrator-assignments.md): separate exact group/role checks and persistent detail/inventory results.

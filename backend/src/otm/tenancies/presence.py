@@ -112,9 +112,6 @@ class PresenceChecks:
         views = presence_views(
             snapshot, latest, event if latest is not None else None, self.store.clock()
         )
-        assignments = administrator_view(
-            snapshot, latest, event if latest is not None else None, self.store.clock()
-        )
         return directory.model_copy(
             update={
                 "check_available": reason is None,
@@ -127,9 +124,13 @@ class PresenceChecks:
                     user.model_copy(
                         update={
                             "presence": views.get(user.purpose, UserPresenceView()),
-                            "administrator_access": assignments
-                            if user.purpose == "automation"
-                            else AdministratorAccessView(),
+                            "administrator_access": administrator_view(
+                                snapshot,
+                                latest,
+                                event if latest is not None else None,
+                                self.store.clock(),
+                                user.purpose,
+                            ),
                         }
                     )
                     for user in directory.users
@@ -329,11 +330,15 @@ def console_view(snapshot, latest, event, now):
 
 
 # Detail reads reuse sealed exact-subject evidence and the presence freshness/context boundary.
-def administrator_view(snapshot, latest, event, now):
+def administrator_view(snapshot, latest, event, now, purpose="automation"):
     if latest is None:
         return AdministratorAccessView()
     evidence = decode_result(latest, event["data"], event["data_hash"])
-    check = evidence.administrator_access
+    check = (
+        evidence.administrator_access
+        if purpose == "automation"
+        else evidence.recovery_administrator_access
+    )
     if check is None or not presence_views(snapshot, latest, event, now):
         return AdministratorAccessView()
     return AdministratorAccessView(

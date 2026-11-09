@@ -26,7 +26,7 @@ class SimulatedAdministratorAccessProvider:
 
 
 # Setup fixtures represent the built-in group and domain role separately from account existence.
-def configured_administrator_capture(domain, user, suffix):
+def configured_administrator_capture(domain, user, suffix, members=None):
     binding = AdministratorBinding(
         domain_ocid=domain,
         scim_resource_id=user,
@@ -45,7 +45,7 @@ def configured_administrator_capture(domain, user, suffix):
             group_enabled=True,
             role_enabled=True,
             user_enabled=True,
-            group_members=(user,),
+            group_members=(user,) if members is None else members,
             role_users=(),
             role_groups=(binding.group_id,),
         ),
@@ -54,7 +54,11 @@ def configured_administrator_capture(domain, user, suffix):
 
 # Composition rehydrates immutable producer facts; legacy evidence remains unavailable.
 def simulated_administrator_inspection(command, source, clock):
-    capture = source.automation_administrator
+    capture = (
+        source.automation_administrator
+        if command.target.purpose == "automation"
+        else source.recovery_administrator
+    )
     if capture is None:
         raise ValueError("ADMINISTRATOR_CAPTURE_UNAVAILABLE")
     return AdministratorAccessInspection(

@@ -115,6 +115,11 @@ class PresenceCheckEvidence(Contract):
         default=None, exclude_if=lambda value: value is None
     )
 
+    # Recovery assignments remain a separately scoped result, without changing legacy bytes.
+    recovery_administrator_access: AdministratorCheck | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
+
     # Policy verification is independent of the two user-existence results.
     recovery_console: RecoveryConsoleCheck | None = Field(
         default=None, exclude_if=lambda value: value is None
@@ -130,11 +135,14 @@ class PresenceCheckEvidence(Contract):
     # denied per-user evidence and superseded reads cannot certify presence or absence.
     @model_validator(mode="after")
     def coverage(self):
-        if self.administrator_access is not None:
-            access = self.administrator_access
-            if (
-                access.context != self.results[0].context
-                or access.target != self.results[0].target
+        for access, subject in zip(
+            (self.administrator_access, self.recovery_administrator_access),
+            self.results,
+            strict=True,
+        ):
+            if access is not None and (
+                access.context != subject.context
+                or access.target != subject.target
                 or not self.started_at <= access.checked_at <= self.checked_at
                 or self.state == "superseded"
                 and (access.result.group != "unknown" or access.result.domain_role != "unknown")
@@ -245,6 +253,9 @@ class RequiredUsersSummary(Contract):
     checking: bool = False
     recovery_console: RecoveryConsoleView = Field(default_factory=RecoveryConsoleView)
     administrator_access: AdministratorAccessView = Field(default_factory=AdministratorAccessView)
+    recovery_administrator_access: AdministratorAccessView = Field(
+        default_factory=AdministratorAccessView
+    )
 
     # Positive summaries require dated per-subject source references, not a caller's label alone.
     @model_validator(mode="after")

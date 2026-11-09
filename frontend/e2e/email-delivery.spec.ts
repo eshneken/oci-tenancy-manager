@@ -90,6 +90,11 @@ test("inspect redirected lifecycle delivery and immutable identities through rea
  const users=page.getByRole("region",{name:"Required users",exact:true});
  await expect(users.getByText("Missing",{exact:true})).toHaveCount(1);
  await expect(users.getByText("Present",{exact:true})).toHaveCount(1);
- await expect(users.getByText("Not checked",{exact:true})).toHaveCount(3);
+ // This legacy notice fixture has no assignment capture: absence must not invent either grant.
+ await expect(users.getByText("Not checked",{exact:true})).toHaveCount(2);
+ const recovery=users.locator(".required-user-card").filter({has:page.getByRole("heading",{name:"Recovery user",exact:true})});
+ await expect(recovery.getByLabel("Administrator assignments: Unverified (simulation)")).toBeVisible();
+ await recovery.getByText("Identity details",{exact:true}).click();
+ await expect(recovery.getByText("Unable to verify",{exact:true})).toHaveCount(2);
  expect(errors).toEqual([]);
 });

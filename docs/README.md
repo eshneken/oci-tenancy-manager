@@ -128,7 +128,7 @@ responsive tenancy detail layout for laptop and mobile screens.
 The [UI review policy](ui-ux-review-policy.md#whole-page-section-rhythm--9-november-2026)
 requires full-page spacing checks alongside cropped panel reviews.
 
-- [Automation administrator assignments](reference/administrator-assignments.md): scoped simulated group/role checks, evidence fields and local review.
+- [Required-user administrator assignments](reference/administrator-assignments.md): scoped simulated group/role checks, evidence fields and local review.
 
 - [Automation assignment UI checkpoint](history/automation-assignments-ui-checkpoint-2026-11-09.md): final qualification receipt and saved-preview preservation.
 
@@ -144,3 +144,5 @@ The [Recovery overview row](reference/required-users-screen.md#recovery-overview
 records the compact three-fact layout and aligned cost/override header actions.
 
 The [Recovery overview and matching header actions checkpoint](history/check-date-footer-local-session-checkpoint-2026-11-09.md#recovery-overview-and-matching-header-actions) records final responsive qualification and unchanged data/settings.
+
+- [Recovery assignments UI checkpoint](history/recovery-assignments-checkpoint-2026-11-09.md): independent recovery group/role results and compact permission summary.

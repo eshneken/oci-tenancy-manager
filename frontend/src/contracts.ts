@@ -1740,6 +1740,7 @@ export interface RequiredUsersSummary {
   automation?: UserPresenceView;
   checking?: Checking;
   recovery?: UserPresenceView;
+  recovery_administrator_access?: AdministratorAccessView;
   recovery_console?: RecoveryConsoleView;
   state?: State12;
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "./api";
 import { followLink } from "./navigation";
+import type { AdministratorAccessView } from "./contracts";
 
 const purposes = { automation: "Automation user", recovery: "Recovery user" };
 const presenceNames = {not_checked:"Not checked", present:"Present", missing:"Missing", unknown:"Unable to verify"};
@@ -9,6 +10,22 @@ const blocked = {not_configured:"Presence checks require a registered automation
 const policyNames = {not_checked:"Not checked",verified:"Verified in simulation",drift:"Policy drift",unknown:"Unable to verify",stale:"Check out of date"};
 const assignmentNames = {not_checked:"Not checked",verified:"Verified in simulation",missing:"Missing or disabled",unknown:"Unable to verify"};
 const states = { recorded: "Recorded", not_recorded: "Not recorded", retired: "Retired record" };
+
+// Summarize only the two required assignments, never password readiness or effective privileges.
+function AssignmentSummary({access}:{access?:AdministratorAccessView}) {
+  const values=[access?.group??"not_checked",access?.domain_role??"not_checked"];
+  const state=access?.stale?"stale":values.includes("missing")?"missing":values.every(value=>value==="verified")?"verified":values.every(value=>value==="not_checked")?"not_checked":"unknown";
+  const names={stale:"Out of date",missing:"Missing",verified:"Assigned",not_checked:"Not checked",unknown:"Unverified"};
+  return <span className={"badge "+(state==="verified"?"active":state==="missing"?"presence-missing":state==="stale"?"review-open":"required-user-state")} title="Simulated Administrators group and domain administrator role checks only. Expand Identity details for each result. This does not establish password readiness or all effective permissions." aria-label={`Administrator assignments: ${names[state]} (simulation)`}>{names[state]}</span>;
+}
+
+// Reuse exact assignment labels in the overview and recovery identity disclosure.
+function AssignmentFacts({access}:{access?:AdministratorAccessView}) {
+  return <>{(["group","domain_role"] as const).map(kind=>{
+    const state=access?.[kind]??"not_checked";
+    return <div key={kind}><dt>{kind==="group"?"Administrators group":"Domain administrator role"}</dt><dd><span className={"badge "+(access?.stale?"review-open":state==="verified"?"active":state==="missing"?"presence-missing":"required-user-state")}>{access?.stale?"Check out of date":assignmentNames[state]}</span></dd></div>;
+  })}</>;
+}
 
 // Keep dated provenance compact while preserving the full UTC instant and exact operation target.
 function CheckDate({label,kind,at,operationId,navigate}:{label:string;kind:string;at:string;operationId?:string|null;navigate:(path:string)=>void}) {
@@ -118,14 +135,7 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
             <div className="required-user-overview-fact"><dt>Identity record</dt><dd><span className="badge required-user-state">{states[user.identity_state]}</span></dd></div>
             <div className="required-user-overview-fact"><dt>Presence</dt><dd><span className={"badge " + (presence.stale ? "review-open" : presence.state === "present" ? "active" : presence.state === "missing" ? "presence-missing" : "required-user-state")}>{label}</span>
               {presence.stale && <span className="muted"> · Last result: {presenceNames[presence.state]}</span>}</dd></div>
-            {user.purpose === "automation" ? <>
-              {(["group","domain_role"] as const).map(kind => {
-                const access = administrator;
-                const state = access?.[kind] ?? "not_checked";
-                return <div key={kind}><dt>{kind === "group" ? "Administrators group" : "Domain administrator role"}</dt><dd><span className={"badge " + (access?.stale ? "review-open" : state === "verified" ? "active" : state === "missing" ? "presence-missing" : "required-user-state")}>{access?.stale ? "Check out of date" : assignmentNames[state]}</span></dd></div>;
-              })}
-
-            </> : <div className="required-user-overview-fact"><dt>Permissions</dt><dd>Not checked</dd></div>}
+            {user.purpose === "automation" ? <AssignmentFacts access={administrator}/> : <div className="required-user-overview-fact"><dt>Permissions</dt><dd><AssignmentSummary access={administrator}/></dd></div>}
 
             {user.purpose === "recovery" && (["mfa_exemption","network_boundary"] as const).map(control => {
               const policy = consolePolicy;
@@ -135,14 +145,15 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
             })}
 
           </dl>
-          {(presence.checked_at || (user.purpose === "automation" ? administrator?.checked_at : consolePolicy?.checked_at)) && <dl className="required-user-checks">
-            {user.purpose === "automation" && administrator?.checked_at && <CheckDate label="Assignments checked" kind="assignment" at={administrator.checked_at} operationId={administrator.operation_id} navigate={navigate}/>}
+          {(presence.checked_at || administrator?.checked_at || (user.purpose === "recovery" && consolePolicy?.checked_at)) && <dl className="required-user-checks">
+            {administrator?.checked_at && <CheckDate label="Assignments checked" kind="assignment" at={administrator.checked_at} operationId={administrator.operation_id} navigate={navigate}/>}
             {presence.checked_at && <CheckDate label={presence.state === "unknown" ? "Presence last attempt" : "Presence checked"} kind="presence" at={presence.checked_at} operationId={presence.operation_id} navigate={navigate}/>}
             {user.purpose === "recovery" && consolePolicy?.checked_at && <CheckDate label="Policy checked" kind="policy" at={consolePolicy.checked_at} operationId={consolePolicy.operation_id} navigate={navigate}/>}
           </dl>}
           {user.identity && <details className="required-user-details">
             <summary>Identity details</summary>
             <dl className="required-user-facts">
+              {user.purpose === "recovery" && <AssignmentFacts access={administrator}/>}
               <div><dt>Domain OCID</dt><dd className="technical-id">{user.identity.domain_ocid}</dd></div>
               <div><dt>User OCID</dt><dd className="technical-id">{user.identity.user_ocid}</dd></div>
               <div><dt>SCIM resource ID</dt><dd className="technical-id">{user.identity.scim_resource_id}</dd></div>

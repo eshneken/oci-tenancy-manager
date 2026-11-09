@@ -150,6 +150,9 @@ def summaries(service, connection, workspace, children):
                 update={
                     "recovery_console": console_view(snapshot, row, row, now),
                     "administrator_access": administrator_view(snapshot, row, row, now),
+                    "recovery_administrator_access": administrator_view(
+                        snapshot, row, row, now, "recovery"
+                    ),
                 }
             )
         except (ValueError, KeyError, TypeError):

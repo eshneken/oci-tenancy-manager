@@ -48,7 +48,11 @@ def test_durable_assignment_results(assignments_case):
     assert view(c) == result
     inventory = c.workflow.tenancies(c.principal, TenancyQuery()).items[0]
     assert inventory.required_users.administrator_access == access
-    assert result.users[1].administrator_access.group == "not_checked"
+    assert result.users[1].administrator_access.group == "verified"
+    assert (
+        inventory.required_users.recovery_administrator_access
+        == result.users[1].administrator_access
+    )
     public = result.model_dump_json() + inventory.model_dump_json()
     public += (
         SqlOperationDirectory(c.engine)
@@ -68,6 +72,7 @@ def test_durable_assignment_results(assignments_case):
 
 
 # Actual assignment mutations never change the independent user-presence observation.
+@pytest.mark.parametrize("purpose", ["automation", "recovery"])
 @pytest.mark.parametrize(
     "fault,group,role",
     [
@@ -79,13 +84,15 @@ def test_durable_assignment_results(assignments_case):
         ("disabled", "missing", "missing"),
     ],
 )
-def test_assignment_faults_are_independent(assignments_case, fault, group, role):
+def test_assignment_faults_are_independent(assignments_case, fault, group, role, purpose):
     c = assignments_case
 
     # Inject independent fixture facts below the real validation wrapper, never product UI controls.
     def factory(command, source, clock):
         inspection = simulated_administrator_inspection(command, source, clock)
         facts = inspection.provider.facts
+        if command.target.purpose != purpose:
+            return inspection
         changed = (
             {"group_members": ()}
             if fault == "group"
@@ -106,25 +113,34 @@ def test_assignment_faults_are_independent(assignments_case, fault, group, role)
     refresh(c)
     actual = view(c)
     assert all(user.presence.state == "present" for user in actual.users)
-    assert actual.users[0].administrator_access.group == group
-    assert actual.users[0].administrator_access.domain_role == role
+    index = 0 if purpose == "automation" else 1
+    assert actual.users[index].administrator_access.group == group
+    assert actual.users[index].administrator_access.domain_role == role
+    assert actual.users[1 - index].administrator_access.group == "verified"
     inventory = c.workflow.tenancies(c.principal, TenancyQuery()).items[0]
     assert inventory.required_users.administrator_access == actual.users[0].administrator_access
+    assert (
+        inventory.required_users.recovery_administrator_access
+        == actual.users[1].administrator_access
+    )
 
 
 # Absent legacy source assignments are never backfilled from desired names or user existence.
-def test_legacy_assignments_are_unverifiable(assignments_case):
+@pytest.mark.parametrize("purpose", ["automation", "recovery"])
+def test_legacy_assignments_are_unverifiable(assignments_case, purpose):
     c = assignments_case
     original = c.reader.source
 
     # Replay a historical producer shape while preserving authenticated scope and existing users.
     def legacy(connection, snapshot):
-        return original(connection, snapshot).model_copy(update={"automation_administrator": None})
+        return original(connection, snapshot).model_copy(update={purpose + "_administrator": None})
 
     c.reader.source = legacy
     refresh(c)
     assert view(c).users[0].presence.state == "present"
-    assert view(c).users[0].administrator_access.group == "unknown"
+    assert (
+        view(c).users[0 if purpose == "automation" else 1].administrator_access.group == "unknown"
+    )
 
 
 # Slow callbacks lose their assignment proof even when the provider itself reported success.

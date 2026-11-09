@@ -52,3 +52,5 @@ Private original feeds, raw evidence, screenshots and machine-specific paths are
 - [Check-date footer and local session checkpoint — 9 November 2026](check-date-footer-local-session-checkpoint-2026-11-09.md): compact exact check links, aligned footers and local-only eight-hour idle policy.
 
 The [Recovery/header refinement](check-date-footer-local-session-checkpoint-2026-11-09.md#recovery-overview-and-matching-header-actions) extends that same UI checkpoint with a readable tablet layout and matching panel actions.
+
+- [Recovery assignments UI checkpoint](recovery-assignments-checkpoint-2026-11-09.md): independent recovery group/role results and compact permission summary.

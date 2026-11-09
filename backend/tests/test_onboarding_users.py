@@ -193,3 +193,26 @@ def test_operation_detail_accepts_capture_key():
         safe_code="ONBOARDING_VERIFIED",
     )
     assert step.step_key == "capture_required_users"
+
+
+# Both permanent identities must retain their separately verified administrative assignments.
+@pytest.mark.parametrize("purpose", ["automation", "recovery"])
+def test_setup_requires_observed_administrator_assignments(registry, purpose):
+    app, intent, _, _ = case(registry)
+    discovery = app.facade.inspect_onboarding(intent, app.facade.onboarding_handoff(intent))
+    users = app.facade.capture_onboarding_users(intent, discovery.model_dump(mode="json"))
+    assert (
+        users.automation_administrator.facts.group_members
+        == users.recovery_administrator.facts.group_members
+    )
+    capture = getattr(users, purpose + "_administrator")
+    damaged = users.model_copy(
+        update={
+            purpose + "_administrator": capture.model_copy(
+                update={"facts": capture.facts.model_copy(update={"role_groups": ()})}
+            )
+        }
+    )
+    with patch.object(app.facade, "capture_onboarding_users", return_value=damaged):
+        with pytest.raises(ValueError, match="ADMINISTRATOR_ASSIGNMENTS_UNVERIFIED"):
+            capture_users(app.facade, intent, discovery.model_dump(mode="json"))

@@ -31,8 +31,11 @@ export function RequiredUserSummary({id,name,status,summary,navigate}:{
       <a className={"badge " + (summary.recovery_console.state === "drift" ? "presence-missing" : "review-open")} href={href}
         aria-label={`Recovery policy ${summary.recovery_console.state === "drift" ? "drift" : "out of date"} for ${name}`}
         onClick={event=>followLink(event,href,navigate)}>{summary.recovery_console.state === "drift" ? "Recovery policy drift" : "Recovery policy out of date"}</a>}
-    {summary?.administrator_access && (summary.administrator_access.stale || [summary.administrator_access.group,summary.administrator_access.domain_role].includes("missing")) &&
-      <a className={"badge " + (summary.administrator_access.stale ? "review-open" : "presence-missing")} href={href} aria-label={`Automation assignments ${summary.administrator_access.stale ? "out of date" : "missing"} for ${name}`} onClick={event=>followLink(event,href,navigate)}>{summary.administrator_access.stale ? "Automation assignments out of date" : "Automation assignment missing"}</a>}
+    {(["automation","recovery"] as const).map(purpose=>{
+      const access=purpose==="automation"?summary?.administrator_access:summary?.recovery_administrator_access;
+      const label=purpose==="automation"?"Automation":"Recovery";
+      return access && (access.stale || [access.group,access.domain_role].includes("missing")) ? <a key={purpose} className={"badge "+(access.stale?"review-open":"presence-missing")} href={href} aria-label={`${label} assignments ${access.stale?"out of date":"missing"} for ${name}`} onClick={event=>followLink(event,href,navigate)}>{label} assignments {access.stale?"out of date":"missing"}</a>:null;
+    })}
     {summary?.checking&&<span className="muted">Checking…</span>}
     <span className="sr-only" id={descriptionId}>{description}</span>
   </span>;

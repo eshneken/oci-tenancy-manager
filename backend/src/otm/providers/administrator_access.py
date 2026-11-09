@@ -40,7 +40,7 @@ class AdministratorCapture(Contract):
     binding: AdministratorBinding
     facts: AdministratorFacts = Field(repr=False)
 
-    # An authenticated capture must identify the same domain, automation account and resources.
+    # An authenticated capture must identify the same domain, exact subject and resources.
     @model_validator(mode="after")
     def scope(self):
         if self.facts.binding != self.binding:
@@ -54,12 +54,11 @@ class InspectAdministratorAccess(Contract):
     target: RequiredUserTarget
     binding: AdministratorBinding
 
-    # This capability is deliberately limited to the exact automation user in its bound domain.
+    # Subject identity is exact; inspecting recovery grants never selects a recovery signer.
     @model_validator(mode="after")
     def scope(self):
         if (
-            self.target.purpose != "automation"
-            or self.context.workspace_id != self.target.workspace_id
+            self.context.workspace_id != self.target.workspace_id
             or self.binding.domain_ocid != self.target.domain_ocid
             or self.binding.scim_resource_id != self.target.scim_resource_id
         ):
@@ -88,13 +87,10 @@ class AdministratorCheck(Contract):
     checked_at: UtcInstant
     result: AdministratorResult
 
-    # An assignment result for a recovery/other subject is never an automation result.
+    # The sealed evidence additionally pairs this result with its exact ordered subject.
     @model_validator(mode="after")
     def scope(self):
-        if (
-            self.target.purpose != "automation"
-            or self.context.workspace_id != self.target.workspace_id
-        ):
+        if self.context.workspace_id != self.target.workspace_id:
             raise ValueError("ADMINISTRATOR_CHECK_SCOPE_INVALID")
         return self
 

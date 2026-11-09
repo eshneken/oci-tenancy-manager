@@ -428,7 +428,7 @@ async function organizationFlows(page: Page) {
       );
       const users = page.getByRole("region", { name: "Required users", exact: true });
       await expect(users.getByText("Recorded", { exact: true })).toHaveCount(2);
-      await expect(users.getByText("Not checked", { exact: true })).toHaveCount(7);
+      await expect(users.getByText("Not checked", { exact: true })).toHaveCount(9);
       await expect(users.getByText("otm-automation", { exact: true })).toBeVisible();
       await expect(users.getByRole("button", { name: "Refresh required users", exact: true })).toHaveCount(0);
       // Real HTTPS admission and the native worker publish independent fixture observations.
@@ -443,13 +443,13 @@ async function organizationFlows(page: Page) {
       expect(response.status()).toBe(202);
       const checkId = (await response.json()).operation_id;
       await expect(users.getByText("Present", { exact: true })).toHaveCount(2, { timeout: 20_000 });
-      await expect(users.getByText("Not checked", { exact: true })).toHaveCount(1);
+      await expect(users.getByText("Not checked", { exact: true })).toHaveCount(0);
       const automation = users.locator(".required-user-card").filter({has:page.getByRole("heading",{name:"Automation user",exact:true})});
       await expect(automation.getByText("Verified in simulation",{exact:true})).toHaveCount(2);
       await expect(automation.getByRole("link",{name:/^View assignment check, /})).toHaveAttribute("href",/\/operations\/[a-f0-9-]+$/);
       await expect(users.getByText("Console MFA exemption", { exact: true })).toBeVisible();
       await expect(users.getByText("Approved-network restriction", { exact: true })).toBeVisible();
-      await expect(users.locator(".required-user-card").filter({has:page.getByRole("heading",{name:"Recovery user",exact:true})}).getByText("Verified in simulation", { exact: true })).toHaveCount(2);
+      await expect(users.locator(".required-user-card").filter({has:page.getByRole("heading",{name:"Recovery user",exact:true})}).getByText("Verified in simulation", { exact: true })).toHaveCount(4);
       // Private provider perimeter evidence must not appear in ordinary authenticated responses.
       const privateCheck=await page.request.get(new URL(childUrl).pathname.replace("/tenancies/","/api/tenancies/")+"/required-users");
       const privateBody=await privateCheck.text();
@@ -495,6 +495,14 @@ async function organizationFlows(page: Page) {
       await disclosure.focus(); await disclosure.press("Enter");
       await expect(users.locator("details").first()).toHaveAttribute("open", "");
       await expect(users.getByRole("link", { name: "View setup operation" }).first()).toHaveAttribute("href", /\/operations\/[a-f0-9-]+$/);
+      const recoveryCard=users.locator(".required-user-card").nth(1);
+      await expect(recoveryCard.getByLabel("Administrator assignments: Assigned (simulation)")).toBeVisible();
+      const recoveryDetails=recoveryCard.getByText("Identity details",{exact:true});
+      await recoveryDetails.focus(); await recoveryDetails.press("Enter");
+      await expect(recoveryCard.getByText("Administrators group",{exact:true})).toBeVisible();
+      await expect(recoveryCard.getByText("Domain administrator role",{exact:true})).toBeVisible();
+      await expect(recoveryCard.getByRole("link",{name:/^View assignment check, /})).toHaveAttribute("href",/\/operations\/[a-f0-9-]+$/);
+      await recoveryDetails.press("Enter");
       for (const width of [1280, 1024, 768, 390, 320]) {
         await page.setViewportSize({ width, height: 900 });
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -535,7 +543,7 @@ async function organizationFlows(page: Page) {
           const footerBox=await footer.boundingBox();
           expect(footerBox!.y).toBeGreaterThan(factsBox!.y+factsBox!.height);
           const dates=await footer.locator(":scope > div").evaluateAll(nodes=>nodes.map(node=>{const r=node.getBoundingClientRect();return {x:r.x,y:r.y};}));
-          expect(dates).toHaveLength(2);
+          expect(dates).toHaveLength(await card.getByRole("heading",{name:"Recovery user",exact:true}).count()?3:2);
           if(width>700){
             expect(Math.abs(dates[0].y-dates[1].y)).toBeLessThan(2);expect(dates[1].x).toBeGreaterThan(dates[0].x);
             const values=await footer.locator("dd").evaluateAll(nodes=>nodes.map(node=>node.getBoundingClientRect().y));
@@ -586,12 +594,15 @@ async function organizationFlows(page: Page) {
             const response=await route.fetch();
             const body=await response.json();
             body.users[0].administrator_access={...body.users[0].administrator_access,group:stale?"verified":"missing",domain_role:"verified",stale};
+            body.users[1].administrator_access={...body.users[1].administrator_access,group:stale?"verified":"missing",domain_role:"verified",stale};
             await route.fulfill({response,json:body});
           });
           try{
             await page.reload();
             const card=users.locator(".required-user-card").first();
             await expect(card.getByText(stale?"Check out of date":"Missing or disabled",{exact:true})).toHaveCount(stale?2:1);
+            const recoveryCard=users.locator(".required-user-card").nth(1);
+            await expect(recoveryCard.getByLabel(`Administrator assignments: ${stale?"Out of date":"Missing"} (simulation)`)).toBeVisible();
             for(const width of [1280,320]){
               await page.setViewportSize({width,height:900});
               expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
