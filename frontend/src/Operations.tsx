@@ -1,3 +1,4 @@
+import {RecoveryPasswordOperation} from "./RecoveryPasswordOperation";
 import { EmailNotifications } from "./EmailNotifications";
 import { Select } from "./Select";
 import { useEffect, useRef, useState } from "react";
@@ -329,7 +330,9 @@ function OperationList({
                           </span>
                           {simulationIssue(operation) && (
                             <p className="operation-issue-note">
-                              {operation.kind === "recovery_network_repair"
+                              {operation.kind === "recovery_password"
+                                ? "Password work requires reconciliation. Review the recorded outcome before further access."
+                                : operation.kind === "recovery_network_repair"
                                 ? "Repair effect is unverified. Review the operation for independent reconciliation; do not retry the write."
                                 : operation.kind === "organization_action"
                                 ? "Local workflow is blocked. Review the employee or tenancy record."
@@ -583,7 +586,8 @@ function OperationDetail({
               </span>
               <span>Stage: {stageLabel(operation.stage)}</span>
             </div>
-            {simulationIssue(operation) && (
+            {detail.recovery_password&&<RecoveryPasswordOperation operation={operation} progress={detail.recovery_password} navigate={navigate}/>}
+            {simulationIssue(operation) && operation.kind!=="recovery_password" && (
               <p className="notice" role="status">
                 {operation.kind === "recovery_network_repair" ? "The network repair has an uncertain effect. The tenancy remains reserved until independent reconciliation. Do not retry the write or start another repair." : operation.kind === "cost_collection" ? "Cost reads exhausted retries or their collection context changed. Open the tenancy to retry eligible current-month reads. No tenancy settings were changed." : operation.kind === "configuration_check" ? "The read-only check did not complete. Review configuration checks; no tenancy settings were changed." : operation.kind === "configuration_update"
                   ? "Baseline update is blocked. Open its configuration progress to review incomplete tenancies and available retries."
@@ -594,10 +598,10 @@ function OperationDetail({
             )}
             {operation.state === "succeeded" && (
               <p className="notice">
-                {operation.kind === "recovery_network_repair" ? "Approved recovery networks verified in simulation. Review the separately dated user checks; no OCI resources or credentials were changed." : operation.kind === "required_user_check" ? "Simulated user check completed. Review the tenancy for presence, automation and recovery administrator assignments and recovery-policy results; completion does not establish recovery readiness. Password readiness and all effective permissions were not checked." : operation.kind === "cost_collection" ? "Cost collection completed in local simulation. Review each tenancy for partial or unqualified source data; no OCI resources were changed." : operation.kind === "configuration_check" ? "Read-only configuration check completed. Review its results for differences or categories that could not be verified; completion does not mean the configuration matches." : operation.kind === "configuration_update" ? "Baseline update verified in local simulation; no OCI resources were changed." : operation.kind === "organization_action"
+                {operation.kind === "recovery_password" ? "Recovery password operation verified in local simulation. Review the recorded outcome above." : operation.kind === "recovery_network_repair" ? "Approved recovery networks verified in simulation. Review the separately dated user checks; no OCI resources or credentials were changed." : operation.kind === "required_user_check" ? "Simulated user check completed. Review the tenancy for presence, automation and recovery administrator assignments and recovery-policy results; completion does not establish recovery readiness. Password readiness and all effective permissions were not checked." : operation.kind === "cost_collection" ? "Cost collection completed in local simulation. Review each tenancy for partial or unqualified source data; no OCI resources were changed." : operation.kind === "configuration_check" ? "Read-only configuration check completed. Review its results for differences or categories that could not be verified; completion does not mean the configuration matches." : operation.kind === "configuration_update" ? "Baseline update verified in local simulation; no OCI resources were changed." : operation.kind === "organization_action"
                   ? "Local lifecycle simulation completed. Registry changes are verified; no OCI resources were changed."
                   : "Inspection completed successfully. This tenancy has not been adopted by this inspection."}
-                {operation.kind !== "configuration_check" && operation.result_tenancy_id && (
+                {!["configuration_check","recovery_password"].includes(operation.kind) && operation.result_tenancy_id && (
                   <>
                     {" "}
                     <a
@@ -684,7 +688,7 @@ function OperationDetail({
                     {detail.steps.map((step) => (
                       <li key={step.step_key}>
                         <h3>
-                          {step.step_key.startsWith("required_users:") ? "Check required users, assignments and recovery policy" : step.step_key.startsWith("cost:") ? "Read current month costs" : step.step_key.startsWith("configuration_check:") ? "Check assigned managed configuration" : step.step_key === "inspect_target"
+                          {step.step_key.startsWith("recovery_password:") ? detail.recovery_password?.phase==="setup"?"Prepare recovery password custody":"Rotate recovery password" : step.step_key.startsWith("required_users:") ? "Check required users, assignments and recovery policy" : step.step_key.startsWith("cost:") ? "Read current month costs" : step.step_key.startsWith("configuration_check:") ? "Check assigned managed configuration" : step.step_key === "inspect_target"
                             ? "Inspect target"
                             : step.step_key.startsWith("remove_member_groups:") ? "Remove user group memberships" : step.step_key.startsWith("delete_member_user:") ? "Delete tenancy user" : step.step_key === "apply_lifecycle"
                               ? "Apply simulated lifecycle"

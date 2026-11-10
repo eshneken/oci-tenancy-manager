@@ -195,3 +195,13 @@ certify current access or password readiness. See the [closed Operations field m
 This follow-up’s passing combined validation and preserved main installation are [recorded separately](../history/recovery-password-checkpoint-2026-11-09.md#access-panel-and-recorded-results-follow-up).
 The earlier440-case receipt and focused header-placement receipt keep their original scope; neither
 automatically qualifies this newer source.
+
+
+## Password operation progress — source follow-up
+
+The Operations source now has a dedicated **Password preparation**/**Password rotation** panel
+with recovery username, original first-request/deadline, authorized request count, operation outcome
+and **Open tenancy**. Its [six-field read-only projection](operations.md#recovery-password-operation-progress)
+comes from immutable intent and exact window-scoped request history, not the current credential head.
+Attempts are not proof of browser delivery. No secret action, retry/reset or extension is added.
+The panel’s [validation and saved-install status](../history/recovery-password-checkpoint-2026-11-09.md#password-operation-progress-follow-up) pass with the separately recorded full-run/final-copy targeted scope; earlier password behavior retains its own receipt.

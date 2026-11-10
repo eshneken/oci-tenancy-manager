@@ -558,3 +558,21 @@ it("shows separate linked historical required-user sections",async()=>{
  expect(document.getElementById("automation-assignment")).toHaveTextContent("Missing");
  expect(document.getElementById("recovery-policy")).toHaveTextContent("Console MFA exemption");
 });
+
+// Recovery outcomes cannot fall through to unrelated inspection or pending-association messages.
+it.each(["setup","rotation"] as const)("composes %s recovery progress with truthful terminal copy",async phase=>{
+ vi.spyOn(api,"operation").mockResolvedValue({...detail,operation:{...row,kind:"recovery_password"},recovery_password:{phase,tenancy_id:id,user_name:"otm-recovery",request_count:phase==="rotation"?2:0,first_request_at:phase==="rotation"?row.accepted_at:null,rotation_due_at:phase==="rotation"?"2026-10-30T16:00:00Z":null}});
+ mount(<Operations operationId={id} expired={vi.fn()} navigate={vi.fn()}/>);
+ expect(await screen.findByRole("heading",{name:phase==="setup"?"Password preparation":"Password rotation"})).toBeVisible();
+ expect(screen.getByText(/Recovery password operation verified in local simulation/)).toBeVisible();
+ expect(screen.queryByText(/Review the recorded deadline/)).not.toBeInTheDocument();
+ expect(screen.queryByText(/Inspection completed successfully/)).not.toBeInTheDocument();
+});
+
+// Directory summaries cannot invent a disclosure window for a failed setup operation.
+it("uses phase-neutral password failure guidance in the operation list",async()=>{
+ vi.spyOn(api,"operations").mockResolvedValue({...directory,items:[{...row,kind:"recovery_password",state:"needs_attention"}],total:1,pages:1});
+ mount(<Operations operationId={null} expired={vi.fn()} navigate={vi.fn()}/>);
+ expect(await screen.findByText("Password work requires reconciliation. Review the recorded outcome before further access.")).toBeVisible();
+ expect(screen.queryByText(/original rotation obligation remains/)).not.toBeInTheDocument();
+});

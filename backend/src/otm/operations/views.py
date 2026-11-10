@@ -1,9 +1,10 @@
 """Closed read models for the durable operation directory; never expose raw intent/provider JSON."""
 
+from datetime import timedelta
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from otm.contracts import Contract, Generation, Text, UtcInstant
 from otm.notifications.contracts import NotificationSummary
@@ -130,8 +131,38 @@ class OperationEventView(Contract):
     safe_code: Text | None
 
 
+# Summarize the original recovery obligation without exposing custody references or secret material.
+class RecoveryPasswordProgress(Contract):
+    phase: Literal["setup", "rotation"]
+    tenancy_id: UUID
+    user_name: Text
+    first_request_at: UtcInstant | None = None
+    rotation_due_at: UtcInstant | None = None
+    request_count: int = Field(ge=0)
+
+    # Missing/inconsistent history is unavailable; page reads never invent or extend a window.
+    @model_validator(mode="after")
+    def original_window(self):
+        if self.phase == "setup":
+            if (
+                self.first_request_at is not None
+                or self.rotation_due_at is not None
+                or self.request_count
+            ):
+                raise ValueError("INVALID_RECOVERY_PROGRESS")
+        elif (
+            self.first_request_at is None
+            or self.rotation_due_at is None
+            or self.request_count < 1
+            or self.rotation_due_at - self.first_request_at != timedelta(hours=4)
+        ):
+            raise ValueError("INVALID_RECOVERY_PROGRESS")
+        return self
+
+
 # Keep status, logical steps and recent history from one read-only database snapshot.
 class OperationDetail(Contract):
+    recovery_password: RecoveryPasswordProgress | None = None
     notifications: tuple[NotificationSummary, ...] = ()
     operation: OperationSummary
     steps: list[OperationStepView]

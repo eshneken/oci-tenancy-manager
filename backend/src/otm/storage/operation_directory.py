@@ -22,6 +22,7 @@ from otm.operations.views import (
     OperationQuery,
     OperationStepView,
     OperationSummary,
+    RecoveryPasswordProgress,
     UserCheckFact,
     UserCheckSection,
 )
@@ -32,6 +33,7 @@ from otm.storage.tables import (
     operation,
     operation_step,
     org_person,
+    recovery_grant,
     tenancy,
 )
 from otm.tenancies.contracts import OrganizationActionOutcome
@@ -94,6 +96,40 @@ def user_check_sections(evidence):
         )
     )
     return tuple(sections)
+
+
+# Read the original window; later rotations and current heads cannot rewrite its history.
+def password_progress(connection, row, intent):
+    if intent.kind != "recovery_password" or row["kind"] != intent.kind:
+        raise ValueError("INVALID_RECOVERY_PROGRESS")
+    first = None
+    count = 0
+    if intent.phase == "rotation":
+        count, first, last, earliest_due, latest_due = connection.execute(
+            select(
+                func.count(),
+                func.min(recovery_grant.c.first_disclosure_attempt_at),
+                func.max(recovery_grant.c.first_disclosure_attempt_at),
+                func.min(recovery_grant.c.due_at),
+                func.max(recovery_grant.c.due_at),
+            ).where(
+                recovery_grant.c.workspace_id == row["workspace_id"],
+                recovery_grant.c.accepted_operation_id == row["id"],
+                recovery_grant.c.credential_id == intent.credential_id,
+                recovery_grant.c.tenancy_id == intent.location.target.tenancy_id,
+                recovery_grant.c.exposure_generation == intent.exposure_generation,
+            )
+        ).one()
+        if first != last or earliest_due != intent.due_at or latest_due != intent.due_at:
+            raise ValueError("INVALID_RECOVERY_PROGRESS")
+    return RecoveryPasswordProgress(
+        phase=intent.phase,
+        tenancy_id=intent.location.target.tenancy_id,
+        user_name=intent.location.target.user_name,
+        first_request_at=utc(first),
+        rotation_due_at=intent.due_at,
+        request_count=count,
+    )
 
 
 # Convert stored timestamps to UTC without substituting a retrieval time for missing evidence.
@@ -368,6 +404,9 @@ class SqlOperationDirectory:
                 .all()
             )
             return OperationDetail(
+                recovery_password=password_progress(connection, row, frozen.intent)
+                if row["kind"] == "recovery_password"
+                else None,
                 notifications=list_for_operation(connection, workspace, identifier),
                 operation=summary,
                 steps=[self.step(step) for step in steps],

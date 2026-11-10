@@ -484,6 +484,69 @@
       "title": "OperationSummary",
       "type": "object"
     },
+    "RecoveryPasswordProgress": {
+      "additionalProperties": false,
+      "properties": {
+        "first_request_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "First Request At"
+        },
+        "phase": {
+          "enum": [
+            "setup",
+            "rotation"
+          ],
+          "title": "Phase",
+          "type": "string"
+        },
+        "request_count": {
+          "minimum": 0,
+          "title": "Request Count",
+          "type": "integer"
+        },
+        "rotation_due_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rotation Due At"
+        },
+        "tenancy_id": {
+          "format": "uuid",
+          "title": "Tenancy Id",
+          "type": "string"
+        },
+        "user_name": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "User Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "phase",
+        "tenancy_id",
+        "user_name",
+        "request_count"
+      ],
+      "title": "RecoveryPasswordProgress",
+      "type": "object"
+    },
     "UserCheckFact": {
       "additionalProperties": false,
       "properties": {
@@ -584,6 +647,17 @@
     },
     "operation": {
       "$ref": "#/$defs/OperationSummary"
+    },
+    "recovery_password": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RecoveryPasswordProgress"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "steps": {
       "items": {

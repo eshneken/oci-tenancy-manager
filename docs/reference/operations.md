@@ -378,3 +378,41 @@ remain plain dates. Malformed evidence still fails closed through the existing d
 The new public fields are derived from retained audit evidence, not new persisted state.
 
 [Follow-up validation/install status](../history/recovery-password-checkpoint-2026-11-09.md#access-panel-and-recorded-results-follow-up).
+
+
+## Recovery-password operation progress
+
+This source follow-up adds optional `OperationDetail.recovery_password`, a closed read-only
+`RecoveryPasswordProgress` projection. Validation and saved-install status are recorded in its
+[separate receipt section](../history/recovery-password-checkpoint-2026-11-09.md#password-operation-progress-follow-up).
+The receipt records the440-case complete run and later targeted-qualified copy separately; earlier
+password/check-result receipts retain their original scope.
+
+| Field | Exact source and meaning |
+| --- | --- |
+| `phase` | setup or rotation, from this operation’s original validated immutable password intent |
+| `tenancy_id` | Exact intended child, used by Open tenancy; no caller-selected alternate target |
+| `user_name` | Intended recovery username; not a secret or machine signer |
+| `first_request_at` | The shared original first-authorized attempt from matching immutable disclosure grants; null for setup |
+| `rotation_due_at` | Original intent due time; null for setup, exactly first request+4h for rotation |
+| `request_count` | Number of distinct authorized request records for this operation/window, including failed/lost delivery; setup is0 and request-key retries do not add another record |
+
+Rotation aggregates match exact workspace, operation, credential, child and exposure generation.
+All retained original first/deadline values must agree; rotation requires at least one matching
+request and exactly four hours. Missing/inconsistent history is unavailable, not reconstructed
+from current credential heads or a later window. Setup requires null window dates and zero requests.
+No new table, column, migration, stored status, provider call or configuration setting is introduced.
+
+Operations shows **Password preparation** or **Password rotation**, with the exact recorded dates,
+request count where applicable, verified/ended time and **Open tenancy**. Labels distinguish pending/
+scheduled, preparing/rotating, overdue, verified simulation success and reconciliation required.
+Overdue/attention guidance preserves the original obligation; historical success remains historical
+even when a newer credential/window exists. Collapsed help explains the four-hour window and session
+limits. This panel cannot disclose a password, retry a reset, extend a deadline or establish delivery.
+
+The deadline timer refreshes display-only overdue presentation even when polling returns unchanged
+data; it neither schedules provider work nor moves the recorded deadline. Failed preparation uses
+setup-specific custody/onboarding guidance rather than implying a disclosure window exists. Timer
+and display state are transient, with no additional persistent field or setting. Follow-up validation
+and installation pass in the separate receipt, with final-copy targeted scope explicitly distinguished
+from the preceding complete native run.

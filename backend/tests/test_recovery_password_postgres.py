@@ -2,7 +2,7 @@
 
 from datetime import timedelta
 from unittest.mock import Mock, patch
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from sqlalchemy import select, text, update
@@ -104,7 +104,8 @@ def password_pg(workflow_case, tmp_path):
         view.available_actions == ()
         and next(s for s in view.checks if s.key == "retire_temporary").state != "verified"
     )
-    c.rotation.run(head["rotation_operation_id"])
+    c.setup_id = head["rotation_operation_id"]
+    c.rotation.run(c.setup_id)
     c.worker.run(receipt.operation_id)
     assert c.workflow.onboarding(c.principal, receipt.operation_id).phase == "complete"
     c.child = c.workflow.tenancies(c.principal, TenancyQuery()).items[0]
@@ -157,6 +158,18 @@ def test_original_window_rotation_and_retained_history(password_pg):
     assert second["rotation_due_at"] == first["rotation_due_at"]
     assert second["password"] == first["password"]
     assert len(records(c, grants)) == 2
+    from otm.storage.operation_directory import SqlOperationDirectory
+
+    directory = SqlOperationDirectory(c.engine)
+    setup = directory.detail(c.policy.workspace_id, c.setup_id).recovery_password
+    assert setup.phase == "setup" and setup.request_count == 0
+    progress = directory.detail(
+        c.policy.workspace_id, before["rotation_operation_id"]
+    ).recovery_password
+    assert progress.request_count == 2
+    assert progress.first_request_at == before["first_disclosure_at"]
+    assert progress.rotation_due_at == before["rotation_due_at"]
+    assert progress.tenancy_id == c.child.id
     with c.engine.connect() as connection:
         assert (
             connection.scalar(select(tenancy.c.operation_id).where(tenancy.c.id == c.child.id))
@@ -188,6 +201,16 @@ def test_original_window_rotation_and_retained_history(password_pg):
     )
     with pytest.raises(OrganizationConflict, match="REQUEST_CLOSED"):
         c.access.disclose(c.principal, c.child.id, command)
+    c.clock.return_value += timedelta(minutes=1)
+    _, next_window = request(c)
+    retained = directory.detail(
+        c.policy.workspace_id, before["rotation_operation_id"]
+    ).recovery_password
+    assert retained == progress
+    newer = directory.detail(
+        c.policy.workspace_id, UUID(next_window["operation_id"])
+    ).recovery_password
+    assert newer.request_count == 1 and newer.first_request_at > progress.first_request_at
 
 
 # API consent and destructive workflows cannot bypass an outstanding password obligation.

@@ -32,7 +32,7 @@ Earlier dated preservation receipts remain historical evidence.
 | Former-owner retention/removal qualification | [Current workflow](reference/organization-workflows.md), [dated receipt](history/ownership-disposition-checkpoint-2026-11-07.md) |
 | Saved costs and user results | [Read compatibility and persistence](reference/README.md), [qualified fix](history/persisted-read-compatibility-checkpoint-2026-11-07.md) — membership changes retain compatible dated database observations |
 | Confirmed missing required-user notices | [Incident/routing model and full field dictionary](reference/required-user-alerts.md), [qualified checkpoint](history/required-user-alerts-checkpoint-2026-11-07.md) |
-| Local build cadence | [Batched UI checkpoints and the 15-minute integration limit](engineering-test-plan.md#current-local-cadence-and-integration-budget--7-november-2026) |
+| Local build cadence | [Targeted UI checks, full milestone/PR gates and the 15-minute budget](engineering-test-plan.md#current-local-cadence-and-integration-budget--9-november-2026) |
 | Prior checkpoints | [Dated history](history/README.md) |
 
 ## Source of truth
@@ -168,3 +168,5 @@ The [recovery-network repair source subset](reference/recovery-network-repair.md
 - [Recovery-password checkpoint](history/recovery-password-checkpoint-2026-11-09.md):440 clean-tree integration cases, independent reviews and preserved main installation; live OCI pending.
 
 - [Access-panel and historical-check follow-up](history/recovery-password-checkpoint-2026-11-09.md#access-panel-and-recorded-results-follow-up): installed mini-panel layout and exact Operations results; combined438+2 integration evidence is separate from earlier clean440 receipts.
+
+- [Password operation progress follow-up](history/recovery-password-checkpoint-2026-11-09.md#password-operation-progress-follow-up): installed original-window status panel;440 complete cases plus later explicitly targeted-qualified copy.

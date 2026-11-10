@@ -72,3 +72,5 @@ and [presence checks](user-presence-checks.md#retained-results-after-membership-
 - [Recovery-password custody and original-window rotation](recovery-password-access.md) — implemented source subset; actual fields and pending live boundaries; checkpoint receipt records qualification/install status.
 
 Current source [Operations check-section mapping](operations.md#recorded-required-user-check-sections--source-follow-up) and [access mini-panel](required-users-screen.md#access-mini-panel-and-exact-check-destinations--source-follow-up) have separately recorded combined follow-up validation and preserved main installation.
+
+- [Recovery-password Operations progress](operations.md#recovery-password-operation-progress): immutable original-window projection and safe status panel; installed with separately recorded full-run and final-copy targeted evidence.

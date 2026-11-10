@@ -33,8 +33,9 @@ only the selected local fixture; it never grants password disclosure or claims l
 
 The read-only checkpoint is now followed by [perimeter-only recovery-network repair](recovery-network-repair.md),
 locally qualified with preserved main-preview publication in the [final receipt](../history/recovery-network-repair-checkpoint-2026-11-09.md). Real OCI remains pending.
-Refresh remains read-only. Fleet distribution, broader repairs, password disclosure, Vault custody,
-rotation scheduling and API-key rotation remain subsequent parts of the accepted milestone.
+Refresh remains read-only. [Password custody/disclosure and original-window rotation](recovery-password-access.md)
+are locally qualified in the [password receipt](../history/recovery-password-checkpoint-2026-11-09.md).
+Fleet distribution, broader repairs, real Vault/provider behavior and API-key retirement remain pending.
 Configuration Drift continues to describe baseline-managed root objects; recovery console controls
 have their own independent Required users projection rather than being counted as root-policy drift.
 
@@ -108,13 +109,14 @@ current desired revision; this internal result alone is not a durable readiness 
 | Exact setup/import plus current policy observations | Implemented in explicit simulator; legacy stays unverified, replacement identities cannot inherit old proof; full recreation writer pending |
 | UI/manual refresh and recovery-policy drift | Implemented alongside independent presence, with safe inventory links; complete integration and responsive visual qualification passed |
 | Guarded repair and policy propagation | Perimeter-only conditional repair passes local qualification and preserved main publication; real OCI, broader repairs and fleet propagation remain pending. |
-| Password custody, disclosure and scheduled four-hour rotation | Pending; preserve D40 first-attempt clock and D54 CURRENT, audit/notices before disclosure and unknown-write holds |
+| Password custody, disclosure and scheduled four-hour rotation | Locally qualified and installed in main8443; original-attempt4h, CURRENT and unknown holds are preserved. Real OCI/Vault remains pending; dedicated Operations progress follow-up has its own receipt status. |
 | Thirty-day automation-key retirement | Pending, retained in this milestone plan; creation-based age, independent signer verification, bounded drain and verified old-key removal |
 | UI checkpoint qualification | Passed:402 complete integration cases, independent reviews and main-only preserved publication; live OCI qualification still pending |
 
-No integration suite is run for an isolated foundation slice. The approved batching cadence runs the
-complete900-second-budget suite when the coherent UI checkpoint is ready. Both complete-source unit
-gates and focused static checks remain required during implementation. The [final checkpoint receipt](../history/recovery-policy-ui-checkpoint-2026-11-07.md) records the qualified
+The [current 9 November cadence](../engineering-test-plan.md#current-local-cadence-and-integration-budget--9-november-2026)
+uses relevant targeted UI checks and reserves complete 900-second-budget integration for milestone/PR
+checkpoints or justified explicit/cross-cutting validation. Both complete-source unit gates remain
+required at UI checkpoints; every CI build retains all required suites. The [final checkpoint receipt](../history/recovery-policy-ui-checkpoint-2026-11-07.md) records the qualified
 main8443 publication with29 preexisting tables preserved; parallel8444 remains unchanged. No hosted
 configuration or OCI resources are changed.
 

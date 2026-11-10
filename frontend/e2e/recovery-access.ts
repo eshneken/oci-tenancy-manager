@@ -32,8 +32,22 @@ export async function recoveryAccess(page:Page){
  await modal.getByRole("button",{name:"Close",exact:true}).click();await expect(modal).not.toBeVisible();await expect(launcher).toBeFocused();
  await page.reload();await launcher.click();await expect(modal.getByLabel("Recovery password",{exact:true})).toHaveCount(0);await expect(consent).not.toBeChecked();await consent.check();await submit.click();await expect(secret).toBeVisible();
  const after=await page.evaluate(async()=>{const response=await fetch(location.pathname.replace("/tenancies/","/api/tenancies/")+"/administrator-access");const data=await response.json();return{first:data.first_disclosure_at,due:data.rotation_due_at};});expect(after).toEqual(before);
- await modal.getByRole("button",{name:"Close",exact:true}).click();page.off("request",track);
- const operationId=await page.evaluate(async()=>{const response=await fetch(location.pathname.replace("/tenancies/","/api/tenancies/")+"/administrator-access");return(await response.json()).operation_id as string;});
+ const operationLink=modal.getByRole("link",{name:"View password operation",exact:true});
+ const operationHref=await operationLink.getAttribute("href");const operationId=operationHref!.split("/").at(-1)!;
+ await operationLink.click();page.off("request",track);
+ await expect(page).toHaveURL(new RegExp("/operations/"+operationId+"$"));
+ const progress=page.getByRole("region",{name:"Password rotation",exact:true});
+ await expect(progress.getByText("Scheduled",{exact:true})).toBeVisible();
+ await expect(progress.locator("time").first()).toHaveAttribute("datetime",before.first);
+ await expect(progress.locator("time").nth(1)).toHaveAttribute("datetime",before.due);
+ await expect(progress.locator("dt").filter({hasText:"Authorized requests"}).locator("+ dd")).toHaveText("2");
+ await expect(page.getByLabel("Recovery password",{exact:true})).toHaveCount(0);
+ for(const width of [1280,1024,390,320]){
+  await page.setViewportSize({width,height:900});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await progress.screenshot({path:resolve(".local-dev/browser",`recovery-password-progress-${width}.png`)});
+ }
+ await page.setViewportSize({width:1280,height:900});
+ await progress.getByRole("link",{name:"Open tenancy",exact:true}).click();await expect(launcher).toBeVisible();
  await expect.poll(async()=>{const detail=await(await page.request.get("/api/operations/"+operationId)).json();return detail.notifications?.some((notice:{event:string;state:string})=>notice.event==="recovery_password_requested"&&notice.state==="sent");},{timeout:10000}).toBe(true);
  await page.getByRole("link",{name:"Audit history",exact:true}).click();await expect(page.getByRole("table").getByText("Recovery password requested",{exact:true}).first()).toBeVisible();
 }

@@ -124,3 +124,42 @@ Main8443 received paired API/worker and five immutable qualified assets. All32 p
   was checked with `pg_restore --list`; this validates its catalog, **not an executed restore drill**.
 Health200, deep-link/assets and unauthenticated401 checks passed. No8444 environment or live OCI
 operation was introduced. Live provider and actual restore qualification remain Pending.
+
+
+## Password operation progress follow-up
+
+**Local validation and preserved main installation: PASS, with exact final-copy scope below.**
+This adds optional six-field `RecoveryPasswordProgress` and a Password preparation/Password rotation
+panel. Immutable intent and exact workspace/operation/credential/child/exposure request history supply
+original dates/counts; no current-head substitution, new table, migration, setting or provider call.
+Authorized attempts do not prove delivery. The panel offers safe history, Open tenancy and collapsed
+help, without secret actions, reset retries or deadline extensions.
+
+### Qualification scope
+
+- Full disposable PostgreSQL/native-worker/SMTP/Playwright run
+  `.local-dev/quality/backend-postgres-f04h7780`: **440 passed**, zero failures/errors/skips/timeouts.
+  This covers the API progress projection and actual native UI journey, with screenshots at
+  1280/1024/390/320px. Initial `.local-dev/quality/backend-postgres-4qg6ueyp` hit a frontend installation
+  collision and supplies no qualifying test execution. Sequential frontend/runner tooling resolved it.
+- Backend unit-only: **2108 passed**, **11347/11902 lines (95.3369%)**,162 source files.
+- Final frontend unit-only: **587 passed**, **2017/2074 lines (97.25%)**,41 source files.
+- Two final phase-neutral outer-copy edits occurred **after** the full native run. Explicit focused
+  regressions, the complete final frontend unit gate and build passed afterward. No further full
+  integration run was performed, following the [approved9 November local cadence](../engineering-test-plan.md#current-local-cadence-and-integration-budget--9-november-2026).
+  **The final wording is targeted-qualified, not claimed to have been retested by the full native suite.**
+- Independent source security review and actual four-width UI review passed; the final outer copy was
+  approved within that targeted scope. Static/Ruff, inline documentation388, generated80-schema
+  consistency, Bandit, publication scanner (zero findings), secrets scan849 and documentation checks
+  passed. Normal `npm ci` reported zero vulnerabilities; no broader dependency-audit claim is implied.
+
+### Preserved publication
+
+Main8443 received matching API/worker and five final immutable assets. All32 existing public table
+contents were preserved; no new table, migration or settings change. A private0600 PostgreSQL dump
+was validated with its catalog/restore listing, **not an actual restore drill**. Health200, deep-link,
+asset comparison and unauthenticated401 checks passed. No8444 environment or OCI call was introduced.
+
+The [current field map](../reference/operations.md#recovery-password-operation-progress) and source
+reference describe the installed panel. Earlier full/combined receipts retain their own source scope.
+All live-only provider/sign-in/restore cases and interactive network break/repair remain Pending.

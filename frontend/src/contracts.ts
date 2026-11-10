@@ -1008,6 +1008,12 @@ export type State21 =
   | "superseded";
 export type UpdatedAt2 = string;
 export type Notifications = NotificationSummary1[];
+export type FirstRequestAt = string | null;
+export type Phase1 = "setup" | "rotation";
+export type RequestCount = number;
+export type RotationDueAt2 = string | null;
+export type TenancyId24 = string;
+export type UserName3 = string;
 export type AttemptNumber = number;
 export type SafeCode5 = string | null;
 export type State22 = "running" | "verified" | "needs_attention";
@@ -2220,6 +2226,7 @@ export interface OperationDetail {
   events_limited: EventsLimited;
   notifications?: Notifications;
   operation: OperationSummary;
+  recovery_password?: RecoveryPasswordProgress | null;
   steps: Steps;
 }
 export interface OperationEventView {
@@ -2252,6 +2259,14 @@ export interface NotificationSummary1 {
   safe_code?: SafeCode4;
   state: State21;
   updated_at: UpdatedAt2;
+}
+export interface RecoveryPasswordProgress {
+  first_request_at?: FirstRequestAt;
+  phase: Phase1;
+  request_count: RequestCount;
+  rotation_due_at?: RotationDueAt2;
+  tenancy_id: TenancyId24;
+  user_name: UserName3;
 }
 export interface OperationStepView {
   attempt_number: AttemptNumber;
