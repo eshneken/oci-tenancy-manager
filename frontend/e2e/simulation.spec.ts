@@ -588,16 +588,28 @@ async function organizationFlows(page: Page) {
           expect(overrideBox!.x).toBeGreaterThanOrEqual(costBox!.x+costBox!.width);
         } else expect(overrideBox!.y).toBeGreaterThanOrEqual(costBox!.y+costBox!.height);
         // Whole-section rhythm matters as much as card internals: no panel may touch its neighbour.
-        const gridBox = await page.locator(".tenancy-summary-grid").boundingBox();
-        const usersBox = await users.boundingBox();
-        const membersBox = await page.locator(".table-panel").filter({has:page.getByRole("heading",{name:"Current members",exact:true})}).boundingBox();
+        const rollout = page.getByRole("region",{name:"Tenancy baseline update",exact:true});
+        // Snapshot panel geometry together: delayed focus scrolling must not mix viewport origins.
+        const layout=await page.evaluate(({grid,users,members,keys,rollout})=>{
+          // Copy one optional panel rectangle into the shared viewport snapshot.
+          const rect=(node:Element|null)=>{
+            if(!node)return null;
+            const box=node.getBoundingClientRect();
+            return {x:box.x,y:box.y,width:box.width,height:box.height};
+          };
+          return {gridBox:rect(grid),usersBox:rect(users),membersBox:rect(members),keysBox:rect(keys),rolloutBox:rect(rollout)};
+        },{
+          grid:await page.locator(".tenancy-summary-grid").elementHandle(),
+          users:await users.elementHandle(),
+          members:await page.locator(".table-panel").filter({has:page.getByRole("heading",{name:"Current members",exact:true})}).elementHandle(),
+          keys:await keyPanel.elementHandle(),
+          rollout:await rollout.count()?await rollout.elementHandle():null,
+        });
+        const {gridBox,usersBox,membersBox,keysBox,rolloutBox}=layout;
         expect(gridBox).not.toBeNull(); expect(usersBox).not.toBeNull(); expect(membersBox).not.toBeNull();
-        const keysBox=await keyPanel.boundingBox();
         expect(keysBox).not.toBeNull();
         expect(keysBox!.y-(usersBox!.y+usersBox!.height)).toBeCloseTo(24,0);
         expect(gridBox!.y-(keysBox!.y+keysBox!.height)).toBeCloseTo(24,0);
-        const rollout = page.getByRole("region",{name:"Tenancy baseline update",exact:true});
-        const rolloutBox = await rollout.count() ? await rollout.boundingBox() : null;
         if(rolloutBox) {
           expect(rolloutBox.y-(gridBox!.y+gridBox!.height)).toBeCloseTo(24,0);
           expect(membersBox!.y-(rolloutBox.y+rolloutBox.height)).toBeCloseTo(24,0);
@@ -612,27 +624,39 @@ async function organizationFlows(page: Page) {
       if(!assignmentRenderReviewed){
         assignmentRenderReviewed=true;
         const resource="**/api"+new URL(childUrl).pathname+"/required-users";
-        // Render-only browser fixtures complement real persisted negative cases in PostgreSQL tests.
+        // Render-only cases use separate ephemeral pages so old-document requests cannot satisfy assertions.
+        const assignmentBaseline=JSON.parse(privateBody);
         for(const stale of [false,true]){
-          await page.route(resource,async route=>{
-            const response=await route.fetch();
-            const body=await response.json();
-            body.users[0].administrator_access={...body.users[0].administrator_access,group:stale?"verified":"missing",domain_role:"verified",stale};
-            body.users[1].administrator_access={...body.users[1].administrator_access,group:stale?"verified":"missing",domain_role:"verified",stale};
-            await route.fulfill({response,json:body});
-          });
+          const fixturePage=await page.context().newPage();
+          // Capture one fixed response per page; real persisted negative cases remain in PostgreSQL tests.
+          const assignmentFixture=async (route: import("@playwright/test").Route)=>{
+            const body=structuredClone(assignmentBaseline);
+            for(const user of body.users){
+              user.administrator_access={...user.administrator_access,group:stale?"verified":"missing",domain_role:"verified",stale};
+            }
+            await route.fulfill({status:200,json:body});
+          };
           try{
-            await page.reload();
-            const card=users.locator(".required-user-card").first();
+            await fixturePage.route(resource,assignmentFixture);
+            const loaded=fixturePage.waitForResponse(response=>response.request().method()==="GET" && response.url().endsWith(new URL(childUrl).pathname+"/required-users"));
+            await fixturePage.goto(childUrl);
+            const fixture=await (await loaded).json();
+            expect(fixture.users[0].administrator_access.stale).toBe(stale);
+            expect(fixture.users[1].administrator_access.stale).toBe(stale);
+            const fixtureUsers=fixturePage.getByRole("region",{name:"Required users",exact:true});
+            const card=fixtureUsers.locator(".required-user-card").first();
             await expect(card.getByText(stale?"Check out of date":"Missing or disabled",{exact:true})).toHaveCount(stale?2:1);
-            const recoveryCard=users.locator(".required-user-card").nth(1);
+            const recoveryCard=fixtureUsers.locator(".required-user-card").nth(1);
             await expect(recoveryCard.getByLabel(`Administrator assignments: ${stale?"Out of date":"Missing"} (simulation)`)).toBeVisible();
             for(const width of [1280,320]){
-              await page.setViewportSize({width,height:900});
-              expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-              await page.screenshot({path:resolve(".local-dev/browser",`automation-assignment-render-only-${stale?"stale":"missing"}-${width}.png`),fullPage:true});
+              await fixturePage.setViewportSize({width,height:900});
+              expect(await fixturePage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+              await fixturePage.screenshot({path:resolve(".local-dev/browser",`automation-assignment-render-only-${stale?"stale":"missing"}-${width}.png`),fullPage:true});
             }
-          }finally{await page.unrouteAll({behavior:"wait"});}
+          }finally{
+            await fixturePage.unrouteAll({behavior:"wait"});
+            await fixturePage.close();
+          }
         }
         await page.reload();
         await expect(users.locator(".required-user-card").first().getByText("Verified in simulation",{exact:true})).toHaveCount(2);
