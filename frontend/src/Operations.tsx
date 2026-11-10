@@ -347,6 +347,7 @@ function OperationList({
                           <time dateTime={operation.accepted_at}>
                             {stamp(operation.accepted_at)}
                           </time>
+                          {operation.scheduled_for&&<span className="cell-secondary">Scheduled start: <time dateTime={operation.scheduled_for}>{stamp(operation.scheduled_for)}</time></span>}
                         </td>
                         <td>
                           <time dateTime={operation.updated_at}>
@@ -590,7 +591,9 @@ function OperationDetail({
                 {stateLabel(operation)}
               </span>
               <span>Stage: {stageLabel(operation.stage)}</span>
+              {operation.scheduled_for&&<span title="Earliest scheduled start. Existing work or recovery access may delay execution.">Scheduled start (UTC): <time dateTime={operation.scheduled_for}>{stamp(operation.scheduled_for)}</time></span>}
             </div>
+            {operation.scheduled_for&&<p className="muted">This operation is waiting for its scheduled start. Tenancy provider work is not paused while it waits.</p>}
             {detail.recovery_password&&<RecoveryPasswordOperation operation={operation} progress={detail.recovery_password} navigate={navigate}/>}
             {simulationIssue(operation) && operation.kind!=="recovery_password" && (
               <p className="notice" role="status">
@@ -738,11 +741,11 @@ function OperationDetail({
                   <ol className="operation-timeline">
                     {detail.events.map((event, index) => (
                       <li key={index}>
-                        <h3>{eventNames[event.kind]}</h3>
+                        <h3>{event.summary??eventNames[event.kind]}</h3>
                         <p>
                           <time dateTime={event.at}>{stamp(event.at)}</time>
                         </p>
-                        {event.safe_code && (
+                        {event.safe_code && !(event.summary&&event.safe_code==="SIGNING_KEY_PROGRESS") && (
                           <p>
                             Outcome code: <code>{event.safe_code}</code>
                           </p>

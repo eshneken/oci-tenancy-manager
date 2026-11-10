@@ -22,9 +22,9 @@ function mount(value:SigningKeyView=scheduled){
 it("shows the original retirement deadline and contextual operation links",async()=>{
   history.replaceState(null,"","/tenancies/"+id);
   const c=mount({...scheduled,generation:2,last_rotation_operation_id:operation,last_rotated_at:"2026-11-09T12:00:00Z"});
-  expect(await screen.findByText("Rotation scheduled")).toBeVisible();
+  expect(await screen.findByText("Next rotation scheduled")).toBeVisible();
   expect(screen.getByText("Dec 9, 2026")).toHaveAttribute("title",expect.stringContaining("UTC"));
-  expect(screen.getByText(/Generation 2/)).toBeVisible();
+  expect(screen.getByText(/Current key: generation 2/)).toBeVisible();
   await userEvent.click(screen.getByRole("link",{name:"View last completed key rotation"}));
   expect(c.navigate).toHaveBeenCalledWith(expect.stringContaining("returnTo="));
   expect(c.request).not.toHaveBeenCalled();c.client.clear();history.replaceState(null,"","/");
@@ -32,10 +32,10 @@ it("shows the original retirement deadline and contextual operation links",async
 
 // All submit paths share explicit unchecked consent and fresh preview checks.
 it("requires consent for click, Enter and programmatic submit then starts one exact request",async()=>{
-  const c=mount();await screen.findByText("Rotation scheduled");
+  const c=mount();await screen.findByText("Next rotation scheduled");
   await userEvent.click(screen.getByRole("button",{name:"Rotate key"}));
   const dialog=screen.getByRole("dialog"),form=dialog.querySelector("form")!;
-  const confirm=within(dialog).getByRole("button",{name:"Start rotation"});
+  const confirm=within(dialog).getByRole("button",{name:"Rotate now"});
   expect(confirm).toBeDisabled();
   fireEvent.submit(form);await userEvent.keyboard("{Enter}");expect(c.request).not.toHaveBeenCalled();
   expect(within(dialog).getByText("Rotation steps").closest("details")).not.toHaveAttribute("open");
@@ -50,11 +50,11 @@ it("requires consent for click, Enter and programmatic submit then starts one ex
 
 // Unknown response retains a replay path after the server advances and stops offering a new preview.
 it("reopens an uncertain request and retries identical UUID/body against rotating status",async()=>{
-  const c=mount();await screen.findByText("Rotation scheduled");
+  const c=mount();await screen.findByText("Next rotation scheduled");
   await userEvent.click(screen.getByRole("button",{name:"Rotate key"}));
   await userEvent.click(screen.getByRole("checkbox"));
   c.request.mockRejectedValueOnce(new Error("synthetic transport"));
-  await userEvent.click(screen.getByRole("button",{name:"Start rotation"}));
+  await userEvent.click(screen.getByRole("button",{name:"Rotate now"}));
   await screen.findByText(/request may have been accepted/);
   const original=c.request.mock.calls[0][1];
   await userEvent.click(screen.getByRole("button",{name:"Cancel"}));
@@ -70,7 +70,7 @@ it("reopens an uncertain request and retries identical UUID/body against rotatin
 
 // Known stale-preview conflicts discard consent and request identity before a new decision.
 it("clears consent when a reviewed preview changes or the server rejects it",async()=>{
-  const c=mount();await screen.findByText("Rotation scheduled");
+  const c=mount();await screen.findByText("Next rotation scheduled");
   await userEvent.click(screen.getByRole("button",{name:"Rotate key"}));
   await userEvent.click(screen.getByRole("checkbox"));
   c.read.mockResolvedValue({...scheduled,preview_hash:"b".repeat(64)});
@@ -78,7 +78,7 @@ it("clears consent when a reviewed preview changes or the server rejects it",asy
   await waitFor(()=>expect(screen.getByRole("checkbox")).not.toBeChecked());
   c.request.mockRejectedValueOnce(new ApiError(409));
   await userEvent.click(screen.getByRole("checkbox"));
-  await userEvent.click(screen.getByRole("button",{name:"Start rotation"}));
+  await userEvent.click(screen.getByRole("button",{name:"Rotate now"}));
   await screen.findByText(/preview changed or rotation is unavailable/);
   expect(screen.getByRole("checkbox")).not.toBeChecked();c.client.clear();
 });
@@ -101,7 +101,7 @@ it.each([true,false])("honors attention availability %s",async available=>{
 
 // Status failures remain retryable and denied reads end the privileged view.
 it.each([401,403,500])("handles metadata error %s safely",async status=>{
-  const c=mount();await screen.findByText("Rotation scheduled");c.read.mockRejectedValue(new ApiError(status));
+  const c=mount();await screen.findByText("Next rotation scheduled");c.read.mockRejectedValue(new ApiError(status));
   await act(()=>c.client.invalidateQueries({queryKey:["tenancies","signing-key-rotation",id]}));
   await screen.findByRole("alert");
   if(status!==500)await waitFor(()=>expect(c.expired).toHaveBeenCalled());

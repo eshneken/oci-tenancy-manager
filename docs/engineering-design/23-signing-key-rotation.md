@@ -266,3 +266,28 @@ full milestone/PR/merge gates; report targeted versus full evidence exactly. Nat
 The checkpoint records preserved saved installation, not completed full milestone/PR qualification. Live enrollment, key IDs/timestamps, permission probes, signer
 interoperability, capacity/propagation, custody and restore remain Pending in the
 [manual manifest](../how-to/real-oci-test-manifest.md#credential-security-lifecycles).
+
+## Schedule/current-key UI clarification — source follow-up
+
+Combined clarity targeted gates, final UX and preserved saved republication PASS; prior feature
+qualification remains a separate receipt scope. `OperationSummary.scheduled_for` derives from immutable rotation `due_at` only in
+`waiting/signing_rotation_due`. The list/detail distinguish Accepted from Scheduled start (UTC);
+the latter is earliest eligibility, not guaranteed execution, and future waiting does not pause work.
+Expedited queued/running/drain/terminal operations omit it. No persistent field or migration is added.
+
+The tenancy panel separates Current key: generation N from Next rotation scheduled, with Next
+automatic rotation/Last completed rotation date labels. Rotate key opens confirmation and Rotate now
+expedites the same operation. Resume/retry preserve the original unresolved operation/request. Only
+verified completion allocates the successor; the active key generation is not a future key promise.
+
+### Fixed signing event descriptions — source follow-up
+
+The installed combined clarity patch adds optional omitted-null `OperationEventView.summary` from
+validated immutable `SigningKeyEvidence`, using shared `signing_event_summary` in Operations/Audit.
+Labels distinguish staged, upload authorized/verification pending, public key observed, signer verified,
+activated/old retirement pending, removal authorized/verification pending, old absent/access verified,
+completed and attention. A dispatch fence never implies provider success. Existing records gain
+friendly display labels on refresh without history rewrite; no SQL field/migration is added. The UI
+uses this heading and suppresses only redundant `SIGNING_KEY_PROGRESS`, preserving failure/final codes.
+Combined clarity targeted gates, final history-visual UX and preserved saved republication PASS; earlier two-case schedule
+receipts remain separate and do not qualify these later labels.

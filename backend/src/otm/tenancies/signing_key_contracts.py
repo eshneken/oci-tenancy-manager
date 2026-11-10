@@ -128,3 +128,40 @@ class SigningKeyView(Contract):
     safe_code: Text | None = None
     last_rotation_operation_id: UUID | None = None
     last_rotated_at: UtcInstant | None = None
+
+
+# Labels describe committed evidence, distinguishing a pre-dispatch fence from verified success.
+def signing_event_summary(evidence):
+    if evidence.state == "verified":
+        return (
+            "Automation signer prepared" if evidence.phase == "setup" else "Key rotation completed"
+        )
+    if evidence.state == "attention":
+        return (
+            "Signing-key setup needs attention"
+            if evidence.phase == "setup"
+            else "Key rotation needs attention"
+        )
+    if evidence.state == "cancelled":
+        return "Signing-key operation cancelled"
+    checkpoint = evidence.checkpoint
+    if checkpoint is None:
+        return "Signing-key progress recorded"
+    if checkpoint.phase == "upload":
+        return (
+            "Public-key upload authorized; verification pending"
+            if checkpoint.upload_dispatched
+            else "Replacement key staged"
+        )
+    if checkpoint.phase == "retire":
+        return (
+            "Old-key removal authorized; verification pending"
+            if checkpoint.retire_dispatched
+            else "Replacement activated; old-key retirement pending"
+        )
+    return {
+        "stage": "Replacement preparation recorded",
+        "verify": "Replacement public key observed",
+        "activate": "Replacement signer verified",
+        "complete": "Old key absent; replacement access verified",
+    }[checkpoint.phase]

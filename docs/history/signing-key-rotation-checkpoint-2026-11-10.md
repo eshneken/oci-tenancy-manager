@@ -63,3 +63,54 @@ spaces, which `git show --check` reports as formatting warnings. The migration c
 bytes are preserved; no whitespace-check exemption or historical migration rewrite was introduced.
 Check newly generated SQL formatting before freezing future artifacts. This does not change the
 passing execution, security, coverage or preserved-data results above.
+
+## Scheduled-start/current-generation clarification follow-up
+
+**Earlier schedule-only gates PASS; publication/UX are covered by the later combined-clarity receipt below.** The original
+nine-case installed feature checkpoint above remains separate from this two-case follow-up:
+
+- Backend complete-source unit gate: **2,310 passed**,12,614/13,268 lines, **95.0708%**,174 source files;
+  artifact `backend/.local-dev/quality/unit-mb934x2g`.
+- Frontend complete-source unit gate: **636 passed**,2,101/2,164 lines, **97.08%**,44 source files.
+- Targeted disposable PG and actual HTTPS/native-browser cases: **2 passed**, artifact
+  `.local-dev/quality/backend-postgres-uit6c6ax`. Covers future scheduled date, same-operation manual
+  expedite removing the date, current generation1→2, responsive layout and contextual return.
+- Additive independent security review PASS; the later combined-clarity result below supplies final
+  independent UX and matched publication evidence for the expanded patch.
+
+No migration, query deadline or custody behavior changed. These two cases are neither a repeat of the
+original nine-case qualification nor a complete integration/full-suite/PR gate. The later combined-clarity publication below supersedes this intermediate unpublished state. Optional derived `scheduled_for` separates earliest scheduled start from
+Accepted in Operations, only while a signing rotation is `waiting/signing_rotation_due`. The tenancy
+panel distinguishes Current key: generation N from Next rotation scheduled, and confirmation Rotate
+now expedites the same operation. No DB column/migration, new schedule or custody behavior is added.
+
+### Combined event-label and schedule clarity — targeted gates PASS
+
+A later addition to the same combined clarity patch introduces omitted-null
+`OperationEventView.summary`, a fixed typed-checkpoint projection shared with Audit. Labels separate
+staging, upload authorization/verification pending, observation, signer verification, activation with
+old retirement pending, removal authorization/verification pending, verified old absence, completion
+and attention. Existing history is projected read-only; no migration or payload rewrite. The UI hides
+only redundant `SIGNING_KEY_PROGRESS` when a friendly summary exists, retaining failure/final codes.
+The earlier two-case schedule follow-up and original nine-case feature receipt remain distinct.
+The combined clarity candidate now has its own passing gates:
+
+- Backend **2,324 passed**,12,630/13,284 lines, **95.0768%**,174 source files; artifact
+  `backend/.local-dev/quality/unit-j0up8_rh`.
+- Frontend **637 passed**,2,101/2,164 lines, **97.08%**,44 source files.
+- Targeted disposable PG and actual native HTTPS/browser **2 passed**; artifact
+  `.local-dev/quality/backend-postgres-26oz9v4_`. Covers future scheduled date/current generation,
+  same-operation immediate start, explicit event headings and responsive scheduled/history views.
+- Independent source security and final source/history-visual UX **PASS**, including 1280/320 views.
+  Final static/privacy/publication scanners PASS.
+
+These are targeted combined-clarity gates, not a complete integration/PR/full-suite qualification.
+Combined clarity **republished successfully to sole https://localhost:8443** with matching frozen
+backend, immutable assets and native worker. The private preservation result verifies **all 33 existing
+public tables retained**, `new_tables=[]`, private settings/connection file contents preserved,
+backend snapshot selected and API/worker started. No migration/schema changes were introduced.
+The private backup catalog was verified, **not an actual restore drill**.
+
+The original feature's nine-case receipt, intermediate schedule-only two-case receipt and final
+combined-clarity two-case receipt remain distinct; no full-suite, PR or live-OCI qualification is
+claimed. Final source documentation review PASS; no source edits were made during this review.

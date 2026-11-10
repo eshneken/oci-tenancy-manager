@@ -144,3 +144,30 @@ retained onboarding grants/static root fixture, so dynamic current-grant/configu
 remain work. Password CURRENT selection and original four-hour rotation remain separate; API keys
 always require exact immutable version references. The checkpoint receipt records targeted unit/integration/review/preserved-publication results;
 no complete-suite/PR/live qualification is claimed here.
+
+## Current key versus future operation — source follow-up
+
+Combined clarity targeted gates, final UX and preserved saved republication PASS; earlier targeted
+feature evidence remains separate. The tenancy panel now says **Current key: generation N** alongside **Next rotation scheduled**.
+The generation describes the active key, not a generation waiting to be created. Labels are Next
+automatic rotation (UTC) and Last completed rotation (UTC). Rotate key opens an unchecked confirmation;
+Rotate now starts the SAME scheduled operation early. Resume and lost-response retry describe their
+original unresolved operation/request, not a new keypair. Completion alone creates a new successor.
+
+Operations uses optional `OperationSummary.scheduled_for` from frozen intent `due_at` only while
+`waiting/signing_rotation_due`; Accepted remains admission time. The date is earliest execution
+eligibility, may be delayed by prior work/recovery access and is omitted for expedite/running/drain/
+terminal states. A future waiting operation does not pause provider work. This is derived read-only
+metadata; no SQL column, migration, setting or custody/provider behavior changes.
+
+### Fixed signing event descriptions — source follow-up
+
+The installed combined clarity patch adds optional omitted-null `OperationEventView.summary` from
+validated immutable `SigningKeyEvidence`, using shared `signing_event_summary` in Operations/Audit.
+Labels distinguish staged, upload authorized/verification pending, public key observed, signer verified,
+activated/old retirement pending, removal authorized/verification pending, old absent/access verified,
+completed and attention. A dispatch fence never implies provider success. Existing records gain
+friendly display labels on refresh without history rewrite; no SQL field/migration is added. The UI
+uses this heading and suppresses only redundant `SIGNING_KEY_PROGRESS`, preserving failure/final codes.
+Combined clarity targeted gates, final history-visual UX and preserved saved republication PASS; earlier two-case schedule
+receipts remain separate and do not qualify these later labels.

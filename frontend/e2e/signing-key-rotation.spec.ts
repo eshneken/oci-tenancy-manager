@@ -33,8 +33,17 @@ test("rotate a managed signing key through the independent native worker",async(
   const id=process.env.OTM_E2E_TENANCY_ID!;
   await page.goto("/tenancies/"+id);
   const region=page.getByRole("region",{name:"Automatic key rotation"});
-  await expect(region.getByText("Rotation scheduled",{exact:true})).toBeVisible();
-  await expect(region.getByText(/Generation 1/)).toBeVisible();
+  await expect(region.getByText("Next rotation scheduled",{exact:true})).toBeVisible();
+  await expect(region.getByText(/Current key: generation 1/)).toBeVisible();
+  await region.getByRole("link",{name:"View scheduled rotation",exact:true}).click();
+  await expect(page.getByText(/Scheduled start \(UTC\):/)).toBeVisible();
+  await expect(page.getByText(/not paused while it waits/)).toBeVisible();
+  for(const width of [1280,320]){
+    await page.setViewportSize({width,height:900});
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    await page.screenshot({path:resolve(".local-dev/browser",`signing-scheduled-operation-${width}.png`),fullPage:true});
+  }
+  await page.getByRole("link",{name:"← Back to tenancy",exact:true}).click();
   for(const width of [1280,900,390,320]){
     await page.setViewportSize({width,height:900});
     await region.scrollIntoViewIfNeeded();
@@ -43,7 +52,7 @@ test("rotate a managed signing key through the independent native worker",async(
     await region.getByRole("button",{name:"Rotate key",exact:true}).click();
     const dialog=page.getByRole("dialog");
     await expect(dialog.getByRole("checkbox")).not.toBeChecked();
-    await expect(dialog.getByRole("button",{name:"Start rotation",exact:true})).toBeDisabled();
+    await expect(dialog.getByRole("button",{name:"Rotate now",exact:true})).toBeDisabled();
     await page.screenshot({path:resolve(".local-dev/browser",`signing-key-dialog-${width}.png`)});
     await dialog.getByRole("button",{name:"Cancel",exact:true}).scrollIntoViewIfNeeded();
     await page.screenshot({path:resolve(".local-dev/browser",`signing-key-actions-${width}.png`)});
@@ -54,19 +63,29 @@ test("rotate a managed signing key through the independent native worker",async(
   const dialog=page.getByRole("dialog");
   await dialog.getByRole("checkbox").check();
   const accepted=page.waitForResponse(response=>response.url().endsWith("/signing-key-rotation")&&response.request().method()==="POST");
-  await dialog.getByRole("button",{name:"Start rotation",exact:true}).click();
+  await dialog.getByRole("button",{name:"Rotate now",exact:true}).click();
   const response=await accepted;expect(response.status()).toBe(202);const receipt=await response.json();
   await expect.poll(async()=>{
     const result=await page.request.get("/api/operations/"+receipt.operation_id);
     expect(result.ok()).toBe(true);return(await result.json()).operation.state;
   },{timeout:30000}).toBe("succeeded");
-  await expect(region.getByText(/Generation 2/)).toBeVisible({timeout:10000});
-  await page.reload();await expect(region.getByText(/Generation 2/)).toBeVisible();
+  await expect(region.getByText(/Current key: generation 2/)).toBeVisible({timeout:10000});
+  await page.reload();await expect(region.getByText(/Current key: generation 2/)).toBeVisible();
   await region.getByRole("link",{name:"View last completed key rotation"}).click();
   await expect(page.getByText(/Signing credential operation verified in local simulation/)).toBeVisible();
   await expect(page.getByText(/Inspection completed successfully/)).toHaveCount(0);
+  await expect(page.getByRole("heading",{name:"Replacement signer verified",exact:true})).toBeVisible();
+  await expect(page.getByRole("heading",{name:"Key rotation completed",exact:true})).toBeVisible();
+  await expect(page.getByRole("heading",{name:"Signing-key maintenance",exact:true})).toHaveCount(0);
+  for(const width of [1280,320]){
+    await page.setViewportSize({width,height:900});
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    await page.getByRole("heading",{name:"Recent events",exact:true}).scrollIntoViewIfNeeded();
+    await page.screenshot({path:resolve(".local-dev/browser",`signing-history-${width}.png`),fullPage:true});
+  }
+  await page.setViewportSize({width:1280,height:900});
   await page.getByRole("link",{name:"← Back to tenancy",exact:true}).click();
-  await expect(region.getByText(/Generation 2/)).toBeVisible();
+  await expect(region.getByText(/Current key: generation 2/)).toBeVisible();
   await page.screenshot({path:resolve(".local-dev/browser","signing-key-completed-1280.png"),fullPage:true});
   // Browser-only response fixtures inspect rare presentation states without adding app controls.
   const endpoint="**/api/tenancies/"+id+"/signing-key-rotation";

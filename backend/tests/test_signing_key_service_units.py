@@ -254,3 +254,36 @@ def test_scheduled_priority_is_signing_only():
 
     with pytest.raises(ValueError, match="SIGNING_ROTATION_SCHEDULE_REQUIRED"):
         InspectionEnqueuer().enqueue(Mock(), uuid4(), scheduled_rotation=True)
+
+
+# Only the original future wait exposes an execution date; expedite/drain/terminal states do not.
+@pytest.mark.parametrize(
+    "state,reason,scheduled",
+    [
+        ("waiting", "signing_rotation_due", True),
+        ("queued", None, False),
+        ("running", None, False),
+        ("waiting", "signing_drain", False),
+        ("succeeded", None, False),
+    ],
+)
+def test_operation_schedule_separate_from_acceptance(state, reason, scheduled):
+    from otm.storage.operation_directory import SqlOperationDirectory
+
+    c = worker_case()
+    data = c.frozen.model_dump(mode="json")
+    row = {
+        **c.row,
+        "state": state,
+        "wait_reason": reason,
+        "stage": "Rotate automation signing key",
+        "accepted_at": c.clock(),
+        "updated_at": c.clock(),
+        "completed_at": None,
+        "intent_data": data,
+        "intent_hash": canonical_hash(data),
+    }
+    summary = SqlOperationDirectory(c.engine).summary(row)
+    assert summary.scheduled_for == (c.intent.due_at if scheduled else None)
+    assert ("scheduled_for" in summary.model_dump()) == scheduled
+    assert summary.accepted_at == c.clock()

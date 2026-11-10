@@ -371,6 +371,20 @@
           ],
           "title": "Safe Code"
         },
+        "summary": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        },
         "user_checks": {
           "default": [],
           "items": {
@@ -566,6 +580,19 @@
           ],
           "default": null,
           "title": "Result Tenancy Id"
+        },
+        "scheduled_for": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Scheduled For"
         },
         "stage": {
           "maxLength": 256,

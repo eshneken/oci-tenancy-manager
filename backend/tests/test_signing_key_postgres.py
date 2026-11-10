@@ -141,6 +141,8 @@ def test_enrollment_rotation_and_request_replay(signing_case):
         )
     original = current_key(head)
     assert view.starts_at == original.retire_at - timedelta(days=1)
+    scheduled = SqlOperationDirectory(c.engine).detail(c.policy.workspace_id, view.operation_id)
+    assert scheduled.operation.scheduled_for == view.starts_at
     c.keys.run(view.operation_id)
     assert c.signing.view(c.principal, c.child.id) == view
     c.clock.return_value += timedelta(seconds=1)
@@ -148,6 +150,13 @@ def test_enrollment_rotation_and_request_replay(signing_case):
         client_request_key=uuid4(), preview_hash=view.preview_hash, acknowledged=True
     )
     queued = c.signing.request(c.principal, c.child.id, command)
+    assert queued.operation_id == view.operation_id
+    assert (
+        SqlOperationDirectory(c.engine)
+        .detail(c.policy.workspace_id, queued.operation_id)
+        .operation.scheduled_for
+        is None
+    )
     assert c.signing.request(c.principal, c.child.id, command).operation_id == queued.operation_id
     with c.engine.connect() as connection:
         from otm.storage.organization import OrganizationConflict

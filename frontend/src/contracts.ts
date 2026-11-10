@@ -1116,6 +1116,7 @@ export type ResponsibilityRevision = number | null;
 export type ResponsibleAdministratorId = string | null;
 export type ResponsibleAdministratorName = string | null;
 export type ResultTenancyId = string | null;
+export type ScheduledFor = string | null;
 export type Stage = string;
 export type State21 =
   | "queued"
@@ -1155,6 +1156,7 @@ export type Kind4 =
   | "signing_key_outcome"
   | "signing_key_requested";
 export type SafeCode4 = string | null;
+export type Summary = string | null;
 export type Anchor =
   | "automation-presence"
   | "automation-assignment"
@@ -1317,7 +1319,7 @@ export type Name12 = string;
  */
 export type Resources = AuditResource[];
 export type SafeCode7 = string | null;
-export type Summary = string | null;
+export type Summary1 = string | null;
 export type Items8 = AuditEntry[];
 export type Page15 = number;
 export type PageSize14 = number;
@@ -2459,6 +2461,7 @@ export interface OperationSummary {
   responsible_administrator_id?: ResponsibleAdministratorId;
   responsible_administrator_name?: ResponsibleAdministratorName;
   result_tenancy_id?: ResultTenancyId;
+  scheduled_for?: ScheduledFor;
   stage: Stage;
   state: State21;
   target_label?: TargetLabel;
@@ -2479,6 +2482,7 @@ export interface OperationEventView {
   automation_keys?: AutomationKeysView | null;
   kind: Kind4;
   safe_code: SafeCode4;
+  summary?: Summary;
   user_checks?: UserChecks;
 }
 export interface UserCheckSection {
@@ -2569,7 +2573,7 @@ export interface AuditEntry {
   organization_subject_name?: OrganizationSubjectName;
   resources?: Resources;
   safe_code: SafeCode7;
-  summary?: Summary;
+  summary?: Summary1;
 }
 export interface AuditResource {
   id: Id16;

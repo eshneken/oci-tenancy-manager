@@ -103,6 +103,7 @@ Processing/event timestamps are not relabeled as provider observation/capture ti
 | State badge: `operation.state` | `otm_operation.state`, independent of native job success. Inspection-read issues use no-action guidance; lifecycle attention remains linked to person/tenancy context. Stored states/filters are unchanged. |
 | Stage: `operation.stage` | `otm_operation.stage`; UI replaces underscores for display without adding progress percentages. |
 | Accepted: `operation.accepted_at` | `otm_operation.accepted_at`, rendered in UTC. |
+| Scheduled start: `operation.scheduled_for` | Optional derived immutable `SigningKeyIntent.due_at`, only for signing-key rotation in `waiting/signing_rotation_due`; omitted for queued, running, drain waits or terminal work. Earliest eligibility, not acceptance or guaranteed execution time; no new SQL column. |
 | Updated: `operation.updated_at` | `otm_operation.updated_at`, rendered in UTC. |
 | Completed: `operation.completed_at` | Nullable `otm_operation.completed_at`; no completion time is synthesized. |
 | Initiated by: `operation.initiated_by` | Exact current intent event `audit_event.data.actor.display_name`, after actor-key validation; nullable, with no raw-subject fallback. |
@@ -115,6 +116,7 @@ Processing/event timestamps are not relabeled as provider observation/capture ti
 | Verified: `steps[].verified_at` | Nullable `otm_operation_step.verified_at`, set by committed worker verification, except `handoff`, where it records accepted administrator input; not a provider capture timestamp. |
 | Step outcome code: `steps[].safe_code` | Validated `otm_operation_step.last_outcome.safe_code`, or null when no outcome exists. |
 | Event heading/kind: `events[].kind` | `audit_event.kind`: `operation_intent`, `inspection_dispatch`, `inspection_outcome`, `organization_action_outcome`, `onboarding_action` or `onboarding_outcome`, mapped to recorded event labels. |
+| Friendly event heading: `events[].summary` | Optional omitted-null server projection from validated `SigningKeyEvidence` state/checkpoint/dispatch fences using `signing_event_summary`; shared with Audit, no stored summary or history rewrite. Authorized dispatch is explicitly verification pending, not proof of completion. |
 | Event date: `events[].at` | `audit_event.at`, rendered in UTC. |
 | Event code: `events[].safe_code` | Validated outcome event `audit_event.data.safe_code`; null for acceptance/dispatch. |
 | Event-limit message: `events_limited` | True when the operation snapshot has an event beyond the newest 50 returned. |
@@ -311,8 +313,8 @@ POST /api/operations/{uuid}/responsibility accepts only a request UUID and expec
 revision, returns HTTP 200 ActionReceipt and queues no job. Original creator, activation mailbox,
 provider intent and tenancy owner stay unchanged.
 
-OperationSummary now has 18 fields: responsible_administrator_name, responsible_administrator_id,
-responsibility_revision, can_take_responsibility, id, kind, state, stage, accepted_at, updated_at,
+OperationSummary now has 19 fields: responsible_administrator_name, responsible_administrator_id,
+responsibility_revision, can_take_responsibility, id, kind, state, stage, accepted_at, scheduled_for, updated_at,
 completed_at, initiated_by, target_tenancy_ocid, title, target_label, provider_mode, guided_onboarding
 and result_tenancy_id. The first four are computed for guided detail, with nullable/false defaults
 elsewhere. The [complete new-field/source map](responsibility.md#complete-field-and-storage-map)
@@ -478,3 +480,33 @@ Missing legacy metadata cannot become known zero keys. No credential head, PEM, 
 or compliance proof is added. The new exact inventory fragment is `#automation-keys`, distinct
 from the original five subject/kind sections. Timestamp/anchor source alignment is implemented; targeted checkpoint validation and
 preserved installation [pass with separately recorded scope](../history/automation-signing-key-inventory-checkpoint-2026-11-09.md).
+
+## Signing rotation schedule clarification — 10 November 2026
+
+Combined clarity follow-up: targeted gates, final independent UX and preserved saved republication PASS.
+The separate checkpoint receipt records the earlier feature and later clarification evidence. Operations list shows Scheduled start
+under Accepted, and detail shows Scheduled start (UTC) with an earliest-eligibility tooltip. Existing
+work or a recovery window can delay actual execution; waiting for the future schedule does not pause
+provider work. `scheduled_for` is an omitted-if-null projection, not a new table/column or job trigger.
+Manual Rotate now expedites that same scheduled operation; it no longer projects a future scheduled
+start once queued/running/draining. Verified completion creates a new successor operation.
+
+## Signing event labels — combined clarification patch
+
+Combined clarity targeted gates, final history-visual UX and preserved saved republication PASS. Operations and Audit share a fixed
+server mapping from validated typed signing evidence. Existing history gains readable projections on
+refresh; immutable payloads are not rewritten. Operations prefers `events[].summary` when present and
+hides only redundant `SIGNING_KEY_PROGRESS` code text in that case. Failure and final codes remain
+visible; other event kinds retain their existing labels. This optional DTO field adds no SQL column.
+
+| Evidence | Heading meaning |
+| --- | --- |
+| Upload phase, no dispatch | Replacement key staged |
+| Upload dispatched | Public-key upload authorized; verification pending |
+| Verify phase | Replacement public key observed |
+| Activate phase | Replacement signer verified |
+| Retire phase, no dispatch | Replacement activated; old-key retirement pending |
+| Retire dispatched | Old-key removal authorized; verification pending |
+| Complete checkpoint | Old key absent; replacement access verified |
+| Verified outcome | Automation signer prepared, or Key rotation completed |
+| Attention/cancelled/no checkpoint | Explicit setup/rotation attention, cancellation or generic progress; no inferred success |

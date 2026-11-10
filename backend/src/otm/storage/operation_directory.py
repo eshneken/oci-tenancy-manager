@@ -46,7 +46,11 @@ from otm.tenancies.recovery_password_contracts import (
     RecoveryDisclosureEvidence,
     RecoveryPasswordEvidence,
 )
-from otm.tenancies.signing_key_contracts import SigningKeyEvidence, SigningKeyRequestEvidence
+from otm.tenancies.signing_key_contracts import (
+    SigningKeyEvidence,
+    SigningKeyRequestEvidence,
+    signing_event_summary,
+)
 
 
 # Reconstruct only the five historical check summaries from validated immutable event evidence.
@@ -195,6 +199,12 @@ class SqlOperationDirectory:
             state=row["state"],
             stage=row["stage"],
             accepted_at=utc(row["accepted_at"]),
+            scheduled_for=frozen.intent.due_at
+            if frozen.intent.kind == "signing_key"
+            and frozen.intent.phase == "rotation"
+            and row["state"] == "waiting"
+            and row.get("wait_reason") == "signing_rotation_due"
+            else None,
             updated_at=utc(row["updated_at"]),
             completed_at=utc(row["completed_at"]),
             initiated_by=frozen.actor.display_name,
@@ -512,6 +522,9 @@ class SqlOperationDirectory:
             else None
         )
         return OperationEventView(
+            summary=signing_event_summary(outcome)
+            if isinstance(outcome, SigningKeyEvidence)
+            else None,
             automation_keys=inventory_view(
                 outcome.automation_keys,
                 outcome.operation_id,

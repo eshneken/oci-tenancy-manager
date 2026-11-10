@@ -40,7 +40,11 @@ from otm.tenancies.recovery_password_contracts import (
     RecoveryDisclosureEvidence,
     RecoveryPasswordEvidence,
 )
-from otm.tenancies.signing_key_contracts import SigningKeyEvidence, SigningKeyRequestEvidence
+from otm.tenancies.signing_key_contracts import (
+    SigningKeyEvidence,
+    SigningKeyRequestEvidence,
+    signing_event_summary,
+)
 
 AUTHENTICATION = ("local_sign_in_succeeded", "local_sign_in_failed", "session_logged_out")
 ADMINISTRATION = (
@@ -188,7 +192,7 @@ def entry(row):
         summary = "Recovery network repair: " + proof.state
     if kind == "signing_key_outcome":
         proof = SigningKeyEvidence.model_validate_json(json.dumps(row["data"]))
-        summary = "Automation signing-key " + proof.phase + ": " + proof.state
+        summary = signing_event_summary(proof)
     if kind == "signing_key_requested":
         proof = SigningKeyRequestEvidence.model_validate_json(json.dumps(row["data"]))
         summary = "Requested original signing-key operation: " + proof.action

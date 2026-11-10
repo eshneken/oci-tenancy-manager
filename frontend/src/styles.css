@@ -1873,3 +1873,5 @@ dialog p {
 
 /* Rotation controls remain within the compact signing-key panel and use routine-action emphasis. */
 .signing-rotation{border-top:1px solid #d5dfea;padding-top:20px;margin-top:20px}.signing-rotation h3{margin:0 0 8px}.signing-rotation .required-users-heading{margin-bottom:16px}.signing-rotation .signing-key-facts{margin-top:16px}.signing-rotation>p:last-of-type{margin-bottom:0}
+
+.signing-rotation-summary{display:flex;flex-wrap:wrap;align-items:center;gap:16px}

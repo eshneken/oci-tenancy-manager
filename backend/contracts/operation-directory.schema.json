@@ -121,6 +121,19 @@
           "default": null,
           "title": "Result Tenancy Id"
         },
+        "scheduled_for": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Scheduled For"
+        },
         "stage": {
           "maxLength": 256,
           "minLength": 1,

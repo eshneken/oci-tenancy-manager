@@ -46,6 +46,8 @@ class OperationSummary(Contract):
     state: OperationState
     stage: Text
     accepted_at: UtcInstant
+    # Earliest execution eligibility for a still-scheduled rotation, not its acceptance time.
+    scheduled_for: UtcInstant | None = Field(default=None, exclude_if=lambda value: value is None)
     updated_at: UtcInstant
     completed_at: UtcInstant | None
     initiated_by: Text | None
@@ -109,6 +111,8 @@ class UserCheckSection(Contract):
 
 # Preserve event ordering and bounded historical visibility without disclosing authorization data.
 class OperationEventView(Contract):
+    # Fixed server-derived checkpoint text; raw outcomes and private version references stay private.
+    summary: Text | None = Field(default=None, exclude_if=lambda value: value is None)
     # Only required-user outcomes carry these safe historical result sections.
     user_checks: tuple[UserCheckSection, ...] = ()
     automation_keys: AutomationKeysView | None = None

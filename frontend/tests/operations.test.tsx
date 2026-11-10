@@ -602,3 +602,34 @@ it("opens signing-key history without loading current tenancy inventory",async()
   expect(screen.getByText(/Age at observation/)).toBeVisible();
   expect(current).not.toHaveBeenCalled();
 });
+
+
+// Future execution is distinct from submission in both the list and the operation detail.
+it("shows the future rotation schedule without implying a month-long provider pause",async()=>{
+  const scheduled={...row,kind:"signing_key" as const,state:"waiting" as const,completed_at:null,title:"Rotate automation signing key",scheduled_for:"2026-12-09T12:00:00Z"};
+  vi.spyOn(api,"operations").mockResolvedValue({...directory,items:[scheduled],total:1,pages:1});
+  const list=mount(<Operations operationId={null} expired={vi.fn()} navigate={vi.fn()}/>);
+  await screen.findByText(/Scheduled start:/);
+  expect(screen.getByText(/Scheduled start:/).querySelector("time")).toHaveAttribute("datetime",scheduled.scheduled_for);
+  list.unmount();list.client.clear();
+  vi.spyOn(api,"operation").mockResolvedValue({...detail,operation:scheduled,steps:[],events:[]});
+  const view=mount(<Operations operationId={id} expired={vi.fn()} navigate={vi.fn()}/>);
+  await screen.findByText(/Scheduled start \(UTC\):/);
+  expect(screen.getByText(/not paused while it waits/)).toBeVisible();
+  expect(screen.getByText(/Scheduled start \(UTC\):/).querySelector("time")).toHaveAttribute("datetime",scheduled.scheduled_for);
+  view.client.clear();
+});
+
+
+// Checkpoint summaries explain one rotation without presenting upload authorization as completion.
+it("uses descriptive signing checkpoint labels and omits only redundant generic progress codes",async()=>{
+  vi.spyOn(api,"operation").mockResolvedValue({...detail,operation:{...row,kind:"signing_key"},steps:[],events:[
+    {kind:"signing_key_outcome",at:row.updated_at,safe_code:"SIGNING_KEY_PROGRESS",summary:"Public-key upload authorized; verification pending"},
+    {kind:"signing_key_outcome",at:row.updated_at,safe_code:"SIGNING_KEY_ROTATED",summary:"Key rotation completed"},
+  ]});
+  const c=mount(<Operations operationId={id} expired={vi.fn()} navigate={vi.fn()}/>);
+  expect(await screen.findByRole("heading",{name:"Public-key upload authorized; verification pending"})).toBeVisible();
+  expect(screen.getByRole("heading",{name:"Key rotation completed"})).toBeVisible();
+  expect(screen.queryByText("SIGNING_KEY_PROGRESS")).not.toBeInTheDocument();
+  expect(screen.getByText("SIGNING_KEY_ROTATED")).toBeVisible();c.client.clear();
+});

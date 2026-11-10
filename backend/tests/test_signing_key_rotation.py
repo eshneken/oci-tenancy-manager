@@ -213,3 +213,81 @@ def test_retirement_evidence(damage):
         keys = (candidate.model_copy(update={"created_at": date}),)
     facts = c.facts.model_copy(update={"keys": keys, "complete": damage != "partial"})
     assert retired_inventory(facts.model_dump(), c.replacement, c.clock()) == (damage is None)
+
+
+# Historical labels distinguish intent-to-dispatch fences from observed and completed effects.
+@pytest.mark.parametrize(
+    "phase,upload_sent,retire_sent,expected",
+    [
+        ("stage", False, False, "Replacement preparation recorded"),
+        ("upload", False, False, "Replacement key staged"),
+        ("upload", True, False, "Public-key upload authorized; verification pending"),
+        ("verify", True, False, "Replacement public key observed"),
+        ("activate", True, False, "Replacement signer verified"),
+        ("retire", True, False, "Replacement activated; old-key retirement pending"),
+        ("retire", True, True, "Old-key removal authorized; verification pending"),
+        ("complete", True, True, "Old key absent; replacement access verified"),
+    ],
+)
+def test_checkpoint_descriptions(phase, upload_sent, retire_sent, expected):
+    from otm.operations.contracts import canonical_hash
+    from otm.storage.operation_directory import SqlOperationDirectory
+    from otm.tenancies.signing_key_contracts import SigningKeyEvidence
+    from otm.tenancies.signing_key_engine import SigningRotationState
+
+    c = rotation_case()
+    uploaded = ManagedSigningKey(
+        version=c.candidate, provider_key_id="replacement-id", uploaded_at=c.clock()
+    )
+    checkpoint = SigningRotationState(
+        old=c.old,
+        phase=phase,
+        candidate=c.candidate if phase != "stage" else None,
+        uploaded=uploaded if phase in {"verify", "activate", "retire", "complete"} else None,
+        upload_dispatched=upload_sent,
+        retire_dispatched=retire_sent,
+    )
+    proof = SigningKeyEvidence(
+        operation_id=c.command.context.operation_id,
+        credential_id=c.version.credential_id,
+        tenancy_id=c.a.tenancy_id,
+        phase="rotation",
+        state="progress",
+        safe_code="SIGNING_KEY_PROGRESS",
+        checkpoint=checkpoint,
+        checked_at=c.clock(),
+    )
+    data = proof.model_dump(mode="json")
+    projected = SqlOperationDirectory(None).event(
+        dict(kind="signing_key_outcome", at=c.clock(), data=data, data_hash=canonical_hash(data))
+    )
+    assert projected.summary == expected
+    assert "secret_reference" not in projected.model_dump_json()
+
+
+# Terminal, held and old sparse records remain readable without inventing a successful checkpoint.
+@pytest.mark.parametrize(
+    "state,phase,expected",
+    [
+        ("verified", "setup", "Automation signer prepared"),
+        ("verified", "rotation", "Key rotation completed"),
+        ("attention", "setup", "Signing-key setup needs attention"),
+        ("attention", "rotation", "Key rotation needs attention"),
+        ("cancelled", "rotation", "Signing-key operation cancelled"),
+        ("progress", "rotation", "Signing-key progress recorded"),
+    ],
+)
+def test_sparse_signing_event_descriptions(state, phase, expected):
+    from otm.tenancies.signing_key_contracts import SigningKeyEvidence, signing_event_summary
+
+    c = rotation_case()
+    evidence = SigningKeyEvidence(
+        operation_id=uuid4(),
+        credential_id=c.version.credential_id,
+        tenancy_id=c.a.tenancy_id,
+        phase=phase,
+        state=state,
+        safe_code="SIGNING_KEY_PROGRESS",
+        checked_at=c.clock(),
+    )
+    assert signing_event_summary(evidence) == expected

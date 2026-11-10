@@ -5,7 +5,7 @@ import type {SigningKeyRequest,SigningKeyView} from "./contracts";
 import {operationHref} from "./operationNavigation";
 import {followLink} from "./navigation";
 
-const names:Record<SigningKeyView["state"],string>={not_prepared:"Rotation not prepared",preparing:"Preparing signing credential",scheduled:"Rotation scheduled",rotating:"Rotation in progress",attention:"Rotation needs attention",overdue:"Retirement overdue",inactive:"Tenancy inactive",unavailable:"Rotation unavailable"};
+const names:Record<SigningKeyView["state"],string>={not_prepared:"Rotation not prepared",preparing:"Preparing signing credential",scheduled:"Next rotation scheduled",rotating:"Rotation in progress",attention:"Rotation needs attention",overdue:"Retirement overdue",inactive:"Tenancy inactive",unavailable:"Rotation unavailable"};
 
 // Only explicit preview-bound requests start/resume work; status reads never retrieve key material.
 export function SigningKeyRotation({tenancyId,expired,navigate}:{tenancyId:string;expired:()=>void;navigate:(path:string)=>void}) {
@@ -64,23 +64,24 @@ export function SigningKeyRotation({tenancyId,expired,navigate}:{tenancyId:strin
     {data&&<>
       <div className="required-users-heading"><h3>Automatic rotation</h3>
       {(data.available||uncertain)&&<button type="button" ref={launch} className="button secondary" onClick={start}>{uncertain?"Recover request":data.state==="attention"?"Resume rotation":"Rotate key"}</button>}</div>
-      <p><span className={"badge "+(["attention","overdue"].includes(data.state)?"presence-missing":"required-user-state")}>{names[data.state]}</span>{(data.generation??0)>0&&<span className="muted"> · Generation {data.generation}</span>}</p>
+      <p className="signing-rotation-summary"><span className={"badge "+(["attention","overdue"].includes(data.state)?"presence-missing":"required-user-state")}>{names[data.state]}</span>{(data.generation??0)>0&&<span>Current key: generation {data.generation}</span>}</p>
       {data.state==="not_prepared"&&<p className="muted">This tenancy has not completed versioned signing-credential setup. Refreshing inventory does not enroll it.</p>}
+      {data.state==="scheduled"&&<p className="muted">Rotate key requests rotation now. Waiting for the scheduled date does not pause provider work.</p>}
       {data.state==="rotating"&&<p className="notice" role="status">New provider requests are paused for this tenancy. Existing work and recovery access finish before the key is switched.</p>}
       {data.state==="overdue"&&<p className="notice" role="status">The original retirement deadline has passed. Provider work remains restricted while this obligation is resolved.</p>}
       {data.state==="attention"&&<p className="notice">The original rotation is unresolved. {data.available?"Resume it to retry verification; no new key pair will be generated.":"Review the rotation operation and restore the required context before resuming."} Use independent recovery if automation access is unavailable.</p>}
-      <dl className="signing-key-facts">{data.starts_at&&data.state==="scheduled"&&<div><dt>Next rotation (UTC)</dt><dd>{date(data.starts_at)}</dd></div>}{data.retire_at&&<div><dt>Retirement deadline (UTC)</dt><dd>{date(data.retire_at)}</dd></div>}{data.last_rotated_at&&data.last_rotation_operation_id&&<div><dt>Last rotation (UTC)</dt><dd><a href={operationHref(data.last_rotation_operation_id)} onClick={event=>followLink(event,operationHref(data.last_rotation_operation_id),navigate)} aria-label="View last completed key rotation">{date(data.last_rotated_at)}</a></dd></div>}</dl>
+      <dl className="signing-key-facts">{data.starts_at&&data.state==="scheduled"&&<div><dt>Next automatic rotation (UTC)</dt><dd>{date(data.starts_at)}</dd></div>}{data.retire_at&&<div><dt>Retirement deadline (UTC)</dt><dd>{date(data.retire_at)}</dd></div>}{data.last_rotated_at&&data.last_rotation_operation_id&&<div><dt>Last completed rotation (UTC)</dt><dd><a href={operationHref(data.last_rotation_operation_id)} onClick={event=>followLink(event,operationHref(data.last_rotation_operation_id),navigate)} aria-label="View last completed key rotation">{date(data.last_rotated_at)}</a></dd></div>}</dl>
       {data.operation_id&&<p className="muted"><a href={operationHref(data.operation_id)} onClick={event=>followLink(event,operationHref(data.operation_id),navigate)}>{data.state==="scheduled"?"View scheduled rotation":"View rotation operation"}</a></p>}
     </>}
     <dialog ref={dialog} className="workflow-dialog" aria-labelledby="signing-rotation-title" onCancel={event=>{event.preventDefault();if(!busy)close();}}>
       {open&&<form onSubmit={event=>void submit(event)}>
         <h2 ref={heading} tabIndex={-1} id="signing-rotation-title">{uncertain?"Recover rotation request":data?.state==="attention"?"Resume key rotation":"Rotate automation signing key"}</h2><h3>{data?.tenancy_name}</h3>
         <p className="notice">Local simulation. No OCI keys or credentials will be changed.</p>
-        <p>New provider requests for this tenancy pause while the replacement is verified and the old key is retired. Other tenancies remain available.</p>
+        <p>{uncertain?"This retries the original request without creating another rotation.":data?.state==="attention"?"This resumes the unresolved operation without generating another key pair.":"This starts the existing scheduled operation now. It does not create another rotation."} An accepted rotation pauses new provider requests while the replacement is verified and the old key is retired. Other tenancies remain available.</p>
         <details className="operator-instructions"><summary>Rotation steps</summary><ol><li>Wait for existing work and any recovery-password window to finish.</li><li>Stage one recoverable candidate, upload it and verify its exact signer.</li><li>Switch credentials, then delete the managed old key and verify its absence.</li></ol></details>
         <label className="workflow-check"><input type="checkbox" checked={consent} disabled={busy||query.isFetching} onChange={event=>setConsent(event.target.checked)}/><span>I understand new provider requests for {data?.tenancy_name} will pause until this rotation completes.</span></label>
         {error&&<p className="alert" role="alert">{error}</p>}
-        <div className="dialog-actions"><button type="button" className="button secondary" disabled={busy} onClick={close}>Cancel</button><button type="submit" className="button primary" disabled={!consent||busy||query.isFetching||(!data?.available&&!uncertain)}>{busy?"Submitting…":uncertain?"Retry same request":data?.state==="attention"?"Resume rotation":"Start rotation"}</button></div>
+        <div className="dialog-actions"><button type="button" className="button secondary" disabled={busy} onClick={close}>Cancel</button><button type="submit" className="button primary" disabled={!consent||busy||query.isFetching||(!data?.available&&!uncertain)}>{busy?"Submitting…":uncertain?"Retry same request":data?.state==="attention"?"Resume rotation":"Rotate now"}</button></div>
       </form>}
     </dialog>
   </div>;
