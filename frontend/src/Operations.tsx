@@ -1,3 +1,4 @@
+import {AutomationKeys} from "./AutomationKeys";
 import {operationHref,operationReturn} from "./operationNavigation";
 import {RecoveryPasswordOperation} from "./RecoveryPasswordOperation";
 import { EmailNotifications } from "./EmailNotifications";
@@ -510,11 +511,12 @@ function OperationDetail({
   const detail = result.data;
   const operation = detail?.operation;
   const userChecks=detail?.events.find(event=>event.user_checks?.length)?.user_checks??[];
+  const keyInventory=detail?.events.find(event=>event.automation_keys)?.automation_keys;
   // Deep links wait for recorded results; never fetch current tenancy facts as historical evidence.
   const checkAnchor=location.hash.slice(1);
   useEffect(()=>{
     const anchor=checkAnchor;
-    if(!userChecks.some(check=>check.anchor===anchor))return;
+    if(!userChecks.some(check=>check.anchor===anchor) && !(anchor==="automation-keys"&&keyInventory))return;
     const frame=requestAnimationFrame(()=>{const section=document.getElementById(anchor);section?.scrollIntoView?.({block:"start"});section?.focus();});
     return ()=>cancelAnimationFrame(frame);
   },[detail,checkAnchor]);
@@ -644,6 +646,7 @@ function OperationDetail({
                 <p className="muted">Checked: {stamp(check.checked_at??null)}</p>
               </section>)}</div>
             </section>}
+            {keyInventory && <AutomationKeys inventory={keyInventory} historical navigate={navigate}/>}
             <HistoryContainer
               className={
                 operation.guided_onboarding ? "onboarding-history" : undefined

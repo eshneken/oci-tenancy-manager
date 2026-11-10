@@ -172,3 +172,7 @@ The [recovery-network repair source subset](reference/recovery-network-repair.md
 - [Password operation progress follow-up](history/recovery-password-checkpoint-2026-11-09.md#password-operation-progress-follow-up): installed original-window status panel;440 complete cases plus later explicitly targeted-qualified copy.
 
 - [Context-sensitive operation returns](history/recovery-password-checkpoint-2026-11-09.md#operation-return-navigation-follow-up): recognized local origins, durable href context and exact result anchors; targeted validation and preserved main installation pass; no full native rerun.
+
+- [Automation signing-key inventory source checkpoint](reference/automation-signing-keys.md): separate observation-only panel and original-time age; targeted qualification/main installation pass; rotation enforcement separate.
+
+- [Signing-key inventory checkpoint status](history/automation-signing-key-inventory-checkpoint-2026-11-09.md): targeted public metadata/age checkpoint installed; no new full-suite/milestone/PR qualification.

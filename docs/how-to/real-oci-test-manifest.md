@@ -228,3 +228,19 @@ environment. Interactive recovery-network break/repair remains deferred; no lega
 
 [WIP UI steps](../reference/recovery-password-access.md#current-dialog-and-future-main-only-manual-review)
 require future local qualification/publication and do not establish that milestone today.
+
+
+## Automation signing-key inventory qualification
+
+All cases remain **Pending**; local inventory simulation cannot qualify real key/signer behavior.
+
+| Live case | Required evidence | Status |
+| --- | --- | --- |
+| Exact key resource/subject | Normalize actual identity-domain SCIM/composite API-key resource ID and fingerprint; require exact automation domain/user context, not an OCID-shaped assumption or name match. | Pending |
+| Complete list | Qualify pagination, authorization, supported lifecycle state, duplicates and bounds; complete empty differs from denied/partial/unavailable. Never truncate a list and certify zero or complete coverage. | Pending |
+| Original creation evidence | Identify trustworthy provider key creation/upload timestamp and normalize UTC; absent/future/untrusted time yields Unknown age, never observation/user/connection/feed time or a new lease. | Pending |
+| Repeated/historical views | Preserve original timestamps through refresh/restart; current server-time age and historical capture-time age remain explicitly distinct. Test exact day29/day30 and stale/clock boundaries. | Pending |
+| No added authority | Inventory must not expose PEM/private material, select a signer, establish custody/compliance, rotate/delete, notify or block unrelated work. Existing parent/recovery fallback remains forbidden. | Pending |
+
+Broader30-day rotation, key capacity, new-signer verification and verified old-key retirement remain
+pending in chapter22’s separate matrix. See the [current source map](../reference/automation-signing-keys.md).

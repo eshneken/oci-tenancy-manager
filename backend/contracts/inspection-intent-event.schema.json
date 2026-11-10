@@ -1345,6 +1345,19 @@
           "title": "Authorization Revision",
           "type": "string"
         },
+        "automation_key_inventory_contract": {
+          "anyOf": [
+            {
+              "const": "automation-key-inventory-1",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Automation Key Inventory Contract"
+        },
         "baseline": {
           "anyOf": [
             {

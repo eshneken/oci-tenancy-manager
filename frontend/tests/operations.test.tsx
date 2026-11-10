@@ -589,3 +589,16 @@ it("returns to the originating tenancy and resets for directory entry",async()=>
  c.rerender(<QueryClientProvider client={c.client}><Operations operationId={id} expired={vi.fn()} navigate={navigate}/></QueryClientProvider>);
  expect(screen.getByRole("link",{name:"← Back to operations"})).toHaveAttribute("href","/operations");
 });
+
+
+// Key-age history is frozen to this operation and supports an independently focusable anchor.
+it("opens signing-key history without loading current tenancy inventory",async()=>{
+  vi.spyOn(api,"operation").mockResolvedValue({...detail,operation:{...row,kind:"required_user_check"},events:[{kind:"required_user_check_outcome",at:row.updated_at,safe_code:null,automation_keys:{state:"known",checked_at:row.updated_at,age_as_of:row.updated_at,operation_id:id,keys:[]}}]});
+  const current=vi.spyOn(api,"requiredUsers");
+  history.replaceState(null,"","/operations/"+id+"#automation-keys");
+  mount(<Operations operationId={id} expired={vi.fn()} navigate={vi.fn()}/>);
+  await screen.findByRole("heading",{name:"Automation signing keys"});
+  await waitFor(()=>expect(document.getElementById("automation-keys")).toHaveFocus());
+  expect(screen.getByText(/Age at observation/)).toBeVisible();
+  expect(current).not.toHaveBeenCalled();
+});

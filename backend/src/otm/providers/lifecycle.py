@@ -7,6 +7,7 @@ from pydantic import Field, model_validator
 
 from otm.contracts import Contract, Text
 from otm.providers.administrator_access import AdministratorCapture
+from otm.providers.automation_keys import AutomationKeyCapture
 from otm.providers.inspection_contracts import TenancyOcid
 from otm.providers.recovery_console import RecoveryConsoleCapture
 from otm.providers.required_user_contracts import DomainOcid, ObservedRequiredUser
@@ -49,6 +50,10 @@ class LifecycleCompletion(Contract):
 
 # Capture actual read-back identities; this evidence is not an access grant or credential.
 class OnboardingUsers(Contract):
+    # Optional public-key observations preserve historical producer bytes when absent.
+    automation_keys: AutomationKeyCapture | None = Field(
+        default=None, exclude_if=lambda value: value is None, repr=False
+    )
     # Omission preserves legacy producer hashes and never backfills assignment proof.
     automation_administrator: AdministratorCapture | None = Field(
         default=None, exclude_if=lambda value: value is None, repr=False
@@ -91,6 +96,8 @@ class OnboardingUsers(Contract):
                 or capture.binding.scim_resource_id != subject.scim_resource_id
             ):
                 raise ValueError("ADMINISTRATOR_CAPTURE_SCOPE_INVALID")
+        if self.automation_keys is not None and self.automation_keys.facts.user != self.automation:
+            raise ValueError("AUTOMATION_KEY_CAPTURE_SCOPE_INVALID")
         if self.recovery_console is not None and (
             self.recovery_console.scim_resource_id != self.recovery.scim_resource_id
             or self.recovery_console.facts.domain_ocid != self.domain_ocid

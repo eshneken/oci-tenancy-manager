@@ -34,8 +34,10 @@ export function Onboarding({
     queryKey: ["onboarding", operationId],
     queryFn: ({ signal }) => api.onboarding(operationId, signal),
     retry: false,
+    // Password preparation is a machine wait; human handoff/review and terminal states stop polling.
     refetchInterval: (query) =>
-      ["queued", "running"].includes(query.state.data?.state ?? "")
+      (["queued", "running"].includes(query.state.data?.state ?? "")
+        || query.state.data?.state === "waiting" && query.state.data.phase === "configuring")
         ? 1500
         : false,
   });

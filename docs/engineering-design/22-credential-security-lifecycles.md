@@ -339,3 +339,13 @@ The [current custody/disclosure/rotation source subset](../reference/recovery-pa
 an implemented local subset; [the checkpoint receipt](../history/recovery-password-checkpoint-2026-11-09.md) records qualification and main8443 installation separately. It preserves the standing exact-user MFA/
 CIDR boundary, CURRENT and the original first-attempt four-hour deadline. API-key retirement, live
 provider qualification and deferred interactive network break/repair remain separate pending work.
+
+
+### Read-only signing-key inventory predecessor — source checkpoint
+
+The [automation signing-key field map](../reference/automation-signing-keys.md) describes the first
+bounded inventory/age slice and approved separate panel below Required users. It reuses Refresh
+and optional sealed evidence, with original provider creation timestamps and no legacy backfill.
+It does not implement custody, selected-signer verification, rotation, retirement, alerts or30-day
+work blocking/compliance. All remaining retirement/enforcement requirements above stay Pending.
+Targeted local UI qualification and preserved main installation pass in the [inventory receipt](../history/automation-signing-key-inventory-checkpoint-2026-11-09.md). This is not completed rotation/enforcement or a new full-suite/milestone/PR gate.

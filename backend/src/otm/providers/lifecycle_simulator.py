@@ -18,11 +18,17 @@ from otm.tenancies.views import CompartmentOption, CreationRegion
 class SimulatedLifecycleFacade:
     # Resolve trusted scope from the same explicit local sandbox policy used by the worker.
     def __init__(
-        self, policy: InspectionPolicy, *, recovery_console=None, recovery_console_loader=None
+        self,
+        policy: InspectionPolicy,
+        *,
+        recovery_console=None,
+        recovery_console_loader=None,
+        automation_keys=None,
     ):
         from otm.providers.configuration_simulator import SimulatedConfigurationFacade
 
         self.policy = policy
+        self.automation_keys = automation_keys
         self.recovery_console = recovery_console
         self.recovery_console_loader = recovery_console_loader
         self.configuration_facade = SimulatedConfigurationFacade(policy)
@@ -117,6 +123,22 @@ class SimulatedLifecycleFacade:
         }:
             raise ValueError("TARGET_CHANGED")
 
+        if key == "configure_required" and intent.automation_key_inventory_contract is not None:
+            if self.automation_keys is None:
+                raise ValueError("AUTOMATION_KEY_CAPTURE_UNAVAILABLE")
+            self.automation_keys.configure(
+                intent.workspace_id,
+                intent.pending_tenancy_id,
+                intent.target.tenancy_ocid,
+                ObservedRequiredUser(
+                    domain_ocid=discovery["domain_ocid"],
+                    scim_resource_id="automation-" + intent.pending_tenancy_id.hex,
+                    provider_ocid="ocid1.user.oc1..otmsimautomation"
+                    + intent.pending_tenancy_id.hex,
+                    user_name="otm-automation",
+                ),
+            )
+
     # Return explicit synthetic provider facts, stable across retries and distinct from bootstrap.
     def capture_onboarding_users(self, intent, discovery):
         self.onboarding_step(intent, "verify_required", discovery)
@@ -139,6 +161,20 @@ class SimulatedLifecycleFacade:
             organization_id=intent.organization_id,
             domain_ocid=discovery["domain_ocid"],
             recovery_console=capture,
+            automation_keys=self.automation_keys.read(
+                intent.workspace_id,
+                intent.pending_tenancy_id,
+                intent.target.tenancy_ocid,
+                ObservedRequiredUser(
+                    domain_ocid=discovery["domain_ocid"],
+                    scim_resource_id="automation-" + suffix,
+                    provider_ocid="ocid1.user.oc1..otmsimautomation" + suffix,
+                    user_name="otm-automation",
+                ),
+            )
+            if intent.automation_key_inventory_contract is not None
+            and self.automation_keys is not None
+            else None,
             automation_administrator=configured_administrator_capture(
                 discovery["domain_ocid"],
                 "automation-" + suffix,

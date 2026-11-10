@@ -2272,3 +2272,18 @@ query/audit/ordinary metadata excludes the password. Transient CURRENT acquisiti
 the admitted window for retry; only an unexpected returned version holds custody unknown. Local
 cleanup includes the new FK tables only when empty and refuses retained credential/version/request
 evidence. The checkpoint receipt, not this field map, establishes qualification and saved8443 installation.
+
+
+## Automation key inventory JSON subset — source checkpoint
+
+The [field dictionary](../reference/automation-signing-keys.md) adds optional legacy-omitted
+`OrganizationIntent.automation_key_inventory_contract`, `OnboardingUsers.automation_keys` and
+`PresenceCheckEvidence.automation_keys` in existing immutable intent/onboarding/check evidence.
+`RequiredUsersDirectory.automation_keys` is a safe derived `AutomationKeysView`, preserving exact
+subject/attempt provenance and observation time separately from age assessment time. Known empty
+versus unavailable inventory and per-key unknown creation age remain distinct. No table, column,
+index, migration, credential head, selected signer or competing ER is introduced. The physical
+28-table OTM model is unchanged. The [checkpoint receipt](../history/automation-signing-key-inventory-checkpoint-2026-11-09.md)
+records passing targeted local qualification/publication, not new complete milestone/PR qualification. Historical `OperationEventView.automation_keys` now uses the key check’s own
+recorded time for age, separately from the current server-time projection. Future-at-capture values
+remain Unknown until a fresh qualified read. No new SQL field or signer proof is introduced.

@@ -76,3 +76,5 @@ Current source [Operations check-section mapping](operations.md#recorded-require
 - [Recovery-password Operations progress](operations.md#recovery-password-operation-progress): immutable original-window projection and safe status panel; installed with separately recorded full-run and final-copy targeted evidence.
 
 - [Operation return URL field map](operations.md#context-sensitive-return-navigation--source-follow-up): closed frontend-only returnTo routes; targeted navigation checks and preserved main installation pass; no full native rerun.
+
+- [Automation signing-key inventory and observed age](automation-signing-keys.md): exact public metadata, legacy omission and current/historical age basis; targeted local checkpoint qualified and installed; live enforcement pending.

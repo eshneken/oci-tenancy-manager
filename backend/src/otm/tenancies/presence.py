@@ -117,6 +117,9 @@ class PresenceChecks:
                 "check_available": reason is None,
                 "check_unavailable_reason": reason,
                 "pending_operation_id": pending,
+                "automation_keys": automation_keys_view(
+                    snapshot, latest, event if latest is not None else None, self.store.clock()
+                ),
                 "recovery_console": console_view(
                     snapshot, latest, event if latest is not None else None, self.store.clock()
                 ),
@@ -346,5 +349,27 @@ def administrator_view(snapshot, latest, event, now, purpose="automation"):
         domain_role=check.result.domain_role,
         checked_at=check.checked_at,
         operation_id=latest["operation_id"],
+        stale=not check.checked_at <= now < check.checked_at + FRESH_FOR,
+    )
+
+
+# Exact current context gates inventory; legacy missing capture never becomes a known empty list.
+def automation_keys_view(snapshot, latest, event, now):
+    from otm.tenancies.automation_keys import AutomationKeysView, inventory_view
+
+    if latest is None:
+        return AutomationKeysView()
+    evidence = decode_result(latest, event["data"], event["data_hash"])
+    check = evidence.automation_keys
+    if check is None or not presence_views(snapshot, latest, event, now):
+        return AutomationKeysView(
+            state="unavailable",
+            checked_at=latest["checked_at"],
+            operation_id=latest["operation_id"],
+        )
+    return inventory_view(
+        check,
+        latest["operation_id"],
+        now,
         stale=not check.checked_at <= now < check.checked_at + FRESH_FOR,
     )

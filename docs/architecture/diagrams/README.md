@@ -40,3 +40,5 @@ explains the new choice and legacy compatibility.
 Required-user alert incidents add [typed JSON evidence and outbox fields](../../reference/required-user-alerts.md#fields-and-persistence), without changing physical ER tables/relationships.
 
 - [Recovery-password source ER](recovery-passwords-implemented.mmd): migration0027 physical subset with three new tables; qualification/install status belongs to the separate password checkpoint receipt. Editable source only; no rendered export is claimed yet. [Field dictionary](../../reference/recovery-password-access.md#physical-field-dictionary).
+
+Signing-key inventory adds [typed JSON evidence/views only](../../reference/automation-signing-keys.md#field-dictionary-and-existing-persistence); the physical ER is unchanged and no API-key custody head is introduced.

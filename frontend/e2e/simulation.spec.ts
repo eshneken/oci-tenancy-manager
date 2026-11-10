@@ -445,6 +445,10 @@ async function organizationFlows(page: Page) {
       const checkId = (await response.json()).operation_id;
       await expect(users.getByText("Present", { exact: true })).toHaveCount(2, { timeout: 20_000 });
       await expect(users.getByText("Not checked", { exact: true })).toHaveCount(0);
+      const keyPanel=page.getByRole("region",{name:"Automation signing keys",exact:true});
+      await expect(keyPanel.getByText("Fingerprint",{exact:true})).toBeVisible();
+      await expect(keyPanel.getByText("Under 30 days",{exact:true})).toBeVisible();
+      await expect(keyPanel.getByRole("link")).toHaveAttribute("href",new RegExp("/operations/"+checkId+"\\?returnTo=[^#]+#automation-keys$"));
       const automation = users.locator(".required-user-card").filter({has:page.getByRole("heading",{name:"Automation user",exact:true})});
       await expect(automation.getByText("Verified in simulation",{exact:true})).toHaveCount(2);
       await expect(automation.getByRole("link",{name:/^View assignment check, /})).toHaveAttribute("href",/\/operations\/[a-f0-9-]+\?returnTo=[^#]+#automation-assignment$/);
@@ -588,7 +592,10 @@ async function organizationFlows(page: Page) {
         const usersBox = await users.boundingBox();
         const membersBox = await page.locator(".table-panel").filter({has:page.getByRole("heading",{name:"Current members",exact:true})}).boundingBox();
         expect(gridBox).not.toBeNull(); expect(usersBox).not.toBeNull(); expect(membersBox).not.toBeNull();
-        expect(gridBox!.y-(usersBox!.y+usersBox!.height)).toBeCloseTo(24,0);
+        const keysBox=await keyPanel.boundingBox();
+        expect(keysBox).not.toBeNull();
+        expect(keysBox!.y-(usersBox!.y+usersBox!.height)).toBeCloseTo(24,0);
+        expect(gridBox!.y-(keysBox!.y+keysBox!.height)).toBeCloseTo(24,0);
         const rollout = page.getByRole("region",{name:"Tenancy baseline update",exact:true});
         const rolloutBox = await rollout.count() ? await rollout.boundingBox() : null;
         if(rolloutBox) {
@@ -597,6 +604,7 @@ async function organizationFlows(page: Page) {
         } else expect(membersBox!.y-(gridBox!.y+gridBox!.height)).toBeCloseTo(24,0);
         if(width > 1000) expect(overrideBox!.x-(costBox!.x+costBox!.width)).toBeCloseTo(24,0);
         else expect(overrideBox!.y-(costBox!.y+costBox!.height)).toBeCloseTo(24,0);
+        await keyPanel.screenshot({path:resolve(".local-dev/browser",`automation-keys-${action === "Create tenancy" ? "create" : "import"}-${width}.png`)});
         await page.screenshot({path:resolve(".local-dev/browser",`tenancy-detail-spacing-${action === "Create tenancy" ? "create" : "import"}-${rolloutBox ? "baseline-update" : "no-baseline-update"}-${width}.png`),fullPage:true});
         await page.locator(".tenancy-summary-grid").screenshot({path:resolve(".local-dev/browser",`tenancy-summary-${action === "Create tenancy" ? "create" : "import"}-${width}.png`)});
         await users.screenshot({ path: resolve(".local-dev/browser", `required-users-${action === "Create tenancy" ? "create" : "import"}-${width}.png`) });

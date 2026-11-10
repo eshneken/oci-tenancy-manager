@@ -452,8 +452,9 @@ validation/publication must be recorded separately from earlier qualified Operat
 Nested configuration-check/baseline returns use shared `operationDestination(candidate)`: an exact
 local operation UUID route, at most512 characters, no leading/trailing whitespace, optional **one**
 validated `returnTo` query and optional supported check anchor. Unknown/duplicate query keys, external
-paths and arbitrary fragments are rejected. The five anchors remain automation-presence, automation-
-assignment, recovery-presence, recovery-assignment and recovery-policy. This is transient URL parsing,
+paths and arbitrary fragments are rejected. The supported anchors are automation-presence, automation-
+assignment, recovery-presence, recovery-assignment, recovery-policy and the subsequent inventory
+anchor automation-keys. This is transient URL parsing,
 not a new API/table field. Configuration-check and baseline Back links consume the same validator;
 onboarding baseline links retain the operation query, preserving a tenancy → operation → configuration/
 baseline → operation → tenancy route chain. This preserves only these bounded return contexts, not
@@ -463,3 +464,17 @@ After upgrading, reload the originating tenancy page and reopen the operation li
 open/direct bare operation URL has no recoverable origin query and correctly falls back to Operations.
 The receipt distinguishes compiled-helper Chromium fixture evidence from a full React/API/native
 journey; no full native integration rerun is claimed for this navigation-only follow-up.
+
+
+## Signing-key historical age — source checkpoint
+
+Optional `OperationEventView.automation_keys` now projects an `AutomationKeysView` from validated
+sealed required-user evidence. Other event kinds have no inventory. Operations reuses the separate
+Automation signing keys panel in historical mode, with recorded-check/age-at-observation dates.
+The [complete field map](automation-signing-keys.md#field-dictionary-and-existing-persistence)
+contains public key IDs/fingerprints/provider timestamps and closed inventory/age states only.
+Historical age uses the recorded key-check basis; current tenancy age uses server read time.
+Missing legacy metadata cannot become known zero keys. No credential head, PEM, signer selection
+or compliance proof is added. The new exact inventory fragment is `#automation-keys`, distinct
+from the original five subject/kind sections. Timestamp/anchor source alignment is implemented; targeted checkpoint validation and
+preserved installation [pass with separately recorded scope](../history/automation-signing-key-inventory-checkpoint-2026-11-09.md).

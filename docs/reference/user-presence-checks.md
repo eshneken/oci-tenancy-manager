@@ -210,3 +210,11 @@ Current cards collect their checked dates after all status facts. Date-only UTC 
 separate full timestamp plus View check text; accessible names identify each check and full UTC
 instants remain in hover detail/metadata. This changes no API fields, freshness, polling, history,
 operation IDs or read authority. See the [current screen guide](required-users-screen.md#compact-check-dates--9-november-2026).
+
+
+## Signing-key inventory source extension
+
+[Automation key inventory](automation-signing-keys.md) adds optional independently scoped read
+evidence beside presence/assignments/policy in the same operation. It cannot turn a failed read into
+known zero keys or a missing timestamp into age0. No signer/custody/rotation/compliance proof or
+new provider write is added. Targeted UI qualification and preserved main installation pass in the [inventory receipt](../history/automation-signing-key-inventory-checkpoint-2026-11-09.md); no new full-suite qualification is claimed.

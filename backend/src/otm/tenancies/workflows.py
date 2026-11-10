@@ -71,11 +71,13 @@ class OrganizationWorkflows:
         notifications=None,
         recovery_console=None,
         recovery_password_setup=None,
+        automation_key_inventory_enabled=False,
     ):
         self.store, self.enqueuer, self.policy, self.facade = store, enqueuer, policy, facade
         self.mail_policy, self.notifications = mail_policy, notifications
         self.recovery_console = recovery_console
         self.recovery_password_setup = recovery_password_setup
+        self.automation_key_inventory_enabled = automation_key_inventory_enabled
         self.recovery_passwords = None
         self.configuration_checks = configuration_checks
         self.presence_checks = None
@@ -1264,6 +1266,10 @@ class OrganizationWorkflows:
             whole_tenancy_deletion=deletion_plan is not None,
             presence_connection_contract="simulated-user-presence-1"
             if command.action in {"create_tenancy", "import_tenancy"}
+            else None,
+            automation_key_inventory_contract="automation-key-inventory-1"
+            if self.automation_key_inventory_enabled
+            and command.action in {"create_tenancy", "import_tenancy"}
             else None,
             recovery_console_fingerprint=self.recovery_console.fingerprint
             if command.action in {"create_tenancy", "import_tenancy"} and self.recovery_console

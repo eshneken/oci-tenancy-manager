@@ -9,6 +9,7 @@ from sqlalchemy import select
 from otm.contracts import Contract, Text, UtcInstant
 from otm.providers.required_user_contracts import DomainOcid, UserOcid
 from otm.storage.tables import managed_object_binding as binding
+from otm.tenancies.automation_keys import AutomationKeysView
 from otm.tenancies.presence_contracts import (
     AdministratorAccessView,
     RecoveryConsoleView,
@@ -58,6 +59,7 @@ class RequiredUsersDirectory(Contract):
     ) = "not_configured"
     pending_operation_id: UUID | None = None
     recovery_console: RecoveryConsoleView = Field(default_factory=RecoveryConsoleView)
+    automation_keys: AutomationKeysView = Field(default_factory=AutomationKeysView)
     users: Annotated[tuple[RequiredUserRecord, ...], Field(min_length=2, max_length=2)]
 
     # The API cannot accidentally omit, duplicate or reorder a required purpose.

@@ -40,6 +40,177 @@ export type TenancyName1 = string;
 export type Acknowledged1 = boolean;
 export type ClientRequestKey1 = string;
 export type PreviewHash3 = string;
+export type AgeAsOf = string | null;
+export type CheckedAt = string | null;
+/**
+ * @maxItems 16
+ */
+export type Keys =
+  | []
+  | [AutomationKeyView]
+  | [AutomationKeyView, AutomationKeyView]
+  | [AutomationKeyView, AutomationKeyView, AutomationKeyView]
+  | [AutomationKeyView, AutomationKeyView, AutomationKeyView, AutomationKeyView]
+  | [
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView
+    ]
+  | [
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView
+    ]
+  | [
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView
+    ]
+  | [
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView
+    ]
+  | [
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView
+    ]
+  | [
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView
+    ]
+  | [
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView
+    ]
+  | [
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView
+    ]
+  | [
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView
+    ]
+  | [
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView
+    ]
+  | [
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView
+    ]
+  | [
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView,
+      AutomationKeyView
+    ];
+export type AgeDays = number | null;
+export type AgeState =
+  "within_limit" | "due_soon" | "overdue" | "unknown" | "inactive";
+export type CreatedAt = string | null;
+export type Fingerprint = string;
+export type KeyState = "active" | "inactive" | "unknown";
+export type ProviderKeyId = string;
+export type RetirementDueAt = string | null;
+export type OperationId2 = string | null;
+export type State1 = "not_checked" | "known" | "unavailable" | "stale";
 export type CheckAvailable = boolean;
 export type CheckUnavailableReason =
   | (
@@ -51,13 +222,13 @@ export type CheckUnavailableReason =
   | null;
 export type PendingOperationId = string | null;
 export type ProviderMode3 = "simulated";
-export type CheckedAt = string | null;
+export type CheckedAt1 = string | null;
 export type DesiredFingerprint1 = string | null;
 export type MfaExemption = "not_checked" | "verified" | "drift" | "unknown";
 export type NetworkBoundary = "not_checked" | "verified" | "drift" | "unknown";
 export type ObservedFingerprint1 = string | null;
-export type OperationId2 = string | null;
-export type State1 = "not_checked" | "verified" | "drift" | "unknown" | "stale";
+export type OperationId3 = string | null;
+export type State2 = "not_checked" | "verified" | "drift" | "unknown" | "stale";
 export type TenancyId2 = string;
 export type TenancyStatus =
   "pending" | "active" | "terminating" | "terminated" | "failed" | "cancelled";
@@ -66,10 +237,10 @@ export type TenancyStatus =
  * @maxItems 2
  */
 export type Users = [RequiredUserRecord, RequiredUserRecord];
-export type CheckedAt1 = string | null;
+export type CheckedAt2 = string | null;
 export type DomainRole = "not_checked" | "verified" | "missing" | "unknown";
 export type Group = "not_checked" | "verified" | "missing" | "unknown";
-export type OperationId3 = string | null;
+export type OperationId4 = string | null;
 export type Stale = boolean;
 export type DomainOcid = string;
 export type RecordedAt = string;
@@ -79,10 +250,10 @@ export type SourceOperationId = string;
 export type UserName2 = string;
 export type UserOcid = string;
 export type IdentityState = "recorded" | "not_recorded" | "retired";
-export type CheckedAt2 = string | null;
-export type OperationId4 = string | null;
+export type CheckedAt3 = string | null;
+export type OperationId5 = string | null;
 export type Stale1 = boolean;
-export type State2 = "not_checked" | "present" | "missing" | "unknown";
+export type State3 = "not_checked" | "present" | "missing" | "unknown";
 export type Purpose = "automation" | "recovery";
 export type ClientRequestKey2 = string;
 export type ClientRequestKey3 = string;
@@ -120,12 +291,12 @@ export type LatestFailure =
     )
   | null;
 export type MinorUnits = 2 | null;
-export type OperationId5 = string | null;
+export type OperationId6 = string | null;
 export type Pending = boolean;
 export type PeriodEnd = string | null;
 export type PeriodStart = string | null;
 export type RetrievedAt = string | null;
-export type State3 =
+export type State4 =
   | "not_collected"
   | "current"
   | "partial"
@@ -147,7 +318,7 @@ export type OriginalEmail1 = string | null;
 export type PolicyHash1 = string;
 export type Redirected2 = boolean;
 export type Attempts = number;
-export type CreatedAt = string;
+export type CreatedAt1 = string;
 export type Event =
   | "action_required"
   | "terminal_failure"
@@ -171,7 +342,7 @@ export type RoutingIssues = (
   | "administrator_unavailable"
 )[];
 export type SafeCode = string | null;
-export type State4 =
+export type State5 =
   | "pending"
   | "blocked"
   | "sending"
@@ -230,18 +401,18 @@ export type SafeCode1 =
       | "CHECK_STALE"
     )
   | null;
-export type State5 =
+export type State6 =
   | ("matching" | "missing" | "different" | "unavailable" | "conflict")
   | "not_checked";
 export type Categories1 = ConfigurationIssue[];
-export type CheckedAt3 = string | null;
+export type CheckedAt4 = string | null;
 export type ConfirmedIssueCount = number;
 export type IssueCount = number;
 export type LastOperationId = string | null;
 export type OverrideCategories = ("policy" | "quota" | "budget" | "tags")[];
 export type PendingOperationId1 = string | null;
 export type Stale2 = boolean;
-export type State6 =
+export type State7 =
   | ("matching" | "drifted" | "unavailable" | "superseded")
   | ("not_checked" | "checking");
 export type TenancyId5 = string;
@@ -260,7 +431,7 @@ export type Page1 = number;
 export type PageSize1 = 10 | 25 | 50;
 export type Query = string;
 export type Sort = "name" | "checked_at" | "issue_count";
-export type State7 =
+export type State8 =
   | "all"
   | "matching"
   | "drifted"
@@ -274,14 +445,14 @@ export type BaselineId1 = string | null;
 export type BaselineVersionNumber1 = number | null;
 export type CanCheck1 = boolean;
 export type Categories2 = ConfigurationIssue[];
-export type CheckedAt4 = string | null;
+export type CheckedAt5 = string | null;
 export type ConfirmedIssueCount1 = number;
 export type IssueCount1 = number;
 export type LastOperationId1 = string | null;
 export type OverrideCategories1 = ("policy" | "quota" | "budget" | "tags")[];
 export type PendingOperationId2 = string | null;
 export type Stale3 = boolean;
-export type State8 =
+export type State9 =
   | ("matching" | "drifted" | "unavailable" | "superseded")
   | ("not_checked" | "checking");
 export type TenancyId7 = string;
@@ -310,7 +481,7 @@ export type Value = string;
 export type TagDefaults = TagDefault[];
 export type TagNamespace = "OTM";
 export type ContentHash = string;
-export type CreatedAt1 = string;
+export type CreatedAt2 = string;
 export type CreatedBy = string;
 export type EditRevision = number;
 export type Id1 = string;
@@ -321,12 +492,12 @@ export type PublishedByName = string | null;
 export type VersionNumber = number;
 export type CanEdit = boolean;
 export type BaselineVersionId = string;
-export type CreatedAt2 = string;
+export type CreatedAt3 = string;
 export type CreatedBy1 = string;
 export type EffectiveHash = string;
 export type Id2 = string;
 export type MonthlyBudgetOverrideAmount = number | string | null;
-export type OperationId6 = string;
+export type OperationId7 = string;
 export type PolicyOverrideStatements = [string, ...string[]] | null;
 export type PreviousId = string | null;
 export type QuotaOverrideStatements = [string, ...string[]] | null;
@@ -344,7 +515,7 @@ export type ConfigurationId = string | null;
 export type TenancyRevision1 = number;
 export type TenancyId11 = string;
 export type Id3 = string;
-export type OperationId7 = string | null;
+export type OperationId8 = string | null;
 export type Code =
   | "TENANCY_BUSY"
   | "REGISTERED_CHILD_REQUIRED"
@@ -352,7 +523,7 @@ export type Code =
   | "OVERRIDE_REVIEW_REQUIRED"
   | "OVERRIDE_CONTEXT_UNAVAILABLE";
 export type Name = string;
-export type OperationId8 = string | null;
+export type OperationId9 = string | null;
 export type TenancyId12 = string;
 export type Blockers = ConfigurationBlocker[];
 export type PolicyChoice = ("use_new_baseline" | "keep_override") | null;
@@ -367,7 +538,7 @@ export type PreviewHash4 = string;
 export type ReadyCount = number;
 export type TenancyId14 = string | null;
 export type Revision = number;
-export type State9 = "draft" | "accepted" | "stale";
+export type State10 = "draft" | "accepted" | "stale";
 export type ClientRequestKey6 = string;
 export type TenancyId15 = string | null;
 export type ExpectedRevision1 = number;
@@ -388,11 +559,11 @@ export type RepairCategories = ("policy" | "quota" | "budget" | "tags")[];
 export type TenancyId18 = string | null;
 export type CanRetry = boolean;
 export type ChangeKind = "baseline_update" | "override_change" | "repair";
-export type OperationId9 = string;
-export type State10 = string;
+export type OperationId10 = string;
+export type State11 = string;
 export type Name1 = string;
 export type SafeCode2 = string | null;
-export type State11 = "pending" | "verified" | "needs_attention";
+export type State12 = "pending" | "verified" | "needs_attention";
 export type TenancyId19 = string;
 export type VerifiedAt = string | null;
 export type Targets = ConfigurationTargetProgress[];
@@ -407,7 +578,7 @@ export type Pages1 = number;
 export type PublicationAvailable = boolean;
 export type Total1 = number;
 export type ContentHash1 = string;
-export type CreatedAt3 = string;
+export type CreatedAt4 = string;
 export type CreatedBy2 = string;
 export type EditRevision1 = number;
 export type Id4 = string;
@@ -417,7 +588,7 @@ export type BaselineId2 = string | null;
 export type ExpectedRevision2 = number | null;
 export type BasedOnId2 = string | null;
 export type ContentHash2 = string;
-export type CreatedAt4 = string;
+export type CreatedAt5 = string;
 export type CreatedBy3 = string;
 export type EditRevision2 = number;
 export type Id5 = string;
@@ -553,12 +724,12 @@ export type LatestFailure1 =
     )
   | null;
 export type MinorUnits1 = 2 | null;
-export type OperationId10 = string | null;
+export type OperationId11 = string | null;
 export type Pending1 = boolean;
 export type PeriodEnd1 = string | null;
 export type PeriodStart1 = string | null;
 export type RetrievedAt1 = string | null;
-export type State12 =
+export type State13 =
   | "not_collected"
   | "current"
   | "partial"
@@ -566,7 +737,7 @@ export type State12 =
   | "prior_cycle"
   | "unavailable"
   | "unqualified";
-export type CreatedAt5 = string;
+export type CreatedAt6 = string;
 export type DesiredConfigurationId = string | null;
 export type HasPendingOperation = boolean;
 export type HomeRegion = string;
@@ -579,7 +750,7 @@ export type ManagerName = string | null;
 export type MemberCount = number;
 export type Name4 = string;
 export type OperationCompletedAt = string | null;
-export type OperationId11 = string | null;
+export type OperationId12 = string | null;
 export type OperationState = string | null;
 export type Origin = "create" | "import";
 export type OverrideCategories2 = ("policy" | "quota" | "budget")[];
@@ -589,7 +760,7 @@ export type OwnerPersonId = string | null;
 export type ParentTenancyOcid = string;
 export type ProviderMode6 = "simulated";
 export type Checking = boolean;
-export type State13 =
+export type State14 =
   "not_checked" | "present" | "missing" | "unavailable" | "stale";
 export type Status1 = string;
 export type TenancyOcid = string;
@@ -610,7 +781,7 @@ export type BootstrapUsername = string;
 export type CanAct = boolean;
 export type Key1 = string;
 export type Label1 = string;
-export type State14 = "pending" | "verified" | "needs_attention";
+export type State15 = "pending" | "verified" | "needs_attention";
 export type VerifiedAt2 = string | null;
 export type Checks = OnboardingCheck[];
 export type ActivationScimId = string | null;
@@ -625,7 +796,7 @@ export type ParentTenancyOcid1 = string;
 export type TenancyOcid2 = string;
 export type ExpectedParentTenancyOcid = string;
 export type IssueCode = string | null;
-export type OperationId12 = string;
+export type OperationId13 = string;
 export type Origin1 = "create" | "import";
 export type OwnerName1 = string;
 export type Phase =
@@ -640,7 +811,7 @@ export type PublicKey = string | null;
 export type RequestedHomeRegion = string | null;
 export type RequestedName = string | null;
 export type Revision2 = number;
-export type State15 = string;
+export type State16 = string;
 export type TenancyId21 = string;
 export type Action1 =
   | "create_tenancy"
@@ -669,7 +840,7 @@ export type FormerOwnerDisposition = ("keep_member" | "remove") | null;
 export type HomeRegion2 = string | null;
 export type ImportOcid = string | null;
 export type Name6 = string | null;
-export type OperationId13 = string | null;
+export type OperationId14 = string | null;
 export type ParentCompartmentOcid = string | null;
 export type PartnerPersonId = string | null;
 export type PersonId2 = string;
@@ -686,9 +857,9 @@ export type ReviewId = string | null;
 export type TenancyId22 = string | null;
 export type TenancyKind = "individual" | "shared";
 export type AcceptedAt1 = string;
-export type OperationId14 = string | null;
+export type OperationId15 = string | null;
 export type ProviderMode7 = "simulated" | "application";
-export type State16 =
+export type State17 =
   | "queued"
   | "succeeded"
   | "running"
@@ -718,7 +889,7 @@ export type CleanupRequired = boolean;
 export type CompartmentName1 = string | null;
 export type CompartmentOcid = string | null;
 export type Id8 = string;
-export type OperationId15 = string | null;
+export type OperationId16 = string | null;
 export type PersonId3 = string;
 export type Role2 = "owner" | "member";
 export type Status2 = string;
@@ -747,7 +918,7 @@ export type Id10 = string;
 export type Kind2 = string;
 export type LastSeenAt = string;
 export type Name9 = string;
-export type OperationId16 = string | null;
+export type OperationId17 = string | null;
 export type PersonId4 = string | null;
 export type Resolution = string | null;
 export type ResolvedAt = string | null;
@@ -839,7 +1010,7 @@ export type OriginalState = string | null;
 export type ProposedVersionId2 = string | null;
 export type RevisionId = string | null;
 export type SnapshotId = string;
-export type State17 =
+export type State18 =
   "received" | "staged" | "published" | "rejected" | "superseded" | "duplicate";
 export type Page9 = number;
 export type PageSize8 = number;
@@ -869,7 +1040,7 @@ export type OriginalState1 = string | null;
 export type ProposedVersionId3 = string | null;
 export type RevisionId1 = string | null;
 export type SnapshotId1 = string;
-export type State18 =
+export type State19 =
   "received" | "staged" | "published" | "rejected" | "superseded" | "duplicate";
 export type DisplayName = string;
 export type IconUrl = string | null;
@@ -918,7 +1089,7 @@ export type ResponsibleAdministratorId = string | null;
 export type ResponsibleAdministratorName = string | null;
 export type ResultTenancyId = string | null;
 export type Stage = string;
-export type State19 =
+export type State20 =
   | "queued"
   | "running"
   | "waiting"
@@ -960,21 +1131,21 @@ export type Anchor =
   | "recovery-presence"
   | "recovery-assignment"
   | "recovery-policy";
-export type CheckedAt5 = string | null;
+export type CheckedAt6 = string | null;
 export type Label2 =
   | "Presence"
   | "Administrators group"
   | "Domain administrator role"
   | "Console MFA exemption"
   | "Approved-network restriction";
-export type State20 =
+export type State21 =
   "not_checked" | "present" | "missing" | "unknown" | "verified" | "drift";
 export type Facts = UserCheckFact[];
 export type UserChecks = UserCheckSection[];
 export type Events = OperationEventView[];
 export type EventsLimited = boolean;
 export type Attempts1 = number;
-export type CreatedAt6 = string;
+export type CreatedAt7 = string;
 export type Event1 =
   | "action_required"
   | "terminal_failure"
@@ -998,7 +1169,7 @@ export type RoutingIssues1 = (
   | "administrator_unavailable"
 )[];
 export type SafeCode4 = string | null;
-export type State21 =
+export type State22 =
   | "pending"
   | "blocked"
   | "sending"
@@ -1016,7 +1187,7 @@ export type TenancyId24 = string;
 export type UserName3 = string;
 export type AttemptNumber = number;
 export type SafeCode5 = string | null;
-export type State22 = "running" | "verified" | "needs_attention";
+export type State23 = "running" | "verified" | "needs_attention";
 export type StepKey = string;
 export type VerifiedAt3 = string | null;
 export type Steps = OperationStepView[];
@@ -1025,7 +1196,7 @@ export type Page14 = number;
 export type PageSize13 = 10 | 25 | 50 | 100;
 export type Query5 = string;
 export type Sort5 = "accepted_at" | "updated_at" | "state" | "stage";
-export type State23 =
+export type State24 =
   | ""
   | "queued"
   | "running"
@@ -1035,8 +1206,8 @@ export type State23 =
   | "cancelled"
   | "failed";
 export type AcceptedAt3 = string;
-export type OperationId17 = string;
-export type State24 =
+export type OperationId18 = string;
+export type State25 =
   | "queued"
   | "running"
   | "waiting"
@@ -1103,7 +1274,7 @@ export type Kind5 =
   | "organization_feed_rejected"
   | "organization_published"
   | "organization_review_decided";
-export type OperationId18 = string | null;
+export type OperationId19 = string | null;
 export type OrganizationSubjectName = string | null;
 export type Id16 = string;
 export type Kind6 = "tenancy" | "person";
@@ -1257,6 +1428,7 @@ export interface RecoveryNetworkRequest {
   preview_hash: PreviewHash3;
 }
 export interface RequiredUsersDirectory {
+  automation_keys?: AutomationKeysView;
   check_available?: CheckAvailable;
   check_unavailable_reason?: CheckUnavailableReason;
   pending_operation_id?: PendingOperationId;
@@ -1266,14 +1438,30 @@ export interface RequiredUsersDirectory {
   tenancy_status: TenancyStatus;
   users: Users;
 }
-export interface RecoveryConsoleView {
+export interface AutomationKeysView {
+  age_as_of?: AgeAsOf;
   checked_at?: CheckedAt;
+  keys?: Keys;
+  operation_id?: OperationId2;
+  state?: State1;
+}
+export interface AutomationKeyView {
+  age_days?: AgeDays;
+  age_state: AgeState;
+  created_at: CreatedAt;
+  fingerprint: Fingerprint;
+  key_state: KeyState;
+  provider_key_id: ProviderKeyId;
+  retirement_due_at?: RetirementDueAt;
+}
+export interface RecoveryConsoleView {
+  checked_at?: CheckedAt1;
   desired_fingerprint?: DesiredFingerprint1;
   mfa_exemption?: MfaExemption;
   network_boundary?: NetworkBoundary;
   observed_fingerprint?: ObservedFingerprint1;
-  operation_id?: OperationId2;
-  state?: State1;
+  operation_id?: OperationId3;
+  state?: State2;
 }
 export interface RequiredUserRecord {
   administrator_access?: AdministratorAccessView;
@@ -1283,10 +1471,10 @@ export interface RequiredUserRecord {
   purpose: Purpose;
 }
 export interface AdministratorAccessView {
-  checked_at?: CheckedAt1;
+  checked_at?: CheckedAt2;
   domain_role?: DomainRole;
   group?: Group;
-  operation_id?: OperationId3;
+  operation_id?: OperationId4;
   stale?: Stale;
 }
 export interface RequiredUserIdentity {
@@ -1299,10 +1487,10 @@ export interface RequiredUserIdentity {
   user_ocid: UserOcid;
 }
 export interface UserPresenceView {
-  checked_at?: CheckedAt2;
-  operation_id?: OperationId4;
+  checked_at?: CheckedAt3;
+  operation_id?: OperationId5;
   stale?: Stale1;
-  state?: State2;
+  state?: State3;
 }
 export interface PresenceCheckRequest {
   client_request_key: ClientRequestKey2;
@@ -1332,12 +1520,12 @@ export interface CostView {
   forecast_over_budget?: ForecastOverBudget;
   latest_failure?: LatestFailure;
   minor_units?: MinorUnits;
-  operation_id?: OperationId5;
+  operation_id?: OperationId6;
   pending?: Pending;
   period_end?: PeriodEnd;
   period_start?: PeriodStart;
   retrieved_at?: RetrievedAt;
-  state?: State3;
+  state?: State4;
 }
 export interface BudgetCycleFacts {
   budget_processing_period_start_offset: BudgetProcessingPeriodStartOffset;
@@ -1375,7 +1563,7 @@ export interface EmailRoute1 {
 }
 export interface NotificationSummary {
   attempts: Attempts;
-  created_at: CreatedAt;
+  created_at: CreatedAt1;
   event: Event;
   id: Id;
   last_attempt_at?: LastAttemptAt;
@@ -1386,7 +1574,7 @@ export interface NotificationSummary {
   required_user_purpose?: RequiredUserPurpose;
   routing_issues?: RoutingIssues;
   safe_code?: SafeCode;
-  state: State4;
+  state: State5;
   updated_at: UpdatedAt;
 }
 export interface ResponsibilityCommand {
@@ -1415,14 +1603,14 @@ export interface ConfigurationCheckSummary {
   baseline_version_number: BaselineVersionNumber;
   can_check?: CanCheck;
   categories: Categories1;
-  checked_at: CheckedAt3;
+  checked_at: CheckedAt4;
   confirmed_issue_count: ConfirmedIssueCount;
   issue_count: IssueCount;
   last_operation_id: LastOperationId;
   override_categories: OverrideCategories;
   pending_operation_id: PendingOperationId1;
   stale?: Stale2;
-  state: State6;
+  state: State7;
   tenancy_id: TenancyId5;
   tenancy_name: TenancyName2;
 }
@@ -1434,7 +1622,7 @@ export interface ConfigurationIssue {
   observed: Observed;
   retained?: Retained;
   safe_code: SafeCode1;
-  state: State5;
+  state: State6;
 }
 export interface ConfigurationDriftQuery {
   direction?: Direction;
@@ -1442,7 +1630,7 @@ export interface ConfigurationDriftQuery {
   page_size?: PageSize1;
   query?: Query;
   sort?: Sort;
-  state?: State7;
+  state?: State8;
   tab?: Tab;
   tenancy_id?: TenancyId6;
 }
@@ -1451,14 +1639,14 @@ export interface ConfigurationCheckSummary1 {
   baseline_version_number: BaselineVersionNumber1;
   can_check?: CanCheck1;
   categories: Categories2;
-  checked_at: CheckedAt4;
+  checked_at: CheckedAt5;
   confirmed_issue_count: ConfirmedIssueCount1;
   issue_count: IssueCount1;
   last_operation_id: LastOperationId1;
   override_categories: OverrideCategories1;
   pending_operation_id: PendingOperationId2;
   stale?: Stale3;
-  state: State8;
+  state: State9;
   tenancy_id: TenancyId7;
   tenancy_name: TenancyName3;
 }
@@ -1479,7 +1667,7 @@ export interface BaselineVersion {
   based_on_id?: BasedOnId;
   content: BaselineContent;
   content_hash: ContentHash;
-  created_at: CreatedAt1;
+  created_at: CreatedAt2;
   created_by: CreatedBy;
   edit_revision: EditRevision;
   id: Id1;
@@ -1504,12 +1692,12 @@ export interface TagDefault {
 }
 export interface TenancyConfiguration {
   baseline_version_id: BaselineVersionId;
-  created_at: CreatedAt2;
+  created_at: CreatedAt3;
   created_by: CreatedBy1;
   effective_hash: EffectiveHash;
   id: Id2;
   monthly_budget_override_amount?: MonthlyBudgetOverrideAmount;
-  operation_id: OperationId6;
+  operation_id: OperationId7;
   policy_override_statements?: PolicyOverrideStatements;
   previous_id: PreviousId;
   quota_override_statements?: QuotaOverrideStatements;
@@ -1534,10 +1722,10 @@ export interface OverrideContext {
 }
 export interface ConfigurationPlanView {
   id: Id3;
-  operation_id?: OperationId7;
+  operation_id?: OperationId8;
   preview: ConfigurationPreview;
   revision: Revision;
-  state: State9;
+  state: State10;
 }
 export interface ConfigurationPreview {
   baseline: BaselineVersion | null;
@@ -1553,7 +1741,7 @@ export interface ConfigurationPreview {
 export interface ConfigurationBlocker {
   code: Code;
   name: Name;
-  operation_id?: OperationId8;
+  operation_id?: OperationId9;
   tenancy_id: TenancyId12;
 }
 export interface OverrideConflict {
@@ -1613,14 +1801,14 @@ export interface ConfigurationProgress {
   baseline: BaselineVersion;
   can_retry: CanRetry;
   change_kind?: ChangeKind;
-  operation_id: OperationId9;
-  state: State10;
+  operation_id: OperationId10;
+  state: State11;
   targets: Targets;
 }
 export interface ConfigurationTargetProgress {
   name: Name1;
   safe_code?: SafeCode2;
-  state: State11;
+  state: State12;
   tenancy_id: TenancyId19;
   verified_at?: VerifiedAt;
 }
@@ -1639,7 +1827,7 @@ export interface BaselineDirectory {
 export interface BaselineDraft {
   content: BaselineContent;
   content_hash: ContentHash1;
-  created_at: CreatedAt3;
+  created_at: CreatedAt4;
   created_by: CreatedBy2;
   edit_revision: EditRevision1;
   id: Id4;
@@ -1667,7 +1855,7 @@ export interface BaselineVersion1 {
   based_on_id?: BasedOnId2;
   content: BaselineContent;
   content_hash: ContentHash2;
-  created_at: CreatedAt4;
+  created_at: CreatedAt5;
   created_by: CreatedBy3;
   edit_revision: EditRevision2;
   id: Id5;
@@ -1809,7 +1997,7 @@ export interface TenancyView {
   configuration_issue_count?: ConfigurationIssueCount;
   configuration_verified_at?: ConfigurationVerifiedAt;
   costs?: CostView1;
-  created_at: CreatedAt5;
+  created_at: CreatedAt6;
   desired_configuration_id?: DesiredConfigurationId;
   has_pending_operation?: HasPendingOperation;
   home_region: HomeRegion;
@@ -1822,7 +2010,7 @@ export interface TenancyView {
   member_count: MemberCount;
   name: Name4;
   operation_completed_at?: OperationCompletedAt;
-  operation_id: OperationId11;
+  operation_id: OperationId12;
   operation_state: OperationState;
   origin: Origin;
   override_categories?: OverrideCategories2;
@@ -1851,12 +2039,12 @@ export interface CostView1 {
   forecast_over_budget?: ForecastOverBudget1;
   latest_failure?: LatestFailure1;
   minor_units?: MinorUnits1;
-  operation_id?: OperationId10;
+  operation_id?: OperationId11;
   pending?: Pending1;
   period_end?: PeriodEnd1;
   period_start?: PeriodStart1;
   retrieved_at?: RetrievedAt1;
-  state?: State12;
+  state?: State13;
 }
 export interface RequiredUsersSummary {
   administrator_access?: AdministratorAccessView;
@@ -1865,7 +2053,7 @@ export interface RequiredUsersSummary {
   recovery?: UserPresenceView;
   recovery_administrator_access?: AdministratorAccessView;
   recovery_console?: RecoveryConsoleView;
-  state?: State13;
+  state?: State14;
 }
 export interface OnboardingCommand {
   action: Action;
@@ -1891,7 +2079,7 @@ export interface OnboardingView {
   email_contacts?: EmailContacts1 | null;
   expected_parent_tenancy_ocid: ExpectedParentTenancyOcid;
   issue_code?: IssueCode;
-  operation_id: OperationId12;
+  operation_id: OperationId13;
   origin: Origin1;
   owner_name: OwnerName1;
   phase: Phase;
@@ -1899,7 +2087,7 @@ export interface OnboardingView {
   requested_home_region?: RequestedHomeRegion;
   requested_name?: RequestedName;
   revision: Revision2;
-  state: State15;
+  state: State16;
   submitted_handoff: OnboardingHandoff | null;
   suggested_handoff: OnboardingHandoff;
   tenancy_id: TenancyId21;
@@ -1907,7 +2095,7 @@ export interface OnboardingView {
 export interface OnboardingCheck {
   key: Key1;
   label: Label1;
-  state: State14;
+  state: State15;
   verified_at?: VerifiedAt2;
 }
 export interface OnboardingDiscovery {
@@ -1944,7 +2132,7 @@ export interface OrganizationAction {
   home_region?: HomeRegion2;
   import_ocid?: ImportOcid;
   name?: Name6;
-  operation_id?: OperationId13;
+  operation_id?: OperationId14;
   parent_compartment_ocid?: ParentCompartmentOcid;
   partner_person_id?: PartnerPersonId;
   person_id: PersonId2;
@@ -1962,9 +2150,9 @@ export interface AssociationChoice {
 }
 export interface ActionReceipt {
   accepted_at: AcceptedAt1;
-  operation_id: OperationId14;
+  operation_id: OperationId15;
   provider_mode: ProviderMode7;
-  state: State16;
+  state: State17;
 }
 export interface PersonWorkflow {
   actions: Actions;
@@ -1991,7 +2179,7 @@ export interface AssociationView {
   compartment_name: CompartmentName1;
   compartment_ocid: CompartmentOcid;
   id: Id8;
-  operation_id: OperationId15;
+  operation_id: OperationId16;
   person_id: PersonId3;
   role: Role2;
   status: Status2;
@@ -2019,7 +2207,7 @@ export interface ReviewView {
   kind: Kind2;
   last_seen_at: LastSeenAt;
   name: Name9;
-  operation_id: OperationId16;
+  operation_id: OperationId17;
   person_id: PersonId4;
   resolution: Resolution;
   resolved_at: ResolvedAt;
@@ -2132,7 +2320,7 @@ export interface OrganizationOutcome {
   proposed_version_id?: ProposedVersionId2;
   revision_id?: RevisionId;
   snapshot_id: SnapshotId;
-  state: State17;
+  state: State18;
 }
 export interface Diagnostic {
   affected_email?: AffectedEmail;
@@ -2153,7 +2341,7 @@ export interface OrganizationOutcome1 {
   proposed_version_id?: ProposedVersionId3;
   revision_id?: RevisionId1;
   snapshot_id: SnapshotId1;
-  state: State18;
+  state: State19;
 }
 export interface BrandingView {
   display_name: DisplayName;
@@ -2215,7 +2403,7 @@ export interface OperationSummary {
   responsible_administrator_name?: ResponsibleAdministratorName;
   result_tenancy_id?: ResultTenancyId;
   stage: Stage;
-  state: State19;
+  state: State20;
   target_label?: TargetLabel;
   target_tenancy_ocid: TargetTenancyOcid;
   title?: Title;
@@ -2231,22 +2419,23 @@ export interface OperationDetail {
 }
 export interface OperationEventView {
   at: At1;
+  automation_keys?: AutomationKeysView | null;
   kind: Kind4;
   safe_code: SafeCode3;
   user_checks?: UserChecks;
 }
 export interface UserCheckSection {
   anchor: Anchor;
-  checked_at?: CheckedAt5;
+  checked_at?: CheckedAt6;
   facts: Facts;
 }
 export interface UserCheckFact {
   label: Label2;
-  state: State20;
+  state: State21;
 }
 export interface NotificationSummary1 {
   attempts: Attempts1;
-  created_at: CreatedAt6;
+  created_at: CreatedAt7;
   event: Event1;
   id: Id14;
   last_attempt_at?: LastAttemptAt1;
@@ -2257,7 +2446,7 @@ export interface NotificationSummary1 {
   required_user_purpose?: RequiredUserPurpose1;
   routing_issues?: RoutingIssues1;
   safe_code?: SafeCode4;
-  state: State21;
+  state: State22;
   updated_at: UpdatedAt2;
 }
 export interface RecoveryPasswordProgress {
@@ -2271,7 +2460,7 @@ export interface RecoveryPasswordProgress {
 export interface OperationStepView {
   attempt_number: AttemptNumber;
   safe_code: SafeCode5;
-  state: State22;
+  state: State23;
   step_key: StepKey;
   verified_at: VerifiedAt3;
 }
@@ -2281,12 +2470,12 @@ export interface OperationQuery {
   page_size?: PageSize13;
   query?: Query5;
   sort?: Sort5;
-  state?: State23;
+  state?: State24;
 }
 export interface Acceptance {
   accepted_at: AcceptedAt3;
-  operation_id: OperationId17;
-  state: State24;
+  operation_id: OperationId18;
+  state: State25;
 }
 export interface InspectionSubmission {
   client_request_key: ClientRequestKey11;
@@ -2319,7 +2508,7 @@ export interface AuditEntry {
   changes?: Changes1;
   id: Id15;
   kind: Kind5;
-  operation_id: OperationId18;
+  operation_id: OperationId19;
   organization_subject_name?: OrganizationSubjectName;
   resources?: Resources;
   safe_code: SafeCode6;

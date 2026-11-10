@@ -35,8 +35,10 @@ class UserPresenceWorker:
         recovery_console_loader=None,
         recovery_inspection_factory=None,
         administrator_inspection_factory=None,
+        key_inspection_factory=None,
     ):
         self.administrator_inspection_factory = administrator_inspection_factory
+        self.key_inspection_factory = key_inspection_factory
         self.engine, self.workspace, self.clock = engine, workspace, clock
         self.notifications = notifications
         self.recovery_console_loader = recovery_console_loader
@@ -74,6 +76,7 @@ class UserPresenceWorker:
         console = self.read_console(commands[1], source, frozen.intent.snapshot)
         assignments = self.read_administrator(commands[0], source)
         recovery_assignments = self.read_administrator(commands[1], source)
+        keys = self.read_keys(commands[0], source)
         self.finish(
             identifier,
             check["attempt_id"],
@@ -82,7 +85,39 @@ class UserPresenceWorker:
             console,
             assignments,
             recovery_assignments,
+            keys=keys,
         )
+
+    # Inventory failures remain independent of presence and never become known zero-key reads.
+    def read_keys(self, command, source):
+        from otm.providers.automation_keys import AutomationKeyCheck, InspectAutomationKeys
+
+        if self.key_inspection_factory is None:
+            return None
+        fallback = AutomationKeyCheck(
+            context=command.context,
+            target=command.target,
+            checked_at=self.clock(),
+            state="unavailable",
+        )
+        if source is None:
+            return fallback
+        try:
+            request = InspectAutomationKeys(context=command.context, target=command.target)
+            started = self.clock()
+            result = AutomationKeyCheck.model_validate(
+                self.key_inspection_factory(request, source, self.clock).inspect(request)
+            )
+            finished = self.clock()
+            if (
+                result.context != request.context
+                or result.target != request.target
+                or not started <= result.checked_at <= finished <= started + READ_WINDOW
+            ):
+                return fallback
+            return result
+        except Exception:
+            return fallback
 
     # Missing legacy capture, failed reads and substituted subjects never gain inferred assignments.
     def read_administrator(self, subject_command, source):
@@ -329,6 +364,7 @@ class UserPresenceWorker:
         console=None,
         assignments=None,
         recovery_assignments=None,
+        keys=None,
     ):
         with self.engine.begin() as connection:
             locked = self.locked(connection, identifier)
@@ -389,6 +425,15 @@ class UserPresenceWorker:
                     else None
                     for item in (assignments, recovery_assignments)
                 )
+            if keys is not None and (
+                not current
+                or clock_invalid
+                or at - check["started_at"] > READ_WINDOW
+                or not check["started_at"] <= keys.checked_at <= at
+            ):
+                keys = keys.model_copy(
+                    update={"checked_at": at, "state": "unavailable", "keys": ()}
+                )
             episodes, opened = None, ()
             if frozen.intent.notice_policy_version == 1:
                 from otm.tenancies.presence_alerts import advance_episodes
@@ -407,6 +452,7 @@ class UserPresenceWorker:
                 recovery_console=console,
                 administrator_access=assignments,
                 recovery_administrator_access=recovery_assignments,
+                automation_keys=keys,
             )
             if opened and self.notifications is not None:
                 from otm.tenancies.presence_alerts import stage_missing

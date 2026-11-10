@@ -156,6 +156,11 @@ def run_worker(*, once=False):
                 queue,
             )
 
+        from otm.providers.automation_keys_simulator import SimulatedAutomationKeys
+
+        key_inventory = SimulatedAutomationKeys(
+            Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "automation-key-inventory", clock
+        )
         register_organization_task(
             native,
             OrganizationLifecycleWorker(
@@ -167,6 +172,7 @@ def run_worker(*, once=False):
                     organization_policy().policy,
                     recovery_console=settings.recovery_console,
                     recovery_console_loader=recovery_console_policy,
+                    automation_keys=key_inventory,
                 ),
                 mail_policy_loader=mail_policy,
                 notifications=notifier,
@@ -196,8 +202,11 @@ def run_worker(*, once=False):
             ),
             queue,
         )
+        from functools import partial
+
         from otm.operations.runner import register_presence_task
         from otm.providers.administrator_access_simulator import simulated_administrator_inspection
+        from otm.providers.automation_keys_simulator import simulated_key_inspection
         from otm.providers.presence_simulator import simulated_presence_inspection
         from otm.providers.recovery_console_simulator import simulated_console_inspection
         from otm.tenancies.presence_worker import UserPresenceWorker
@@ -215,6 +224,7 @@ def run_worker(*, once=False):
                 recovery_console_loader=recovery_console_policy,
                 recovery_inspection_factory=simulated_console_inspection,
                 administrator_inspection_factory=simulated_administrator_inspection,
+                key_inspection_factory=partial(simulated_key_inspection, key_inventory),
             ),
             queue,
         )

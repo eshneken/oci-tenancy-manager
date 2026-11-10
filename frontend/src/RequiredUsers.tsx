@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "./api";
 import { followLink } from "./navigation";
 import type { AdministratorAccessView } from "./contracts";
+import {AutomationKeys} from "./AutomationKeys";
 import {RecoveryAccess} from "./RecoveryAccess";
 import {RecoveryNetworkRepair} from "./RecoveryNetworkRepair";
 
@@ -78,6 +79,8 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
     if (authorizationLost) expired();
   }, [authorizationLost, expired]);
   const data = authorizationLost ? undefined : result.data;
+  // Inventory read-time/age changes are independent; all recovery-readiness changes still invalidate.
+  const recoveryChecksRevision=JSON.stringify({...data,automation_keys:undefined});
   // Stored result changes refresh inventory/history without fetching any provider from a GET.
   useEffect(()=>{
     if(!data)return;
@@ -104,7 +107,7 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
     keys.current.set(tenancyId,key);
     mutation.mutate({tenancyId,key});
   }
-  return <section id="required-users" className="operation-panel required-users" aria-labelledby="required-users-title" aria-busy={result.isFetching}>
+  return <><section id="required-users" className="operation-panel required-users" aria-labelledby="required-users-title" aria-busy={result.isFetching}>
     <div className="required-users-heading">
       <h2 ref={heading} tabIndex={-1} id="required-users-title">Required users</h2>
       <div className="required-users-actions">
@@ -167,9 +170,9 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
             </dl>
           </details>}
           </section>
-          {user.purpose === "automation" && <RecoveryAccess key={"password-"+tenancyId} tenancyId={tenancyId} checksRevision={JSON.stringify(data)} expired={expired} navigate={navigate}/>}
+          {user.purpose === "automation" && <RecoveryAccess key={"password-"+tenancyId} tenancyId={tenancyId} checksRevision={recoveryChecksRevision} expired={expired} navigate={navigate}/>}
         </li>;})}
       </ul>
     </>}
-  </section>;
+  </section>{data && <AutomationKeys inventory={data.automation_keys} navigate={navigate}/>}</>;
 }

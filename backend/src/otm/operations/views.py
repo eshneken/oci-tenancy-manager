@@ -10,6 +10,7 @@ from otm.contracts import Contract, Generation, Text, UtcInstant
 from otm.notifications.contracts import NotificationSummary
 from otm.operations.contracts import OperationState
 from otm.providers.inspection_contracts import TenancyOcid
+from otm.tenancies.automation_keys import AutomationKeysView
 
 
 # Bound all directory controls before SQL construction; workspace comes only from the session.
@@ -109,6 +110,7 @@ class UserCheckSection(Contract):
 class OperationEventView(Contract):
     # Only required-user outcomes carry these safe historical result sections.
     user_checks: tuple[UserCheckSection, ...] = ()
+    automation_keys: AutomationKeysView | None = None
     kind: Literal[
         "operation_responsibility_changed",
         "email_delivery",

@@ -37,7 +37,7 @@ it("shows both identities and contextual setup links", async () => {
   expect(access.closest("li")).toBe(screen.getByRole("heading",{name:"Automation user"}).closest("li"));
   expect(screen.getAllByText("Recorded", { exact: true })).toHaveLength(2);
   expect(screen.getAllByText("Not checked", { exact: true })).toHaveLength(9);
-  expect(screen.queryByText(/healthy|verified|missing/i)).not.toBeInTheDocument();
+  expect(within(screen.getByRole("region",{name:/^Required users$/})).queryByText(/healthy|verified|missing/i)).not.toBeInTheDocument();
   const card = screen.getByRole("heading", { name: "Automation user" }).closest("li")!;
   const details = card.querySelector("details")!;
   expect(details.open).toBe(false);
@@ -376,5 +376,28 @@ it.each([
   expect(card.getByText("Administrators group")).toBeVisible();
   expect(card.getByText("Domain administrator role")).toBeVisible();
   if(group!=="not_checked")expect(card.getByRole("link",{name:/^View assignment check, /})).toHaveAttribute("href","/operations/"+id+"#recovery-assignment");
+  c.client.clear();
+});
+
+
+// Read-time key ages must not invalidate unchanged recovery consent or disclosed credentials.
+it("keeps recovery access stable when only signing-key age assessment changes",async()=>{
+  const c=mount(configured);
+  vi.mocked(api.administratorAccess).mockResolvedValue({tenancy_id:id,tenancy_name:"Example tenancy",state:"ready",user_name:"otm-recovery",available:true,preview_hash:"a".repeat(64),provider_mode:"simulated"});
+  await c.client.invalidateQueries({queryKey:["tenancies","administrator-access",id]});
+  await userEvent.click(await screen.findByRole("button",{name:"Request password"}));
+  const dialog=screen.getByRole("dialog");
+  const consent=within(dialog).getByRole("checkbox");
+  await userEvent.click(consent);
+  expect(consent).toBeChecked();
+  c.client.setQueryData(["tenancies","required-users",id],{...configured,automation_keys:{state:"known",keys:[],checked_at:"2026-11-09T12:00:00Z",age_as_of:"2026-11-09T13:00:00Z",operation_id:id}});
+  await waitFor(()=>expect(screen.getByText(/No signing keys were found/)).toBeInTheDocument());
+  expect(consent).toBeChecked();
+  const password="synthetic-not-a-credential";
+  vi.spyOn(api,"recoveryPassword").mockResolvedValue({request_id:id,user_name:"otm-recovery",password,first_disclosure_at:new Date().toISOString(),rotation_due_at:new Date(Date.now()+14400000).toISOString(),operation_id:id,provider_mode:"simulated"});
+  await userEvent.click(within(dialog).getByRole("button",{name:"Get password"}));
+  expect(await screen.findByLabelText("Recovery password")).toHaveValue(password);
+  c.client.setQueryData(["tenancies","required-users",id],{...configured,automation_keys:{state:"known",keys:[],checked_at:"2026-11-09T12:00:00Z",age_as_of:"2026-11-09T14:00:00Z",operation_id:id}});
+  await waitFor(()=>expect(screen.getByLabelText("Recovery password")).toHaveValue(password));
   c.client.clear();
 });

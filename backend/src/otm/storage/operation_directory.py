@@ -36,6 +36,7 @@ from otm.storage.tables import (
     recovery_grant,
     tenancy,
 )
+from otm.tenancies.automation_keys import inventory_view
 from otm.tenancies.contracts import OrganizationActionOutcome
 from otm.tenancies.labels import ACTION_LABELS
 from otm.tenancies.onboarding_contracts import OnboardingEvidence
@@ -496,6 +497,15 @@ class SqlOperationDirectory:
             else None
         )
         return OperationEventView(
+            automation_keys=inventory_view(
+                outcome.automation_keys,
+                outcome.operation_id,
+                outcome.automation_keys.checked_at
+                if outcome.automation_keys
+                else outcome.checked_at,
+            )
+            if isinstance(outcome, PresenceCheckEvidence)
+            else None,
             kind=row["kind"],
             at=utc(row["at"]),
             safe_code=outcome.safe_code if outcome else None,

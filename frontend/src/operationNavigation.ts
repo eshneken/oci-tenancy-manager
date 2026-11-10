@@ -27,7 +27,7 @@ export function operationHref(id:string|null|undefined,anchor="") {
 // Nested pages return to an operation only with its validated origin and check anchor.
 export function operationDestination(candidate:string) {
   if(candidate.length>512||candidate.trim()!==candidate)return null;
-  const match=candidate.match(new RegExp(`^(/operations/${uuid})(?:\\?([^#]*))?(?:#((?:automation|recovery)-(?:presence|assignment)|recovery-policy))?$`,"i"));
+  const match=candidate.match(new RegExp(`^(/operations/${uuid})(?:\\?([^#]*))?(?:#((?:automation|recovery)-(?:presence|assignment)|recovery-policy|automation-keys))?$`,"i"));
   if(!match)return null;
   if(match[2]!==undefined){
     const params=new URLSearchParams(match[2]);

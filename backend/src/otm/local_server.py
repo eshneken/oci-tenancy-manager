@@ -49,6 +49,7 @@ def create_local_application():
         for path in (
             custody_path,
             Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "recovery-passwords",
+            Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "automation-key-inventory",
             Path(os.environ["OTM_APPLICATION_CONFIG"]),
             *(
                 [Path(os.environ["OTM_ORGANIZATION_CONFIG"])]
@@ -98,6 +99,12 @@ def create_local_application():
             def organization_policy():
                 return load_sandbox(path, workspace)
 
+            from otm.providers.automation_keys_simulator import SimulatedAutomationKeys
+
+            keys = SimulatedAutomationKeys(
+                Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "automation-key-inventory",
+                clock,
+            )
             policy = organization_policy().policy
             workflow = OrganizationWorkflows(
                 organization_store,
@@ -109,7 +116,9 @@ def create_local_application():
                     policy,
                     recovery_console=settings.recovery_console,
                     recovery_console_loader=recovery_console_policy,
+                    automation_keys=keys,
                 ),
+                automation_key_inventory_enabled=True,
                 recovery_console=settings.recovery_console,
                 policy_loader=organization_policy,
                 mail_policy=settings.mail_policy(),

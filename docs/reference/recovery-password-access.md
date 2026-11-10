@@ -205,3 +205,12 @@ and **Open tenancy**. Its [six-field read-only projection](operations.md#recover
 comes from immutable intent and exact window-scoped request history, not the current credential head.
 Attempts are not proof of browser delivery. No secret action, retry/reset or extension is added.
 The panel’s [validation and saved-install status](../history/recovery-password-checkpoint-2026-11-09.md#password-operation-progress-follow-up) pass with the separately recorded full-run/final-copy targeted scope; earlier password behavior retains its own receipt.
+
+
+## Signing-key metadata independence — source checkpoint
+
+The separate observation-only inventory’s read-time/age fields do not invalidate the existing
+password dialog. Current source excludes `automation_keys` from `checksRevision`, preserving
+consent and displayed transient password across those independent updates. User identity, recovery
+policy and other security-readiness changes still clear access under existing guards. No new stored
+field, expiry extension or credential authority is added. [Targeted checkpoint qualification and preserved main installation](../history/automation-signing-key-inventory-checkpoint-2026-11-09.md) pass; broader live claims remain pending.
