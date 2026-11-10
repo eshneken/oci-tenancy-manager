@@ -505,11 +505,21 @@ function OperationDetail({
   useReadDenial(result.error, expired);
   const detail = result.data;
   const operation = detail?.operation;
+  const userChecks=detail?.events.find(event=>event.user_checks?.length)?.user_checks??[];
+  // Deep links wait for recorded results; never fetch current tenancy facts as historical evidence.
+  const checkAnchor=location.hash.slice(1);
+  useEffect(()=>{
+    const anchor=checkAnchor;
+    if(!userChecks.some(check=>check.anchor===anchor))return;
+    const frame=requestAnimationFrame(()=>{const section=document.getElementById(anchor);section?.scrollIntoView?.({block:"start"});section?.focus();});
+    return ()=>cancelAnimationFrame(frame);
+  },[detail,checkAnchor]);
+
   const HistoryContainer = operation?.guided_onboarding ? "details" : "div";
   const notFound =
     result.error instanceof ApiError && result.error.status === 404;
   const eventNames = {
-    operation_intent: "Operation accepted",
+    recovery_password_disclosed:"Recovery password requested",recovery_password_outcome:"Recovery password outcome",operation_intent: "Operation accepted",
     inspection_dispatch: "Inspection dispatched",
     inspection_outcome: "Inspection outcome",
     organization_action_outcome: "Simulated lifecycle result",
@@ -517,7 +527,7 @@ function OperationDetail({
     onboarding_outcome: "Onboarding check",
     configuration_outcome: "Configuration verification",
     cost_collection_outcome: "Cost collection result",
-    required_user_check_outcome: "User presence check result",
+    required_user_check_outcome: "Required-user check results",
     recovery_network_outcome: "Recovery network repair result",
     configuration_check_outcome: "Configuration check result",
     configuration_retry: "Configuration retry",
@@ -619,6 +629,15 @@ function OperationDetail({
               />
             )}
             {(operation.guided_onboarding||Boolean(detail.notifications?.length))&&<EmailNotifications notifications={detail.notifications??[]}/>}
+            {userChecks.length>0&&<section className="operation-panel" aria-label="Recorded user check results">
+              <h2>Recorded user check results</h2>
+              <p className="muted">Historical observations from this operation in local simulation. These results do not establish current access or password readiness.</p>
+              <div className="required-users-grid">{userChecks.map(check=><section key={check.anchor} id={check.anchor} tabIndex={-1} className="required-user-card">
+                <h3>{{"automation-presence":"Automation user · Presence","automation-assignment":"Automation user · Assignments","recovery-presence":"Recovery user · Presence","recovery-assignment":"Recovery user · Assignments","recovery-policy":"Recovery user · Console policy"}[check.anchor]}</h3>
+                <dl className="required-user-facts">{check.facts.map(fact=><div key={fact.label}><dt>{fact.label}</dt><dd><span className={"badge "+(["present","verified"].includes(fact.state)?"active":["missing","drift"].includes(fact.state)?"presence-missing":"required-user-state")}>{{not_checked:"Not checked",present:"Present",missing:"Missing",unknown:"Unable to verify",verified:"Verified in simulation",drift:"Drift detected"}[fact.state]}</span></dd></div>)}</dl>
+                <p className="muted">Checked: {stamp(check.checked_at??null)}</p>
+              </section>)}</div>
+            </section>}
             <HistoryContainer
               className={
                 operation.guided_onboarding ? "onboarding-history" : undefined
@@ -665,7 +684,7 @@ function OperationDetail({
                     {detail.steps.map((step) => (
                       <li key={step.step_key}>
                         <h3>
-                          {step.step_key.startsWith("required_users:") ? "Read required-user presence" : step.step_key.startsWith("cost:") ? "Read current month costs" : step.step_key.startsWith("configuration_check:") ? "Check assigned managed configuration" : step.step_key === "inspect_target"
+                          {step.step_key.startsWith("required_users:") ? "Check required users, assignments and recovery policy" : step.step_key.startsWith("cost:") ? "Read current month costs" : step.step_key.startsWith("configuration_check:") ? "Check assigned managed configuration" : step.step_key === "inspect_target"
                             ? "Inspect target"
                             : step.step_key.startsWith("remove_member_groups:") ? "Remove user group memberships" : step.step_key.startsWith("delete_member_user:") ? "Delete tenancy user" : step.step_key === "apply_lifecycle"
                               ? "Apply simulated lifecycle"

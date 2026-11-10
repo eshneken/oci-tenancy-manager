@@ -11,6 +11,7 @@ from otm.notifications.contracts import (
     NotificationEvidence,
     NotificationIntent,
     NotificationSummary,
+    RecoveryPasswordNotice,
     RequiredUserMissingNotice,
 )
 from otm.operations.contracts import canonical_hash
@@ -27,6 +28,7 @@ def decode_intent(row):
     model = {
         "cost-failure-email-1": CostFailureNotice,
         "required-user-missing-email-1": RequiredUserMissingNotice,
+        "recovery-password-email-1": RecoveryPasswordNotice,
     }.get(row["intent"].get("contract_version"), NotificationIntent)
     frozen = model.model_validate_json(json.dumps(row["intent"]))
     if (
@@ -72,6 +74,46 @@ class LifecycleNotifier:
         self.policy, self.enqueuer, self.profile_hash = policy, enqueuer, profile_hash
         self.application_origin = application_origin
 
+    # Disclosure notices are durably accepted before any password can leave the API.
+    def stage_recovery_disclosure(self, connection, request, child, actor, at):
+        from otm.storage.tables import recovery_credential
+        from otm.tenancies.recovery_password_notices import stage
+
+        head = (
+            connection.execute(
+                select(recovery_credential).where(
+                    recovery_credential.c.workspace_id == request["workspace_id"],
+                    recovery_credential.c.id == request["credential_id"],
+                    recovery_credential.c.tenancy_id == child["id"],
+                )
+            )
+            .mappings()
+            .one()
+        )
+        stage(
+            self,
+            connection,
+            request["workspace_id"],
+            request["accepted_operation_id"],
+            head,
+            at,
+            request=request,
+            actor=actor,
+        )
+
+    # Failure delivery never erases or extends the system's original rotation obligation.
+    def stage_recovery_failure(self, connection, row, head, at):
+        from otm.tenancies.recovery_password_notices import stage
+
+        stage(
+            self,
+            connection,
+            row["workspace_id"],
+            row["id"],
+            dict(head, requester_subject=row["initiating_actor_subject"]),
+            at,
+        )
+
     # The caller already owns lifecycle row/authority locks; email acceptance shares its
     # transaction.
     def stage(self, connection, row, at):
@@ -95,7 +137,7 @@ class LifecycleNotifier:
         if intent.action in {
             "create_tenancy",
             "import_tenancy",
-        } and intent.onboarding_version not in {1, 2, 3}:
+        } and intent.onboarding_version not in {1, 2, 3, 4}:
             return None
         if row["state"] not in {"waiting", "needs_attention", "failed"} or (
             row["state"] == "waiting"
@@ -290,10 +332,10 @@ def list_for_operation(connection, workspace, operation_id):
                 if isinstance(intent, RequiredUserMissingNotice)
                 else None,
                 recipient_roles=tuple(dict.fromkeys(r.role for r in intent.reasons))
-                if isinstance(intent, RequiredUserMissingNotice)
+                if isinstance(intent, (RequiredUserMissingNotice, RecoveryPasswordNotice))
                 else (),
                 routing_issues=intent.routing_issues
-                if isinstance(intent, RequiredUserMissingNotice)
+                if isinstance(intent, (RequiredUserMissingNotice, RecoveryPasswordNotice))
                 else (),
             )
         )

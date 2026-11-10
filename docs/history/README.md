@@ -56,3 +56,7 @@ The [Recovery/header refinement](check-date-footer-local-session-checkpoint-2026
 - [Recovery assignments UI checkpoint](recovery-assignments-checkpoint-2026-11-09.md): independent recovery group/role results and compact permission summary.
 
 - [Recovery-network repair checkpoint — 9 November 2026](recovery-network-repair-checkpoint-2026-11-09.md): 430 final integration cases, guarded conditional repair and preserved main data/settings.
+
+- [Recovery-password checkpoint](recovery-password-checkpoint-2026-11-09.md):440 clean-tree integration cases, independent reviews and preserved main installation with three empty custody tables.
+
+- [Access-panel and recorded-results source follow-up](recovery-password-checkpoint-2026-11-09.md#access-panel-and-recorded-results-follow-up): installed layout and exact historical check sections;438 passing cases plus both corrected native journeys rerun successfully, not a clean440 rerun.

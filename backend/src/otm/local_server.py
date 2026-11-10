@@ -48,6 +48,7 @@ def create_local_application():
         path.resolve().is_relative_to(frontend.resolve())
         for path in (
             custody_path,
+            Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "recovery-passwords",
             Path(os.environ["OTM_APPLICATION_CONFIG"]),
             *(
                 [Path(os.environ["OTM_ORGANIZATION_CONFIG"])]
@@ -158,6 +159,29 @@ def create_local_application():
             if workflow.policy
             else None,
         )
+
+        if workflow.policy is not None and settings.recovery_console is not None:
+            from otm.providers.recovery_password_simulator import SimulatedRecoveryPasswords
+            from otm.storage.enqueue import RECOVERY_PASSWORD_TASK
+            from otm.tenancies.recovery_password import RecoveryPasswordAccess
+            from otm.tenancies.recovery_password_setup import RecoveryPasswordSetup
+
+            if settings.environment != "local":
+                raise ValueError("LOCAL_PASSWORD_SIMULATOR_REQUIRES_LOCAL")
+            passwords = SimulatedRecoveryPasswords(
+                Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "recovery-passwords",
+            )
+            password_queue = InspectionEnqueuer(
+                queue=workspace_queue(settings.local_auth.workspace_id),
+                task=RECOVERY_PASSWORD_TASK,
+            )
+            workflow.recovery_password_setup = RecoveryPasswordSetup(password_queue)
+            workflow.recovery_passwords = RecoveryPasswordAccess(
+                workflow.presence_checks,
+                passwords,
+                password_queue,
+                notifier=notifier,
+            )
 
         from otm.financial.service import CostCollections
         from otm.storage.enqueue import COST_TASK

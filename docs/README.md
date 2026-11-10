@@ -3,6 +3,11 @@
 Use this index for the current application. Historical checkpoints explain past decisions; they
 are not competing implementation instructions or proof of real OCI behavior.
 
+**Current local environment — 9 November 2026:** use only [Atlas on localhost:8443](https://localhost:8443).
+The [former8444 instance is retired](how-to/parallel-local-instance.md); no additional local instances
+are requested. Interactive recovery-network repair testing is [deferred until real OCI](reference/recovery-network-repair.md#manual-local-checkpoint-runbook).
+Earlier dated preservation receipts remain historical evidence.
+
 | Need | Start here |
 | --- | --- |
 | Product scope and acceptance criteria | [Product specification](product/oci-tenancy-manager-spec.md) |
@@ -150,10 +155,16 @@ The [Recovery overview and matching header actions checkpoint](history/check-dat
 
 The backend [implementation overview](../backend/README.md) and current required-user field dictionaries
 were reconciled during the whole-milestone publication audit. Historical checkpoint counts retain
-their original scope; current application metadata contains 25 OTM tables through migration 0026.
+their original scope; current application metadata contains 28 OTM tables through migration 0027.
 
 - [Guarded recovery-network repair](reference/recovery-network-repair.md): qualified simulated conditional perimeter-only repair and preserved main preview; live OCI pending.
 
-The [recovery-network repair source subset](reference/recovery-network-repair.md) reuses existing operations, steps, audit and checks. Migration 0026 extends CHECK-constraint branches only; the 25 OTM tables are unchanged. Full local UI/integration qualification and preserved main-preview publication pass; live OCI remains pending.
+The [recovery-network repair source subset](reference/recovery-network-repair.md) reuses existing operations, steps, audit and checks. Migration 0026 extends CHECK-constraint branches only; the 25 existing OTM tables were unchanged at that checkpoint. Full local UI/integration qualification and preserved main-preview publication pass; live OCI remains pending.
 
 - [Recovery-network repair final checkpoint](history/recovery-network-repair-checkpoint-2026-11-09.md): 430 complete integration cases, independent reviews and preserved main data/settings.
+
+- [Recovery-password source subset](reference/recovery-password-access.md): explicit simulator, version4 custody handoff and original-window rotation; qualification/install status is in its checkpoint receipt.
+
+- [Recovery-password checkpoint](history/recovery-password-checkpoint-2026-11-09.md):440 clean-tree integration cases, independent reviews and preserved main installation; live OCI pending.
+
+- [Access-panel and historical-check follow-up](history/recovery-password-checkpoint-2026-11-09.md#access-panel-and-recorded-results-follow-up): installed mini-panel layout and exact Operations results; combined438+2 integration evidence is separate from earlier clean440 receipts.

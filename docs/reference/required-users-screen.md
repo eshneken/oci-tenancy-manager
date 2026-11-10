@@ -162,3 +162,13 @@ Recovery Permissions now summarizes separately retained group/role evidence. Its
 remain under Identity details. Assignment, presence and policy dates flow in two columns below the
 overview badges; mobile stacks them. See the [current field map](administrator-assignments.md).
 No password disclosure or all-effective-permissions claim is introduced.
+
+
+## Access mini-panel and exact check destinations — source follow-up
+
+The user cards retain their paired layout; a separate **Administrator access** mini-panel below
+Automation user offers **Request password**. It uses the same recovery credential/dialog and
+existing guards; its position does not make the automation user a human login. Footer dates now
+link to exact subject/kind anchors in [Recorded user check results](operations.md#recorded-required-user-check-sections--source-follow-up).
+Historical assignment/policy omissions are Not checked, not inferred success. No table or permission
+change is introduced. This follow-up’s [validation/installation](../history/recovery-password-checkpoint-2026-11-09.md#access-panel-and-recorded-results-follow-up) passes with the separately recorded combined evidence; earlier440-case/focused receipts retain their own scope.

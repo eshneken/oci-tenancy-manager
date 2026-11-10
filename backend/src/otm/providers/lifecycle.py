@@ -24,6 +24,7 @@ class LifecycleBlocked(ValueError):
             "PERSON_RETURNED",
             "LIFECYCLE_UNAVAILABLE",
             "EMAIL_ROUTING_CHANGED",
+            "RECOVERY_PASSWORD_ROTATION_REQUIRED",
         }:
             raise ValueError("INVALID_LIFECYCLE_CODE")
         self.code = code

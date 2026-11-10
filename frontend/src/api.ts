@@ -1,3 +1,4 @@
+import type {RecoveryPasswordView,RecoveryPasswordRequest,RecoveryPasswordDisclosure} from "./contracts";
 import type { RequiredUsersDirectory, PresenceCheckRequest } from "./contracts";
 import type {RecoveryNetworkPreview,RecoveryNetworkRequest} from "./contracts";
 import type { CostRefreshReceipt, CostRefreshRequest } from "./contracts";
@@ -76,7 +77,13 @@ async function request<T>(
         : { "Content-Type": "application/json", "X-OTM-Request": "1" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  if (!response.ok) throw new ApiError(response.status);
+  if (!response.ok) {
+    if(response.status===409){
+      const body=await response.json().catch(()=>({}));
+      if(body?.code==="RECOVERY_PASSWORD_ROTATION_REQUIRED")throw new WorkflowError(response.status,body.code);
+    }
+    throw new ApiError(response.status);
+  }
   return response.status === 204
     ? (undefined as T)
     : ((await response.json()) as T);
@@ -104,6 +111,14 @@ export class WorkflowError extends ApiError {
 }
 
 export const api = {
+  // Metadata only; never fetch a password from a GET or place disclosure responses in Query cache.
+  administratorAccess(id:string, signal?:AbortSignal) {
+    return request<RecoveryPasswordView>("/api/tenancies/"+encodeURIComponent(id)+"/administrator-access","GET",undefined,signal);
+  },
+  // Last-mile secret response must remain in the caller's transient component state only.
+  recoveryPassword(id:string, body:RecoveryPasswordRequest, signal?:AbortSignal) {
+    return request<RecoveryPasswordDisclosure>("/api/tenancies/"+encodeURIComponent(id)+"/administrator-access/password","POST",body,signal);
+  },
   // Nonsecret delivery policy remains administrator-only; never expose SMTP settings or credentials.
   emailPolicy(signal?:AbortSignal) { return request<EmailPolicyView>("/api/email-policy","GET",undefined,signal); },
   // Transfer workflow responsibility only; frozen creation intent and tenancy ownership stay unchanged.

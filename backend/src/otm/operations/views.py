@@ -38,6 +38,7 @@ class OperationSummary(Contract):
         "cost_collection",
         "required_user_check",
         "recovery_network_repair",
+        "recovery_password",
     ]
     state: OperationState
     stage: Text
@@ -69,7 +70,7 @@ class OperationStepView(Contract):
     step_key: Annotated[
         str,
         Field(
-            pattern=r"^(inspect_target|apply_lifecycle|handoff|inspect_bootstrap|establish_automation|verify_automation|configure_required|verify_required|retire_temporary|configure_baseline|verify_configured_access|capture_required_users|configuration_check:[0-9a-f-]{36}|required_users:[0-9a-f-]{36}|recovery_network:[0-9a-f-]{36}|cost:[0-9a-f-]{36}|(remove_member_groups|delete_member_user):[0-9a-f-]{36}|configuration:[0-9a-f-]{36})$"
+            pattern=r"^(inspect_target|apply_lifecycle|handoff|inspect_bootstrap|establish_automation|verify_automation|configure_required|verify_required|retire_temporary|configure_baseline|verify_configured_access|capture_required_users|prepare_recovery_password|configuration_check:[0-9a-f-]{36}|required_users:[0-9a-f-]{36}|recovery_network:[0-9a-f-]{36}|recovery_password:[0-9a-f-]{36}|cost:[0-9a-f-]{36}|(remove_member_groups|delete_member_user):[0-9a-f-]{36}|configuration:[0-9a-f-]{36})$"
         ),
     ]
     state: Literal["running", "verified", "needs_attention"]
@@ -78,8 +79,35 @@ class OperationStepView(Contract):
     safe_code: Text | None
 
 
+# Project only named, closed result labels; provider contexts and identity bindings stay private.
+class UserCheckFact(Contract):
+    label: Literal[
+        "Presence",
+        "Administrators group",
+        "Domain administrator role",
+        "Console MFA exemption",
+        "Approved-network restriction",
+    ]
+    state: Literal["not_checked", "present", "missing", "unknown", "verified", "drift"]
+
+
+# Historical sections describe this operation's observation, never current access readiness.
+class UserCheckSection(Contract):
+    anchor: Literal[
+        "automation-presence",
+        "automation-assignment",
+        "recovery-presence",
+        "recovery-assignment",
+        "recovery-policy",
+    ]
+    checked_at: UtcInstant | None = None
+    facts: tuple[UserCheckFact, ...]
+
+
 # Preserve event ordering and bounded historical visibility without disclosing authorization data.
 class OperationEventView(Contract):
+    # Only required-user outcomes carry these safe historical result sections.
+    user_checks: tuple[UserCheckSection, ...] = ()
     kind: Literal[
         "operation_responsibility_changed",
         "email_delivery",
@@ -95,6 +123,8 @@ class OperationEventView(Contract):
         "cost_collection_outcome",
         "required_user_check_outcome",
         "recovery_network_outcome",
+        "recovery_password_outcome",
+        "recovery_password_disclosed",
     ]
     at: UtcInstant
     safe_code: Text | None

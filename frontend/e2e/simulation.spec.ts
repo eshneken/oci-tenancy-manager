@@ -1,3 +1,4 @@
+import {recoveryAccess} from "./recovery-access";
 import {keepOwnershipRoundTrip,removeFormerOwner} from "./ownership-transfer";
 import {tenancyOverrides} from "./tenancy-overrides";
 import {existingCompartmentMembership} from "./shared-membership";
@@ -392,7 +393,7 @@ async function organizationFlows(page: Page) {
       const pendingUsers = page.getByRole("region", { name: "Required users", exact: true });
       await expect(pendingUsers.getByText("Not recorded", { exact: true })).toHaveCount(4);
       await expect(pendingUsers.getByText(/Setup is still in progress/)).toBeVisible();
-      await expect(pendingUsers.locator("details")).toHaveCount(0);
+      await expect(pendingUsers.locator("details.required-user-details")).toHaveCount(0);
       await page.goto(setupUrl);
       await expect(review).toBeVisible();
       await reviewCheckboxControl(
@@ -446,7 +447,7 @@ async function organizationFlows(page: Page) {
       await expect(users.getByText("Not checked", { exact: true })).toHaveCount(0);
       const automation = users.locator(".required-user-card").filter({has:page.getByRole("heading",{name:"Automation user",exact:true})});
       await expect(automation.getByText("Verified in simulation",{exact:true})).toHaveCount(2);
-      await expect(automation.getByRole("link",{name:/^View assignment check, /})).toHaveAttribute("href",/\/operations\/[a-f0-9-]+$/);
+      await expect(automation.getByRole("link",{name:/^View assignment check, /})).toHaveAttribute("href",/\/operations\/[a-f0-9-]+#automation-assignment$/);
       await expect(users.getByText("Console MFA exemption", { exact: true })).toBeVisible();
       await expect(users.getByText("Approved-network restriction", { exact: true })).toBeVisible();
       await expect(users.locator(".required-user-card").filter({has:page.getByRole("heading",{name:"Recovery user",exact:true})}).getByText("Verified in simulation", { exact: true })).toHaveCount(4);
@@ -468,8 +469,12 @@ async function organizationFlows(page: Page) {
         userRefreshCaptured=true;
       }
       await users.getByRole("link", { name: /^View presence check, / }).first().click();
-      await expect(page).toHaveURL(new RegExp("/operations/" + checkId + "$"));
+      await expect(page).toHaveURL(new RegExp("/operations/" + checkId + "#automation-presence$"));
       await expect(page.getByRole("heading", { level: 1 })).toHaveText("Check required users");
+      await expect(page.getByRole("heading", {name:"Recovery user · Console policy",exact:true})).toBeVisible();
+      await expect(page.locator("#automation-presence")).toBeFocused();
+      await expect(page.locator("#recovery-policy").getByText("Console MFA exemption",{exact:true})).toBeVisible();
+
       await expect(page.getByText("Completed", { exact: true }).first()).toBeVisible();
       await page.goto(childUrl);
       await expect(users.getByText("Present", { exact: true })).toHaveCount(2);
@@ -491,9 +496,9 @@ async function organizationFlows(page: Page) {
       await expect(page).toHaveURL(new RegExp("#required-users$"));
       await expect(users.getByRole("heading",{name:"Required users",exact:true})).toBeFocused();
       await expect(users.getByText("Present", { exact: true })).toHaveCount(2);
-      const disclosure = users.locator("details").first().locator("summary");
+      const disclosure = users.locator("details.required-user-details").first().locator("summary");
       await disclosure.focus(); await disclosure.press("Enter");
-      await expect(users.locator("details").first()).toHaveAttribute("open", "");
+      await expect(users.locator("details.required-user-details").first()).toHaveAttribute("open", "");
       await expect(users.getByRole("link", { name: "View setup operation" }).first()).toHaveAttribute("href", /\/operations\/[a-f0-9-]+$/);
       const recoveryCard=users.locator(".required-user-card").nth(1);
       await expect(recoveryCard.getByLabel("Administrator assignments: Assigned (simulation)")).toBeVisible();
@@ -501,11 +506,17 @@ async function organizationFlows(page: Page) {
       await recoveryDetails.focus(); await recoveryDetails.press("Enter");
       await expect(recoveryCard.getByText("Administrators group",{exact:true})).toBeVisible();
       await expect(recoveryCard.getByText("Domain administrator role",{exact:true})).toBeVisible();
-      await expect(recoveryCard.getByRole("link",{name:/^View assignment check, /})).toHaveAttribute("href",/\/operations\/[a-f0-9-]+$/);
+      await expect(recoveryCard.getByRole("link",{name:/^View assignment check, /})).toHaveAttribute("href",/\/operations\/[a-f0-9-]+#recovery-assignment$/);
       await recoveryDetails.press("Enter");
       for (const width of [1280, 1024, 768, 390, 320]) {
         await page.setViewportSize({ width, height: 900 });
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        const accessPanel=users.getByRole("region",{name:"Administrator access",exact:true});
+        const accessBox=await accessPanel.boundingBox();
+        const automationBox=await users.locator(".required-user-card").first().boundingBox();
+        expect(Math.abs(accessBox!.x-automationBox!.x)).toBeLessThan(2);
+        expect(Math.abs(accessBox!.width-automationBox!.width)).toBeLessThan(2);
+        expect(accessBox!.y-(automationBox!.y+automationBox!.height)).toBeGreaterThanOrEqual(15);
         const cards = await users.locator(".required-user-card").evaluateAll(elements => elements.map(e => {
           const r = e.getBoundingClientRect(); return { x: r.x, y: r.y };
         }));
@@ -552,7 +563,10 @@ async function organizationFlows(page: Page) {
           else expect(dates[1].y).toBeGreaterThan(dates[0].y);
           for(const link of await footer.getByRole("link").all()){
             await expect(link).toHaveText(/^[A-Z][a-z]{2} \d{1,2}, \d{4}$/);
-            await expect(link).toHaveAttribute("href",/\/operations\/[a-f0-9-]+$/);
+            const purpose=await card.getByRole("heading",{name:"Recovery user",exact:true}).count()?"recovery":"automation";
+            const name=await link.getAttribute("aria-label");
+            const kind=name?.includes("assignment")?"assignment":name?.includes("policy")?"policy":"presence";
+            await expect(link).toHaveAttribute("href",new RegExp("/operations/[a-f0-9-]+#"+purpose+"-"+kind+"$"));
           }
         }
         const costs = page.getByRole("region",{name:"Current month costs",exact:true});
@@ -993,6 +1007,7 @@ async function organizationFlows(page: Page) {
   await modal.getByRole("combobox",{name:"Tenancy type",exact:true}).selectOption("shared");
   await finish("Create tenancy");
   await removeFormerOwner(page);
+  await recoveryAccess(page);
 
 }
 

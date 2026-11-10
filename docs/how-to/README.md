@@ -13,7 +13,7 @@ isolated synthetic fixtures; private enrollment factors do not belong in reports
 - [Local review: lifecycle email and environment routing](lifecycle-email-runbook.md), including [additional lifecycle notices](lifecycle-email-runbook.md#additional-lifecycle-notices)
 - [Local quality checks](local-quality-checks.md)
 - [Organization Mapping — manual test runbook](organization-mapping-runbook.md), including [return/consent correction checks](organization-mapping-runbook.md#return-and-destructive-consent-correction-review-after-installation) after deliberate installation
-- [Parallel Atlas Test instance](parallel-local-instance.md)
+- [Retired parallel Atlas Test instance](parallel-local-instance.md) — historical instructions only; current local use is8443 only, with no new instance creation
 - [Manual review: administrator responsibility takeover](responsibility-runbook.md)
 - [Manual review: tenancy detail, shared access and onboarding](tenancy-refinements-runbook.md)
 

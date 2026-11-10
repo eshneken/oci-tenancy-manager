@@ -70,10 +70,13 @@ class OrganizationWorkflows:
         mail_policy=None,
         notifications=None,
         recovery_console=None,
+        recovery_password_setup=None,
     ):
         self.store, self.enqueuer, self.policy, self.facade = store, enqueuer, policy, facade
         self.mail_policy, self.notifications = mail_policy, notifications
         self.recovery_console = recovery_console
+        self.recovery_password_setup = recovery_password_setup
+        self.recovery_passwords = None
         self.configuration_checks = configuration_checks
         self.presence_checks = None
         self.recovery_network_repairs = None
@@ -226,7 +229,7 @@ class OrganizationWorkflows:
                         audit_event.c.kind == "operation_intent",
                     )
                 ).scalar_one_or_none()
-                if candidate and candidate["intent"].get("onboarding_version") in {1, 2, 3}:
+                if candidate and candidate["intent"].get("onboarding_version") in {1, 2, 3, 4}:
                     onboarding_id = row["operation_id"]
             config_operation = row["operation_id"] or row.get("last_operation_id")
             cost = (
@@ -1242,6 +1245,13 @@ class OrganizationWorkflows:
                         self.mail_policy.guard(route)
             except EmailPolicyBlocked:
                 raise OrganizationConflict("EMAIL_CONTACT_CONFIGURATION_REQUIRED") from None
+        from otm.tenancies.recovery_password_lifecycle import require_termination_ready
+
+        require_termination_ready(
+            connection,
+            state.workspace,
+            (item.tenancy_id for item in plan if item.action == "delete"),
+        )
         intent = OrganizationIntent(
             workspace_id=state.workspace,
             policy_revision=self.policy.policy_revision,
@@ -1258,7 +1268,7 @@ class OrganizationWorkflows:
             recovery_console_fingerprint=self.recovery_console.fingerprint
             if command.action in {"create_tenancy", "import_tenancy"} and self.recovery_console
             else None,
-            onboarding_version=3
+            onboarding_version=(4 if self.recovery_password_setup and self.recovery_console else 3)
             if command.action in {"create_tenancy", "import_tenancy"}
             else None,
             activation_email=contacts.activation.effective_email

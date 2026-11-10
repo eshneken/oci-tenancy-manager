@@ -2224,3 +2224,51 @@ from the latest sealed policy check, whereas `source_hash` still pins producer o
 provenance. Fresh actual authority supplies preview network counts. Independently observed external
 network edits are repairable after refresh; unrefreshed third states or post-admission changes block.
 The [final local receipt](../history/recovery-network-repair-checkpoint-2026-11-09.md) records430 complete integration cases and preserved main publication. Real OCI, broader repair and credential flows remain pending.
+
+
+## Recovery-password source subset — 9 November 2026
+
+The [field-complete source dictionary](../reference/recovery-password-access.md#physical-field-dictionary)
+and [actual-subset ER source](../architecture/diagrams/recovery-passwords-implemented.mmd) describe
+migration0027: `otm_credential` (18 columns), `otm_credential_version` (8), and
+`otm_human_access_grant` (15). This extends source metadata from25 to28 OTM application tables,
+excluding runner-owned tables. Qualification and installed migration/saved-app status are recorded
+only in the [checkpoint receipt](../history/recovery-password-checkpoint-2026-11-09.md).
+The broader proposed identity/access context tables and generic credential kinds above are not
+silently implemented by these three existing planned names.
+
+Head FKs scope child, exact principal binding, onboarding origin and current system operation.
+Composite same-credential pointers reference immutable version evidence and append-only root request;
+request rows separately reference exact disclosed version, rotation operation and their shared root.
+Deferred head/version/root constraints support atomic circular insertion. Per-subject/active-child
+and provider-secret uniqueness avoid competing custody; requester request keys preserve replay.
+Database window constraints retain exactly+four hours; no plaintext credential column exists.
+
+`location`/`location_hash` and version `reference`/`reference_hash` are typed nonsecret JSON. Initial
+setup accepts a null provider locator until staged custody allocates a real returned reference;
+a usable version cannot remain unallocated. CURRENT is resolved for ordinary retrieval, with exact
+returned version checked against reconciled evidence. Stored current pointers are not read fallback.
+Original first/due times and exposure/root IDs live on the head and immutable requests; fixed duration/
+anchor live in typed disclosure evidence, not invented physical policy columns. Request resolution
+is derived from head generation and operation outcomes; there are no grant state/resolved columns
+in this implemented subset. This is distinct from additional fields in the broader proposal.
+
+Version4 setup admits the system operation/head/queue within the onboarding transaction, waits
+before temporary cleanup and resumes only after coupled child/custody verification. Existing versions
+are preserved without legacy backfill. Intent/step/outcome/audit/outbox fields are mapped in the
+reference; transient plaintext is confined to the exceptional authenticated response and explicit
+local simulator custody. Due rotation survives requester deprovisioning, keeps its original deadline
+and acquires execution exclusion only when needed. D54 manual paused restore remains authoritative.
+No new local instance, external journal, account/TOTP workflow or live OCI claim is introduced.
+
+
+### Password UI fields and cleanup boundary — implemented subset
+
+`RecoveryAccess.tsx` consumes `RecoveryPasswordView` and exceptional no-store
+`RecoveryPasswordDisclosure`: request ID, username/password, original first/due timestamps, rotation
+operation and simulated mode. Only the exceptional response contains transient plaintext. Consent,
+mask/show/copy/close, focus and clearing on navigation/hidden/deadline are client state, not columns;
+query/audit/ordinary metadata excludes the password. Transient CURRENT acquisition failure preserves
+the admitted window for retry; only an unexpected returned version holds custody unknown. Local
+cleanup includes the new FK tables only when empty and refuses retained credential/version/request
+evidence. The checkpoint receipt, not this field map, establishes qualification and saved8443 installation.

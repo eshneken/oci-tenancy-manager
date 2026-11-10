@@ -331,3 +331,11 @@ required. Readback must verify networks and unchanged surrounding policy. Applie
 capture is retained without current readiness; unknown writes remain held without automatic retry.
 No assignment repair, MFA/rule edits, user recreation, password custody/rotation or fleet rollout is
 implemented by this subset. Migration 0026 extends existing constraints with zero new tables.
+
+
+### Password source subset — 9 November 2026
+
+The [current custody/disclosure/rotation source subset](../reference/recovery-password-access.md) is
+an implemented local subset; [the checkpoint receipt](../history/recovery-password-checkpoint-2026-11-09.md) records qualification and main8443 installation separately. It preserves the standing exact-user MFA/
+CIDR boundary, CURRENT and the original first-attempt four-hour deadline. API-key retirement, live
+provider qualification and deferred interactive network break/repair remain separate pending work.

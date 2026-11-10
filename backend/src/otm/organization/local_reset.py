@@ -10,6 +10,9 @@ from otm.storage.tables import metadata
 from otm.storage.transaction import require_transaction
 
 TABLES = (
+    "otm_human_access_grant",
+    "otm_credential_version",
+    "otm_credential",
     "otm_user_presence_check",
     "otm_user_presence_connection",
     "otm_managed_object_binding",
@@ -82,7 +85,8 @@ def clear_organization(connection, workspace, issuer):
         connection.scalars(
             text(
                 "SELECT tablename FROM pg_tables WHERE schemaname='public' "
-                "AND (tablename='otm_managed_object_binding' "
+                "AND (tablename IN ('otm_credential','otm_credential_version',"
+                "'otm_human_access_grant','otm_managed_object_binding') "
                 "OR left(tablename,17)='otm_user_presence' OR left(tablename,4)='org_' "
                 "OR left(tablename,11)='otm_tenancy' "
                 "OR left(tablename,12)='otm_baseline' OR left(tablename,17)='otm_configuration' "
@@ -114,10 +118,10 @@ def clear_organization(connection, workspace, issuer):
             "SELECT EXISTS(SELECT 1 FROM public.otm_operation WHERE workspace_id=:workspace A"
             "ND kind IN ('organization_action','configurati"
             "on_update','configuration_check','cost_collection','required_user_check',"
-            "'recovery_network_repair') AND "
+            "'recovery_network_repair','recovery_password') AND "
             "state IN "
             "('queued','running','waiting','needs_"
-            "attention'))"
+            "attention')) OR EXISTS(SELECT 1 FROM public.otm_credential)"
         ),
         {"workspace": workspace},
     )

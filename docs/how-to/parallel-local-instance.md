@@ -1,4 +1,14 @@
-# Parallel Atlas Test instance
+# Parallel Atlas Test instance — retired
+
+**Retired 9 November 2026.** The user selected one local installation: Atlas on
+`https://localhost:8443`. Port8444 is no longer an active application. Its verified private backup
+and local files were archived; owned API/worker processes and database container/anonymous volumes
+were removed. Main8443 data and runtime configuration were preserved and health checks passed.
+
+Everything below is a **historical procedure**, not a current setup recommendation. Do not run these
+bootstrap/start instructions or create another local instance for testing. Dated earlier checkpoint
+statements about preserving8444 describe its state before retirement.
+
 
 Your existing organization stays at **[Atlas — localhost:8443](https://localhost:8443)**.
 The separate **[Atlas Test — 127.0.0.1:8444](https://127.0.0.1:8444)** is prepared for the

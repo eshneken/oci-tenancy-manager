@@ -49,6 +49,7 @@ def browser_failure_locations(cases):
         "financial-costs.spec.ts",
         "configuration-drift.spec.ts",
         "recovery-network.spec.ts",
+        "recovery-access.ts",
         "email-delivery.spec.ts",
         "operation-responsibility.spec.ts",
         "mapping-helpers.ts",

@@ -7,7 +7,12 @@ import procrastinate
 from sqlalchemy import select, update
 
 from otm.email_policy import EmailPolicyBlocked
-from otm.notifications.contracts import CostFailureNotice, Envelope, RequiredUserMissingNotice
+from otm.notifications.contracts import (
+    CostFailureNotice,
+    Envelope,
+    RecoveryPasswordNotice,
+    RequiredUserMissingNotice,
+)
 from otm.notifications.service import decode_intent, record_evidence
 from otm.operations.contracts import canonical_hash
 from otm.operations.responsibility import execution_authority
@@ -184,6 +189,38 @@ class NotificationDeliveryWorker:
                 safe_code=None,
                 at=at,
             )
+            if isinstance(intent, RecoveryPasswordNotice):
+                requested = intent.event == "recovery_password_requested"
+                return Envelope(
+                    notification_id=identifier,
+                    recipient=recipient,
+                    subject="Recovery password requested"
+                    if requested
+                    else "Recovery password needs attention",
+                    body=(
+                        "An authorized recovery-password disclosure attempt was recorded.\n"
+                        if requested
+                        else "Recovery password preparation or rotation could not be verified.\n"
+                    )
+                    + (
+                        "Original password-rotation deadline: "
+                        + intent.rotation_due_at.isoformat()
+                        + "\n"
+                        if intent.rotation_due_at
+                        else ""
+                    )
+                    + (
+                        "Review tenancy: "
+                        + intent.application_origin
+                        + "/tenancies/"
+                        + str(intent.tenancy_id)
+                        + "\n"
+                        if intent.application_origin
+                        else "Sign in and open the affected tenancy.\n"
+                    )
+                    + "Passwords are never included in email. "
+                    "Review the latest status in the application.\n",
+                ), attempt
             if isinstance(intent, RequiredUserMissingNotice):
                 purpose = "Automation" if intent.purpose == "automation" else "Recovery"
                 return Envelope(
@@ -228,6 +265,10 @@ class NotificationDeliveryWorker:
     # Reuse the same exact authority, assignment, route and transport fences at both send
     # boundaries.
     def _context_issue(self, connection, row, op, intent):
+        if isinstance(intent, RecoveryPasswordNotice):
+            from otm.tenancies.recovery_password_notices import delivery_issue
+
+            return delivery_issue(self, connection, row, op, intent)
         if isinstance(intent, RequiredUserMissingNotice):
             from otm.tenancies.presence_alerts import delivery_issue
 

@@ -17,7 +17,10 @@ from otm.tenancies.onboarding_contracts import OnboardingEvidence
 # Retain domain/users together; caller owns the existing locked simulation transition transaction.
 def capture_bindings(connection, row, intent, users, event_id, at):
     require_transaction(connection)
-    if intent.onboarding_version != 3 or intent.action not in {"create_tenancy", "import_tenancy"}:
+    if intent.onboarding_version not in {3, 4} or intent.action not in {
+        "create_tenancy",
+        "import_tenancy",
+    }:
         raise ValueError("MANAGED_BINDING_SOURCE_UNVERIFIED")
     users = OnboardingUsers.model_validate(users)
     event = (

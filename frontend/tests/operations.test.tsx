@@ -540,3 +540,21 @@ it("labels an incomplete read-only check without directing a destructive workflo
  mount(<Operations operationId={id} expired={vi.fn()} navigate={vi.fn()}/>);
  await screen.findByText("Check incomplete");expect(screen.getByText(/read-only check did not complete/)).toBeVisible();expect(screen.queryByText(/pending associations remain/)).toBeNull();
 });
+
+// Historical policy and assignment details come from this operation, not current tenancy reads.
+it("shows separate linked historical required-user sections",async()=>{
+ vi.spyOn(api,"operation").mockResolvedValue({...detail,operation:{...row,kind:"required_user_check"},events:[{kind:"required_user_check_outcome",at:row.updated_at,safe_code:null,user_checks:[
+ {anchor:"automation-assignment",checked_at:row.updated_at,facts:[{label:"Administrators group",state:"missing"}]},
+ {anchor:"recovery-policy",checked_at:row.updated_at,facts:[{label:"Console MFA exemption",state:"verified"},{label:"Approved-network restriction",state:"drift"}]},
+ ]}]});
+ history.replaceState(null,"","/operations/"+id+"#automation-assignment");
+ const c=mount(<Operations operationId={id} expired={vi.fn()} navigate={vi.fn()}/>);
+ expect(await screen.findByRole("heading",{name:"Recovery user · Console policy"})).toBeVisible();
+ await waitFor(()=>expect(document.getElementById("automation-assignment")).toHaveFocus());
+ history.replaceState(null,"","/operations/"+id+"#recovery-policy");
+ c.rerender(<QueryClientProvider client={c.client}><Operations operationId={id} expired={vi.fn()} navigate={vi.fn()}/></QueryClientProvider>);
+ await waitFor(()=>expect(document.getElementById("recovery-policy")).toHaveFocus());
+ expect(screen.getByText("Drift detected")).toBeVisible();
+ expect(document.getElementById("automation-assignment")).toHaveTextContent("Missing");
+ expect(document.getElementById("recovery-policy")).toHaveTextContent("Console MFA exemption");
+});

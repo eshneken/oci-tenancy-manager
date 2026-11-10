@@ -44,6 +44,8 @@ packages = ["src/otm"]
 
 # Deploy the frozen migration assets alongside the package; never bundle local environments.
 [tool.hatch.build.targets.wheel.force-include]
+"migrations/versions/0027_recovery_passwords.py" = "otm_migrations/migrations/versions/0027_recovery_passwords.py"
+"migrations/sql/0027-recovery-passwords.sql" = "otm_migrations/migrations/sql/0027-recovery-passwords.sql"
 "migrations/versions/0026_recovery_network_repair.py" = "otm_migrations/migrations/versions/0026_recovery_network_repair.py"
 "migrations/sql/0026-recovery-network-repair.sql" = "otm_migrations/migrations/sql/0026-recovery-network-repair.sql"
 "migrations/versions/0025_user_presence_checks.py" = "otm_migrations/migrations/versions/0025_user_presence_checks.py"

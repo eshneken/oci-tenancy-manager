@@ -189,6 +189,11 @@ These cases remain pending real OCI; local fixtures do not qualify the live APIs
 
 ## Recovery network repair qualification
 
+**User deferral — 9 November 2026:** additional interactive recovery-network repair testing waits
+for real OCI and an approved actual policy break/repair. Do not create another local installation
+or manufacture drift in main8443. The former8444 instance is retired;430-case automated simulator
+qualification remains valid, while every live case below remains Pending.
+
 All cases remain **Pending**. Local simulated repair is not provider/sign-in qualification.
 
 | Live case | Required evidence | Status |
@@ -202,3 +207,24 @@ All cases remain **Pending**. Local simulated repair is not provider/sign-in qua
 
 Use only an approved disposable child. This flow does not qualify assignment repair, user recreation,
 password custody, rotation or fleet rollout. See the [current source field map](../reference/recovery-network-repair.md).
+
+
+## Recovery password custody and original-window qualification
+
+All cases remain **Pending**. Source/local simulator work does not qualify OCI/Vault or sign-in.
+Use an approved disposable real child when available; main8443 remains the sole saved local review
+environment. Interactive recovery-network break/repair remains deferred; no legacy custody backfill.
+
+| Live case | Required evidence | Status |
+| --- | --- | --- |
+| Version4 setup | Stage/allocate real custody and verify exact recovery user, child password and CURRENT before temporary cleanup; preserve old accepted versions/unrelated users. | Pending |
+| CURRENT and references | Use actual returned Vault locator, CURRENT for normal reads and exact candidates for writes; no invented OCID, LATEST or historical DB fallback. | Pending |
+| Original window | Persist request/audit/notices/due work before release; lost response and transient read failure preserve first-attempt+4h, joining requests never extend, unexpected version blocks. | Pending |
+| Independent authority | Qualify automation context, exact recovery identity/assignments and MFA/CIDR controls. Stale/denied/incomplete facts are not readiness; no recovery signer fallback. | Pending |
+| Coupled rotation | Stage recoverably, change only bound child user, independently verify candidate, conditionally promote CURRENT and read back; unknown effects never permit blind reset. | Pending |
+| Lifecycle and restore | Exercise concurrency, requester departure, target/connection replacement, busy child and paused worker; preserve original deadlines and D54 paused manual reconciliation. | Pending |
+| Notices and disclosure | Other-admin/owner/direct-manager attempt notices, admin failure notices, frozen roles/routing and environment checks; no secret in email/audit/log/cache/export; exceptional response is authenticated/no-store. | Pending |
+| Sign-in limits | Verify actual allowed-source sign-in/outside denial separately; rotation does not promise existing-session termination; preserve independent same-account manual recovery. | Pending |
+
+[WIP UI steps](../reference/recovery-password-access.md#current-dialog-and-future-main-only-manual-review)
+require future local qualification/publication and do not establish that milestone today.

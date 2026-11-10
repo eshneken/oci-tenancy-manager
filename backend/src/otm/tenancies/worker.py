@@ -40,8 +40,10 @@ class OrganizationLifecycleWorker:
         *,
         mail_policy_loader=None,
         notifications=None,
+        recovery_setup=None,
     ):
         self.engine, self.workspace, self.clock = engine, workspace, clock
+        self.recovery_setup = recovery_setup
         self.mail_policy_loader, self.notifications = mail_policy_loader, notifications
         self.policy_loader, self.facade = policy_loader, facade
 
@@ -172,12 +174,28 @@ class OrganizationLifecycleWorker:
                             raise ValueError("BASELINE_PIN_CHANGED")
                     except (ValueError, RuntimeError, OrganizationConflict):
                         raise LifecycleBlocked("TARGET_CHANGED") from None
-                if intent.onboarding_version in {1, 2, 3}:
+                if intent.onboarding_version in {1, 2, 3, 4}:
                     from otm.tenancies.onboarding import advance
 
-                    if not advance(connection, row, intent, self.facade, at):
+                    if not advance(
+                        connection, row, intent, self.facade, at, recovery_setup=self.recovery_setup
+                    ):
                         self._stage_email(connection, identifier, at)
                         return
+                from otm.tenancies.recovery_password_lifecycle import require_termination_ready
+
+                try:
+                    require_termination_ready(
+                        connection,
+                        self.workspace,
+                        (
+                            item.tenancy_id
+                            for item in intent.associations
+                            if item.action == "delete"
+                        ),
+                    )
+                except OrganizationConflict:
+                    raise LifecycleBlocked("RECOVERY_PASSWORD_ROTATION_REQUIRED") from None
                 if any(item.removes_identity for item in intent.associations):
                     # An attempted identity write stays uncertain until independent readback passes.
                     connection.execute(
@@ -541,10 +559,19 @@ class OrganizationLifecycleWorker:
         from otm.tenancies.membership_access import validate_removals
 
         validate_removals(intent, completion)
+        from otm.tenancies.recovery_password_lifecycle import retire_terminated_credentials
+
         if intent.whole_tenancy_deletion:
             from otm.tenancies.deletion import publish_deletion
 
-            return publish_deletion(connection, state, intent, completion, identifier, at)
+            result = publish_deletion(connection, state, intent, completion, identifier, at)
+            retire_terminated_credentials(
+                connection,
+                self.workspace,
+                (item.tenancy_id for item in intent.associations if item.action == "delete"),
+                at,
+            )
+            return result
         expected = {
             item.new_association_id: (item.tenancy_ocid, item.recipient_person_id)
             for item in intent.associations
@@ -753,4 +780,10 @@ class OrganizationLifecycleWorker:
                 "operation_id": str(identifier),
                 "provider_mode": "simulated",
             },
+        )
+        retire_terminated_credentials(
+            connection,
+            self.workspace,
+            (item.tenancy_id for item in intent.associations if item.action == "delete"),
+            at,
         )

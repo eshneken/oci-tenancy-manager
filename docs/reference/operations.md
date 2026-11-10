@@ -347,3 +347,34 @@ bounded outcomes were recorded, including Missing or Unable to verify; it does n
 health. No retry/repair or actionable navigation count is added for these diagnostics. Return to the
 child's Required users context for a new explicit Check now. See the
 [full source/storage map](user-presence-checks.md).
+
+
+## Recorded required-user check sections — source follow-up
+
+**Local validation and main installation pass for this follow-up.** Its separate receipt records
+combined438+2 evidence, not a single clean440 rerun. The earlier password checkpoint retains its own scope. Existing operation/event reads now expose
+five closed historical check sections from hash-checked, validated `PresenceCheckEvidence`. No
+provider acquisition, repair, table, migration or raw JSON response is added.
+
+| Public field | Exact meaning |
+| --- | --- |
+| `OperationEventView.user_checks` | Tuple of safe `UserCheckSection` values on required-user outcome events only; other event kinds return an empty tuple |
+| `UserCheckSection.anchor` | One of automation-presence, automation-assignment, recovery-presence, recovery-assignment, recovery-policy |
+| `checked_at` | That particular captured observation’s time; null for omitted legacy checks, never fabricated from the event/request/retrieval time |
+| `facts` | Closed `UserCheckFact` values; no binding IDs, provider contexts, raw lists, CIDRs, private references or credentials |
+| Fact `label` | Presence, Administrators group, Domain administrator role, Console MFA exemption, Approved-network restriction |
+| Fact `state` | not_checked, present, missing, unknown, verified, drift; displayed as Not checked, Present, Missing, Unable to verify, Verified in simulation or Drift detected |
+
+The page’s **Recorded user check results** uses the latest included event carrying these sections
+within the existing bounded event history. Each named section displays its own date and safe facts.
+Old evidence that omitted assignments/policy explicitly shows Not checked with no invented date.
+These are the operation’s historical observations, not current head/freshness/readiness decisions.
+Opening the page cannot refresh or repair anything.
+
+Required-user footer links use `/operations/{operation UUID}#{purpose}-{kind}`. Exact anchors are
+`automation-presence`, `automation-assignment`, `recovery-presence`, `recovery-assignment` and
+`recovery-policy`. The matching loaded section receives scroll/focus; missing operation references
+remain plain dates. Malformed evidence still fails closed through the existing directory boundary.
+The new public fields are derived from retained audit evidence, not new persisted state.
+
+[Follow-up validation/install status](../history/recovery-password-checkpoint-2026-11-09.md#access-panel-and-recorded-results-follow-up).

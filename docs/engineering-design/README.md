@@ -76,3 +76,5 @@ Compact create/import help: [Collapsed OCI operator checklist](../reference/tena
 Owner retention, verified identity removal and manual cleanup: [explicit former-owner disposition](../reference/organization-workflows.md#explicit-former-owner-disposition--7-november-2026).
 
 Confirmed required-user email: [current incident/routing/storage contract](../reference/required-user-alerts.md).
+
+Implemented source: [recovery-password custody/disclosure/rotation subset](../reference/recovery-password-access.md). Migration0027 adds three tables; the [checkpoint receipt](../history/recovery-password-checkpoint-2026-11-09.md) records qualification and saved-app status. Main8443 remains the sole local review environment.

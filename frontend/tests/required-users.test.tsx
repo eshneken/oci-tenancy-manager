@@ -20,6 +20,7 @@ const directory: RequiredUsersDirectory = {
 
 // Each case owns its cache; no data is borrowed from the operator's saved workspace.
 function mount(value: RequiredUsersDirectory | Promise<RequiredUsersDirectory> = directory) {
+  vi.spyOn(api,"administratorAccess").mockResolvedValue({tenancy_id:id,tenancy_name:"Example tenancy",state:"not_prepared",available:false,provider_mode:"simulated"});
   const read = vi.spyOn(api, "requiredUsers").mockImplementation(() => Promise.resolve(value));
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const expired = vi.fn(), navigate = vi.fn();
@@ -31,6 +32,9 @@ function mount(value: RequiredUsersDirectory | Promise<RequiredUsersDirectory> =
 it("shows both identities and contextual setup links", async () => {
   const c = mount();
   await screen.findByText("otm-automation");
+  const access=screen.getByRole("region",{name:"Administrator access"});
+  expect(within(access).getByRole("button",{name:"Request password"})).toBeInTheDocument();
+  expect(access.closest("li")).toBe(screen.getByRole("heading",{name:"Automation user"}).closest("li"));
   expect(screen.getAllByText("Recorded", { exact: true })).toHaveLength(2);
   expect(screen.getAllByText("Not checked", { exact: true })).toHaveLength(9);
   expect(screen.queryByText(/healthy|verified|missing/i)).not.toBeInTheDocument();
@@ -136,7 +140,7 @@ it("shows independent current and failed account observations", async()=>{
   expect(screen.getAllByText("Permissions")).toHaveLength(1);
   expect(screen.getAllByText("Not checked",{exact:true})).toHaveLength(7);
   await userEvent.click(screen.getAllByRole("link",{name:/^View presence check, /})[0]);
-  expect(c.navigate).toHaveBeenCalledWith("/operations/"+checkId);
+  expect(c.navigate).toHaveBeenCalledWith("/operations/"+checkId+"#automation-presence");
   c.read.mockResolvedValue({...present,users:present.users.map(u=>({...u,presence:{...u.presence!,state:"unknown"}})) as RequiredUsersDirectory["users"]});
   await c.client.invalidateQueries({queryKey:["tenancies","required-users",id]});
   await waitFor(()=>expect(screen.getAllByText("Unable to verify")).toHaveLength(2));
@@ -282,7 +286,7 @@ it("shows recovery MFA drift beside verified network controls and present users"
   expect(within(card).getByText("Approved-network restriction")).toBeVisible();
   expect(within(card).getByText("Verified in simulation")).toBeVisible();
   await userEvent.click(within(card).getByRole("link",{name:/^View policy check, /}));
-  expect(c.navigate).toHaveBeenCalledWith("/operations/"+checkId);
+  expect(c.navigate).toHaveBeenCalledWith("/operations/"+checkId+"#recovery-policy");
   c.client.clear();
 });
 
@@ -311,7 +315,7 @@ it.each(["verified","missing","unknown"] as const)("shows automation assignment 
   expect(card.getByText("Administrators group")).toBeInTheDocument();
   expect(card.getByText("Domain administrator role")).toBeInTheDocument();
   expect(card.getAllByText(state === "verified" ? "Verified in simulation" : state === "missing" ? "Missing or disabled" : "Unable to verify")).toHaveLength(2);
-  expect(card.getByRole("link",{name:/^View assignment check, /})).toHaveAttribute("href","/operations/"+id);
+  expect(card.getByRole("link",{name:/^View assignment check, /})).toHaveAttribute("href","/operations/"+id+"#automation-assignment");
 });
 
 // Expired assignment evidence remains dated and neutral even when the last observation passed.
@@ -333,15 +337,15 @@ it("groups date-only provenance below badges with the exact check links", async 
   expect(assignmentLink).toHaveTextContent(/^Nov 10, 2026$/);
   expect(assignmentLink.querySelector("time")).toHaveAttribute("datetime","2026-11-10T00:10:00Z");
   expect(assignmentLink).toHaveAttribute("title",expect.stringContaining("UTC"));
-  expect(assignmentLink).toHaveAttribute("href","/operations/"+assignment);
-  expect(policyLink).toHaveAttribute("href","/operations/"+policy);
+  expect(assignmentLink).toHaveAttribute("href","/operations/"+assignment+"#automation-assignment");
+  expect(policyLink).toHaveAttribute("href","/operations/"+policy+"#recovery-policy");
   for(const link of [...presence,assignmentLink,policyLink]){
     const card=link.closest("li")!,footer=card.querySelector(".required-user-checks")!,facts=card.querySelector(".required-user-facts")!;
     expect(facts.compareDocumentPosition(footer)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(footer.textContent).not.toMatch(/\d+:\d+/);
   }
   await userEvent.click(assignmentLink);
-  expect(c.navigate).toHaveBeenCalledWith("/operations/"+assignment);
+  expect(c.navigate).toHaveBeenCalledWith("/operations/"+assignment+"#automation-assignment");
 });
 
 // A legacy dated result without a check reference remains readable without inventing a destination.
@@ -371,6 +375,6 @@ it.each([
   await userEvent.click(disclosure);
   expect(card.getByText("Administrators group")).toBeVisible();
   expect(card.getByText("Domain administrator role")).toBeVisible();
-  if(group!=="not_checked")expect(card.getByRole("link",{name:/^View assignment check, /})).toHaveAttribute("href","/operations/"+id);
+  if(group!=="not_checked")expect(card.getByRole("link",{name:/^View assignment check, /})).toHaveAttribute("href","/operations/"+id+"#recovery-assignment");
   c.client.clear();
 });

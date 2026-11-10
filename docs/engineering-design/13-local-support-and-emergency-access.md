@@ -204,3 +204,12 @@ credential/grant/audit evidence. Do not request LATEST or an old DB version for 
 A CURRENT change during an outstanding exposure window requires reconciliation, not a reset timer.
 Unknown/in-progress rotations still block disclosure until the coupled child/Vault outcome is known.
 API signing keys retain their fingerprint/version contract. See [the simple restore procedure](17-recovery-and-release.md).
+
+
+## Implemented source subset — 9 November 2026
+
+The [implemented-source reference](../reference/recovery-password-access.md) maps the current version4
+onboarding handoff, three-table custody/window subset, CURRENT retrieval and system rotation. It is
+an implemented local subset; [qualification and saved-app status](../history/recovery-password-checkpoint-2026-11-09.md) are separate. Broader proposed fields/screens in this chapter
+are not proof of implementation. Existing accepted versions and legacy registrations remain unchanged;
+there is no automatic custody backfill, new local instance or live OCI/Vault capability.

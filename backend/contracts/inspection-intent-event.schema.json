@@ -1435,7 +1435,8 @@
               "enum": [
                 1,
                 2,
-                3
+                3,
+                4
               ],
               "type": "integer"
             },
@@ -1696,6 +1697,39 @@
       "title": "OverrideValues",
       "type": "object"
     },
+    "PasswordLocation": {
+      "additionalProperties": false,
+      "properties": {
+        "credential_id": {
+          "format": "uuid",
+          "title": "Credential Id",
+          "type": "string"
+        },
+        "secret_reference": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secret Reference"
+        },
+        "target": {
+          "$ref": "#/$defs/RequiredUserTarget"
+        }
+      },
+      "required": [
+        "credential_id",
+        "target"
+      ],
+      "title": "PasswordLocation",
+      "type": "object"
+    },
     "PresenceCheckIntent": {
       "additionalProperties": false,
       "properties": {
@@ -1914,6 +1948,102 @@
         "expires_at"
       ],
       "title": "RecoveryNetworkIntent",
+      "type": "object"
+    },
+    "RecoveryPasswordIntent": {
+      "additionalProperties": false,
+      "properties": {
+        "contract_version": {
+          "const": "recovery-password-1",
+          "default": "recovery-password-1",
+          "title": "Contract Version",
+          "type": "string"
+        },
+        "credential_id": {
+          "format": "uuid",
+          "title": "Credential Id",
+          "type": "string"
+        },
+        "due_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Due At"
+        },
+        "expected_current": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expected Current"
+        },
+        "exposure_generation": {
+          "minimum": 0,
+          "title": "Exposure Generation",
+          "type": "integer"
+        },
+        "generation": {
+          "minimum": 1,
+          "title": "Generation",
+          "type": "integer"
+        },
+        "kind": {
+          "const": "recovery_password",
+          "default": "recovery_password",
+          "title": "Kind",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/$defs/PasswordLocation"
+        },
+        "onboarding_operation_id": {
+          "format": "uuid",
+          "title": "Onboarding Operation Id",
+          "type": "string"
+        },
+        "phase": {
+          "enum": [
+            "setup",
+            "rotation"
+          ],
+          "title": "Phase",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/ConfigurationOperationTarget"
+        },
+        "workspace_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Workspace Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "phase",
+        "credential_id",
+        "generation",
+        "location",
+        "target",
+        "onboarding_operation_id",
+        "exposure_generation"
+      ],
+      "title": "RecoveryPasswordIntent",
       "type": "object"
     },
     "RequiredUserTarget": {
@@ -2207,6 +2337,9 @@
         },
         {
           "$ref": "#/$defs/RecoveryNetworkIntent"
+        },
+        {
+          "$ref": "#/$defs/RecoveryPasswordIntent"
         }
       ],
       "title": "Intent"

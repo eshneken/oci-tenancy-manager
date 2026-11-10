@@ -64,6 +64,9 @@ test("repair owned recovery networks through the real API and native worker",asy
  await expect(recovery.getByText(/Approved networks verified in simulation/)).toBeVisible({timeout:20000});
  await expect(recovery.getByText("Policy drift",{exact:true})).toHaveCount(0,{timeout:20000});
  await expect(recovery.getByRole("button",{name:"Repair approved networks",exact:true})).toHaveCount(0);
+ // Wait for the independent follow-up user check before discarding the component's progress state.
+ // A completed repair operation alone is not proof that the stored check has been refreshed.
+ await expect(recovery.locator(":scope > .required-user-facts").getByText("Verified in simulation",{exact:true})).toHaveCount(2,{timeout:20000});
  await page.reload();
  await expect(recovery.getByText("Policy drift",{exact:true})).toHaveCount(0);
  await expect(recovery.locator(":scope > .required-user-facts").getByText("Verified in simulation",{exact:true})).toHaveCount(2);

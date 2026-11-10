@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "./api";
 import { followLink } from "./navigation";
 import type { AdministratorAccessView } from "./contracts";
+import {RecoveryAccess} from "./RecoveryAccess";
 import {RecoveryNetworkRepair} from "./RecoveryNetworkRepair";
 
 const purposes = { automation: "Automation user", recovery: "Recovery user" };
@@ -29,10 +30,10 @@ function AssignmentFacts({access}:{access?:AdministratorAccessView}) {
 }
 
 // Keep dated provenance compact while preserving the full UTC instant and exact operation target.
-function CheckDate({label,kind,at,operationId,navigate}:{label:string;kind:string;at:string;operationId?:string|null;navigate:(path:string)=>void}) {
+function CheckDate({label,kind,at,operationId,navigate,purpose}:{label:string;kind:string;purpose:string;at:string;operationId?:string|null;navigate:(path:string)=>void}) {
   const date=new Date(at).toLocaleDateString("en-US",{timeZone:"UTC",month:"short",day:"numeric",year:"numeric"});
   const full=new Date(at).toLocaleString("en-US",{timeZone:"UTC",timeZoneName:"short"});
-  const href=operationId?"/operations/"+encodeURIComponent(operationId):null;
+  const href=operationId?"/operations/"+encodeURIComponent(operationId)+"#"+purpose+"-"+kind:null;
   return <div><dt>{label} (UTC)</dt><dd>{href?<a href={href} aria-label={`View ${kind} check, ${date}`} title={full} onClick={event=>followLink(event,href,navigate)}><time dateTime={at}>{date}</time></a>:<time dateTime={at} title={full}>{date}</time>}</dd></div>;
 }
 
@@ -129,7 +130,7 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
           const consolePolicy = data.recovery_console;
           const administrator = user.administrator_access;
           const label = presence.stale ? "Check out of date" : presenceNames[presence.state];
-          return <li key={user.purpose} className="required-user-card">
+          return <li key={user.purpose} className="required-user-column"><section className="required-user-card">
           <h3>{purposes[user.purpose]}</h3>
           <dl className={"required-user-facts"+(user.purpose === "recovery" ? " required-recovery-facts" : "")}>
             <div className="required-user-fact-wide"><dt>Username</dt><dd>{user.identity?.user_name ?? "Not recorded"}</dd></div>
@@ -147,9 +148,9 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
 
           </dl>
           {(presence.checked_at || administrator?.checked_at || (user.purpose === "recovery" && consolePolicy?.checked_at)) && <dl className="required-user-checks">
-            {administrator?.checked_at && <CheckDate label="Assignments checked" kind="assignment" at={administrator.checked_at} operationId={administrator.operation_id} navigate={navigate}/>}
-            {presence.checked_at && <CheckDate label={presence.state === "unknown" ? "Presence last attempt" : "Presence checked"} kind="presence" at={presence.checked_at} operationId={presence.operation_id} navigate={navigate}/>}
-            {user.purpose === "recovery" && consolePolicy?.checked_at && <CheckDate label="Policy checked" kind="policy" at={consolePolicy.checked_at} operationId={consolePolicy.operation_id} navigate={navigate}/>}
+            {administrator?.checked_at && <CheckDate purpose={user.purpose} label="Assignments checked" kind="assignment" at={administrator.checked_at} operationId={administrator.operation_id} navigate={navigate}/>}
+            {presence.checked_at && <CheckDate purpose={user.purpose} label={presence.state === "unknown" ? "Presence last attempt" : "Presence checked"} kind="presence" at={presence.checked_at} operationId={presence.operation_id} navigate={navigate}/>}
+            {user.purpose === "recovery" && consolePolicy?.checked_at && <CheckDate purpose={user.purpose} label="Policy checked" kind="policy" at={consolePolicy.checked_at} operationId={consolePolicy.operation_id} navigate={navigate}/>}
           </dl>}
           {user.purpose === "recovery" && <RecoveryNetworkRepair key={tenancyId} tenancyId={tenancyId} eligible={Boolean(data.check_available&&!checking&&presence.state==="present"&&!presence.stale&&consolePolicy?.state==="drift"&&consolePolicy.mfa_exemption==="verified"&&consolePolicy.network_boundary==="drift")} policy={consolePolicy} expired={expired} navigate={navigate}/>}
           {user.identity && <details className="required-user-details">
@@ -164,6 +165,8 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
               <div><dt>Source</dt><dd><a href={"/operations/" + user.identity.source_operation_id} onClick={event => followLink(event, "/operations/" + user.identity!.source_operation_id, navigate)}>View setup operation</a></dd></div>
             </dl>
           </details>}
+          </section>
+          {user.purpose === "automation" && <RecoveryAccess key={"password-"+tenancyId} tenancyId={tenancyId} checksRevision={JSON.stringify(data)} expired={expired} navigate={navigate}/>}
         </li>;})}
       </ul>
     </>}

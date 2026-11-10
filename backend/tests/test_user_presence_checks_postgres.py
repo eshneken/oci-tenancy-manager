@@ -151,6 +151,13 @@ def test_admission_read_publication_and_directory(presence_case):
         and detail.operation.result_tenancy_id == c.child.id
     )
     assert detail.steps[0].safe_code == "USER_PRESENCE_CHECK_COMPLETE"
+    recorded = next(event for event in detail.events if event.kind == "required_user_check_outcome")
+    assert len(recorded.user_checks) == 5
+    assert recorded.user_checks[0].anchor == "automation-presence"
+    assert recorded.user_checks[0].facts[0].state == "present"
+    assert recorded.user_checks[-1].anchor == "recovery-policy"
+    assert "context" not in recorded.model_dump_json()
+
     history = SqlAuditDirectory(c.engine).directory(
         c.policy.workspace_id, AuditQuery(query=str(response.operation_id))
     )

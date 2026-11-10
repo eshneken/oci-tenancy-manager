@@ -121,6 +121,41 @@ def run_worker(*, once=False):
         def organization_policy():
             return load_sandbox(path, policy.workspace_id)
 
+        password_setup = None
+        if settings.recovery_console is not None:
+            from otm.operations.runner import register_recovery_password_task
+            from otm.providers.recovery_password_simulator import SimulatedRecoveryPasswords
+            from otm.storage.enqueue import (
+                ORGANIZATION_TASK,
+                RECOVERY_PASSWORD_TASK,
+                InspectionEnqueuer,
+            )
+            from otm.tenancies.recovery_password_setup import RecoveryPasswordSetup
+            from otm.tenancies.recovery_password_worker import RecoveryPasswordWorker
+
+            if settings.environment != "local":
+                raise ValueError("LOCAL_PASSWORD_SIMULATOR_REQUIRES_LOCAL")
+            passwords = SimulatedRecoveryPasswords(
+                Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "recovery-passwords",
+            )
+            password_queue = InspectionEnqueuer(queue=queue, task=RECOVERY_PASSWORD_TASK)
+            password_setup = RecoveryPasswordSetup(password_queue)
+            register_recovery_password_task(
+                native,
+                RecoveryPasswordWorker(
+                    engine,
+                    policy.workspace_id,
+                    clock,
+                    organization_policy,
+                    passwords,
+                    passwords,
+                    password_queue,
+                    InspectionEnqueuer(queue=queue, task=ORGANIZATION_TASK),
+                    notifier=notifier,
+                ),
+                queue,
+            )
+
         register_organization_task(
             native,
             OrganizationLifecycleWorker(
@@ -135,6 +170,7 @@ def run_worker(*, once=False):
                 ),
                 mail_policy_loader=mail_policy,
                 notifications=notifier,
+                recovery_setup=password_setup,
             ),
             queue,
         )

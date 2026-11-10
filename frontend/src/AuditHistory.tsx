@@ -37,7 +37,7 @@ function eventLabel(kind: AuditEntry["kind"]) {
     baseline_draft_saved: "Baseline draft saved",
     baseline_published: "Baseline published",
     baseline_default_changed: "Baseline default changed",
-    operation_intent: "Operation intent recorded",
+    recovery_password_disclosed:"Recovery password requested",recovery_password_outcome:"Recovery password outcome",operation_intent: "Operation intent recorded",
     inspection_dispatch: "Inspection dispatched",
     inspection_outcome: "Inspection outcome",
     administrator_revoked: "Administrator access revoked",

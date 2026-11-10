@@ -33,6 +33,7 @@ const labels: Record<Action, string> = {
   cancel_simulation: "Cancel local simulation",
 };
 const guidance: Record<string, string> = {
+  RECOVERY_PASSWORD_ROTATION_REQUIRED:"Termination is blocked while recovery access or password reconciliation is outstanding. Review Administrator access on the tenancy and its password operation before retrying.",
   DESTRUCTIVE_CONFIRMATION_REQUIRED: "Review the action and acknowledge its consequences before continuing.",
   SIMULATION_ALREADY_FINISHED:
     "This simulation has already finished or changed. Reload the preview before making another decision.",

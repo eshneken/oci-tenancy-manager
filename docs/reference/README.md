@@ -68,3 +68,7 @@ and [presence checks](user-presence-checks.md#retained-results-after-membership-
 - [Repair approved recovery networks](recovery-network-repair.md): exact conditional perimeter update, consent, private evidence and manual steps; local qualification/main publication pass, live OCI pending.
 
 - [Recovery-network repair qualification](../history/recovery-network-repair-checkpoint-2026-11-09.md): final local gates and main-only preservation.
+
+- [Recovery-password custody and original-window rotation](recovery-password-access.md) — implemented source subset; actual fields and pending live boundaries; checkpoint receipt records qualification/install status.
+
+Current source [Operations check-section mapping](operations.md#recorded-required-user-check-sections--source-follow-up) and [access mini-panel](required-users-screen.md#access-mini-panel-and-exact-check-destinations--source-follow-up) have separately recorded combined follow-up validation and preserved main installation.

@@ -212,3 +212,65 @@ def test_attention_count_has_independent_scoped_predicate(directory_case):
     assert ["onboarding_handoff", "onboarding_review"] in predicate.params.values()
     assert "pending_operation_id" in str(predicate) and "EXISTS" in str(predicate)
     assert "missing" not in predicate.params.values()
+
+
+# Historical sections use recorded outcomes; absent legacy checks remain unchecked.
+@pytest.mark.parametrize("extended", [False, True])
+def test_required_user_event_sections(directory_case, extended):
+    from test_user_presence_check_units import case
+
+    from otm.providers.administrator_access import AdministratorCheck, AdministratorResult
+    from otm.providers.recovery_console import RecoveryConsoleCheck, RecoveryConsoleResult
+    from otm.tenancies.presence_contracts import PresenceCheckEvidence
+
+    c = case()
+    evidence = c.evidence
+    if extended:
+        assignment = AdministratorCheck(
+            context=c.results[0].context,
+            target=c.results[0].target,
+            checked_at=evidence.checked_at,
+            result=AdministratorResult(group="missing", domain_role="verified"),
+        )
+        policy = RecoveryConsoleCheck(
+            context=c.results[1].context,
+            target=c.results[1].target,
+            checked_at=evidence.checked_at,
+            result=RecoveryConsoleResult(
+                state="unknown",
+                mfa_exemption="unknown",
+                network_boundary="unknown",
+                desired_fingerprint="a" * 64,
+                safe_code="RECOVERY_CONSOLE_UNVERIFIED",
+            ),
+        )
+        evidence = PresenceCheckEvidence.model_validate(
+            evidence.model_copy(
+                update={
+                    "administrator_access": assignment,
+                    "recovery_administrator_access": assignment.model_copy(
+                        update={"context": c.results[1].context, "target": c.results[1].target}
+                    ),
+                    "recovery_console": policy,
+                }
+            ).model_dump()
+        )
+    data = evidence.model_dump(mode="json")
+    row = dict(
+        kind="required_user_check_outcome", at=NOW, data=data, data_hash=canonical_hash(data)
+    )
+    result = directory_case.store.event(row)
+    assert [section.anchor for section in result.user_checks] == [
+        "automation-presence",
+        "automation-assignment",
+        "recovery-presence",
+        "recovery-assignment",
+        "recovery-policy",
+    ]
+    assert result.user_checks[0].facts[0].state == "present"
+    assert result.user_checks[1].facts[0].state == ("missing" if extended else "not_checked")
+    assert result.user_checks[-1].facts[0].state == ("unknown" if extended else "not_checked")
+    assert result.user_checks[-1].checked_at == (evidence.checked_at if extended else None)
+    assert "context" not in result.model_dump_json() and "binding" not in result.model_dump_json()
+    with pytest.raises(ValueError, match="INVALID_OPERATION_EVIDENCE"):
+        directory_case.store.event({**row, "data_hash": "0" * 64})

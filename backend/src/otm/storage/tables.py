@@ -55,7 +55,7 @@ operation = Table(
     ),
     CheckConstraint(
         "kind IN ('inspect_import','organization_action"
-        "','configuration_update','configuration_check','cost_collection','required_user_check','recovery_network_repair')",
+        "','configuration_update','configuration_check','cost_collection','required_user_check','recovery_network_repair','recovery_password')",
         name="ck_operation_kind",
     ),
     CheckConstraint(
@@ -108,7 +108,7 @@ audit_event = Table(
         "((kind='operation_intent' AND intent_revision IS NOT NULL AND intent_revision>=1) "
         "OR (kind IN ('inspection_dispatch','inspection_outcome','organization_action_out"
         "come','onboarding_action','onboarding_outcome','configuration_outcome',"
-        "'configuration_retry','configuration_check_outcome','cost_collection_outcome','required_user_check_outcome','recovery_network_outcome','operation_responsibility_changed',"
+        "'configuration_retry','configuration_check_outcome','cost_collection_outcome','required_user_check_outcome','recovery_network_outcome','recovery_password_outcome','recovery_password_disclosed','operation_responsibility_changed',"
         "'email_delivery') "
         "AND intent_revision IS NULL))) "
         "OR (kind IN ('administrator_revoked','administrator_bootstrapped',"
@@ -181,14 +181,15 @@ operation_step = Table(
         "OR (command_kind='onboarding' AND step_key IN ('handoff','inspect_bootstrap',"
         "'establish_automation','verify_automation','configure_required','verify_required',"
         "'retire_temporary','configure_baseline','verify_configured_access',"
-        "'capture_required_users')) "
+        "'capture_required_users','prepare_recovery_password')) "
         "OR (command_kind='configuration_update' AND step_key ~ '^configuration:[0-9a-f-]{36}$') "
         "OR (command_kind='configuration_check' AND ste"
         "p_key ~ '^configuration_check:[0-9a-f-]{36}$') "
         "OR (command_kind='cost_collection' AND step_key ~ '^cost:[0-9a-f-]{36}$') "
         "OR (command_kind='required_user_check' AND step_key ~ '^required_users:[0-9a-f-]{36}$') "
         "OR (command_kind='recovery_network_repair' "
-        "AND step_key ~ '^recovery_network:[0-9a-f-]{36}$')",
+        "AND step_key ~ '^recovery_network:[0-9a-f-]{36}$') OR "
+        "(command_kind='recovery_password' AND step_key ~ '^recovery_password:[0-9a-f-]{36}$')",
         name="ck_inspection_step_kind",
     ),
     CheckConstraint(
@@ -203,7 +204,7 @@ operation_step = Table(
         "ation_check','cost_collection','required_user_check') AND effect_knowledge='none') OR "
         "(command_kind IN ('organization_action','onboarding','configuration_update') "
         "AND effect_knowledge IN ('none','known')) OR "
-        "(command_kind='recovery_network_repair' "
+        "(command_kind IN ('recovery_network_repair','recovery_password') "
         "AND effect_knowledge IN ('none','known','unknown'))",
         name="ck_inspection_read_only",
     ),
@@ -1533,4 +1534,233 @@ Index(
     user_presence_check.c.tenancy_id,
     user_presence_check.c.context_hash,
     postgresql_where=user_presence_check.c.state.in_(("queued", "reading")),
+)
+
+
+# The recovery credential head owns one system rotation obligation, not a four-hour child lock.
+recovery_credential = Table(
+    "otm_credential",
+    metadata,
+    Column("id", Uuid(as_uuid=True), primary_key=True),
+    Column("workspace_id", String(256), nullable=False),
+    Column("tenancy_id", Uuid(as_uuid=True), nullable=False),
+    Column("principal_binding_id", Uuid(as_uuid=True), nullable=False),
+    Column("source_operation_id", Uuid(as_uuid=True), nullable=False),
+    Column("location", JSONB, nullable=False),
+    Column("location_hash", String(64), nullable=False),
+    Column("state", String(16), nullable=False),
+    Column("generation", Integer, nullable=False),
+    Column("current_version_id", Uuid(as_uuid=True)),
+    Column("staged_version_id", Uuid(as_uuid=True)),
+    Column("exposure_generation", Integer, nullable=False),
+    Column("first_disclosure_at", DateTime(timezone=True)),
+    Column("rotation_due_at", DateTime(timezone=True)),
+    Column("active_window_grant_id", Uuid(as_uuid=True)),
+    Column("rotation_operation_id", Uuid(as_uuid=True), nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
+    UniqueConstraint("workspace_id", "id"),
+    UniqueConstraint("workspace_id", "tenancy_id", "id"),
+    UniqueConstraint("workspace_id", "principal_binding_id"),
+    ForeignKeyConstraint(
+        ["workspace_id", "tenancy_id"], ["public.otm_tenancy.workspace_id", "public.otm_tenancy.id"]
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "tenancy_id", "principal_binding_id"],
+        [
+            "public.otm_managed_object_binding.workspace_id",
+            "public.otm_managed_object_binding.tenancy_id",
+            "public.otm_managed_object_binding.id",
+        ],
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "source_operation_id"],
+        ["public.otm_operation.workspace_id", "public.otm_operation.id"],
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "rotation_operation_id"],
+        ["public.otm_operation.workspace_id", "public.otm_operation.id"],
+        deferrable=True,
+        initially="DEFERRED",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "id", "current_version_id"],
+        [
+            "public.otm_credential_version.workspace_id",
+            "public.otm_credential_version.credential_id",
+            "public.otm_credential_version.id",
+        ],
+        name="fk_credential_current",
+        use_alter=True,
+        deferrable=True,
+        initially="DEFERRED",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "id", "staged_version_id"],
+        [
+            "public.otm_credential_version.workspace_id",
+            "public.otm_credential_version.credential_id",
+            "public.otm_credential_version.id",
+        ],
+        name="fk_credential_staged",
+        use_alter=True,
+        deferrable=True,
+        initially="DEFERRED",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "id", "active_window_grant_id"],
+        [
+            "public.otm_human_access_grant.workspace_id",
+            "public.otm_human_access_grant.credential_id",
+            "public.otm_human_access_grant.id",
+        ],
+        name="fk_credential_window",
+        use_alter=True,
+        deferrable=True,
+        initially="DEFERRED",
+    ),
+    CheckConstraint(
+        "state IN ('staging','usable','rotating','unknown','retired') AND "
+        "generation>=1 AND exposure_generation>=0 AND location_hash ~ "
+        "'^[0-9a-f]{64}$' AND jsonb_typeof(location)='object'",
+        name="ck_credential_state",
+    ),
+    CheckConstraint(
+        "(first_disclosure_at IS NULL AND rotation_due_at IS NULL AND "
+        "active_window_grant_id IS NULL) OR (first_disclosure_at IS NOT NULL AND "
+        "rotation_due_at IS NOT NULL AND "
+        "rotation_due_at=first_disclosure_at+interval '4 hours' AND "
+        "active_window_grant_id IS NOT NULL AND exposure_generation>=1)",
+        name="ck_credential_exposure",
+    ),
+)
+Index(
+    "ix_credential_due",
+    recovery_credential.c.workspace_id,
+    recovery_credential.c.rotation_due_at,
+    postgresql_where=recovery_credential.c.rotation_due_at.is_not(None),
+)
+
+recovery_credential.append_constraint(
+    CheckConstraint(
+        "state<>'usable' OR current_version_id IS NOT NULL", name="ck_credential_usable"
+    )
+)
+
+# Versions are immutable nonsecret evidence; CURRENT remains the custody selector for disclosure.
+recovery_version = Table(
+    "otm_credential_version",
+    metadata,
+    Column("id", Uuid(as_uuid=True), primary_key=True),
+    Column("workspace_id", String(256), nullable=False),
+    Column("credential_id", Uuid(as_uuid=True), nullable=False),
+    Column("version_number", Integer, nullable=False),
+    Column("reference", JSONB, nullable=False),
+    Column("reference_hash", String(64), nullable=False),
+    Column("created_operation_id", Uuid(as_uuid=True), nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    UniqueConstraint("workspace_id", "credential_id", "id"),
+    UniqueConstraint("workspace_id", "credential_id", "version_number"),
+    ForeignKeyConstraint(
+        ["workspace_id", "credential_id"],
+        ["public.otm_credential.workspace_id", "public.otm_credential.id"],
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "created_operation_id"],
+        ["public.otm_operation.workspace_id", "public.otm_operation.id"],
+    ),
+    CheckConstraint(
+        "version_number>=1 AND reference_hash ~ '^[0-9a-f]{64}$' AND "
+        "jsonb_typeof(reference)='object'",
+        name="ck_credential_version",
+    ),
+)
+
+# Each authorized disclosure attempt is append-only and retains its original shared window.
+recovery_grant = Table(
+    "otm_human_access_grant",
+    metadata,
+    Column("id", Uuid(as_uuid=True), primary_key=True),
+    Column("workspace_id", String(256), nullable=False),
+    Column("tenancy_id", Uuid(as_uuid=True), nullable=False),
+    Column("credential_id", Uuid(as_uuid=True), nullable=False),
+    Column("disclosed_version_id", Uuid(as_uuid=True), nullable=False),
+    Column("requesting_subject", String(256), nullable=False),
+    Column("requester_snapshot", JSONB, nullable=False),
+    Column("request_key", Uuid(as_uuid=True), nullable=False),
+    Column("payload_digest", String(64), nullable=False),
+    Column("accepted_operation_id", Uuid(as_uuid=True), nullable=False),
+    Column("window_root_grant_id", Uuid(as_uuid=True), nullable=False),
+    Column("exposure_generation", Integer, nullable=False),
+    Column("accepted_at", DateTime(timezone=True), nullable=False),
+    Column("first_disclosure_attempt_at", DateTime(timezone=True), nullable=False),
+    Column("due_at", DateTime(timezone=True), nullable=False),
+    UniqueConstraint("workspace_id", "credential_id", "id"),
+    UniqueConstraint("workspace_id", "requesting_subject", "request_key"),
+    ForeignKeyConstraint(
+        ["workspace_id", "tenancy_id", "credential_id"],
+        [
+            "public.otm_credential.workspace_id",
+            "public.otm_credential.tenancy_id",
+            "public.otm_credential.id",
+        ],
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "credential_id", "disclosed_version_id"],
+        [
+            "public.otm_credential_version.workspace_id",
+            "public.otm_credential_version.credential_id",
+            "public.otm_credential_version.id",
+        ],
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "credential_id", "window_root_grant_id"],
+        [
+            "public.otm_human_access_grant.workspace_id",
+            "public.otm_human_access_grant.credential_id",
+            "public.otm_human_access_grant.id",
+        ],
+        deferrable=True,
+        initially="DEFERRED",
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "accepted_operation_id"],
+        ["public.otm_operation.workspace_id", "public.otm_operation.id"],
+    ),
+    CheckConstraint(
+        "exposure_generation>=1 AND due_at=first_disclosure_attempt_at+interval "
+        "'4 hours' AND accepted_at>=first_disclosure_attempt_at AND "
+        "accepted_at<due_at AND payload_digest ~ '^[0-9a-f]{64}$' AND "
+        "jsonb_typeof(requester_snapshot)='object'",
+        name="ck_recovery_grant_window",
+    ),
+)
+Index(
+    "ix_recovery_grant_history",
+    recovery_grant.c.workspace_id,
+    recovery_grant.c.credential_id,
+    recovery_grant.c.accepted_at.desc(),
+)
+
+# A provider secret is never shared across credentials, including retained retired histories.
+Index(
+    "uq_credential_secret_reference",
+    recovery_credential.c.location["secret_reference"].astext,
+    unique=True,
+    postgresql_where=recovery_credential.c.location["secret_reference"].astext.is_not(None),
+)
+Index(
+    "uq_active_recovery_credential",
+    recovery_credential.c.workspace_id,
+    recovery_credential.c.tenancy_id,
+    unique=True,
+    postgresql_where=recovery_credential.c.state != "retired",
+)
+
+recovery_credential.append_constraint(
+    CheckConstraint(
+        "current_version_id IS NULL OR staged_version_id IS NULL OR "
+        "current_version_id<>staged_version_id",
+        name="ck_credential_distinct_candidate",
+    )
 )

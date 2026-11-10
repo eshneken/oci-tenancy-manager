@@ -10,6 +10,7 @@ from otm.storage.transaction import require_transaction
 
 INSPECTION_TASK = "otm.inspect_import"
 PRESENCE_TASK = "otm.required_user_check"
+RECOVERY_PASSWORD_TASK = "otm.recovery_password"  # nosec B105: fixed native task name, no credential
 RECOVERY_NETWORK_TASK = "otm.recovery_network_repair"
 COST_TASK = "otm.cost_collection"
 CONFIGURATION_CHECK_TASK = "otm.configuration_check"
@@ -31,6 +32,7 @@ class InspectionEnqueuer:
         if task not in {
             PRESENCE_TASK,
             RECOVERY_NETWORK_TASK,
+            RECOVERY_PASSWORD_TASK,
             COST_TASK,
             INSPECTION_TASK,
             ORGANIZATION_TASK,
@@ -55,6 +57,7 @@ class InspectionEnqueuer:
             allow_unknown=True,
             queue=self.queue,
             connection=raw,
+            **({"priority": 100} if self.task == RECOVERY_PASSWORD_TASK else {}),
             lock="operation:" + str(operation_id),
             # None means immediately eligible; host-derived zero ETAs can be ahead of DB time.
             schedule_in={"seconds": delay_seconds} if delay_seconds else None,

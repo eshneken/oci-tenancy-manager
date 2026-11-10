@@ -84,29 +84,20 @@ reservation; known outcomes release it. No new generic access-plan or credential
 
 ## Manual local checkpoint runbook
 
-Use a disposable synthetic test workspace and an explicitly configured simulator after the matching
-qualified UI snapshot is installed. Do not edit saved main/parallel profiles or their data to create
-a demonstration. The [final checkpoint receipt](../history/recovery-network-repair-checkpoint-2026-11-09.md) records the matched main8443 installation; parallel8444 remains preserved. Do not introduce artificial drift in the main preview.
+**Interactive recovery-network repair testing is deferred by the user until real OCI is available**
+and an actual approved policy difference can be introduced and repaired. Do not create another local
+instance or modify main settings/provider fixtures to manufacture drift. Main8443 is the only local
+application; the former8444 instance has been [retired](../how-to/parallel-local-instance.md).
 
-1. Create/import a simulated child with a valid private desired recovery-network configuration and
-   complete setup. Refresh user data and confirm both policy controls are verified in simulation.
-2. Have the operator apply a reviewed desired-settings change in that disposable environment,
-   preserving nonempty bounded approved ranges. No actual corporate CIDRs belong in instructions,
-   commands, screenshots or repository fixtures. This step changes desired state, not provider state.
-3. Select **Refresh user data**. Independent retained provider facts should show network-only drift,
-   while the exact-user MFA exemption and recovery presence remain verified.
-4. Open **Repair approved networks**. Inspect the exact tenancy, safe counts and revisions; check
-   the acknowledgment, then select **Confirm network repair**.
-5. Follow the operation. On known verified completion, inspect the separately refreshed policy
-   dates and results; refresh manually if the follow-up read could not start. Reload and verify that
-   dated evidence persists. Configuration baselines and unrelated identities/rules remain unchanged.
-6. Exercise blocked, stale, conditional-conflict and unknown-effect cases through disposable tests,
-   not a product fault-control panel. Unknown means stop and reconcile, never force another write.
+The complete430-case automated simulator qualification, independent responsive UI review and
+preserved main publication remain valid in the [final receipt](../history/recovery-network-repair-checkpoint-2026-11-09.md).
+This deferral concerns additional interactive qualification, not reversal of that automated evidence.
+A healthy saved child need not expose Repair, and refreshing a legacy record does not backfill policy.
 
-Native integration/browser runs, independent responsive UI review and preserved main publication
-pass in the [final receipt](../history/recovery-network-repair-checkpoint-2026-11-09.md). Live OCI ownership, conditional API,
-authority, propagation and sign-in cases remain pending in the manual manifest. Password custody,
-four-hour rotation, 30-day key retirement and broader repairs remain subsequent work.
+When an approved real OCI child becomes available, use the [pending live matrix](../how-to/real-oci-test-manifest.md#recovery-network-repair-qualification)
+for actual break/check/preview/acknowledgment/repair/readback testing. Actual ownership, conditional
+API authority, propagation and sign-in remain unqualified. No new local environment is required.
+Password custody, four-hour rotation,30-day key retirement and broader repairs remain subsequent work.
 
 
 ## Live API surface and remaining qualification

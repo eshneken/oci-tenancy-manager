@@ -41,3 +41,11 @@ condition = "AND"
 paths = ['''(^|/)scripts/publication-assets\.json$''']
 regexTarget = "line"
 regexes = ['''^\s*"docs/architecture/diagrams/production\-core\-access\-proposed\.svg":\s*"9ef7fe8a09d463cb94909092c49e1bc7cf64955bc9f6f0c930e2b7c09fa4dfe0"\s*,?\s*$''']
+
+[[allowlists]]
+description = "Independently reviewed recovery migration integrity digest"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''(^|/)backend/migrations/sql/manifest\.json$''']
+regexTarget = "line"
+regexes = ['''^\s*"0027-recovery-passwords\.sql":\s*"331aec3da0c8544d74c73349afc1eea528c22e4bee35ca899ad361c8fcff7c01"\s*,?\s*$''']

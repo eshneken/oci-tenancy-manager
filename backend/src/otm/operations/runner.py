@@ -114,3 +114,15 @@ def register_recovery_network_task(app, worker, queue):
         worker.run(UUID(operation_id))
 
     return repair_recovery_network
+
+
+# Password writes are a fixed reference-only native capability; no blind retries are enabled.
+def register_recovery_password_task(app, worker, queue):
+    from otm.storage.enqueue import RECOVERY_PASSWORD_TASK
+
+    # Existing operation/credential heads govern every delivery, including delayed system work.
+    @app.task(name=RECOVERY_PASSWORD_TASK, queue=queue, retry=False)
+    def recovery_password(operation_id):
+        worker.run(UUID(operation_id))
+
+    return recovery_password

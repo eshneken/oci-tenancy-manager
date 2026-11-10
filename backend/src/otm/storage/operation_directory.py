@@ -22,6 +22,8 @@ from otm.operations.views import (
     OperationQuery,
     OperationStepView,
     OperationSummary,
+    UserCheckFact,
+    UserCheckSection,
 )
 from otm.storage.read_snapshot import read_snapshot
 from otm.storage.tables import (
@@ -37,6 +39,61 @@ from otm.tenancies.labels import ACTION_LABELS
 from otm.tenancies.onboarding_contracts import OnboardingEvidence
 from otm.tenancies.presence_contracts import PresenceCheckEvidence
 from otm.tenancies.recovery_network_contracts import RecoveryNetworkEvidence
+from otm.tenancies.recovery_password_contracts import (
+    RecoveryDisclosureEvidence,
+    RecoveryPasswordEvidence,
+)
+
+
+# Reconstruct only the five historical check summaries from validated immutable event evidence.
+def user_check_sections(evidence):
+    sections = []
+    for observation, assignment in zip(
+        evidence.results,
+        (evidence.administrator_access, evidence.recovery_administrator_access),
+        strict=True,
+    ):
+        purpose = observation.target.purpose
+        sections.append(
+            UserCheckSection(
+                anchor=f"{purpose}-presence",
+                checked_at=observation.captured_at,
+                facts=(UserCheckFact(label="Presence", state=observation.state),),
+            )
+        )
+        sections.append(
+            UserCheckSection(
+                anchor=f"{purpose}-assignment",
+                checked_at=assignment.checked_at if assignment else None,
+                facts=tuple(
+                    UserCheckFact(
+                        label=label,
+                        state=getattr(assignment.result, key) if assignment else "not_checked",
+                    )
+                    for label, key in (
+                        ("Administrators group", "group"),
+                        ("Domain administrator role", "domain_role"),
+                    )
+                ),
+            )
+        )
+    policy = evidence.recovery_console
+    sections.append(
+        UserCheckSection(
+            anchor="recovery-policy",
+            checked_at=policy.checked_at if policy else None,
+            facts=tuple(
+                UserCheckFact(
+                    label=label, state=getattr(policy.result, key) if policy else "not_checked"
+                )
+                for label, key in (
+                    ("Console MFA exemption", "mfa_exemption"),
+                    ("Approved-network restriction", "network_boundary"),
+                )
+            ),
+        )
+    )
+    return tuple(sections)
 
 
 # Convert stored timestamps to UTC without substituting a retrieval time for missing evidence.
@@ -113,13 +170,20 @@ class SqlOperationDirectory:
                 "cost_collection",
                 "required_user_check",
                 "recovery_network_repair",
+                "recovery_password",
             }
             else None,
             guided_onboarding=frozen.intent.kind == "organization_action"
-            and frozen.intent.onboarding_version in {1, 2, 3},
+            and frozen.intent.onboarding_version in {1, 2, 3, 4},
             target_tenancy_ocid=frozen.intent.target.tenancy_ocid,
             title=ACTION_LABELS[frozen.intent.action]
             if frozen.intent.kind == "organization_action"
+            else (
+                "Prepare recovery password"
+                if frozen.intent.phase == "setup"
+                else "Rotate recovery password"
+            )
+            if frozen.intent.kind == "recovery_password"
             else "Repair approved recovery networks"
             if frozen.intent.kind == "recovery_network_repair"
             else "Check required users"
@@ -146,6 +210,7 @@ class SqlOperationDirectory:
                 "cost_collection",
                 "required_user_check",
                 "recovery_network_repair",
+                "recovery_password",
             }
             else None,
         )
@@ -164,7 +229,7 @@ class SqlOperationDirectory:
             .exists()
         )
         guided = and_(
-            audit_event.c.data["intent"]["onboarding_version"].astext.in_(("1", "2", "3")),
+            audit_event.c.data["intent"]["onboarding_version"].astext.in_(("1", "2", "3", "4")),
             or_(
                 operation.c.state == "needs_attention",
                 operation.c.wait_reason.in_(("onboarding_handoff", "onboarding_review")),
@@ -314,7 +379,9 @@ class SqlOperationDirectory:
     def step(self, row):
         outcome = (
             (
-                RecoveryNetworkEvidence
+                RecoveryPasswordEvidence
+                if row["command_kind"] == "recovery_password"
+                else RecoveryNetworkEvidence
                 if row["command_kind"] == "recovery_network_repair"
                 else PresenceCheckEvidence
                 if row["command_kind"] == "required_user_check"
@@ -345,13 +412,17 @@ class SqlOperationDirectory:
     def event(self, row):
         if canonical_hash(row["data"]) != row["data_hash"]:
             raise ValueError("INVALID_OPERATION_EVIDENCE")
+        if row["kind"] == "recovery_password_disclosed":
+            RecoveryDisclosureEvidence.model_validate_json(json.dumps(row["data"]))
         if row["kind"] == "email_delivery":
             NotificationEvidence.model_validate_json(json.dumps(row["data"]))
         if row["kind"] == "operation_responsibility_changed":
             ResponsibilityEvidence.model_validate_json(json.dumps(row["data"]))
         outcome = (
             (
-                RecoveryNetworkEvidence
+                RecoveryPasswordEvidence
+                if row["kind"] == "recovery_password_outcome"
+                else RecoveryNetworkEvidence
                 if row["kind"] == "recovery_network_outcome"
                 else PresenceCheckEvidence
                 if row["kind"] == "required_user_check_outcome"
@@ -377,6 +448,7 @@ class SqlOperationDirectory:
                 "cost_collection_outcome",
                 "required_user_check_outcome",
                 "recovery_network_outcome",
+                "recovery_password_outcome",
                 "configuration_retry",
                 "organization_action_outcome",
                 "onboarding_action",
@@ -385,5 +457,10 @@ class SqlOperationDirectory:
             else None
         )
         return OperationEventView(
-            kind=row["kind"], at=utc(row["at"]), safe_code=outcome.safe_code if outcome else None
+            kind=row["kind"],
+            at=utc(row["at"]),
+            safe_code=outcome.safe_code if outcome else None,
+            user_checks=user_check_sections(outcome)
+            if isinstance(outcome, PresenceCheckEvidence)
+            else (),
         )

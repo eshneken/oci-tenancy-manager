@@ -19,7 +19,9 @@
             "action_required",
             "terminal_failure",
             "cost_read_failed",
-            "required_user_missing"
+            "required_user_missing",
+            "recovery_password_requested",
+            "recovery_password_rotation_failed"
           ],
           "title": "Event",
           "type": "string"
@@ -186,7 +188,9 @@
             "configuration_check_outcome",
             "cost_collection_outcome",
             "required_user_check_outcome",
-            "recovery_network_outcome"
+            "recovery_network_outcome",
+            "recovery_password_outcome",
+            "recovery_password_disclosed"
           ],
           "title": "Kind",
           "type": "string"
@@ -203,6 +207,14 @@
             }
           ],
           "title": "Safe Code"
+        },
+        "user_checks": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/UserCheckSection"
+          },
+          "title": "User Checks",
+          "type": "array"
         }
       },
       "required": [
@@ -244,7 +256,7 @@
           "type": "string"
         },
         "step_key": {
-          "pattern": "^(inspect_target|apply_lifecycle|handoff|inspect_bootstrap|establish_automation|verify_automation|configure_required|verify_required|retire_temporary|configure_baseline|verify_configured_access|capture_required_users|configuration_check:[0-9a-f-]{36}|required_users:[0-9a-f-]{36}|recovery_network:[0-9a-f-]{36}|cost:[0-9a-f-]{36}|(remove_member_groups|delete_member_user):[0-9a-f-]{36}|configuration:[0-9a-f-]{36})$",
+          "pattern": "^(inspect_target|apply_lifecycle|handoff|inspect_bootstrap|establish_automation|verify_automation|configure_required|verify_required|retire_temporary|configure_baseline|verify_configured_access|capture_required_users|prepare_recovery_password|configuration_check:[0-9a-f-]{36}|required_users:[0-9a-f-]{36}|recovery_network:[0-9a-f-]{36}|recovery_password:[0-9a-f-]{36}|cost:[0-9a-f-]{36}|(remove_member_groups|delete_member_user):[0-9a-f-]{36}|configuration:[0-9a-f-]{36})$",
           "title": "Step Key",
           "type": "string"
         },
@@ -327,7 +339,8 @@
             "configuration_check",
             "cost_collection",
             "required_user_check",
-            "recovery_network_repair"
+            "recovery_network_repair",
+            "recovery_password"
           ],
           "title": "Kind",
           "type": "string"
@@ -469,6 +482,82 @@
         "target_tenancy_ocid"
       ],
       "title": "OperationSummary",
+      "type": "object"
+    },
+    "UserCheckFact": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "enum": [
+            "Presence",
+            "Administrators group",
+            "Domain administrator role",
+            "Console MFA exemption",
+            "Approved-network restriction"
+          ],
+          "title": "Label",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "not_checked",
+            "present",
+            "missing",
+            "unknown",
+            "verified",
+            "drift"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "state"
+      ],
+      "title": "UserCheckFact",
+      "type": "object"
+    },
+    "UserCheckSection": {
+      "additionalProperties": false,
+      "properties": {
+        "anchor": {
+          "enum": [
+            "automation-presence",
+            "automation-assignment",
+            "recovery-presence",
+            "recovery-assignment",
+            "recovery-policy"
+          ],
+          "title": "Anchor",
+          "type": "string"
+        },
+        "checked_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Checked At"
+        },
+        "facts": {
+          "items": {
+            "$ref": "#/$defs/UserCheckFact"
+          },
+          "title": "Facts",
+          "type": "array"
+        }
+      },
+      "required": [
+        "anchor",
+        "facts"
+      ],
+      "title": "UserCheckSection",
       "type": "object"
     }
   },

@@ -36,6 +36,10 @@ from otm.tenancies.contracts import OrganizationActionOutcome
 from otm.tenancies.onboarding_contracts import OnboardingEvidence
 from otm.tenancies.presence_contracts import PresenceCheckEvidence
 from otm.tenancies.recovery_network_contracts import RecoveryNetworkEvidence
+from otm.tenancies.recovery_password_contracts import (
+    RecoveryDisclosureEvidence,
+    RecoveryPasswordEvidence,
+)
 
 AUTHENTICATION = ("local_sign_in_succeeded", "local_sign_in_failed", "session_logged_out")
 ADMINISTRATION = (
@@ -55,6 +59,8 @@ OPERATIONS = (
     "cost_collection_outcome",
     "required_user_check_outcome",
     "recovery_network_outcome",
+    "recovery_password_outcome",
+    "recovery_password_disclosed",
     "cost_refresh_requested",
     "operation_intent",
     "inspection_dispatch",
@@ -79,6 +85,7 @@ def actor_expression():
     return case(
         (audit_event.c.kind == "required_user_check_outcome", "User presence worker"),
         (audit_event.c.kind == "recovery_network_outcome", "Recovery network worker"),
+        (audit_event.c.kind == "recovery_password_outcome", "Recovery password worker"),
         (audit_event.c.kind == "cost_collection_outcome", "Cost collection worker"),
         (audit_event.c.kind == "local_sign_in_failed", None),
         (
@@ -163,6 +170,15 @@ def entry(row):
     if kind == "cost_refresh_requested":
         receipt = CostRefreshReceipt.model_validate_json(json.dumps(row["data"]["receipt"]))
         summary = f"Cost refresh: {receipt.accepted_count} queued, {receipt.joined_count} joined"
+    if kind == "recovery_password_disclosed":
+        proof = RecoveryDisclosureEvidence.model_validate_json(json.dumps(row["data"]))
+        summary = (
+            "Authorized recovery-password disclosure attempt; original rotation due "
+            + proof.rotation_due_at.isoformat()
+        )
+    if kind == "recovery_password_outcome":
+        proof = RecoveryPasswordEvidence.model_validate_json(json.dumps(row["data"]))
+        summary = "Recovery password " + proof.phase + ": " + proof.state
     if kind == "recovery_network_outcome":
         proof = RecoveryNetworkEvidence.model_validate_json(json.dumps(row["data"]))
         summary = "Recovery network repair: " + proof.state
@@ -197,6 +213,13 @@ def entry(row):
         }:
             raise ValueError("INVALID_AUDIT_ACTOR")
         actor_name = "Email delivery worker"
+    elif kind == "recovery_password_outcome":
+        if row["actor_subject"] != "otm-worker:recovery-password" or row["actor_snapshot"] != {
+            "kind": "worker",
+            "subject": "recovery-password",
+        }:
+            raise ValueError("INVALID_AUDIT_ACTOR")
+        actor_name = "Recovery password worker"
     elif kind == "recovery_network_outcome":
         if row["actor_subject"] != "otm-worker:recovery-network" or row["actor_snapshot"] != {
             "kind": "worker",
@@ -275,7 +298,9 @@ def entry(row):
     )
     outcome = (
         (
-            RecoveryNetworkEvidence
+            RecoveryPasswordEvidence
+            if kind == "recovery_password_outcome"
+            else RecoveryNetworkEvidence
             if kind == "recovery_network_outcome"
             else PresenceCheckEvidence
             if kind == "required_user_check_outcome"
@@ -294,6 +319,7 @@ def entry(row):
             "inspection_outcome",
             "required_user_check_outcome",
             "recovery_network_outcome",
+            "recovery_password_outcome",
             "configuration_outcome",
             "configuration_retry",
             "organization_action_outcome",
@@ -373,6 +399,8 @@ def resource_context(connection, workspace, rows):
         wanted = set()
         if intent.kind in {"required_user_check", "recovery_network_repair"}:
             wanted = {intent.snapshot.tenancy_id}
+        elif intent.kind == "recovery_password":
+            wanted = {intent.location.target.tenancy_id}
         elif intent.kind in {"configuration_update", "configuration_check", "cost_collection"}:
             wanted = {
                 target.configuration.tenancy_id

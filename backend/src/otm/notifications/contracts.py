@@ -142,7 +142,12 @@ class NotificationSummary(Contract):
     id: UUID
     state: DeliveryState
     event: Literal[
-        "action_required", "terminal_failure", "cost_read_failed", "required_user_missing"
+        "action_required",
+        "terminal_failure",
+        "cost_read_failed",
+        "required_user_missing",
+        "recovery_password_requested",
+        "recovery_password_rotation_failed",
     ]
     recipient: Mailbox | None
     original_recipient: Mailbox | None
@@ -177,3 +182,45 @@ class NotificationEvidence(Contract):
     state: DeliveryState
     attempts: Annotated[int, Field(ge=0, le=3)]
     safe_code: Text | None = None
+
+
+# Password notices describe an authorized attempt or failure, never contain the secret itself.
+class RecoveryPasswordNotice(Contract):
+    contract_version: Literal["recovery-password-email-1"] = "recovery-password-email-1"
+    operation_id: UUID
+    tenancy_id: UUID
+    credential_id: UUID
+    grant_id: UUID | None
+    requester_subject: Text
+    organization_version_id: UUID
+    configuration_id: UUID
+    reasons: Annotated[tuple[RecipientReason, ...], Field(max_length=1024)]
+    routing_issues: tuple[
+        Literal["owner_unavailable", "manager_unavailable", "administrator_unavailable"], ...
+    ] = ()
+    original_recipient: Mailbox | None
+    delivery_recipient: Mailbox | None
+    route: EmailRoute
+    application_origin: HttpsOrigin | None
+    delivery_profile_hash: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")] | None
+    event: Literal["recovery_password_requested", "recovery_password_rotation_failed"]
+    first_disclosure_at: UtcInstant | None
+    rotation_due_at: UtcInstant | None
+    created_at: UtcInstant
+
+    # No designee recipient or empty invented delivery target can become an authorized notice.
+    @model_validator(mode="after")
+    def recovery_roles(self):
+        if (
+            any(reason.role == "designee" for reason in self.reasons)
+            or not self.reasons
+            and not self.routing_issues
+            or self.event == "recovery_password_requested"
+            and (
+                self.grant_id is None
+                or self.first_disclosure_at is None
+                or self.rotation_due_at is None
+            )
+        ):
+            raise ValueError("RECOVERY_PASSWORD_NOTICE_INVALID")
+        return self

@@ -492,6 +492,31 @@ def setup_database(root: Path, state: LocalState, project: Path) -> LocalState:
                 "UPDATE(state,attempt_id,attempt_number,started_at,checked_at,results,"
                 "evidence_event_id) ON public.otm_user_presence_check TO otm_local_worker"
             )
+            # Password setup admits its child operation atomically in the lifecycle transaction.
+            connection.exec_driver_sql("GRANT INSERT ON public.otm_operation TO otm_local_worker")
+            # Recovery grants/versions are append-only; only workers can stage verified custody.
+            connection.exec_driver_sql(
+                "GRANT SELECT ON public.otm_credential,public.otm_credential_version,"
+                "public.otm_human_access_grant TO otm_local_api,otm_local_worker"
+            )
+            connection.exec_driver_sql(
+                "GRANT INSERT ON public.otm_credential,public.otm_credential_version "
+                "TO otm_local_worker"
+            )
+            connection.exec_driver_sql(
+                "GRANT INSERT ON public.otm_human_access_grant TO otm_local_api"
+            )
+            connection.exec_driver_sql(
+                "GRANT UPDATE(state,exposure_generation,first_disclosure_at,rotation_due_at,"
+                "active_window_grant_id,rotation_operation_id,updated_at) "
+                "ON public.otm_credential TO otm_local_api"
+            )
+            connection.exec_driver_sql(
+                "GRANT "
+                "UPDATE(state,generation,current_version_id,staged_version_id,location,location_hash,"
+                "first_disclosure_at,rotation_due_at,active_window_grant_id,updated_at) "
+                "ON public.otm_credential TO otm_local_worker"
+            )
             from otm.organization.reviews import initialize_existing_reviews
 
             initialize_existing_reviews(connection)
@@ -561,6 +586,9 @@ def setup(project: Path, root: Path, port: int = 8443):
             .replace("https://localhost:8443", "https://localhost:" + str(port))
         )
         (root / "application.toml").write_text(content)
+    recovery_custody = root / "recovery-passwords"
+    recovery_custody.mkdir(mode=0o700, exist_ok=True)
+    DirectorySecrets(recovery_custody)
     custody = root / "mfa"
     custody.mkdir(mode=0o700, exist_ok=True)
     DirectorySecrets(custody)

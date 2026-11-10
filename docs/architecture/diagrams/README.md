@@ -38,3 +38,5 @@ immutable operation JSON. Physical ER relationships are unchanged; [the exact ad
 explains the new choice and legacy compatibility.
 
 Required-user alert incidents add [typed JSON evidence and outbox fields](../../reference/required-user-alerts.md#fields-and-persistence), without changing physical ER tables/relationships.
+
+- [Recovery-password source ER](recovery-passwords-implemented.mmd): migration0027 physical subset with three new tables; qualification/install status belongs to the separate password checkpoint receipt. Editable source only; no rendered export is claimed yet. [Field dictionary](../../reference/recovery-password-access.md#physical-field-dictionary).

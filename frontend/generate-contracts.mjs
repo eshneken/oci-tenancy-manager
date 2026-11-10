@@ -1,6 +1,7 @@
 import { compile } from "json-schema-to-typescript";
 import { readFile, writeFile } from "node:fs/promises";
 const names = [
+ "recovery-password-view", "recovery-password-request", "recovery-password-disclosure",
  "recovery-network-preview", "recovery-network-request",
  "required-users-directory", "presence-check-request",
  "cost-refresh-request", "cost-refresh-receipt", "cost-view",

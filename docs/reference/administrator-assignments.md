@@ -82,3 +82,9 @@ publication invalidates both assignment results. The compact recovery summary is
 when both assignments verify, Missing if either is absent/disabled, Unverified for incomplete
 proof, Not checked without evidence, and Out of date for retained expired evidence.
 Individual results remain in Identity details, with no new credential action or readiness gate.
+
+
+Current source footer links target the exact automation-assignment or recovery-assignment section
+in [Recorded user check results](operations.md#recorded-required-user-check-sections--source-follow-up).
+Those dated closed historical facts do not establish current assignment health; omitted legacy checks
+show Not checked. Passing combined validation and preserved installation for this follow-up are recorded in its separate receipt section.
