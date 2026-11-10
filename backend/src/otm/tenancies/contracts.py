@@ -195,6 +195,10 @@ class OrganizationIntent(Contract):
     automation_key_inventory_contract: Literal["automation-key-inventory-1"] | None = Field(
         default=None, exclude_if=lambda value: value is None
     )
+    # Fresh setup explicitly prepares versioned custody; legacy inventory is never adopted.
+    signing_key_rotation_contract: Literal["signer-1"] | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
     # Full immutable publication snapshot; absent only for previously accepted local operations.
     baseline: BaselineVersion | None = None
     # The initiating verified mailbox is frozen separately from ownership; local testing may
@@ -227,6 +231,11 @@ class OrganizationIntent(Contract):
             raise ValueError("RECOVERY_CONSOLE_REQUIRES_FRESH_CAPTURE")
         if self.presence_connection_contract is not None and self.onboarding_version not in {3, 4}:
             raise ValueError("PRESENCE_CONNECTION_REQUIRES_FRESH_CAPTURE")
+        if (
+            self.signing_key_rotation_contract is not None
+            and self.automation_key_inventory_contract is None
+        ):
+            raise ValueError("SIGNING_KEY_ROTATION_SETUP_INVALID")
         if self.automation_key_inventory_contract is not None and (
             self.onboarding_version not in {3, 4} or self.presence_connection_contract is None
         ):

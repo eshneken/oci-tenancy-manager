@@ -3,7 +3,7 @@
 from sqlalchemy import select, update
 
 from otm.storage.organization import OrganizationConflict
-from otm.storage.tables import recovery_credential, tenancy
+from otm.storage.tables import operation, recovery_credential, signing_credential, tenancy
 
 
 # Every termination entry point uses the same tenancy-to-credential lock order as disclosure.
@@ -67,3 +67,37 @@ def retire_terminated_credentials(connection, workspace, tenancy_ids, at):
         )
         .values(state="retired", updated_at=at)
     )
+
+    # Confirmed initiation also tombstones the managed signer and cancels its future ETA.
+    # Pending termination/cancellation never enters this confirmed-child subquery.
+    retired = (
+        connection.execute(
+            update(signing_credential)
+            .where(
+                signing_credential.c.workspace_id == workspace,
+                signing_credential.c.tenancy_id.in_(confirmed),
+                signing_credential.c.state != "retired",
+            )
+            .values(state="retired", updated_at=at)
+            .returning(signing_credential.c.rotation_operation_id)
+        )
+        .scalars()
+        .all()
+    )
+    if retired:
+        connection.execute(
+            update(operation)
+            .where(
+                operation.c.workspace_id == workspace,
+                operation.c.id.in_(retired),
+                operation.c.kind == "signing_key",
+                operation.c.state.in_(("waiting", "queued", "needs_attention")),
+            )
+            .values(
+                state="cancelled",
+                stage="Tenancy termination initiated",
+                wait_reason=None,
+                completed_at=at,
+                updated_at=at,
+            )
+        )

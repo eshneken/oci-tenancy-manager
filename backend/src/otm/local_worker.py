@@ -27,7 +27,7 @@ from otm.providers.inspection import TenancyInspection
 from otm.providers.lifecycle_simulator import SimulatedLifecycleFacade
 from otm.settings import load_settings
 from otm.storage.administrators import SqlAdministratorStore
-from otm.storage.enqueue import workspace_queue
+from otm.storage.enqueue import ORGANIZATION_TASK, InspectionEnqueuer, workspace_queue
 from otm.storage.execution import SqlExecutionStore
 from otm.tenancies.worker import OrganizationLifecycleWorker
 
@@ -126,9 +126,7 @@ def run_worker(*, once=False):
             from otm.operations.runner import register_recovery_password_task
             from otm.providers.recovery_password_simulator import SimulatedRecoveryPasswords
             from otm.storage.enqueue import (
-                ORGANIZATION_TASK,
                 RECOVERY_PASSWORD_TASK,
-                InspectionEnqueuer,
             )
             from otm.tenancies.recovery_password_setup import RecoveryPasswordSetup
             from otm.tenancies.recovery_password_worker import RecoveryPasswordWorker
@@ -161,6 +159,36 @@ def run_worker(*, once=False):
         key_inventory = SimulatedAutomationKeys(
             Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "automation-key-inventory", clock
         )
+        from otm.operations.runner import register_signing_key_task
+        from otm.providers.signing_key_rotation_simulator import SimulatedSigningKeys
+        from otm.secrets.directory import DirectorySecrets
+        from otm.storage.enqueue import SIGNING_KEY_TASK
+        from otm.tenancies.signing_key_records import SigningKeySetup
+        from otm.tenancies.signing_key_worker import SigningKeyWorker
+        from otm.tenancies.signing_keys import signing_dispatch_allowed
+
+        signing_path = Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "signing-key-custody"
+        if any(path.is_symlink() for path in (signing_path, *signing_path.parents)):
+            raise ValueError("PRIVATE_SIGNING_DIRECTORY_REQUIRED")
+        signing_path.mkdir(mode=0o700, exist_ok=True)
+        DirectorySecrets(signing_path)
+        signing_provider = SimulatedSigningKeys(signing_path, key_inventory, clock)
+        signing_queue = InspectionEnqueuer(queue=queue, task=SIGNING_KEY_TASK)
+        signing_setup = SigningKeySetup(signing_queue, organization_policy)
+        register_signing_key_task(
+            native,
+            SigningKeyWorker(
+                engine,
+                policy.workspace_id,
+                clock,
+                organization_policy,
+                signing_provider,
+                signing_queue,
+                InspectionEnqueuer(queue=queue, task=ORGANIZATION_TASK),
+                notifier=notifier,
+            ),
+            queue,
+        )
         register_organization_task(
             native,
             OrganizationLifecycleWorker(
@@ -177,6 +205,8 @@ def run_worker(*, once=False):
                 mail_policy_loader=mail_policy,
                 notifications=notifier,
                 recovery_setup=password_setup,
+                signing_setup=signing_setup,
+                signing_dispatch=signing_dispatch_allowed,
             ),
             queue,
         )
@@ -188,6 +218,7 @@ def run_worker(*, once=False):
                 clock,
                 organization_policy,
                 SimulatedConfigurationFacade(organization_policy().policy),
+                signing_dispatch=signing_dispatch_allowed,
             ),
             queue,
         )
@@ -199,6 +230,7 @@ def run_worker(*, once=False):
                 clock,
                 organization_policy,
                 SimulatedConfigurationFacade(organization_policy().policy),
+                signing_dispatch=signing_dispatch_allowed,
             ),
             queue,
         )
@@ -225,6 +257,7 @@ def run_worker(*, once=False):
                 recovery_inspection_factory=simulated_console_inspection,
                 administrator_inspection_factory=simulated_administrator_inspection,
                 key_inspection_factory=partial(simulated_key_inspection, key_inventory),
+                signing_dispatch=signing_dispatch_allowed,
             ),
             queue,
         )
@@ -241,12 +274,13 @@ def run_worker(*, once=False):
                 organization_policy,
                 recovery_console_policy,
                 simulated_network_repair,
+                signing_dispatch=signing_dispatch_allowed,
             ),
             queue,
         )
         from otm.financial.worker import CostCollectionWorker
         from otm.providers.budget_simulator import SimulatedBudgetFacade
-        from otm.storage.enqueue import COST_TASK, InspectionEnqueuer
+        from otm.storage.enqueue import COST_TASK
 
         # Reload only operator settings; old work cannot silently adopt changed cost policy.
         def cost_policy():
@@ -263,6 +297,7 @@ def run_worker(*, once=False):
                 InspectionEnqueuer(queue=queue, task=COST_TASK),
                 profile=settings.costs,
                 profile_loader=cost_policy,
+                signing_dispatch=signing_dispatch_allowed,
                 notifications=notifier,
             ),
             queue,

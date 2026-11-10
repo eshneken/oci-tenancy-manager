@@ -510,6 +510,11 @@
     "recovery_console": {
       "$ref": "#/$defs/RecoveryConsoleView"
     },
+    "signing_rotation_available": {
+      "default": false,
+      "title": "Signing Rotation Available",
+      "type": "boolean"
+    },
     "tenancy_id": {
       "format": "uuid",
       "title": "Tenancy Id",

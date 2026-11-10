@@ -24,11 +24,13 @@ class SimulatedLifecycleFacade:
         recovery_console=None,
         recovery_console_loader=None,
         automation_keys=None,
+        signing_keys=None,
     ):
         from otm.providers.configuration_simulator import SimulatedConfigurationFacade
 
         self.policy = policy
         self.automation_keys = automation_keys
+        self.signing_keys = signing_keys
         self.recovery_console = recovery_console
         self.recovery_console_loader = recovery_console_loader
         self.configuration_facade = SimulatedConfigurationFacade(policy)
@@ -137,6 +139,7 @@ class SimulatedLifecycleFacade:
                     + intent.pending_tenancy_id.hex,
                     user_name="otm-automation",
                 ),
+                empty=intent.signing_key_rotation_contract is not None,
             )
 
     # Return explicit synthetic provider facts, stable across retries and distinct from bootstrap.

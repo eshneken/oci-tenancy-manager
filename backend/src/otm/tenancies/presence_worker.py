@@ -36,9 +36,11 @@ class UserPresenceWorker:
         recovery_inspection_factory=None,
         administrator_inspection_factory=None,
         key_inspection_factory=None,
+        signing_dispatch=None,
     ):
         self.administrator_inspection_factory = administrator_inspection_factory
         self.key_inspection_factory = key_inspection_factory
+        self.signing_dispatch = signing_dispatch
         self.engine, self.workspace, self.clock = engine, workspace, clock
         self.notifications = notifications
         self.recovery_console_loader = recovery_console_loader
@@ -348,7 +350,10 @@ class UserPresenceWorker:
             )
             source = None
             try:
-                if self.current(connection, frozen, child):
+                if self.current(connection, frozen, child) and (
+                    self.signing_dispatch is None
+                    or self.signing_dispatch(connection, self.workspace, child["id"], self.clock())
+                ):
                     source = self.source(connection, frozen.intent.snapshot)
             except (ValueError, RuntimeError):
                 source = None

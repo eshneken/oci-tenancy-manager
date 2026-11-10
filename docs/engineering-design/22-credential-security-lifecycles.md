@@ -349,3 +349,11 @@ and optional sealed evidence, with original provider creation timestamps and no 
 It does not implement custody, selected-signer verification, rotation, retirement, alerts or30-day
 work blocking/compliance. All remaining retirement/enforcement requirements above stay Pending.
 Targeted local UI qualification and preserved main installation pass in the [inventory receipt](../history/automation-signing-key-inventory-checkpoint-2026-11-09.md). This is not completed rotation/enforcement or a new full-suite/milestone/PR gate.
+
+
+### Detailed rotation accounting proposal — 9 November 2026
+
+[Chapter 23](23-signing-key-rotation.md) records the proposed one-head execution plan, explicit fresh
+onboarding, native scheduling/query/deduplication, approved brief per-child provider pause, password-
+window drain, staged/upload/probe/CAS/retire phases and recovery/overdue evidence. It is not a runtime
+implementation, installed CronJob, completed enforcement or provider qualification claim.

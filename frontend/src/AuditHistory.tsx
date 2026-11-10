@@ -34,6 +34,7 @@ const columns = [
 // Turn an allowed recorded event kind into a readable label without inventing an outcome.
 function eventLabel(kind: AuditEntry["kind"]) {
   const labels: Record<AuditEntry["kind"], string> = {
+    signing_key_outcome:"Signing-key maintenance",signing_key_requested:"Signing-key rotation requested",
     configuration_review_staged: "Override review staged",
     baseline_draft_saved: "Baseline draft saved",
     baseline_published: "Baseline published",

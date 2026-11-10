@@ -2287,3 +2287,7 @@ index, migration, credential head, selected signer or competing ER is introduced
 records passing targeted local qualification/publication, not new complete milestone/PR qualification. Historical `OperationEventView.automation_keys` now uses the key check’s own
 recorded time for age, separately from the current server-time projection. Future-at-capture values
 remain Unknown until a fresh qualified read. No new SQL field or signer proof is introduced.
+
+## Managed signing-head implemented subset — 10 November 2026
+
+Candidate migration 0028 adds one `otm_signing_credential` (17 columns), reusing existing operations, steps, audit, bindings, immutable presence connections and outbox. [Exact field and JSON map](../reference/signing-key-rotation.md) and [editable ER](../architecture/diagrams/signing-credentials-implemented.mmd) distinguish written source from targeted local qualification/saved installation PASS; full-suite/PR/live Pending. Installed totals are 29 OTM/ 33 public tables; all 32 preexisting public tables were preserved. No separate key-version/history/notification table or recovery-password CURRENT reuse. This local subset does not qualify real generation, Vault/OCI signing, dynamic privilege proof or hosted deployment.

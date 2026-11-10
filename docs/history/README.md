@@ -66,3 +66,5 @@ The [Recovery/header refinement](check-date-footer-local-session-checkpoint-2026
 - [Operation return navigation follow-up](recovery-password-checkpoint-2026-11-09.md#operation-return-navigation-follow-up): contextual links; targeted validation and preserved main installation pass; no full native rerun.
 
 - [Automation signing-key inventory checkpoint](automation-signing-key-inventory-checkpoint-2026-11-09.md): targeted read-only age panel qualified/installed; four targeted cases, not a complete-suite gate.
+
+- [Signing-key rotation targeted UI checkpoint — 10 November 2026](signing-key-rotation-checkpoint-2026-11-10.md): targeted local qualification and preserved installation PASS; full-suite/PR/live Pending.

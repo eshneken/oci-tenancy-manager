@@ -46,6 +46,7 @@ from otm.tenancies.recovery_password_contracts import (
     RecoveryDisclosureEvidence,
     RecoveryPasswordEvidence,
 )
+from otm.tenancies.signing_key_contracts import SigningKeyEvidence, SigningKeyRequestEvidence
 
 
 # Reconstruct only the five historical check summaries from validated immutable event evidence.
@@ -198,7 +199,7 @@ class SqlOperationDirectory:
             completed_at=utc(row["completed_at"]),
             initiated_by=frozen.actor.display_name,
             result_tenancy_id=row.get("registered_tenancy_id")
-            if row["state"] == "succeeded"
+            if (row["state"] == "succeeded" or frozen.intent.kind == "signing_key")
             and frozen.intent.kind
             in {
                 "organization_action",
@@ -208,6 +209,7 @@ class SqlOperationDirectory:
                 "required_user_check",
                 "recovery_network_repair",
                 "recovery_password",
+                "signing_key",
             }
             else None,
             guided_onboarding=frozen.intent.kind == "organization_action"
@@ -221,6 +223,10 @@ class SqlOperationDirectory:
                 else "Rotate recovery password"
             )
             if frozen.intent.kind == "recovery_password"
+            else "Rotate automation signing key"
+            if frozen.intent.kind == "signing_key" and frozen.intent.phase == "rotation"
+            else "Prepare automation signing credential"
+            if frozen.intent.kind == "signing_key"
             else "Repair approved recovery networks"
             if frozen.intent.kind == "recovery_network_repair"
             else "Check required users"
@@ -248,6 +254,7 @@ class SqlOperationDirectory:
                 "required_user_check",
                 "recovery_network_repair",
                 "recovery_password",
+                "signing_key",
             }
             else None,
         )
@@ -419,7 +426,9 @@ class SqlOperationDirectory:
     def step(self, row):
         outcome = (
             (
-                RecoveryPasswordEvidence
+                SigningKeyEvidence
+                if row["command_kind"] == "signing_key"
+                else RecoveryPasswordEvidence
                 if row["command_kind"] == "recovery_password"
                 else RecoveryNetworkEvidence
                 if row["command_kind"] == "recovery_network_repair"
@@ -460,7 +469,11 @@ class SqlOperationDirectory:
             ResponsibilityEvidence.model_validate_json(json.dumps(row["data"]))
         outcome = (
             (
-                RecoveryPasswordEvidence
+                SigningKeyEvidence
+                if row["kind"] == "signing_key_outcome"
+                else SigningKeyRequestEvidence
+                if row["kind"] == "signing_key_requested"
+                else RecoveryPasswordEvidence
                 if row["kind"] == "recovery_password_outcome"
                 else RecoveryNetworkEvidence
                 if row["kind"] == "recovery_network_outcome"
@@ -489,6 +502,8 @@ class SqlOperationDirectory:
                 "required_user_check_outcome",
                 "recovery_network_outcome",
                 "recovery_password_outcome",
+                "signing_key_outcome",
+                "signing_key_requested",
                 "configuration_retry",
                 "organization_action_outcome",
                 "onboarding_action",

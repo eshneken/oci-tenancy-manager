@@ -145,6 +145,7 @@ class NotificationSummary(Contract):
         "action_required",
         "terminal_failure",
         "cost_read_failed",
+        "signing_key_attention",
         "required_user_missing",
         "recovery_password_requested",
         "recovery_password_rotation_failed",
@@ -224,3 +225,22 @@ class RecoveryPasswordNotice(Contract):
         ):
             raise ValueError("RECOVERY_PASSWORD_NOTICE_INVALID")
         return self
+
+
+# One unresolved credential-generation incident targets current authorized administrators only.
+class SigningKeyFailureNotice(Contract):
+    contract_version: Literal["signing-key-email-1"] = "signing-key-email-1"
+    operation_id: UUID
+    tenancy_id: UUID
+    credential_id: UUID
+    generation: Annotated[int, Field(ge=0)]
+    administrator_id: UUID
+    authorization_revision: UUID
+    original_recipient: Mailbox | None
+    delivery_recipient: Mailbox | None
+    route: EmailRoute
+    application_origin: HttpsOrigin | None = None
+    delivery_profile_hash: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")] | None = None
+    event: Literal["signing_key_attention"] = "signing_key_attention"
+    retire_at: UtcInstant | None
+    created_at: UtcInstant

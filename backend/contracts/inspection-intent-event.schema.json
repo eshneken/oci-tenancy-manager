@@ -1291,6 +1291,32 @@
       "title": "LifecycleTarget",
       "type": "object"
     },
+    "ManagedSigningKey": {
+      "additionalProperties": false,
+      "properties": {
+        "provider_key_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Provider Key Id",
+          "type": "string"
+        },
+        "uploaded_at": {
+          "format": "date-time",
+          "title": "Uploaded At",
+          "type": "string"
+        },
+        "version": {
+          "$ref": "#/$defs/SigningKeyVersion"
+        }
+      },
+      "required": [
+        "version",
+        "provider_key_id",
+        "uploaded_at"
+      ],
+      "title": "ManagedSigningKey",
+      "type": "object"
+    },
     "OrganizationIntent": {
       "additionalProperties": false,
       "properties": {
@@ -1549,6 +1575,19 @@
           ],
           "default": null,
           "title": "Recovery Console Fingerprint"
+        },
+        "signing_key_rotation_contract": {
+          "anyOf": [
+            {
+              "const": "signer-1",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Signing Key Rotation Contract"
         },
         "target": {
           "$ref": "#/$defs/LifecycleTarget"
@@ -2168,6 +2207,174 @@
       "title": "RequiredUserTarget",
       "type": "object"
     },
+    "SigningKeyIntent": {
+      "additionalProperties": false,
+      "properties": {
+        "connection_id": {
+          "format": "uuid",
+          "title": "Connection Id",
+          "type": "string"
+        },
+        "connection_revision": {
+          "minimum": 1,
+          "title": "Connection Revision",
+          "type": "integer"
+        },
+        "contract_version": {
+          "const": "signer-1",
+          "default": "signer-1",
+          "title": "Contract Version",
+          "type": "string"
+        },
+        "credential_id": {
+          "format": "uuid",
+          "title": "Credential Id",
+          "type": "string"
+        },
+        "due_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Due At"
+        },
+        "expected_generation": {
+          "minimum": 0,
+          "title": "Expected Generation",
+          "type": "integer"
+        },
+        "kind": {
+          "const": "signing_key",
+          "default": "signing_key",
+          "title": "Kind",
+          "type": "string"
+        },
+        "old": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ManagedSigningKey"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "phase": {
+          "enum": [
+            "setup",
+            "rotation"
+          ],
+          "title": "Phase",
+          "type": "string"
+        },
+        "policy_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Policy Hash",
+          "type": "string"
+        },
+        "source_evidence_event_id": {
+          "format": "uuid",
+          "title": "Source Evidence Event Id",
+          "type": "string"
+        },
+        "source_operation_id": {
+          "format": "uuid",
+          "title": "Source Operation Id",
+          "type": "string"
+        },
+        "subject": {
+          "$ref": "#/$defs/RequiredUserTarget"
+        },
+        "target": {
+          "$ref": "#/$defs/ConfigurationOperationTarget"
+        },
+        "workspace_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Workspace Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "phase",
+        "workspace_id",
+        "credential_id",
+        "subject",
+        "connection_id",
+        "connection_revision",
+        "policy_hash",
+        "expected_generation",
+        "source_operation_id",
+        "source_evidence_event_id",
+        "target"
+      ],
+      "title": "SigningKeyIntent",
+      "type": "object"
+    },
+    "SigningKeyVersion": {
+      "additionalProperties": false,
+      "properties": {
+        "created_operation_id": {
+          "format": "uuid",
+          "title": "Created Operation Id",
+          "type": "string"
+        },
+        "credential_id": {
+          "format": "uuid",
+          "title": "Credential Id",
+          "type": "string"
+        },
+        "fingerprint": {
+          "pattern": "^[0-9a-f]{2}(?::[0-9a-f]{2}){15}$",
+          "title": "Fingerprint",
+          "type": "string"
+        },
+        "generation": {
+          "minimum": 1,
+          "title": "Generation",
+          "type": "integer"
+        },
+        "material_created_at": {
+          "format": "date-time",
+          "title": "Material Created At",
+          "type": "string"
+        },
+        "secret_reference": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Secret Reference",
+          "type": "string"
+        },
+        "secret_version": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Secret Version",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/RequiredUserTarget"
+        }
+      },
+      "required": [
+        "credential_id",
+        "created_operation_id",
+        "generation",
+        "target",
+        "secret_reference",
+        "secret_version",
+        "fingerprint",
+        "material_created_at"
+      ],
+      "title": "SigningKeyVersion",
+      "type": "object"
+    },
     "TagDefault": {
       "additionalProperties": false,
       "properties": {
@@ -2353,6 +2560,9 @@
         },
         {
           "$ref": "#/$defs/RecoveryPasswordIntent"
+        },
+        {
+          "$ref": "#/$defs/SigningKeyIntent"
         }
       ],
       "title": "Intent"

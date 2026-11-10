@@ -50,6 +50,8 @@ class RequiredUserRecord(Contract):
 
 # The read-only view always names both supported purposes, with independent identity records.
 class RequiredUsersDirectory(Contract):
+    # Host-selected metadata capability, not proof that this tenancy has enrolled custody.
+    signing_rotation_available: bool = False
     tenancy_id: UUID
     tenancy_status: Literal["pending", "active", "terminating", "terminated", "failed", "cancelled"]
     provider_mode: Literal["simulated"]

@@ -174,5 +174,5 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
         </li>;})}
       </ul>
     </>}
-  </section>{data && <AutomationKeys inventory={data.automation_keys} navigate={navigate}/>}</>;
+  </section>{data && <AutomationKeys inventory={data.automation_keys} navigate={navigate} tenancyId={data.signing_rotation_available?tenancyId:undefined} expired={expired}/>}</>;
 }

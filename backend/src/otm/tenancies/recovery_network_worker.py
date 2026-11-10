@@ -25,7 +25,18 @@ from otm.tenancies.recovery_network_contracts import RecoveryNetworkEvidence, Re
 # Only this explicitly composed capability may execute the fixed reference-only queue task.
 class RecoveryNetworkWorker:
     # Authority, desired settings, time and provider factory are operator-owned dependencies.
-    def __init__(self, engine, workspace, clock, policy_loader, console_loader, factory):
+    def __init__(
+        self,
+        engine,
+        workspace,
+        clock,
+        policy_loader,
+        console_loader,
+        factory,
+        *,
+        signing_dispatch=None,
+    ):
+        self.signing_dispatch = signing_dispatch
         self.engine, self.workspace, self.clock = engine, workspace, clock
         self.policy_loader, self.console_loader, self.factory = (
             policy_loader,
@@ -106,6 +117,10 @@ class RecoveryNetworkWorker:
             .mappings()
             .one_or_none()
         )
+        if self.signing_dispatch is not None and not self.signing_dispatch(
+            connection, self.workspace, child["id"], self.clock()
+        ):
+            return None
         policy, desired = self.policy_loader(), self.console_loader()
         if (
             grant is None

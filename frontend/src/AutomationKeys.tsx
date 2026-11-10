@@ -1,3 +1,4 @@
+import {SigningKeyRotation} from "./SigningKeyRotation";
 import type {AutomationKeysView} from "./contracts";
 import {operationHref} from "./operationNavigation";
 import {followLink} from "./navigation";
@@ -5,7 +6,7 @@ import {followLink} from "./navigation";
 const names={within_limit:"Under 30 days",due_soon:"Due within 1 day",overdue:"30 days or older",unknown:"Age unknown",inactive:"Inactive"};
 
 // Display dated public inventory only; a key row is never a usable credential or compliance claim.
-export function AutomationKeys({inventory,historical=false,navigate}:{inventory?:AutomationKeysView|null;historical?:boolean;navigate:(path:string)=>void}) {
+export function AutomationKeys({inventory,historical=false,navigate,tenancyId,expired}:{inventory?:AutomationKeysView|null;historical?:boolean;navigate:(path:string)=>void;tenancyId?:string;expired?:()=>void}) {
   const state=inventory?.state??"not_checked";
   const rows=inventory?.keys??[];
   const known=state==="known"||state==="stale";
@@ -29,5 +30,6 @@ export function AutomationKeys({inventory,historical=false,navigate}:{inventory?
       <dl className="signing-key-facts"><div><dt>Created (UTC)</dt><dd>{date(key.created_at)}</dd></div><div><dt>Key age</dt><dd><span className={"badge "+(key.age_state==="overdue"?"presence-missing":key.age_state==="due_soon"?"review-open":"required-user-state")}>{names[key.age_state]}</span>{key.age_days!=null&&<span className="muted"> · {key.age_days} days</span>}</dd></div><div><dt>30-day date (UTC)</dt><dd>{date(key.retirement_due_at)}</dd></div></dl>
     </li>)}</ul>}
     {inventory?.checked_at&&<p className="muted signing-key-provenance">{historical?"Recorded check":"Inventory checked"}: {href&&!historical?<a href={href} aria-label={`View automation signing-key inventory check, ${checkedDate}`} title={checkedTitle} onClick={event=>followLink(event,href,navigate)}>{date(inventory.checked_at)}</a>:date(inventory.checked_at)}{inventory.age_as_of&&<> · {historical?"Age at observation":"Age assessed"}: {date(inventory.age_as_of)}</>}</p>}
+    {!historical&&tenancyId&&expired&&<SigningKeyRotation key={tenancyId} tenancyId={tenancyId} expired={expired} navigate={navigate}/>}
   </section>;
 }

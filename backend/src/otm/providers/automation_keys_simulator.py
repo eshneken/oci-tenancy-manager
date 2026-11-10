@@ -71,7 +71,7 @@ class SimulatedAutomationKeys:
         return AutomationKeyCapture(facts=record.facts)
 
     # O_EXCL preserves the original creation time across retries and restarts.
-    def configure(self, workspace, identifier, tenancy_ocid, user):
+    def configure(self, workspace, identifier, tenancy_ocid, user, *, empty=False):
         self.guard()
         if not isinstance(identifier, UUID):
             raise ValueError("SIMULATED_KEY_TARGET_INVALID")
@@ -89,7 +89,11 @@ class SimulatedAutomationKeys:
             tenancy_id=identifier,
             tenancy_ocid=tenancy_ocid,
             facts=AutomationKeyFacts(
-                user=user, authorized=True, complete=True, supported=True, keys=(key,)
+                user=user,
+                authorized=True,
+                complete=True,
+                supported=True,
+                keys=() if empty else (key,),
             ),
         )
         try:

@@ -142,7 +142,9 @@ def cleanup_cronjob(settings: ApplicationSettings, image: str) -> dict:
 # Keep database URLs out of command arguments, diagnostics and rendered deployment manifests.
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["cleanup-sessions", "render-session-cleanup"])
+    parser.add_argument(
+        "command", choices=["cleanup-sessions", "render-session-cleanup", "queue-signing-rotations"]
+    )
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--image")
     args = parser.parse_args(argv)
@@ -151,6 +153,30 @@ def main(argv=None) -> int:
         settings = load_settings(args.config)
         if args.command == "render-session-cleanup":
             print(json.dumps(cleanup_cronjob(settings, args.image or ""), indent=2))
+        elif args.command == "queue-signing-rotations":
+            if settings.local_auth is None:
+                raise ValueError("SIGNING_ROTATION_WORKSPACE_REQUIRED")
+            from datetime import UTC, datetime
+
+            from otm.storage.enqueue import SIGNING_KEY_TASK, InspectionEnqueuer, workspace_queue
+            from otm.tenancies.signing_keys import SigningKeys
+
+            engine = maintenance_engine(
+                os.environ.get("OTM_DATABASE_URL", ""), os.environ.get("OTM_DATABASE_CA_FILE")
+            )
+            require_runtime_role(engine)
+            service = SigningKeys(
+                None,
+                None,
+                InspectionEnqueuer(
+                    workspace_queue(settings.local_auth.workspace_id), task=SIGNING_KEY_TASK
+                ),
+            )
+            with engine.begin() as connection:
+                count = service.enqueue_due(
+                    connection, settings.local_auth.workspace_id, datetime.now(UTC)
+                )
+            print(json.dumps({"queued_due_operations": count, "limit": 100}))
         else:
             from datetime import UTC, datetime
 

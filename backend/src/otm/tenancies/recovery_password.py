@@ -125,6 +125,9 @@ def preview_digest(head, child, ready):
 
 # One API service uses existing current-entitlement locks, exact custody and native scheduling.
 class RecoveryPasswordAccess:
+    # Explicit host composition supplies the guard for versioned signing credentials.
+    signing_guard = None
+
     # No default custody/transport/provider is invented when dependencies are not composed.
     def __init__(self, presence, vault, enqueuer, *, notifier=None):
         self.presence, self.store = presence, presence.store
@@ -231,6 +234,8 @@ class RecoveryPasswordAccess:
                     raise RequestConflict("REQUEST_KEY_REUSED_FOR_DIFFERENT_INTENT")
                 request = prior
             else:
+                if self.signing_guard is not None:
+                    self.signing_guard(connection, workspace, identifier, at)
                 view = self.project(connection, workspace, identifier, at)
                 if not view.available:
                     raise OrganizationConflict("RECOVERY_PASSWORD_UNAVAILABLE")

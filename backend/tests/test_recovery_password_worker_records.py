@@ -217,6 +217,8 @@ def test_setup_version_and_replay(password_case):
 )
 def test_termination_credential_guard(password_case, state, exposed):
     c = password_case
+    # These established password-only fixtures have no managed signing head.
+    c.connection.execute.return_value.scalars.return_value.all.return_value = []
     c.connection.execute.return_value.mappings.return_value.all.return_value = [
         dict(state=state, first_disclosure_at=NOW if exposed else None)
     ]

@@ -161,7 +161,7 @@ Use private approved source ranges, never publish operational CIDRs/secrets in r
    and CURRENT before resuming. No extra human account, TOTP broker or public bypass is required.
 5. Qualify domain key create/list/get/delete, exact IDs/fingerprints, permission/propagation and three-key
    capacity. Prove the new signer alone can operate, old use drains and exact old deletion is verified.
-6. Exercise day29/day30, unknown creation age, occupied slots, upload/delete timeouts, candidate failure,
+6. Exercise day 29/day 30, unknown creation age, occupied slots, upload/delete timeouts, candidate failure,
    overlapping scans and restore before activation. Never delete the sole working/unowned key or reset
    original age. Unresolved retirement remains overdue with scoped repair available. Inventory every
    registered managed automation principal and explicitly owned parent/hosting keys.
@@ -191,7 +191,7 @@ These cases remain pending real OCI; local fixtures do not qualify the live APIs
 
 **User deferral — 9 November 2026:** additional interactive recovery-network repair testing waits
 for real OCI and an approved actual policy break/repair. Do not create another local installation
-or manufacture drift in main8443. The former8444 instance is retired;430-case automated simulator
+or manufacture drift in main 8443. The former8444 instance is retired;430-case automated simulator
 qualification remains valid, while every live case below remains Pending.
 
 All cases remain **Pending**. Local simulated repair is not provider/sign-in qualification.
@@ -212,7 +212,7 @@ password custody, rotation or fleet rollout. See the [current source field map](
 ## Recovery password custody and original-window qualification
 
 All cases remain **Pending**. Source/local simulator work does not qualify OCI/Vault or sign-in.
-Use an approved disposable real child when available; main8443 remains the sole saved local review
+Use an approved disposable real child when available; main 8443 remains the sole saved local review
 environment. Interactive recovery-network break/repair remains deferred; no legacy custody backfill.
 
 | Live case | Required evidence | Status |
@@ -239,8 +239,27 @@ All cases remain **Pending**; local inventory simulation cannot qualify real key
 | Exact key resource/subject | Normalize actual identity-domain SCIM/composite API-key resource ID and fingerprint; require exact automation domain/user context, not an OCID-shaped assumption or name match. | Pending |
 | Complete list | Qualify pagination, authorization, supported lifecycle state, duplicates and bounds; complete empty differs from denied/partial/unavailable. Never truncate a list and certify zero or complete coverage. | Pending |
 | Original creation evidence | Identify trustworthy provider key creation/upload timestamp and normalize UTC; absent/future/untrusted time yields Unknown age, never observation/user/connection/feed time or a new lease. | Pending |
-| Repeated/historical views | Preserve original timestamps through refresh/restart; current server-time age and historical capture-time age remain explicitly distinct. Test exact day29/day30 and stale/clock boundaries. | Pending |
+| Repeated/historical views | Preserve original timestamps through refresh/restart; current server-time age and historical capture-time age remain explicitly distinct. Test exact day 29/day 30 and stale/clock boundaries. | Pending |
 | No added authority | Inventory must not expose PEM/private material, select a signer, establish custody/compliance, rotate/delete, notify or block unrelated work. Existing parent/recovery fallback remains forbidden. | Pending |
 
 Broader30-day rotation, key capacity, new-signer verification and verified old-key retirement remain
 pending in chapter22’s separate matrix. See the [current source map](../reference/automation-signing-keys.md).
+
+## Managed signing-key rotation qualification
+
+Status: **Pending — real OCI and hosted execution**. The [targeted local checkpoint](../history/signing-key-rotation-checkpoint-2026-11-10.md)
+uses nonusable simulator material and cannot establish any live behavior below. Use approved disposable
+children/test mailboxes and exact scoped credentials; do not create another local saved instance.
+
+| Live case | Required evidence | Status |
+| --- | --- | --- |
+| Fresh create/import enrollment | Exact canonical automation identity, real original keypair/material clock, source bindings, no legacy/inventory adoption or premature temporary-admin cleanup | Pending |
+| Exact signer and Vault custody | Original exact immutable secret version, least required custody permissions, independently created candidate signer, no CURRENT/LATEST or old-signer fallback | Pending |
+| Key CRUD/slots | Actual identity-domain key IDs/fingerprints, complete listing, occupied three-key capacity, inactive/unknown keys, no unowned/sole-working deletion | Pending |
+| Upload and propagation | Before-dispatch persistence, lost response/restart, same candidate fingerprint reconciliation, absent-after-uncertain hold and no blind reupload | Pending |
+| Candidate permissions | Fresh current OCI identity, identity-domain admin/group and root-configuration capability; removed grants/denied/incomplete reads cannot reuse retained onboarding proof | Pending |
+| Activation and retirement | Exact-generation CAS, original old deadline across activation, exact old ID/fingerprint deletion/response loss, continuing replacement proof and full old absence | Pending |
+| Native OKE execution | Day29 original ETA/day30 guard, scheduled/manual priority and same-operation locks, hourly bounded rescue deployment, no competing rotation, restart/crash manual recovery | Pending |
+| Recovery-password overlap | Active original four-hour window drains before child reservation; due closure runs between key phases, no deadline extension/deadlock or unsafe old-key fallback | Pending |
+| Isolation and notices | Cached views/other children continue; no raw key material; one original-operation/admin incident across holds/resume/activation with frozen routing and no uncertain resend | Pending |
+| Lifecycle/restore | Confirmed termination tombstones only that child; pending termination defers; D54 paused restore reconciles actual key custody/provider effects before continuation, no resurrection | Pending |

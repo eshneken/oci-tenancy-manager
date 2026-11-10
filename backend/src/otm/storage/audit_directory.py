@@ -40,6 +40,7 @@ from otm.tenancies.recovery_password_contracts import (
     RecoveryDisclosureEvidence,
     RecoveryPasswordEvidence,
 )
+from otm.tenancies.signing_key_contracts import SigningKeyEvidence, SigningKeyRequestEvidence
 
 AUTHENTICATION = ("local_sign_in_succeeded", "local_sign_in_failed", "session_logged_out")
 ADMINISTRATION = (
@@ -54,6 +55,8 @@ ADMINISTRATION = (
 )
 EMAIL_DELIVERY = ("email_delivery",)
 OPERATIONS = (
+    "signing_key_outcome",
+    "signing_key_requested",
     "operation_responsibility_changed",
     "configuration_check_outcome",
     "cost_collection_outcome",
@@ -86,6 +89,7 @@ def actor_expression():
         (audit_event.c.kind == "required_user_check_outcome", "User presence worker"),
         (audit_event.c.kind == "recovery_network_outcome", "Recovery network worker"),
         (audit_event.c.kind == "recovery_password_outcome", "Recovery password worker"),
+        (audit_event.c.kind == "signing_key_outcome", "Signing-key worker"),
         (audit_event.c.kind == "cost_collection_outcome", "Cost collection worker"),
         (audit_event.c.kind == "local_sign_in_failed", None),
         (
@@ -182,6 +186,12 @@ def entry(row):
     if kind == "recovery_network_outcome":
         proof = RecoveryNetworkEvidence.model_validate_json(json.dumps(row["data"]))
         summary = "Recovery network repair: " + proof.state
+    if kind == "signing_key_outcome":
+        proof = SigningKeyEvidence.model_validate_json(json.dumps(row["data"]))
+        summary = "Automation signing-key " + proof.phase + ": " + proof.state
+    if kind == "signing_key_requested":
+        proof = SigningKeyRequestEvidence.model_validate_json(json.dumps(row["data"]))
+        summary = "Requested original signing-key operation: " + proof.action
     if kind == "required_user_check_outcome":
         proof = PresenceCheckEvidence.model_validate_json(json.dumps(row["data"]))
         summary = "Read-only user presence check: " + proof.state
@@ -213,6 +223,13 @@ def entry(row):
         }:
             raise ValueError("INVALID_AUDIT_ACTOR")
         actor_name = "Email delivery worker"
+    elif kind == "signing_key_outcome":
+        if row["actor_subject"] != "otm-worker:signing-key" or row["actor_snapshot"] != {
+            "kind": "worker",
+            "subject": "signing-key",
+        }:
+            raise ValueError("INVALID_AUDIT_ACTOR")
+        actor_name = "Signing-key worker"
     elif kind == "recovery_password_outcome":
         if row["actor_subject"] != "otm-worker:recovery-password" or row["actor_snapshot"] != {
             "kind": "worker",
@@ -298,7 +315,11 @@ def entry(row):
     )
     outcome = (
         (
-            RecoveryPasswordEvidence
+            SigningKeyEvidence
+            if kind == "signing_key_outcome"
+            else SigningKeyRequestEvidence
+            if kind == "signing_key_requested"
+            else RecoveryPasswordEvidence
             if kind == "recovery_password_outcome"
             else RecoveryNetworkEvidence
             if kind == "recovery_network_outcome"
@@ -320,6 +341,8 @@ def entry(row):
             "required_user_check_outcome",
             "recovery_network_outcome",
             "recovery_password_outcome",
+            "signing_key_outcome",
+            "signing_key_requested",
             "configuration_outcome",
             "configuration_retry",
             "organization_action_outcome",
@@ -399,6 +422,8 @@ def resource_context(connection, workspace, rows):
         wanted = set()
         if intent.kind in {"required_user_check", "recovery_network_repair"}:
             wanted = {intent.snapshot.tenancy_id}
+        elif intent.kind == "signing_key":
+            wanted = {intent.subject.tenancy_id}
         elif intent.kind == "recovery_password":
             wanted = {intent.location.target.tenancy_id}
         elif intent.kind in {"configuration_update", "configuration_check", "cost_collection"}:

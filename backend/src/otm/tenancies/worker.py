@@ -41,9 +41,13 @@ class OrganizationLifecycleWorker:
         mail_policy_loader=None,
         notifications=None,
         recovery_setup=None,
+        signing_setup=None,
+        signing_dispatch=None,
     ):
         self.engine, self.workspace, self.clock = engine, workspace, clock
         self.recovery_setup = recovery_setup
+        self.signing_setup = signing_setup
+        self.signing_dispatch = signing_dispatch
         self.mail_policy_loader, self.notifications = mail_policy_loader, notifications
         self.policy_loader, self.facade = policy_loader, facade
 
@@ -161,6 +165,15 @@ class OrganizationLifecycleWorker:
                         raise LifecycleBlocked("EMAIL_ROUTING_CHANGED") from None
                 state = registry_state(connection, self.workspace)
                 self._validate(state, intent, identifier)
+                if self.signing_dispatch is not None and intent.onboarding_version is None:
+                    targets = {item.tenancy_id for item in intent.associations}
+                    if intent.pending_tenancy_id is not None:
+                        targets.add(intent.pending_tenancy_id)
+                    if any(
+                        not self.signing_dispatch(connection, self.workspace, target, at)
+                        for target in targets
+                    ):
+                        raise LifecycleBlocked("LIFECYCLE_UNAVAILABLE")
                 from otm.tenancies.membership_access import validate_removal_targets
 
                 validate_removal_targets(connection, self.workspace, intent)
@@ -178,7 +191,13 @@ class OrganizationLifecycleWorker:
                     from otm.tenancies.onboarding import advance
 
                     if not advance(
-                        connection, row, intent, self.facade, at, recovery_setup=self.recovery_setup
+                        connection,
+                        row,
+                        intent,
+                        self.facade,
+                        at,
+                        recovery_setup=self.recovery_setup,
+                        signing_setup=self.signing_setup,
                     ):
                         self._stage_email(connection, identifier, at)
                         return

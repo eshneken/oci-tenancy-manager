@@ -10,6 +10,7 @@ from otm.storage.transaction import require_transaction
 
 INSPECTION_TASK = "otm.inspect_import"
 PRESENCE_TASK = "otm.required_user_check"
+SIGNING_KEY_TASK = "otm.signing_key"
 RECOVERY_PASSWORD_TASK = "otm.recovery_password"  # nosec B105: fixed native task name, no credential
 RECOVERY_NETWORK_TASK = "otm.recovery_network_repair"
 COST_TASK = "otm.cost_collection"
@@ -31,6 +32,7 @@ class InspectionEnqueuer:
     def __init__(self, queue: str = OPERATIONS_QUEUE, *, task: str = INSPECTION_TASK):
         if task not in {
             PRESENCE_TASK,
+            SIGNING_KEY_TASK,
             RECOVERY_NETWORK_TASK,
             RECOVERY_PASSWORD_TASK,
             COST_TASK,
@@ -47,7 +49,16 @@ class InspectionEnqueuer:
     #
     # Registered simulated handlers cover inspection, lifecycle, configuration and cost reads.
     # Real OCI and corporate entitlement composition remain separate work.
-    def enqueue(self, connection: Connection, operation_id: UUID, *, delay_seconds=0) -> None:
+    def enqueue(
+        self,
+        connection: Connection,
+        operation_id: UUID,
+        *,
+        delay_seconds=0,
+        scheduled_rotation=False,
+    ) -> None:
+        if scheduled_rotation and self.task != SIGNING_KEY_TASK:
+            raise ValueError("SIGNING_ROTATION_SCHEDULE_REQUIRED")
         raw = require_transaction(connection)
         # Prefer builtins, then migration-owned objects; explicitly put temp relations last.
         # Runtime roles must not have CREATE on public (qualified during deployment).
@@ -57,7 +68,13 @@ class InspectionEnqueuer:
             allow_unknown=True,
             queue=self.queue,
             connection=raw,
-            **({"priority": 100} if self.task == RECOVERY_PASSWORD_TASK else {}),
+            **(
+                {"priority": 100}
+                if self.task == RECOVERY_PASSWORD_TASK
+                else {"priority": -1}
+                if scheduled_rotation
+                else {}
+            ),
             lock="operation:" + str(operation_id),
             # None means immediately eligible; host-derived zero ETAs can be ahead of DB time.
             schedule_in={"seconds": delay_seconds} if delay_seconds else None,

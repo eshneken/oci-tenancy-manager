@@ -517,6 +517,18 @@ def setup_database(root: Path, state: LocalState, project: Path) -> LocalState:
                 "first_disclosure_at,rotation_due_at,active_window_grant_id,updated_at) "
                 "ON public.otm_credential TO otm_local_worker"
             )
+            # APIs may request a pause; only workers may create or switch managed key heads.
+            connection.exec_driver_sql(
+                "GRANT SELECT ON public.otm_signing_credential TO otm_local_api,otm_local_worker"
+            )
+            connection.exec_driver_sql(
+                "GRANT UPDATE(state,updated_at) ON public.otm_signing_credential TO otm_local_api"
+            )
+            connection.exec_driver_sql(
+                "GRANT INSERT,UPDATE(current_key,current_hash,generation,state,retire_at,"
+                "rotation_operation_id,updated_at) ON public.otm_signing_credential "
+                "TO otm_local_worker"
+            )
             from otm.organization.reviews import initialize_existing_reviews
 
             initialize_existing_reviews(connection)

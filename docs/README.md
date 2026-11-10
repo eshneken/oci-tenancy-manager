@@ -176,3 +176,7 @@ The [recovery-network repair source subset](reference/recovery-network-repair.md
 - [Automation signing-key inventory source checkpoint](reference/automation-signing-keys.md): separate observation-only panel and original-time age; targeted qualification/main installation pass; rotation enforcement separate.
 
 - [Signing-key inventory checkpoint status](history/automation-signing-key-inventory-checkpoint-2026-11-09.md): targeted public metadata/age checkpoint installed; no new full-suite/milestone/PR qualification.
+
+- [Managed signing-key rotation](reference/signing-key-rotation.md): candidate 0028 head, field dictionary/ER, schedule, pause/drain and failure-email accounting; targeted local qualification/saved installation PASS; full-suite/PR/live Pending.
+
+- [Signing-key rotation targeted checkpoint](history/signing-key-rotation-checkpoint-2026-11-10.md): nine targeted PG/native/SMTP/browser cases and source-unit gates pass; preserved saved publication PASS; full-suite/PR and live OCI Pending. [Operator review after installation](how-to/signing-key-rotation-runbook.md).

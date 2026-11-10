@@ -115,6 +115,9 @@ def network_command(snapshot, capture, desired, operation_id, attempt_id):
 
 # Admission shares current session/grant locks and the existing child operation fence.
 class RecoveryNetworkRepairs:
+    # Explicit host composition supplies the guard for versioned signing credentials.
+    signing_guard = None
+
     # Host-owned source selection and facade factory are explicit; no adapter is auto-discovered.
     def __init__(self, presence, factory, enqueuer):
         self.presence, self.factory, self.enqueuer = presence, factory, enqueuer
@@ -238,6 +241,8 @@ class RecoveryNetworkRepairs:
                 .where(tenancy.c.workspace_id == workspace, tenancy.c.id == identifier)
                 .with_for_update()
             ).scalar_one_or_none()
+            if self.signing_guard is not None:
+                self.signing_guard(connection, workspace, identifier, at)
             child, snapshot, source, desired, last, observed, preview = self.prepare(
                 connection, workspace, identifier
             )

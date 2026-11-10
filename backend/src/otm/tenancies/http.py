@@ -17,6 +17,7 @@ from otm.tenancies.presence_contracts import PresenceCheckRequest
 from otm.tenancies.recovery_network_contracts import RecoveryNetworkPreview, RecoveryNetworkRequest
 from otm.tenancies.recovery_password_contracts import RecoveryPasswordRequest, RecoveryPasswordView
 from otm.tenancies.required_users import RequiredUsersDirectory
+from otm.tenancies.signing_key_contracts import SigningKeyRequest, SigningKeyView
 from otm.tenancies.views import (
     PersonWorkflow,
     ReviewDirectory,
@@ -31,6 +32,10 @@ from otm.tenancies.views import (
 PUBLIC_CONFLICTS = frozenset(
     {
         "REQUIRED_USERS_CHECK_UNAVAILABLE",
+        "SIGNING_KEY_MAINTENANCE_REQUIRED",
+        "SIGNING_KEY_CONFIRMATION_REQUIRED",
+        "SIGNING_KEY_ROTATION_UNAVAILABLE",
+        "SIGNING_KEY_PREVIEW_CHANGED",
         "RECOVERY_PASSWORD_UNAVAILABLE",
         "RECOVERY_PASSWORD_READ_UNAVAILABLE",
         "RECOVERY_PASSWORD_CONFIRMATION_REQUIRED",
@@ -135,6 +140,31 @@ def workflow_router(service):
         if service.recovery_passwords is None:
             raise OrganizationConflict("RECOVERY_PASSWORD_UNAVAILABLE")
         return service.recovery_passwords
+
+    # Read-only progress never initializes legacy keys or obtains private material.
+    @router.get("/api/tenancies/{identifier}/signing-key-rotation", response_model=SigningKeyView)
+    def signing_key_rotation(identifier: UUID, request: Request):
+        if service.signing_key_rotations is None:
+            return JSONResponse({"code": "SIGNING_KEY_ROTATION_UNAVAILABLE"}, status_code=409)
+        return guarded(lambda: service.signing_key_rotations.view(request.user, identifier))
+
+    # Preview/consent and durable replay precede reference-only native deferral.
+    @router.post("/api/tenancies/{identifier}/signing-key-rotation")
+    async def request_signing_key_rotation(identifier: UUID, request: Request):
+        from otm.configuration.rollout_http import bounded_command
+
+        command = await bounded_command(request, SigningKeyRequest, 4096)
+        if isinstance(command, JSONResponse):
+            return command
+        if service.signing_key_rotations is None:
+            return JSONResponse({"code": "SIGNING_KEY_ROTATION_UNAVAILABLE"}, status_code=409)
+        result = await run_in_threadpool(
+            guarded,
+            lambda: service.signing_key_rotations.request(request.user, identifier, command),
+        )
+        if isinstance(result, JSONResponse):
+            return result
+        return JSONResponse(result.model_dump(mode="json"), status_code=202)
 
     # Opening the access dialog reads metadata only and cannot initialize or disclose a secret.
     @router.get("/api/tenancies/{identifier}/administrator-access")

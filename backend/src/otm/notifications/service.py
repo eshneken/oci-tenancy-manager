@@ -13,6 +13,7 @@ from otm.notifications.contracts import (
     NotificationSummary,
     RecoveryPasswordNotice,
     RequiredUserMissingNotice,
+    SigningKeyFailureNotice,
 )
 from otm.operations.contracts import canonical_hash
 from otm.operations.responsibility import execution_authority, latest_claim
@@ -27,6 +28,7 @@ def decode_intent(row):
         raise ValueError("NOTIFICATION_INTENT_INVALID")
     model = {
         "cost-failure-email-1": CostFailureNotice,
+        "signing-key-email-1": SigningKeyFailureNotice,
         "required-user-missing-email-1": RequiredUserMissingNotice,
         "recovery-password-email-1": RecoveryPasswordNotice,
     }.get(row["intent"].get("contract_version"), NotificationIntent)

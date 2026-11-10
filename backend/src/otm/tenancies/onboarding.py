@@ -44,6 +44,16 @@ def onboarding_steps(intent):
             )
             + (
                 (("capture_required_users", "Record permanent user identities"),)
+                + (
+                    (
+                        (
+                            "prepare_automation_signer",
+                            "Prepare versioned automation signing credential",
+                        ),
+                    )
+                    if intent.signing_key_rotation_contract is not None
+                    else ()
+                )
                 if intent.onboarding_version in {3, 4}
                 else ()
             )
@@ -322,7 +332,7 @@ def submit(service, connection, state, row, principal, command, at):
 
 
 # Execute deterministic facade capabilities in order; never retire access before replacement checks.
-def advance(connection, row, intent, facade, at, *, recovery_setup=None):
+def advance(connection, row, intent, facade, at, *, recovery_setup=None, signing_setup=None):
     steps = step_rows(connection, row)
     handoff = steps.get("handoff")
     if handoff is None:
@@ -397,6 +407,19 @@ def advance(connection, row, intent, facade, at, *, recovery_setup=None):
         for current, _ in onboarding_steps(intent)[1:]:
             if current in steps and steps[current]["state"] == "verified":
                 continue
+            if current == "prepare_automation_signer":
+                if signing_setup is None:
+                    raise ValueError("REQUIRED_ACCESS_UNVERIFIED")
+                signing_setup.admit(connection, row, intent, at)
+                transition(
+                    connection,
+                    row,
+                    at,
+                    "waiting",
+                    "Prepare automation signing credential",
+                    "onboarding_signer",
+                )
+                return False
             if current == "prepare_recovery_password":
                 if recovery_setup is None:
                     raise ValueError("REQUIRED_ACCESS_UNVERIFIED")

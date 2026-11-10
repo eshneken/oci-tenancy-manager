@@ -1,3 +1,4 @@
+import type {SigningKeyView,SigningKeyRequest} from "./contracts";
 import type {RecoveryPasswordView,RecoveryPasswordRequest,RecoveryPasswordDisclosure} from "./contracts";
 import type { RequiredUsersDirectory, PresenceCheckRequest } from "./contracts";
 import type {RecoveryNetworkPreview,RecoveryNetworkRequest} from "./contracts";
@@ -111,6 +112,11 @@ export class WorkflowError extends ApiError {
 }
 
 export const api = {
+  // Key metadata and replay-safe commands never carry private material or browser-selected identities.
+  signingKeyRotation(id:string,signal?:AbortSignal){return request<SigningKeyView>("/api/tenancies/"+encodeURIComponent(id)+"/signing-key-rotation","GET",undefined,signal);},
+  // Server preview/consent binds the current generation; response loss retries the identical UUID.
+  requestSigningKeyRotation(id:string,body:SigningKeyRequest,signal?:AbortSignal){return request<ActionReceipt>("/api/tenancies/"+encodeURIComponent(id)+"/signing-key-rotation","POST",body,signal);},
+
   // Metadata only; never fetch a password from a GET or place disclosure responses in Query cache.
   administratorAccess(id:string, signal?:AbortSignal) {
     return request<RecoveryPasswordView>("/api/tenancies/"+encodeURIComponent(id)+"/administrator-access","GET",undefined,signal);

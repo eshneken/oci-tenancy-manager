@@ -50,6 +50,7 @@ def create_local_application():
             custody_path,
             Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "recovery-passwords",
             Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "automation-key-inventory",
+            Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "signing-key-custody",
             Path(os.environ["OTM_APPLICATION_CONFIG"]),
             *(
                 [Path(os.environ["OTM_ORGANIZATION_CONFIG"])]
@@ -119,11 +120,24 @@ def create_local_application():
                     automation_keys=keys,
                 ),
                 automation_key_inventory_enabled=True,
+                signing_key_setup_enabled=True,
                 recovery_console=settings.recovery_console,
                 policy_loader=organization_policy,
                 mail_policy=settings.mail_policy(),
                 notifications=notifier,
             )
+        if workflow.mode == "simulated":
+            from otm.storage.enqueue import SIGNING_KEY_TASK
+            from otm.tenancies.signing_keys import SigningKeys, require_signing_admission
+
+            workflow.signing_key_rotations = SigningKeys(
+                organization_store,
+                workflow.policy_loader,
+                InspectionEnqueuer(
+                    workspace_queue(settings.local_auth.workspace_id), task=SIGNING_KEY_TASK
+                ),
+            )
+            workflow.signing_guard = require_signing_admission
         from otm.configuration.drift import ConfigurationChecks
         from otm.configuration.rollout import ConfigurationRollouts
         from otm.providers.baseline_simulator import SimulatedBaselineQualifier
@@ -207,6 +221,29 @@ def create_local_application():
             else None,
         )
         workflow.cost_collections = costs
+        for guarded_service in (
+            workflow.presence_checks,
+            workflow.recovery_network_repairs,
+            workflow.recovery_passwords,
+            costs,
+            checks,
+        ):
+            if guarded_service is not None:
+                guarded_service.signing_guard = workflow.signing_guard
+        rollouts = ConfigurationRollouts(
+            organization_store,
+            repair_facade=SimulatedConfigurationFacade(workflow.policy)
+            if workflow.policy
+            else None,
+            policy=workflow.policy,
+            policy_loader=workflow.policy_loader,
+            enqueuer=InspectionEnqueuer(
+                queue=workspace_queue(settings.local_auth.workspace_id), task=CONFIGURATION_TASK
+            )
+            if workflow.policy
+            else None,
+        )
+        rollouts.signing_guard = workflow.signing_guard
         app = create_app(
             sessions,
             BrowserSettings(public_origin=origin),
@@ -221,19 +258,7 @@ def create_local_application():
             baseline_qualifier=SimulatedBaselineQualifier(),
             configuration_checks=checks,
             cost_collections=costs,
-            configuration_rollouts=ConfigurationRollouts(
-                organization_store,
-                repair_facade=SimulatedConfigurationFacade(workflow.policy)
-                if workflow.policy
-                else None,
-                policy=workflow.policy,
-                policy_loader=workflow.policy_loader,
-                enqueuer=InspectionEnqueuer(
-                    queue=workspace_queue(settings.local_auth.workspace_id), task=CONFIGURATION_TASK
-                )
-                if workflow.policy
-                else None,
-            ),
+            configuration_rollouts=rollouts,
             organization=OrganizationWeb(
                 organization_store,
                 clock,

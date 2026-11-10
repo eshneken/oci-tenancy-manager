@@ -49,3 +49,11 @@ condition = "AND"
 paths = ['''(^|/)backend/migrations/sql/manifest\.json$''']
 regexTarget = "line"
 regexes = ['''^\s*"0027-recovery-passwords\.sql":\s*"331aec3da0c8544d74c73349afc1eea528c22e4bee35ca899ad361c8fcff7c01"\s*,?\s*$''']
+
+[[allowlists]]
+description = "Independently reviewed signing migration integrity digest"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''(^|/)backend/migrations/sql/manifest\.json$''']
+regexTarget = "line"
+regexes = ['''^\s*"0028-signing-credentials\.sql":\s*"d5895716c62ba4d0a3892598ff4a6ceed954cba79f0c363cc0b78271fa228f3e"\s*,?\s*$''']

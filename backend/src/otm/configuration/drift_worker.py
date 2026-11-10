@@ -14,7 +14,8 @@ from otm.storage.transaction import require_transaction
 # here.
 class ConfigurationCheckWorker:
     # Dependencies carry exact deployment scope, fresh authority, server UTC and a read capability.
-    def __init__(self, engine, workspace, clock, policy_loader, facade):
+    def __init__(self, engine, workspace, clock, policy_loader, facade, *, signing_dispatch=None):
+        self.signing_dispatch = signing_dispatch
         self.engine, self.workspace, self.clock, self.policy_loader, self.facade = (
             engine,
             workspace,
@@ -148,6 +149,10 @@ class ConfigurationCheckWorker:
                 code = "ASSIGNMENT_CHANGED"
             elif registered["operation_id"]:
                 code = "TENANCY_BUSY"
+            if self.signing_dispatch is not None and not self.signing_dispatch(
+                connection, self.workspace, target_id, self.clock()
+            ):
+                code = "PROVIDER_UNAVAILABLE"
             started = self.clock()
             try:
                 desired = expected_objects(connection, self.workspace, target)

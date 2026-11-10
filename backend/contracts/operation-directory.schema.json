@@ -57,7 +57,8 @@
             "cost_collection",
             "required_user_check",
             "recovery_network_repair",
-            "recovery_password"
+            "recovery_password",
+            "signing_key"
           ],
           "title": "Kind",
           "type": "string"

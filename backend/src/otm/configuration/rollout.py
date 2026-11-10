@@ -207,6 +207,9 @@ def save_target_result(connection, row, target, baseline, at, *, code, category=
 # Preview/accept/retry use the same live administrator and workspace transaction guards as
 # onboarding.
 class ConfigurationRollouts:
+    # Explicit host composition supplies the guard for versioned signing credentials.
+    signing_guard = None
+
     # An absent provider/queue is explicitly unavailable; no hidden simulation fallback exists.
     def __init__(
         self, store, *, policy=None, policy_loader=None, enqueuer=None, repair_facade=None
@@ -463,6 +466,8 @@ class ConfigurationRollouts:
             key, event = uuid4(), uuid4()
             accepted = []
             for target in targets:
+                if self.signing_guard is not None:
+                    self.signing_guard(connection, workspace, target.tenancy_id, at)
                 registered = {
                     "id": target.tenancy_id,
                     "desired_configuration_id": target.source_configuration_id,

@@ -36,3 +36,5 @@ includes replacement verification, identity retention/removal and manual resourc
 - [Recovery-policy UI checkpoint](recovery-policy-ui-checkpoint.md): safe local inspection of independent user and console-policy controls.
 
 - [Review contextual operation Back links](operation-navigation.md) — source navigation follow-up; check its separate validation/install receipt before manual main review
+
+- [Managed signing-key rotation local review](signing-key-rotation-runbook.md): newly onboarded simulated child, original schedule, guarded manual expedite and immutable history; use after confirmed installation.

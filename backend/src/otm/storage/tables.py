@@ -55,7 +55,7 @@ operation = Table(
     ),
     CheckConstraint(
         "kind IN ('inspect_import','organization_action"
-        "','configuration_update','configuration_check','cost_collection','required_user_check','recovery_network_repair','recovery_password')",
+        "','configuration_update','configuration_check','cost_collection','required_user_check','recovery_network_repair','recovery_password','signing_key')",
         name="ck_operation_kind",
     ),
     CheckConstraint(
@@ -108,7 +108,7 @@ audit_event = Table(
         "((kind='operation_intent' AND intent_revision IS NOT NULL AND intent_revision>=1) "
         "OR (kind IN ('inspection_dispatch','inspection_outcome','organization_action_out"
         "come','onboarding_action','onboarding_outcome','configuration_outcome',"
-        "'configuration_retry','configuration_check_outcome','cost_collection_outcome','required_user_check_outcome','recovery_network_outcome','recovery_password_outcome','recovery_password_disclosed','operation_responsibility_changed',"
+        "'configuration_retry','configuration_check_outcome','cost_collection_outcome','required_user_check_outcome','recovery_network_outcome','recovery_password_outcome','recovery_password_disclosed','signing_key_outcome','signing_key_requested','operation_responsibility_changed',"
         "'email_delivery') "
         "AND intent_revision IS NULL))) "
         "OR (kind IN ('administrator_revoked','administrator_bootstrapped',"
@@ -181,7 +181,7 @@ operation_step = Table(
         "OR (command_kind='onboarding' AND step_key IN ('handoff','inspect_bootstrap',"
         "'establish_automation','verify_automation','configure_required','verify_required',"
         "'retire_temporary','configure_baseline','verify_configured_access',"
-        "'capture_required_users','prepare_recovery_password')) "
+        "'capture_required_users','prepare_automation_signer','prepare_recovery_password')) "
         "OR (command_kind='configuration_update' AND step_key ~ '^configuration:[0-9a-f-]{36}$') "
         "OR (command_kind='configuration_check' AND ste"
         "p_key ~ '^configuration_check:[0-9a-f-]{36}$') "
@@ -189,7 +189,8 @@ operation_step = Table(
         "OR (command_kind='required_user_check' AND step_key ~ '^required_users:[0-9a-f-]{36}$') "
         "OR (command_kind='recovery_network_repair' "
         "AND step_key ~ '^recovery_network:[0-9a-f-]{36}$') OR "
-        "(command_kind='recovery_password' AND step_key ~ '^recovery_password:[0-9a-f-]{36}$')",
+        "(command_kind='recovery_password' AND step_key ~ '^recovery_password:[0-9a-f-]{36}$') OR "
+        "(command_kind='signing_key' AND step_key ~ '^signing_key:[0-9a-f-]{36}$')",
         name="ck_inspection_step_kind",
     ),
     CheckConstraint(
@@ -204,7 +205,7 @@ operation_step = Table(
         "ation_check','cost_collection','required_user_check') AND effect_knowledge='none') OR "
         "(command_kind IN ('organization_action','onboarding','configuration_update') "
         "AND effect_knowledge IN ('none','known')) OR "
-        "(command_kind IN ('recovery_network_repair','recovery_password') "
+        "(command_kind IN ('recovery_network_repair','recovery_password','signing_key') "
         "AND effect_knowledge IN ('none','known','unknown'))",
         name="ck_inspection_read_only",
     ),
@@ -1763,4 +1764,101 @@ recovery_credential.append_constraint(
         "current_version_id<>staged_version_id",
         name="ck_credential_distinct_candidate",
     )
+)
+
+
+# Signing credentials select exact private versions, separate from password CURRENT/window state.
+signing_credential = Table(
+    "otm_signing_credential",
+    metadata,
+    Column("id", Uuid(as_uuid=True), primary_key=True),
+    Column("workspace_id", String(256), nullable=False),
+    Column("tenancy_id", Uuid(as_uuid=True), nullable=False),
+    Column("principal_binding_id", Uuid(as_uuid=True), nullable=False),
+    Column("connection_id", Uuid(as_uuid=True), nullable=False),
+    Column("source_operation_id", Uuid(as_uuid=True), nullable=False),
+    Column("source_evidence_event_id", Uuid(as_uuid=True), nullable=False),
+    Column("target", JSONB, nullable=False),
+    Column("target_hash", String(64), nullable=False),
+    Column("current_key", JSONB),
+    Column("current_hash", String(64)),
+    Column("generation", Integer, nullable=False),
+    Column("state", String(16), nullable=False),
+    Column("retire_at", DateTime(timezone=True)),
+    Column("rotation_operation_id", Uuid(as_uuid=True), nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
+    UniqueConstraint("workspace_id", "id"),
+    UniqueConstraint("workspace_id", "tenancy_id", "id"),
+    UniqueConstraint("workspace_id", "principal_binding_id"),
+    ForeignKeyConstraint(
+        ["workspace_id", "tenancy_id"], ["public.otm_tenancy.workspace_id", "public.otm_tenancy.id"]
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "tenancy_id", "principal_binding_id"],
+        [
+            "public.otm_managed_object_binding.workspace_id",
+            "public.otm_managed_object_binding.tenancy_id",
+            "public.otm_managed_object_binding.id",
+        ],
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "tenancy_id", "connection_id"],
+        [
+            "public.otm_user_presence_connection.workspace_id",
+            "public.otm_user_presence_connection.tenancy_id",
+            "public.otm_user_presence_connection.id",
+        ],
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "source_operation_id", "source_evidence_event_id"],
+        [
+            "public.audit_event.workspace_id",
+            "public.audit_event.operation_id",
+            "public.audit_event.id",
+        ],
+    ),
+    ForeignKeyConstraint(
+        ["workspace_id", "rotation_operation_id"],
+        ["public.otm_operation.workspace_id", "public.otm_operation.id"],
+        deferrable=True,
+        initially="DEFERRED",
+    ),
+    CheckConstraint(
+        "state IN ('staging','usable','rotating','attention','retired') AND generation>=0 "
+        "AND updated_at>=created_at AND target_hash ~ '^[0-9a-f]{64}$' "
+        "AND jsonb_typeof(target)='object'",
+        name="ck_signing_credential_state",
+    ),
+    CheckConstraint(
+        "(generation=0 AND current_key IS NULL AND current_hash IS NULL AND retire_at IS NULL "
+        "AND state IN ('staging','attention','retired')) OR (generation>=1 "
+        "AND jsonb_typeof(current_key)='object' AND current_hash ~ '^[0-9a-f]{64}$' "
+        "AND retire_at IS NOT NULL)",
+        name="ck_signing_credential_current",
+    ),
+)
+Index(
+    "uq_signing_credential_active",
+    signing_credential.c.workspace_id,
+    signing_credential.c.tenancy_id,
+    unique=True,
+    postgresql_where=signing_credential.c.state != "retired",
+)
+Index(
+    "ix_signing_credential_due",
+    signing_credential.c.workspace_id,
+    signing_credential.c.retire_at,
+    signing_credential.c.id,
+    postgresql_where=signing_credential.c.state == "usable",
+)
+
+# Request replay survives generation completion; a repeated UUID cannot rotate a later key.
+Index(
+    "uq_signing_request",
+    audit_event.c.workspace_id,
+    audit_event.c.actor_subject,
+    audit_event.c.data["client_request_key"].astext,
+    unique=True,
+    postgresql_where=audit_event.c.kind == "signing_key_requested",
 )

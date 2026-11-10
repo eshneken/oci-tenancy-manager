@@ -9,6 +9,8 @@ from otm.contracts import Contract, Text, UtcInstant
 
 AuditKind = Literal[
     "email_delivery",
+    "signing_key_outcome",
+    "signing_key_requested",
     "operation_responsibility_changed",
     "configuration_check_outcome",
     "cost_collection_outcome",

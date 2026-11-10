@@ -41,6 +41,7 @@ class OperationSummary(Contract):
         "required_user_check",
         "recovery_network_repair",
         "recovery_password",
+        "signing_key",
     ]
     state: OperationState
     stage: Text
@@ -72,7 +73,7 @@ class OperationStepView(Contract):
     step_key: Annotated[
         str,
         Field(
-            pattern=r"^(inspect_target|apply_lifecycle|handoff|inspect_bootstrap|establish_automation|verify_automation|configure_required|verify_required|retire_temporary|configure_baseline|verify_configured_access|capture_required_users|prepare_recovery_password|configuration_check:[0-9a-f-]{36}|required_users:[0-9a-f-]{36}|recovery_network:[0-9a-f-]{36}|recovery_password:[0-9a-f-]{36}|cost:[0-9a-f-]{36}|(remove_member_groups|delete_member_user):[0-9a-f-]{36}|configuration:[0-9a-f-]{36})$"
+            pattern=r"^(inspect_target|apply_lifecycle|handoff|inspect_bootstrap|establish_automation|verify_automation|configure_required|verify_required|retire_temporary|configure_baseline|verify_configured_access|capture_required_users|prepare_automation_signer|prepare_recovery_password|configuration_check:[0-9a-f-]{36}|required_users:[0-9a-f-]{36}|recovery_network:[0-9a-f-]{36}|recovery_password:[0-9a-f-]{36}|signing_key:[0-9a-f-]{36}|cost:[0-9a-f-]{36}|(remove_member_groups|delete_member_user):[0-9a-f-]{36}|configuration:[0-9a-f-]{36})$"
         ),
     ]
     state: Literal["running", "verified", "needs_attention"]
@@ -128,6 +129,8 @@ class OperationEventView(Contract):
         "recovery_network_outcome",
         "recovery_password_outcome",
         "recovery_password_disclosed",
+        "signing_key_outcome",
+        "signing_key_requested",
     ]
     at: UtcInstant
     safe_code: Text | None

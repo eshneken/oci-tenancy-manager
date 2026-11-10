@@ -1310,3 +1310,7 @@ stored policy and existing cleanup/expiry cases remain mandatory. Existing sessi
 
 Cleanup PostgreSQL fixtures explicitly retain an already-issued 1,800-second policy, so laptop
 default changes cannot silently relax the mandatory 30-minute idle expiry/polling tests.
+
+## Signing-key rotation targeted checkpoint — 10 November 2026
+
+[Exact evidence](history/signing-key-rotation-checkpoint-2026-11-10.md) records nine targeted disposable PG/native/SMTP/browser cases, not a new complete-suite gate. Preserve coverage for fresh enrollment/no legacy adoption, same-generation request replay, day 29 ETA versus manual queue priority, exact original clocks, upload uncertainty, immutable candidate/CAS/retirement, drain/password closure, original administrator incident dedup/resume eligibility, confirmed termination and restricted installed-role grants. [Live equivalents](how-to/real-oci-test-manifest.md#managed-signing-key-rotation-qualification) remain Pending. Full milestone/PR/merge gates are unchanged.

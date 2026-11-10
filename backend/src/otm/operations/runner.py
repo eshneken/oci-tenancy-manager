@@ -126,3 +126,15 @@ def register_recovery_password_task(app, worker, queue):
         worker.run(UUID(operation_id))
 
     return recovery_password
+
+
+# Signing-key jobs share the existing native queue and carry only immutable operation references.
+def register_signing_key_task(app, worker, queue):
+    from otm.storage.enqueue import SIGNING_KEY_TASK
+
+    # Business checkpoints reconcile uncertain effects; native delivery never creates another pair.
+    @app.task(name=SIGNING_KEY_TASK, queue=queue, retry=False)
+    def signing_key(operation_id):
+        worker.run(UUID(operation_id))
+
+    return signing_key

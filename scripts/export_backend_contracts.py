@@ -80,6 +80,7 @@ from otm.tenancies.recovery_password_contracts import (
     RecoveryPasswordView,
 )
 from otm.tenancies.required_users import RequiredUsersDirectory
+from otm.tenancies.signing_key_contracts import SigningKeyRequest, SigningKeyView
 from otm.tenancies.views import (
     PersonWorkflow,
     ReviewDirectory,
@@ -146,6 +147,8 @@ def contracts() -> dict[str, dict]:
         "tenancy-directory.schema.json": TenancyDirectory.model_json_schema(),
         "tenancy-detail.schema.json": TenancyDetail.model_json_schema(),
         "required-users-directory.schema.json": RequiredUsersDirectory.model_json_schema(),
+        "signing-key-view.schema.json": SigningKeyView.model_json_schema(),
+        "signing-key-request.schema.json": SigningKeyRequest.model_json_schema(),
         "presence-check-request.schema.json": PresenceCheckRequest.model_json_schema(),
         "tenancy-query.schema.json": TenancyQuery.model_json_schema(),
         "organization-directory.schema.json": OrganizationDirectory.model_json_schema(),

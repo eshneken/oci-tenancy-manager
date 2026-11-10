@@ -12,6 +12,7 @@ from otm.notifications.contracts import (
     Envelope,
     RecoveryPasswordNotice,
     RequiredUserMissingNotice,
+    SigningKeyFailureNotice,
 )
 from otm.notifications.service import decode_intent, record_evidence
 from otm.operations.contracts import canonical_hash
@@ -237,6 +238,26 @@ class NotificationDeliveryWorker:
                     )
                     + "This notice does not verify permissions or perform a repair.\n",
                 ), attempt
+            if isinstance(intent, SigningKeyFailureNotice):
+                return Envelope(
+                    notification_id=identifier,
+                    recipient=recipient,
+                    subject="Automation signing-key maintenance needs attention",
+                    body="Automation signing-key preparation or retirement remains unresolved.\n"
+                    + (
+                        "Original retirement deadline: " + intent.retire_at.isoformat() + "\n"
+                        if intent.retire_at
+                        else ""
+                    )
+                    + (
+                        f"Review tenancy: {intent.application_origin}/tenancies/"
+                        f"{intent.tenancy_id}\n"
+                        if intent.application_origin
+                        else "Sign in and open the affected tenancy.\n"
+                    )
+                    + "Other provider work may be paused. "
+                    "Credentials are never included in email.\n",
+                ), attempt
             if isinstance(intent, CostFailureNotice):
                 return Envelope(
                     notification_id=identifier,
@@ -271,6 +292,10 @@ class NotificationDeliveryWorker:
             return delivery_issue(self, connection, row, op, intent)
         if isinstance(intent, RequiredUserMissingNotice):
             from otm.tenancies.presence_alerts import delivery_issue
+
+            return delivery_issue(self, connection, row, op, intent)
+        if isinstance(intent, SigningKeyFailureNotice):
+            from otm.tenancies.signing_key_notices import delivery_issue
 
             return delivery_issue(self, connection, row, op, intent)
         if isinstance(intent, CostFailureNotice):

@@ -168,6 +168,7 @@
             "action_required",
             "terminal_failure",
             "cost_read_failed",
+            "signing_key_attention",
             "required_user_missing",
             "recovery_password_requested",
             "recovery_password_rotation_failed"
@@ -350,7 +351,9 @@
             "required_user_check_outcome",
             "recovery_network_outcome",
             "recovery_password_outcome",
-            "recovery_password_disclosed"
+            "recovery_password_disclosed",
+            "signing_key_outcome",
+            "signing_key_requested"
           ],
           "title": "Kind",
           "type": "string"
@@ -416,7 +419,7 @@
           "type": "string"
         },
         "step_key": {
-          "pattern": "^(inspect_target|apply_lifecycle|handoff|inspect_bootstrap|establish_automation|verify_automation|configure_required|verify_required|retire_temporary|configure_baseline|verify_configured_access|capture_required_users|prepare_recovery_password|configuration_check:[0-9a-f-]{36}|required_users:[0-9a-f-]{36}|recovery_network:[0-9a-f-]{36}|recovery_password:[0-9a-f-]{36}|cost:[0-9a-f-]{36}|(remove_member_groups|delete_member_user):[0-9a-f-]{36}|configuration:[0-9a-f-]{36})$",
+          "pattern": "^(inspect_target|apply_lifecycle|handoff|inspect_bootstrap|establish_automation|verify_automation|configure_required|verify_required|retire_temporary|configure_baseline|verify_configured_access|capture_required_users|prepare_automation_signer|prepare_recovery_password|configuration_check:[0-9a-f-]{36}|required_users:[0-9a-f-]{36}|recovery_network:[0-9a-f-]{36}|recovery_password:[0-9a-f-]{36}|signing_key:[0-9a-f-]{36}|cost:[0-9a-f-]{36}|(remove_member_groups|delete_member_user):[0-9a-f-]{36}|configuration:[0-9a-f-]{36})$",
           "title": "Step Key",
           "type": "string"
         },
@@ -500,7 +503,8 @@
             "cost_collection",
             "required_user_check",
             "recovery_network_repair",
-            "recovery_password"
+            "recovery_password",
+            "signing_key"
           ],
           "title": "Kind",
           "type": "string"

@@ -62,7 +62,8 @@ def dispatch_code(intent, actor, grant, policy):
 # Reuse native job identity and per-target steps; no second coordinator or queue is introduced.
 class ConfigurationUpdateWorker:
     # This worker is qualified for pure local simulation only, with explicit policy and facade.
-    def __init__(self, engine, workspace, clock, policy_loader, facade):
+    def __init__(self, engine, workspace, clock, policy_loader, facade, *, signing_dispatch=None):
+        self.signing_dispatch = signing_dispatch
         self.engine, self.workspace, self.clock, self.policy_loader, self.facade = (
             engine,
             workspace,
@@ -190,6 +191,10 @@ class ConfigurationUpdateWorker:
                 code = "TARGET_CHANGED"
             at = self.clock()
             category = None
+            if self.signing_dispatch is not None and not self.signing_dispatch(
+                connection, self.workspace, target_id, at
+            ):
+                code = "PROVIDER_UNAVAILABLE"
             if not code:
                 if intent.change_kind == "repair":
                     from otm.configuration.repairs import execute_repair

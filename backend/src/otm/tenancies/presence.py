@@ -28,6 +28,9 @@ FRESH_FOR = timedelta(hours=24)
 
 # One service uses the existing session/store locks and explicit deployment policy/queue.
 class PresenceChecks:
+    # Explicit host composition supplies the guard for versioned signing credentials.
+    signing_guard = None
+
     # No default adapter or authority is invented when the service is not composed.
     def __init__(self, store, *, policy, policy_loader, enqueuer, recovery_console_loader=None):
         self.recovery_console_loader = recovery_console_loader
@@ -73,6 +76,11 @@ class PresenceChecks:
             if snapshot is None
             else None
         )
+        if reason is None and self.signing_guard is not None:
+            try:
+                self.signing_guard(connection, workspace, child["id"], self.store.clock())
+            except (OrganizationConflict, ValueError):
+                reason = "tenancy_busy"
         digest = canonical_hash(snapshot.model_dump(mode="json")) if snapshot else None
         pending = next(
             (
@@ -112,13 +120,31 @@ class PresenceChecks:
         views = presence_views(
             snapshot, latest, event if latest is not None else None, self.store.clock()
         )
+        key_change_at = None
+        if self.signing_guard is not None:
+            from otm.storage.tables import signing_credential
+
+            key_change_at = connection.scalar(
+                select(signing_credential.c.updated_at)
+                .where(
+                    signing_credential.c.workspace_id == workspace,
+                    signing_credential.c.tenancy_id == child["id"],
+                    signing_credential.c.state != "retired",
+                )
+                .limit(1)
+            )
         return directory.model_copy(
             update={
+                "signing_rotation_available": self.signing_guard is not None,
                 "check_available": reason is None,
                 "check_unavailable_reason": reason,
                 "pending_operation_id": pending,
                 "automation_keys": automation_keys_view(
-                    snapshot, latest, event if latest is not None else None, self.store.clock()
+                    snapshot,
+                    latest,
+                    event if latest is not None else None,
+                    self.store.clock(),
+                    key_change_at=key_change_at,
                 ),
                 "recovery_console": console_view(
                     snapshot, latest, event if latest is not None else None, self.store.clock()
@@ -187,6 +213,8 @@ class PresenceChecks:
             )
             if child is None:
                 raise OrganizationConflict("TENANCY_NOT_FOUND")
+            if self.signing_guard is not None:
+                self.signing_guard(connection, workspace, identifier, at)
             snapshot = self.snapshot(connection, workspace, child)
             if snapshot is None:
                 raise OrganizationConflict("REQUIRED_USERS_CHECK_UNAVAILABLE")
@@ -354,7 +382,7 @@ def administrator_view(snapshot, latest, event, now, purpose="automation"):
 
 
 # Exact current context gates inventory; legacy missing capture never becomes a known empty list.
-def automation_keys_view(snapshot, latest, event, now):
+def automation_keys_view(snapshot, latest, event, now, *, key_change_at=None):
     from otm.tenancies.automation_keys import AutomationKeysView, inventory_view
 
     if latest is None:
@@ -371,5 +399,7 @@ def automation_keys_view(snapshot, latest, event, now):
         check,
         latest["operation_id"],
         now,
-        stale=not check.checked_at <= now < check.checked_at + FRESH_FOR,
+        stale=not check.checked_at <= now < check.checked_at + FRESH_FOR
+        or key_change_at is not None
+        and key_change_at > check.checked_at,
     )
