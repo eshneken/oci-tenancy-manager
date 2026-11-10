@@ -118,7 +118,7 @@ Do not create additional persistent review instances unless the user requests th
 automated tests still use their owned temporary disposable environments. Interactive recovery-network
 repair testing is deferred to a real OCI tenancy; do not manufacture drift in the saved main app.
 
-Saved review instances on 8443/8444 must serve a per-instance snapshot of qualified built frontend
+The sole saved review instance on 8443 must serve a private snapshot of qualified built frontend
 assets. Do not point their running APIs at the mutable shared frontend/dist while building the next
 slice: a new form can otherwise reach an older in-memory API. Publish frontend and backend together,
 with the existing private backup, migration and preserved-data checks. Disposable tests may use the

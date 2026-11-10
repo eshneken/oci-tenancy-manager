@@ -545,3 +545,5 @@ clears search. These are read-only checks: do not trigger a rotation just to pop
 Tenancies and Organization share centered directory toolbars: shortcut links and checkbox labels
 align vertically with the search textbox on laptops, then stack on narrow screens.
 No directory filtering or mutation semantics change with this alignment refinement.
+
+Historical check deep links focus their recorded section once after it becomes available. Later operation polling preserves the administrator's current focus and scroll position; switching the operation/hash target permits a new focus.

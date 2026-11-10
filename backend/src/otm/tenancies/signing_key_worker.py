@@ -256,10 +256,47 @@ class SigningKeyWorker:
             .mappings()
             .one_or_none()
         )
+        if (
+            binding is None
+            or binding["revision"] != intent.connection_revision
+            or binding["automation_binding_id"] != head["principal_binding_id"]
+        ):
+            return False
+        # Scheduled maintenance is system-owned; initial enrollment still belongs to onboarding.
+        if intent.phase == "rotation":
+            return True
+        parent = (
+            connection.execute(
+                select(operation).where(
+                    operation.c.workspace_id == self.workspace,
+                    operation.c.id == intent.source_operation_id,
+                    operation.c.kind == "organization_action",
+                    operation.c.state == "waiting",
+                    operation.c.wait_reason == "onboarding_signer",
+                )
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if parent is None:
+            return False
+        from otm.operations.responsibility import execution_authority
+        from otm.tenancies.onboarding import load_intent
+
+        parent_frozen = load_intent(connection, parent)
+        owner, revision, actor = execution_authority(connection, parent, parent_frozen)
         return (
-            binding is not None
-            and binding["revision"] == intent.connection_revision
-            and binding["automation_binding_id"] == head["principal_binding_id"]
+            connection.scalar(
+                select(administrator.c.id).where(
+                    administrator.c.workspace_id == self.workspace,
+                    administrator.c.id == owner,
+                    administrator.c.status == "active",
+                    administrator.c.authorization_revision == revision,
+                    administrator.c.issuer == actor.issuer,
+                    administrator.c.subject == actor.subject,
+                )
+            )
+            is not None
         )
 
     # Already dispatched reads drain first; queued reads cannot pass the later child reservation.

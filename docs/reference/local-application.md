@@ -1,6 +1,10 @@
 # Run the local application
 
-30 October 2026 · Local HTTPS, administrator and Organization UI checkpoint
+30 October 2026 foundation · Current operating pointers reconciled 10 November 2026
+
+Use sole saved 8443. The retired 8444 instructions and dated slice qualification below are historical;
+current source is through migration 0028, with 29 OTM application tables. Milestone ship qualification
+is recorded separately and is not inferred from earlier slice receipts.
 
 [Backend setup](../../backend/README.md) · [Local authentication](local-authentication.md)
 · [Administrator model](administrators.md) · [Application settings](application-settings.md)
@@ -30,7 +34,7 @@ uv run --project backend otm-local setup
 Setup creates a private installation under `.local-dev/application/`. It generates a persistent
 installation UUID, separate database-owner/API/worker passwords and an installation-local issuer.
 It starts an instance-labeled PostgreSQL 16 container from the source-pinned image digest, exposes
-its database port only on `127.0.0.1`, applies the reviewed migrations through `0019_operation_responsibility` and provisions a restricted
+its database port only on `127.0.0.1`, applies the reviewed migrations through `0028_signing_credentials` and provisions a restricted
 local API role. It creates no application administrator or default password. Explicit setup upgrades legacy state
 with missing worker custody and adds a separate worker role while preserving existing owner/API
 credentials, account/MFA and all recorded user data.
@@ -149,7 +153,7 @@ The default `create_app()` is still health-only. The explicitly configured local
 | `POST /api/logout` | First handle revocation and immutable logout event, independent of current entitlement/IdP. |
 | `GET /api/administrators` | Fresh authorized directory read in the session workspace. |
 | `POST /api/administrators/{id}/revoke` | Closed `{expected_revision: UUID}` command reusing the atomic revocation service. |
-| `GET /api/operations` | Current-workspace persisted inspections with state/search/sort/pagination controls. |
+| `GET /api/operations` | Current-workspace recorded operations with kind/state/search/sort/pagination controls. |
 | `GET /api/audit-history` | Safe immutable event projections with current workspace scope, actor/ID search, categories and paging. |
 | `GET /api/operations/{id}` | Exact-intent summary, current steps and newest 50 operation events. |
 | `GET /api/inspection-sandbox` | Current-admin virtual-target catalog and pause state; configured simulator only. |
@@ -177,7 +181,9 @@ Both runtime factories reject owner/superuser-like authority
 even if called outside the launcher. That is real database-role separation, but not production process
 isolation: both commands run as the same OS user, which can read the private state holding both
 passwords. The local API role is not a qualified OCI managed-PostgreSQL deployment role. No production
-Vault adapter, ingress/IP limiter, corporate SSO, OKE resource or hosted CI pipeline is installed.
+Vault adapter, ingress/IP limiter, corporate SSO or OKE deployment is installed/qualified. Hosted
+GitHub checkpoint CI and protected master are verified separately; see the
+[existing checkpoint policy](../how-to/github-checkpoints.md).
 
 The local application is persistent developer state, separate from disposable database/browser test
 fixtures. Tests must not modify its human account or saved data. Final unit, PostgreSQL, Playwright,
@@ -193,7 +199,7 @@ The [Operations guide](operations.md) maps the working list/detail pages to exis
 empty state; detail uses exact current intent, current-intent steps and bounded immutable history.
 Dates are recorded UTC instants, and the simulated-provider notice appears in list and detail.
 
-State/search/sort/page controls and manual refresh create read queries; list settings survive detail/
+Kind/state/search/sort/page controls and manual refresh create read queries; list settings survive detail/
 back navigation, and sign-out clears privileged query data. Every read rechecks session/workspace
 authority. A foreign UUID and missing UUID produce the same unavailable detail. Final validation
 results belong in development progress after the final gate run.
@@ -214,10 +220,10 @@ Daily Tenancies/Organization/Configuration remain their separate management cont
 search/category filters, sort/paging and Operations links. No raw JSON or edit/export action exists;
 audit export is still planned MVP work.
 
-Operations is visibility/troubleshooting, not an inbox. Current simulated issue detail says
+Operations is visibility/troubleshooting, not an inbox. Failed read-only simulated inspection detail says
 “Simulation ended with an issue. No action is required.” Its stored `needs_attention` state is
-unchanged. The simulation submission/uncertainty rules remain in force, and real future remediation
-will originate in the affected tenancy/org/config/access context rather than a generic Retry button.
+unchanged. The simulation submission/uncertainty rules remain in force. Signing-key maintenance
+instead directs operation review and supported Resume from its tenancy context, not generic Retry.
 
 
 ### Local instance name and logo
@@ -266,7 +272,9 @@ The reset command's reviewed scope is eight org/registry tables and refuses unse
 Final candidate test/package counts are pending and supersede none of the historical receipts.
 
 
-## Parallel local test organization
+## Parallel local test organization — historical, retired 9 November 2026
+
+Do not follow this historical setup or recreate 8444; only saved 8443 is currently authorized.
 
 [The parallel Atlas Test guide](../how-to/parallel-local-instance.md) describes the prepared
 `.local-dev/runbook` installation at `https://127.0.0.1:8444`; the existing Atlas remains on
@@ -301,7 +309,7 @@ simulation; prior accepted versions retain their graph. There is no new applicat
 
 ### Saved preview asset consistency
 
-Saved review installations on 8443/8444 must use a private per-instance snapshot of the qualified
+The sole saved review installation on 8443 must use a private snapshot of the qualified
 frontend assets, supplied to their server through OTM_FRONTEND_DIST. Keep this stable-review launch
 separate from ordinary otm-local start, which builds and serves the mutable working frontend/dist.
 A new development build must not silently replace the frontend under an older running saved API.
@@ -348,7 +356,7 @@ instances are not yet claimed upgraded.
 ## Manual presence-check source revision
 
 After deliberate coordinated installation of the matching API/frontend/worker and migration 0025,
-a fresh simulated create/import can use Required users → Check now. Keep the foreground worker
+a fresh simulated create/import can use Required users → Refresh user data. Keep the foreground worker
 running. Older recorded identities without an accepted connection remain unqualified; do not reset
 or invent connections to enable them. No extra service, scheduler or simulator-control CLI is
 required. Local qualification and the main-preview upgrade pass; the parallel preview is unchanged. See the
@@ -362,8 +370,9 @@ and measures the entire production source inventory. Run the integration wrapper
 `uv run --project backend python scripts/run_backend_postgres_tests.py`; it selects all postgres
 marked tests, including native worker/HTTPS/browser fixtures, in disposable owned databases.
 The frontend unit/coverage gate remains separate. Both backend lanes and the frontend gate must
-pass; an integration receipt does not stand in for unit execution or coverage. The user approved
-a 600-second aggregate integration budget; individual test limits and all assertions are unchanged. Final Check now qualification passes 1,556 backend units, all 351 PostgreSQL/native-worker/browser cases (429.457 seconds), and 446 frontend units separately. Main port 8443 is upgraded with all 28 preexisting public tables preserved and one empty 14-column check table added. Port 8444 remains unchanged and healthy. [Final receipt](../history/manual-presence-checkpoint-2026-11-06.md). [Canonical lane ownership](../engineering-test-plan.md#complementary-backend-test-lanes).
+pass; an integration receipt does not stand in for unit execution or coverage. The original presence checkpoint used
+a 600-second aggregate integration budget; the current approved budget is 900 seconds under the
+[local cadence](../engineering-test-plan.md#current-local-cadence-and-integration-budget--9-november-2026); individual test limits and all assertions are unchanged. Final Check now qualification passes 1,556 backend units, all 351 PostgreSQL/native-worker/browser cases (429.457 seconds), and 446 frontend units separately. Main port 8443 is upgraded with all 28 preexisting public tables preserved and one empty 14-column check table added. Port 8444 remains unchanged and healthy. [Final receipt](../history/manual-presence-checkpoint-2026-11-06.md). [Canonical lane ownership](../engineering-test-plan.md#complementary-backend-test-lanes).
 
 ## Saved-preview publication safeguards — 9 November 2026
 
@@ -376,9 +385,19 @@ After complete qualification, freeze the exact frontend file hashes in private e
 symlinks in the source tree and snapshot paths, hidden/nonregular frontend entries and reused
 snapshot destinations. Copy into the instance's new immutable release directory, then verify the
 entire copied file set/hash map before serving it. Start matching API and worker code, verify SPA
-routes and served asset bytes, and preserve the independent parallel instance.
+routes and served asset bytes. Do not recreate the retired parallel instance.
 
 Keep database/configuration backups private. Compare complete preexisting table-content hashes
 before and after preparation, with no automatic replay or user/session-row repair. A local settings
 change must be explicitly scoped and model-checked to the approved fields before atomic replacement.
 Changing the local idle limit applies to newly issued sessions; it never rewrites existing deadlines.
+
+
+### Signing custody and local organization reset
+
+The operator-only organization reset includes the signing-credential table in its reviewed schema/FK
+inventory, even when empty. It refuses any retained signing credential or pending signing-key work,
+as it already does for password custody; the command cannot orphan independent secret files or
+credential history. The frozen signing migration uses a distinct truncate-trigger prefix, selected
+through an explicit source-owned name mapping. All vetoes are re-enabled transactionally, and no
+CASCADE is used. This is a local test-installation safeguard, not an endpoint or hosted deletion flow.

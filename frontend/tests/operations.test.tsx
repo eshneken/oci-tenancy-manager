@@ -552,6 +552,12 @@ it("shows separate linked historical required-user sections",async()=>{
  const c=mount(<Operations operationId={id} expired={vi.fn()} navigate={vi.fn()}/>);
  expect(await screen.findByRole("heading",{name:"Recovery user · Console policy"})).toBeVisible();
  await waitFor(()=>expect(document.getElementById("automation-assignment")).toHaveFocus());
+ const back=screen.getByRole("link",{name:"← Back to operations"});
+ back.focus();
+ act(()=>c.client.setQueryData<OperationDetail>(["operations","detail",id],current=>({...current!,events:[...current!.events,{kind:"inspection_outcome",at:row.updated_at,safe_code:null,summary:"Additional recorded result"}]})));
+ await screen.findByRole("heading",{name:"Additional recorded result"});
+ await act(async()=>{await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));});
+ expect(back).toHaveFocus();
  history.replaceState(null,"","/operations/"+id+"#recovery-policy");
  c.rerender(<QueryClientProvider client={c.client}><Operations operationId={id} expired={vi.fn()} navigate={vi.fn()}/></QueryClientProvider>);
  await waitFor(()=>expect(document.getElementById("recovery-policy")).toHaveFocus());

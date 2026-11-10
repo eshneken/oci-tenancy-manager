@@ -448,7 +448,7 @@ async function organizationFlows(page: Page) {
       const keyPanel=page.getByRole("region",{name:"Automation signing keys",exact:true});
       await expect(keyPanel.getByText("Fingerprint",{exact:true})).toBeVisible();
       await expect(keyPanel.getByText("Under 30 days",{exact:true})).toBeVisible();
-      await expect(keyPanel.getByRole("link")).toHaveAttribute("href",new RegExp("/operations/"+checkId+"\\?returnTo=[^#]+#automation-keys$"));
+      await expect(keyPanel.getByRole("link",{name:/^View automation signing-key inventory check,/})).toHaveAttribute("href",new RegExp("/operations/"+checkId+"\\?returnTo=[^#]+#automation-keys$"));
       const automation = users.locator(".required-user-card").filter({has:page.getByRole("heading",{name:"Automation user",exact:true})});
       await expect(automation.getByText("Verified in simulation",{exact:true})).toHaveCount(2);
       await expect(automation.getByRole("link",{name:/^View assignment check, /})).toHaveAttribute("href",/\/operations\/[a-f0-9-]+\?returnTo=[^#]+#automation-assignment$/);
@@ -632,7 +632,7 @@ async function organizationFlows(page: Page) {
               expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
               await page.screenshot({path:resolve(".local-dev/browser",`automation-assignment-render-only-${stale?"stale":"missing"}-${width}.png`),fullPage:true});
             }
-          }finally{await page.unroute(resource);}
+          }finally{await page.unrouteAll({behavior:"wait"});}
         }
         await page.reload();
         await expect(users.locator(".required-user-card").first().getByText("Verified in simulation",{exact:true})).toHaveCount(2);

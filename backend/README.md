@@ -117,7 +117,7 @@ use the same services through guarded directory/revocation HTTP routes; see the 
 
 ## Generated contracts and local state
 
-The frontend derives public TypeScript contracts from authoritative backend models; Python validation remains authoritative. The current schema has 28 OTM application tables through migration 0027, excluding separately owned native job-queue tables. Generated contracts are checked against the current Python models; earlier checkpoint counts on this page are historical.
+The frontend derives public TypeScript contracts from authoritative backend models; Python validation remains authoritative. The current schema has 29 OTM application tables through migration 0028, excluding separately owned native job-queue tables. Generated contracts are checked against the current Python models; earlier checkpoint counts on this page are historical.
 
 The launcher owns separate persistent laptop state under ignored `.local-dev/application/`; the
 organization prototype is untouched. Database owner and runtime credentials are separate, but the
@@ -128,7 +128,7 @@ persistent local administrator and data. No local launch authorizes Git check-in
 ## Operations read visibility
 
 [Operations API/UI fields and snapshot behavior](../docs/reference/operations.md) document two guarded GET routes
-over the existing operation/step/audit tables. The directory has bounded state/search/sort/pagination;
+over the existing operation/step/audit tables. The directory has bounded kind/state/search/sort/pagination;
 detail exposes current-intent steps and the newest 50 immutable events with an explicit limit notice.
 Both views read one read-only repeatable database snapshot and expose closed public projections.
 
@@ -152,9 +152,9 @@ scoped queues, all configuration/public fields and the bounded browser retry gua
 
 Operations and [Audit History](../docs/reference/audit-history.md) are grouped under **Activity & history**;
 Administrators is under **Application settings**, separate from the future daily-management pages.
-Operations is visibility/troubleshooting. Current simulated issues retain `needs_attention` but say
-“Simulation ended with an issue. No action is required.” Real future remediation starts from the
-relevant tenancy/org/config/access context; no generic Retry operation control is introduced.
+Operations is visibility/troubleshooting. Failed read-only simulated inspections retain `needs_attention` but say
+“Simulation ended with an issue. No action is required.” Signing-key maintenance instead directs operation review and supported Resume from its tenancy
+context; no generic Retry operation control is introduced.
 
 Audit History reads the existing immutable event table with current scoped authorization, safe
 actor/category/ID projections and search/sort/paging. Worker events show Inspection worker, operator
@@ -225,8 +225,7 @@ needs no OCI access, adds no temporary simulator controls and does not qualify m
 The [lifecycle email guide](../docs/reference/lifecycle-email.md) maps responsible-admin lifecycle notices (create/import, deletion, shared membership, ownership
 transfer and offboarding),
 immutable contact/policy/profile/origin evidence and bounded SMTP delivery knowledge. One outbox
-table brought the lifecycle-email checkpoint through 0020 to 20 application tables; later presence
-checkpoints bring current OTM metadata to 28 through 0027. Both release kinds use the offline
+table brought the lifecycle-email checkpoint through 0020 to 20 application tables; later credential checkpoints bring current OTM metadata to 29 through 0028. Both release kinds use the offline
 otm-validate-release gate against a trusted expected environment. Hosted checkpoint CI is installed;
 staging/production OCI delivery and infrastructure qualification remain pending.
 [Local capture runbook](../docs/how-to/lifecycle-email-runbook.md). Local capture and saved-instance

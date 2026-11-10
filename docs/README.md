@@ -14,6 +14,7 @@ Earlier dated preservation receipts remain historical evidence.
 | Current architecture and approved future design | [Engineering design](engineering-design/README.md) |
 | Lifecycle action/failure email | [Responsible-only scope and parity](reference/lifecycle-email.md#lifecycle-notice-parity--6-november-2026), [source checkpoint](history/lifecycle-notice-parity-checkpoint-2026-11-06.md) |
 | Find recorded work by type | [Operations filters](reference/operations.md#operation-type-filtering--10-november-2026), [checkpoint receipt](history/operations-filter-checkpoint-2026-11-10.md) |
+| Signer setup authority and rotation regression scope | [Current authority checks](reference/signing-key-rotation.md#setup-authority-and-ship-regression-checks--10-november-2026) |
 | Worker deployment sizing | [Staging/production targets and qualification](engineering-design/06-platform-and-delivery.md#accepted-initial-worker-sizing--10-november-2026) |
 | Run the application | [Local HTTPS setup](reference/local-application.md) |
 | Manual required-user presence checks | [Current check fields, authority and ER](reference/user-presence-checks.md) |
@@ -41,8 +42,10 @@ Earlier dated preservation receipts remain historical evidence.
 
 [Selected credential security design](engineering-design/22-credential-security-lifecycles.md):
 recovery-only MFA exemption with configurable console CIDRs and 30-day automation-key retirement.
-User-selected design; local policy checks and perimeter-only repair are qualified. Remaining
-credential flows and live OCI qualification remain pending.
+User-selected design; local policy checks, perimeter-only repair,
+[password custody/rotation](reference/recovery-password-access.md) and
+[managed signing-key rotation](reference/signing-key-rotation.md) have their separately recorded
+local qualification. Full milestone and live OCI qualification remain separate.
 
 Current [manual required-user checks](reference/user-presence-checks.md) connect the internal presence
 boundary, exact identity mappings and one selected simulated connection to asynchronous acquisition
@@ -157,7 +160,7 @@ The [Recovery overview and matching header actions checkpoint](history/check-dat
 
 The backend [implementation overview](../backend/README.md) and current required-user field dictionaries
 were reconciled during the whole-milestone publication audit. Historical checkpoint counts retain
-their original scope; current application metadata contains 28 OTM tables through migration 0027.
+their original scope; current application metadata contains 29 OTM tables through migration 0028.
 
 - [Guarded recovery-network repair](reference/recovery-network-repair.md): qualified simulated conditional perimeter-only repair and preserved main preview; live OCI pending.
 

@@ -13,7 +13,8 @@ provider call. It observes only the exact registered automation user’s public 
 not select/test a signer, retrieve a PEM or secret, establish custody, rotate/delete keys, send alerts,
 block other work or certify compliance. Recovery/password access remains independent.
 
-Chapter22’s 30-day retirement obligation remains accepted **future enforcement work**. Observed age
+This inventory predecessor remains observation-only; the later
+[managed rotation capability](signing-key-rotation.md) has separate source and qualification. Observed age
 labels do not mean OCI automatically expires a key or that OTM currently enforces deletion. Unknown
 keys are not adopted as managed credentials, and no unrelated key may be removed to free a slot.
 There is no new table, migration or operational setting for this inventory slice.
@@ -108,7 +109,8 @@ alongside the original five user-check targets.
 
 The [checkpoint receipt](../history/automation-signing-key-inventory-checkpoint-2026-11-09.md) records
 passing targeted validation and preserved main publication, with exact native versus later accessibility
-edit scope. It is not new full-suite/milestone/PR qualification. Key rotation/enforcement remains Pending.
+edit scope. It is not new full-suite/milestone/PR qualification. Real OCI rotation/enforcement remains Pending; the separate local simulated managed-rotation
+checkpoint does not turn this inventory into signer proof.
 
 
 ## Independence and setup-polling corrections — source checkpoint
@@ -133,7 +135,8 @@ authorize extra provider actions or change stored state. Targeted local qualific
 3. Open the new tenancy’s Required users and select **Refresh user data**. After acquisition finishes,
    inspect **Automation signing keys**, the separate panel immediately below Required users.
 4. Review fingerprint, original creation date, observed age/30-day date and the distinct Inventory
-   checked/Age assessed dates. No row is selected as an active signer and no key action is offered.
+   checked/Age assessed dates. Inventory rows do not select an active signer. The separate Automatic rotation section, when
+   prepared, exposes the guarded flow in the [rotation runbook](../how-to/signing-key-rotation-runbook.md).
 5. Follow the inventory date to its exact historical operation section. Recorded check/Age at
    observation use the original key check time; navigate back and reload to verify dated persistence.
 6. Older tenancies without the new metadata may remain unavailable. This is expected and is not

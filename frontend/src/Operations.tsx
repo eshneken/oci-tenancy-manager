@@ -547,12 +547,20 @@ function OperationDetail({
   const keyInventory=detail?.events.find(event=>event.automation_keys)?.automation_keys;
   // Deep links wait for recorded results; never fetch current tenancy facts as historical evidence.
   const checkAnchor=location.hash.slice(1);
+  const focusedCheck=useRef<string|null>(null);
   useEffect(()=>{
     const anchor=checkAnchor;
+    const context=operationId+"#"+anchor;
+    if(focusedCheck.current!==context)focusedCheck.current=null;
+    // Polling can update history without taking focus away from the administrator's current control.
+    if(focusedCheck.current===context)return;
     if(!userChecks.some(check=>check.anchor===anchor) && !(anchor==="automation-keys"&&keyInventory))return;
-    const frame=requestAnimationFrame(()=>{const section=document.getElementById(anchor);section?.scrollIntoView?.({block:"start"});section?.focus();});
+    const frame=requestAnimationFrame(()=>{
+      const section=document.getElementById(anchor);
+      if(section){section.scrollIntoView?.({block:"start"});section.focus();focusedCheck.current=context;}
+    });
     return ()=>cancelAnimationFrame(frame);
-  },[detail,checkAnchor]);
+  },[detail,checkAnchor,operationId]);
 
   const back=operationReturn();
   const HistoryContainer = operation?.guided_onboarding ? "details" : "div";

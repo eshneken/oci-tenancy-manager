@@ -7,10 +7,12 @@ from uuid import UUID, uuid4
 import pytest
 from sqlalchemy import select, text, update
 from sqlalchemy.exc import DBAPIError
+from test_operation_responsibility_postgres import colleague
 from test_organization_storage_postgres import factors, login_case, organization_case
 from test_organization_workflows_postgres import action, complete_setup, workflow_case
 from test_recovery_console_checks_postgres import POLICY, refresh
 
+from otm.auth.service import SessionFailure
 from otm.email_policy import MailPolicy
 from otm.notifications.service import LifecycleNotifier
 from otm.notifications.worker import NotificationEnqueuer
@@ -18,6 +20,7 @@ from otm.providers.administrator_access_simulator import simulated_administrator
 from otm.providers.presence_simulator import simulated_presence_inspection
 from otm.providers.recovery_console_simulator import simulated_console_inspection
 from otm.providers.recovery_password_simulator import SimulatedRecoveryPasswords
+from otm.storage.administrators import SqlAdministratorStore
 from otm.storage.enqueue import (
     PRESENCE_TASK,
     RECOVERY_PASSWORD_TASK,
@@ -26,6 +29,8 @@ from otm.storage.enqueue import (
 )
 from otm.storage.organization import OrganizationConflict
 from otm.storage.tables import (
+    admin_session,
+    administrator,
     audit_event,
     notification_outbox,
     operation_step,
@@ -277,11 +282,61 @@ def test_database_guards_preserve_original_records(password_pg):
         assert records(c, heads)[0] == before
 
 
-# Conflict deferrals retain the deadline and deduplicate the urgent administrative notice.
+# Value: protects=original due closure survives actual requester grant/session revocation;
+# fails_when=rotation incorrectly depends on a currently authorized requester;
+# why_new=the existing busy/deadline scenario never revoked its requesting administrator;
+# seam=none; no_claim=live OCI/Vault rotation (real PostgreSQL with simulated custody/provider).
+# Revoke a separate corporate requester while preserving the protected recovery anchor and due job.
 def test_due_busy_notice_and_rotation_survives_requester_session(password_pg):
     c = password_pg
-    request(c)
+    requester = colleague(c, "Password requester")
+    presence = PresenceChecks(
+        requester.store,
+        policy=c.workflow.policy,
+        policy_loader=c.loader,
+        enqueuer=c.service.enqueuer,
+        recovery_console_loader=lambda: POLICY,
+    )
+    access = RecoveryPasswordAccess(presence, c.vault, c.access.enqueuer, notifier=c.notifier)
+    preview = access.view(requester.principal, c.child.id)
+    command = RecoveryPasswordRequest(
+        client_request_key=uuid4(), preview_hash=preview.preview_hash, acknowledged=True
+    )
+    access.disclose(requester.principal, c.child.id, command)
     head = records(c, heads)[0]
+    original_reference = c.vault.current(location_of(head)).reference
+    SqlAdministratorStore(
+        c.engine,
+        c.clock,
+        local_issuer=c.policy.issuer,
+        trusted_issuers=frozenset({c.policy.issuer, requester.grant.issuer}),
+    ).revoke(c.principal, requester.grant.id, requester.grant.authorization_revision)
+    with c.engine.connect() as connection:
+        assert (
+            connection.scalar(
+                select(administrator.c.status).where(administrator.c.id == requester.grant.id)
+            )
+            == "revoked"
+        )
+        assert (
+            connection.scalar(
+                select(admin_session.c.revoked_at).where(
+                    admin_session.c.id == requester.principal.session.id
+                )
+            )
+            is not None
+        )
+        assert (
+            connection.scalar(
+                select(administrator.c.status).where(
+                    administrator.c.workspace_id == c.policy.workspace_id,
+                    administrator.c.identity_kind == "local_recovery",
+                )
+            )
+            == "active"
+        )
+    with pytest.raises(SessionFailure):
+        access.disclose(requester.principal, c.child.id, command)
     c.clock.return_value = head["rotation_due_at"]
     with c.engine.begin() as connection:
         connection.execute(
@@ -299,7 +354,13 @@ def test_due_busy_notice_and_rotation_survives_requester_session(password_pg):
             update(tenancy).where(tenancy.c.id == c.child.id).values(operation_id=None)
         )
     c.rotation.run(head["rotation_operation_id"])
-    assert records(c, heads)[0]["state"] == "usable"
+    closed = records(c, heads)[0]
+    assert closed["state"] == "usable" and closed["generation"] == head["generation"] + 1
+    assert closed["first_disclosure_at"] is None and closed["rotation_due_at"] is None
+    assert c.vault.current(location_of(closed)).reference != original_reference
+    assert records(c, grants)[0]["requesting_subject"] == requester.principal.actor.key
+    with pytest.raises(SessionFailure):
+        access.disclose(requester.principal, c.child.id, command)
 
 
 # Concurrent browser retries share one admission/window/job without duplicating exposure history.

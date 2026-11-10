@@ -11,7 +11,13 @@ The implemented local application includes Organization intake/mapping/reviews, 
 Tenancies, guided onboarding and deletion, immutable administrative Audit History and CSV export,
 Operations, administrator responsibility takeover, baseline publication/overrides/updates, read-only
 configuration-drift checks, and lifecycle email with safe nonproduction routing and local capture.
-[Manual required-user presence checks](docs/reference/user-presence-checks.md) are locally qualified; the main preview is upgraded with existing data preserved. The [dated receipt](docs/history/manual-presence-checkpoint-2026-11-06.md) distinguishes simulation, separate test lanes and the unchanged parallel preview.
+The recovery/access milestone adds [conditional recovery-network repair](docs/reference/recovery-network-repair.md),
+[audited recovery-password access and original-window rotation](docs/reference/recovery-password-access.md),
+and [managed signing-key rotation](docs/reference/signing-key-rotation.md) with observed key inventory;
+all provider effects remain explicitly simulated. [Operations type filters](docs/reference/operations.md#operation-type-filtering--10-november-2026)
+help find the recorded work. Dated checkpoint receipts keep their original test/publication scope.
+[Manual required-user presence checks](docs/reference/user-presence-checks.md) are locally qualified; the main preview is upgraded with existing data preserved. The [dated receipt](docs/history/manual-presence-checkpoint-2026-11-06.md) distinguishes simulation and its original test lanes. The parallel preview was later retired;
+8443 is now the sole saved review instance.
 Real OCI integration, corporate SSO and managed-service deployment remain separately unqualified.
 Daily drift scheduling is deferred until staging/Kubernetes deployment. All five hosted CI jobs and
 administrator-enforced protected `master` are verified at baseline `db08b3b`; development uses

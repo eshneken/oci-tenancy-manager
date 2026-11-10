@@ -1314,3 +1314,19 @@ default changes cannot silently relax the mandatory 30-minute idle expiry/pollin
 ## Signing-key rotation targeted checkpoint — 10 November 2026
 
 [Exact evidence](history/signing-key-rotation-checkpoint-2026-11-10.md) records nine targeted disposable PG/native/SMTP/browser cases, not a new complete-suite gate. Preserve coverage for fresh enrollment/no legacy adoption, same-generation request replay, day 29 ETA versus manual queue priority, exact original clocks, upload uncertainty, immutable candidate/CAS/retirement, drain/password closure, original administrator incident dedup/resume eligibility, confirmed termination and restricted installed-role grants. [Live equivalents](how-to/real-oci-test-manifest.md#managed-signing-key-rotation-qualification) remain Pending. Full milestone/PR/merge gates are unchanged.
+
+
+### Recovery/signing milestone ship regression scope — 10 November 2026
+
+Qualify initial signer setup against the live responsible administrator and exact waiting parent;
+changed authorization or held parent must prevent enrollment/publication, while audited takeover
+must authorize the replacement. Retain system-owned due closure after actual requester revocation.
+Run installed API/worker signing-table negative privilege checks and ordinary configuration/cost/
+lifecycle worker guard-wiring cases in addition to signer helper truth tables. Local organization
+reset must preserve its rollback/guard-restoration assertions with the frozen signing trigger name.
+Browser fixture interception must finish outstanding handlers before navigation; precise inventory
+link assertions must distinguish the newly added scheduled-rotation link.
+
+These cases belong to the complete milestone gate. The earlier targeted UI receipts remain scoped
+to their original source and do not become full-suite passes retroactively. Live interoperation and
+native overlapping closure timing remain in the [manual test manifest](how-to/real-oci-test-manifest.md#initial-signer-authority-and-overlapping-closure).

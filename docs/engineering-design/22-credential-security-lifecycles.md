@@ -1,6 +1,6 @@
 # 22: recovery console CIDR boundary and scheduled API-key rotation
 
-7 November 2026 | User-selected V1 design | Local policy checks and perimeter-only repair qualified; remaining credential flows and live OCI qualification pending
+7 November 2026 | User-selected V1 design | Local simulated policy/repair, password and signing-key subsets qualified; full milestone/live OCI qualification separate
 
 [Design hub](README.md) · [Administrator access](13-local-support-and-emergency-access.md) ·
 [Credential model](11-production-data-model.md#identity-access-and-credential-model) ·
@@ -63,8 +63,8 @@ or stale evidence is Unable to verify, never compliant. Block readiness/new pass
 surface the failed control through existing required-access/Operations and applicable alert policy.
 Repairs require existing preview/authority/target checks; validation itself is read-only and never
 silently disables MFA or rewrites policy. The [current local UI implementation](../reference/recovery-console-verification.md) adds these independent
-read-only controls and exact setup capture. Policy repair, actual provider enforcement and live
-qualification remain pending.
+read-only controls and exact setup capture. The [perimeter-only local repair](../reference/recovery-network-repair.md) is separately qualified;
+actual provider enforcement and live qualification remain pending.
 
 Qualify actual sign-in behavior from allowed and outside sources using the disposable-child test
 procedure, including a broad fallback allow rule. Ordinary validation inspects qualified effective
@@ -353,7 +353,8 @@ Targeted local UI qualification and preserved main installation pass in the [inv
 
 ### Detailed rotation accounting proposal — 9 November 2026
 
-[Chapter 23](23-signing-key-rotation.md) records the proposed one-head execution plan, explicit fresh
+[Chapter 23](23-signing-key-rotation.md) now records the implemented local one-head execution accounting, explicit fresh
 onboarding, native scheduling/query/deduplication, approved brief per-child provider pause, password-
-window drain, staged/upload/probe/CAS/retire phases and recovery/overdue evidence. It is not a runtime
-implementation, installed CronJob, completed enforcement or provider qualification claim.
+window drain, staged/upload/probe/CAS/retire phases and recovery/overdue evidence. Its
+[dated receipt](../history/signing-key-rotation-checkpoint-2026-11-10.md) records targeted local
+qualification and saved installation. No installed OKE CronJob or live provider qualification is claimed.

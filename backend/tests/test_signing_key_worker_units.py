@@ -575,3 +575,57 @@ def test_overdue_password_drain_alerts_without_stealing_closure():
         call.args[0].compile().params.get("operation_id") == c.identifier
         for call in c.connection.execute.call_args_list
     )
+
+
+# Setup requires current parent authority; later rotations remain system-owned.
+@pytest.mark.parametrize("mode", ["valid", "missing_parent", "revoked_owner"])
+def test_setup_parent_authority_boundary(mode):
+    c = worker_case()
+    intent = SigningKeyIntent.model_validate(
+        {
+            **c.intent.model_dump(),
+            "phase": "setup",
+            "expected_generation": 0,
+            "old": None,
+            "due_at": None,
+        }
+    )
+    c.child["status"] = "pending"
+    c.child["operation_id"] = intent.source_operation_id
+    values = (c.row, IntentEventData(intent=intent, actor=c.actor), c.child, c.head)
+    evidence = OnboardingEvidence(
+        step="capture_required_users",
+        outcome="verified",
+        safe_code="ONBOARDING_VERIFIED",
+        required_users=c.source,
+    )
+    data = evidence.model_dump(mode="json")
+    user = dict(
+        generation=c.a.binding_generation,
+        provider_ocid=c.a.provider_ocid,
+        scim_resource_id=c.a.scim_resource_id,
+        user_name=c.a.user_name,
+        identity_domain_binding_id=c.a.identity_domain_binding_id,
+    )
+    c.connection.execute.side_effect = [
+        result(dict(data=data, data_hash=canonical_hash(data))),
+        result(user),
+        result(dict(provider_ocid=c.a.domain_ocid)),
+        result(dict(revision=1, automation_binding_id=c.a.subject_binding_id)),
+        result(None if mode == "missing_parent" else dict(id=c.source_id)),
+    ]
+    owner, revision = uuid4(), uuid4()
+    c.connection.scalar.return_value = None if mode == "revoked_owner" else owner
+    with (
+        patch("otm.tenancies.onboarding.load_intent") as loaded,
+        patch(
+            "otm.operations.responsibility.execution_authority",
+            return_value=(owner, revision, c.actor),
+        ) as authority,
+    ):
+        assert c.worker.current(c.connection, values) == (mode == "valid")
+    if mode == "missing_parent":
+        loaded.assert_not_called()
+        authority.assert_not_called()
+    else:
+        authority.assert_called_once_with(c.connection, dict(id=c.source_id), loaded.return_value)

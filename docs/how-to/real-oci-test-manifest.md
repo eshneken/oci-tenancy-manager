@@ -276,3 +276,15 @@ operation lock/claim exclusion, the per-child rotation pause, duplicate delivery
 worker death, and recovery-password closure while a signing rotation drains. No uncertain write may
 be retried merely because a second worker is available. Local simulation is not evidence of live
 permissions, provider propagation or production timing guarantees.
+
+
+### Initial signer authority and overlapping closure
+
+**Pending — approved real provider/staging environment required.** Revoke or change the responsible
+onboarding administrator after signer setup admission but before execution, and hold the parent
+operation; prove no enrollment or parent continuation. Explicitly transfer responsibility to a live
+administrator and qualify the correct continuation. Verify a due password closure remains system-owned
+after the requester loses access. Exercise a real open password window while signing rotation drains:
+the closure must finish without losing its original deadline before key activation/old-key retirement.
+Local setup/privilege/consumer and isolated drain tests do not qualify provider propagation or OKE
+queue latency. Keep the existing fixed window and retirement deadlines during this exercise.

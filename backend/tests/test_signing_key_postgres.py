@@ -2,6 +2,7 @@
 
 from datetime import timedelta
 from types import SimpleNamespace
+from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
@@ -26,6 +27,7 @@ from otm.storage.enqueue import (
 )
 from otm.storage.operation_directory import SqlOperationDirectory
 from otm.storage.tables import (
+    administrator,
     audit_event,
     notification_outbox,
     operation,
@@ -78,7 +80,7 @@ def signing_case(workflow_case, tmp_path):
 
 
 # Audited human handoff lets the independent signer job unblock temporary cleanup.
-def enroll(c):
+def enroll(c, *, complete=True):
     person = next(p for p in c.store.head(c.principal).people if p.email == "engineer@example.test")
     _, created = action(c, person.id, "create_tenancy")
     c.worker.run(created.operation_id)
@@ -118,6 +120,8 @@ def enroll(c):
             .mappings()
             .one()
         )
+    if not complete:
+        return created.operation_id, head
     c.keys.run(head["rotation_operation_id"])
     c.worker.run(created.operation_id)
     assert c.workflow.onboarding(c.principal, created.operation_id).phase == "complete"
@@ -513,3 +517,67 @@ def test_signing_failure_real_smtp(signing_case, mail_capture, monkeypatch):
                 and "secret_reference" not in body
                 and "simulated-key-material" not in body
             )
+
+
+# Queued enrollment follows current onboarding ownership; holds/revocation cannot upload or resume.
+@pytest.mark.parametrize("mode", ["revision", "parent_held", "takeover"])
+def test_signer_setup_rechecks_parent_authority(signing_case, mode):
+    from test_operation_responsibility_postgres import colleague
+
+    from otm.operations.responsibility import ResponsibilityCommand, take_responsibility
+
+    c = signing_case
+    parent_id, head = enroll(c, complete=False)
+    owner_id = c.principal.session.entitlement_reference
+    if mode == "takeover":
+        replacement = colleague(c, "Replacement administrator")
+        view = replacement.workflow.onboarding(replacement.principal, parent_id)
+        take_responsibility(
+            replacement.workflow,
+            replacement.principal,
+            parent_id,
+            ResponsibilityCommand(client_request_key=uuid4(), expected_revision=view.revision),
+        )
+    with c.engine.begin() as connection:
+        if mode == "parent_held":
+            connection.execute(
+                update(operation)
+                .where(operation.c.id == parent_id)
+                .values(
+                    state="needs_attention",
+                    wait_reason=None,
+                )
+            )
+        else:
+            connection.execute(
+                update(administrator)
+                .where(administrator.c.id == owner_id)
+                .values(
+                    authorization_revision=uuid4(),
+                )
+            )
+    with patch.object(c.key_custody, "enroll", wraps=c.key_custody.enroll) as enroll_key:
+        c.keys.run(head["rotation_operation_id"])
+    with c.engine.connect() as connection:
+        current = (
+            connection.execute(
+                select(signing_credential).where(
+                    signing_credential.c.id == head["id"],
+                )
+            )
+            .mappings()
+            .one()
+        )
+        parent = (
+            connection.execute(select(operation).where(operation.c.id == parent_id))
+            .mappings()
+            .one()
+        )
+    if mode == "takeover":
+        enroll_key.assert_called_once()
+        assert current["generation"] == 1 and current["state"] == "usable"
+        assert parent["state"] == "queued"
+    else:
+        enroll_key.assert_not_called()
+        assert current["generation"] == 0 and current["current_key"] is None
+        assert parent["state"] != "queued"

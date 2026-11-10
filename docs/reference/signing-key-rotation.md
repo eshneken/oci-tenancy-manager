@@ -171,3 +171,21 @@ friendly display labels on refresh without history rewrite; no SQL field/migrati
 uses this heading and suppresses only redundant `SIGNING_KEY_PROGRESS`, preserving failure/final codes.
 Combined clarity targeted gates, final history-visual UX and preserved saved republication PASS; earlier two-case schedule
 receipts remain separate and do not qualify these later labels.
+
+
+## Setup authority and ship regression checks — 10 November 2026
+
+Initial signer enrollment requires its exact source onboarding operation to remain in
+`waiting/onboarding_signer`. The worker reuses the integrity-checked onboarding intent and audited
+responsibility lookup, then requires the current responsible administrator's active grant, captured
+authorization revision and exact issuer/subject. Held parent work or changed/revoked authority cannot
+enroll a signer or resume onboarding. An explicitly transferred responsibility uses the replacement
+administrator, rather than reviving the original actor. Each setup checkpoint revalidates this scope.
+Later system-owned rotations retain their independence from the original requester's session.
+
+The ship regression matrix adds setup authority/held-parent/takeover cases, actual requester
+revocation before password closure, installed signing-table API/worker privilege denials and ordinary
+worker guard-wiring tests. These supplement source unit gates; their final native execution result
+belongs to the milestone PR, not the earlier targeted checkpoint receipts. A fully native overlapping
+password-window/signing-drain timing journey remains a pending qualification case; isolated helper
+and consumer tests do not establish live OCI/OKE timing.
