@@ -54,3 +54,12 @@ across restore, and overlapping live password-window closure remain Pending in t
 The simulator's retained grant/static-root fixture is an explicit limit, not a qualified live proof.
 
 Final source documentation review PASS: declared purpose comments, nonsecret field map, phase/lock/queue accounting and saved-versus-live limits agree. No source edits were made during documentation review.
+
+## Local source checkpoint and formatting note
+
+Local feature commit `6d1ff61` records this targeted UI checkpoint; it has not been pushed or
+qualified as a PR/full-suite milestone. The frozen, installed 0028 SQL retains generated trailing
+spaces, which `git show --check` reports as formatting warnings. The migration checksum and installed
+bytes are preserved; no whitespace-check exemption or historical migration rewrite was introduced.
+Check newly generated SQL formatting before freezing future artifacts. This does not change the
+passing execution, security, coverage or preserved-data results above.
