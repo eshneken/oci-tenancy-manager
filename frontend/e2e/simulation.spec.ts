@@ -628,6 +628,8 @@ async function organizationFlows(page: Page) {
         const assignmentBaseline=JSON.parse(privateBody);
         for(const stale of [false,true]){
           const fixturePage=await page.context().newPage();
+          const fixtureErrors:string[]=[];
+          fixturePage.on("pageerror",error=>fixtureErrors.push(error.name));
           // Capture one fixed response per page; real persisted negative cases remain in PostgreSQL tests.
           const assignmentFixture=async (route: import("@playwright/test").Route)=>{
             const body=structuredClone(assignmentBaseline);
@@ -653,6 +655,7 @@ async function organizationFlows(page: Page) {
               expect(await fixturePage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
               await fixturePage.screenshot({path:resolve(".local-dev/browser",`automation-assignment-render-only-${stale?"stale":"missing"}-${width}.png`),fullPage:true});
             }
+            expect(fixtureErrors).toEqual([]);
           }finally{
             await fixturePage.unrouteAll({behavior:"wait"});
             await fixturePage.close();
