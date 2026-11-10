@@ -1,3 +1,4 @@
+import {operationHref,operationReturn} from "./operationNavigation";
 import {RecoveryPasswordOperation} from "./RecoveryPasswordOperation";
 import { EmailNotifications } from "./EmailNotifications";
 import { Select } from "./Select";
@@ -302,11 +303,11 @@ function OperationList({
                         <td>
                           <a
                             className="operation-link"
-                            href={"/operations/" + operation.id}
+                            href={operationHref(operation.id)}
                             onClick={(event) =>
                               followLink(
                                 event,
-                                "/operations/" + operation.id,
+                                operationHref(operation.id),
                                 navigate,
                               )
                             }
@@ -518,6 +519,7 @@ function OperationDetail({
     return ()=>cancelAnimationFrame(frame);
   },[detail,checkAnchor]);
 
+  const back=operationReturn();
   const HistoryContainer = operation?.guided_onboarding ? "details" : "div";
   const notFound =
     result.error instanceof ApiError && result.error.status === 404;
@@ -541,10 +543,10 @@ function OperationDetail({
     <>
       <a
         className="back-link"
-        href="/operations"
-        onClick={(event) => followLink(event, "/operations", navigate)}
+        href={back.path}
+        onClick={(event) => followLink(event, back.path, navigate)}
       >
-        ← Back to operations
+        ← {back.label}
       </a>
       <div className="page-heading">
         <div>
@@ -620,7 +622,7 @@ function OperationDetail({
                 )}
               </p>
             )}
-            {operation.kind === "configuration_check" && <p><a href={"/configuration/drift"+(operation.result_tenancy_id?"/"+operation.result_tenancy_id+"?returnTo="+encodeURIComponent("/operations/"+operationId):"?tab=checks")} onClick={event=>followLink(event,"/configuration/drift"+(operation.result_tenancy_id?"/"+operation.result_tenancy_id+"?returnTo="+encodeURIComponent("/operations/"+operationId):"?tab=checks"),navigate)}>View configuration checks</a></p>}
+            {operation.kind === "configuration_check" && <p><a href={"/configuration/drift"+(operation.result_tenancy_id?"/"+operation.result_tenancy_id+"?returnTo="+encodeURIComponent(operationHref(operationId)):"?tab=checks")} onClick={event=>followLink(event,"/configuration/drift"+(operation.result_tenancy_id?"/"+operation.result_tenancy_id+"?returnTo="+encodeURIComponent(operationHref(operationId)):"?tab=checks"),navigate)}>View configuration checks</a></p>}
             {operation.kind === "configuration_update" && <p><a href={"/configuration?update="+operationId} onClick={event=>followLink(event,"/configuration?update="+operationId,navigate)}>Open baseline update</a></p>}
             {operation.guided_onboarding && <Responsibility key={"responsibility-"+operationId} operation={operation} expired={expired}/>}
             {operation.guided_onboarding && (

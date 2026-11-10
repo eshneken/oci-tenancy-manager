@@ -1,3 +1,4 @@
+import {operationHref} from "./operationNavigation";
 import { CleanupResponsibilities } from "./CleanupResponsibilities";
 import { EmailContactSummary } from "./EmailContacts";
 import { baselineHref } from "./baselineNavigation";
@@ -428,12 +429,12 @@ export function PersonActions({
             </p>
             {receipt.operation_id && (
               <a
-                href={"/operations/" + receipt.operation_id}
+                href={operationHref(receipt.operation_id)}
                 onClick={(event) => {
                   close();
                   followLink(
                     event,
-                    "/operations/" + receipt.operation_id,
+                    operationHref(receipt.operation_id),
                     navigate,
                   );
                 }}
@@ -491,12 +492,12 @@ export function PersonActions({
                   <p className="notice">
                     This employee has pending work.{" "}
                     <a
-                      href={"/operations/" + data.pending_operation_id}
+                      href={operationHref(data.pending_operation_id)}
                       onClick={(event) => {
                         close();
                         followLink(
                           event,
-                          "/operations/" + data.pending_operation_id,
+                          operationHref(data.pending_operation_id),
                           navigate,
                         );
                       }}

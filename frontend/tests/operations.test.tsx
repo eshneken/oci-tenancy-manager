@@ -576,3 +576,16 @@ it("uses phase-neutral password failure guidance in the operation list",async()=
  expect(await screen.findByText("Password work requires reconciliation. Review the recorded outcome before further access.")).toBeVisible();
  expect(screen.queryByText(/original rotation obligation remains/)).not.toBeInTheDocument();
 });
+
+// Detail reload and same-operation history changes use their own URL context, not global sticky state.
+it("returns to the originating tenancy and resets for directory entry",async()=>{
+ vi.spyOn(api,"operation").mockResolvedValue(detail);
+ const target=`/tenancies/${id}#required-users`,navigate=vi.fn();
+ history.replaceState(null,"",`/operations/${id}?${new URLSearchParams({returnTo:target})}`);
+ const c=mount(<Operations operationId={id} expired={vi.fn()} navigate={navigate}/>);
+ const back=screen.getByRole("link",{name:"← Back to tenancy"});
+ expect(back).toHaveAttribute("href",target);await userEvent.click(back);expect(navigate).toHaveBeenCalledWith(target);
+ history.replaceState(null,"",`/operations/${id}`);
+ c.rerender(<QueryClientProvider client={c.client}><Operations operationId={id} expired={vi.fn()} navigate={navigate}/></QueryClientProvider>);
+ expect(screen.getByRole("link",{name:"← Back to operations"})).toHaveAttribute("href","/operations");
+});

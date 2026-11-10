@@ -1,3 +1,4 @@
+import {operationHref} from "./operationNavigation";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError, WorkflowError } from "./api";
@@ -129,12 +130,12 @@ export function DeleteTenancy({
             deletion does not explicitly offboard them.
           </p>
           <a
-            href={"/operations/" + receipt.operation_id}
+            href={operationHref(receipt.operation_id)}
             onClick={(event) => {
               close();
               followLink(
                 event,
-                "/operations/" + receipt.operation_id,
+                operationHref(receipt.operation_id),
                 navigate,
               );
             }}

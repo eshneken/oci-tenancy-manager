@@ -1,3 +1,4 @@
+import {operationHref} from "./operationNavigation";
 import {useEffect,useRef,useState} from "react";
 import {useQuery,useQueryClient} from "@tanstack/react-query";
 import {api,ApiError} from "./api";
@@ -71,7 +72,7 @@ export function RecoveryNetworkRepair({tenancyId,eligible,policy,expired,navigat
   const state=progress.data?.operation.state;
   return <>
     {(eligible||uncertain)&&<button ref={launch} type="button" className="button secondary" disabled={busy||Boolean(operation&&(!state||["queued","running","needs_attention"].includes(state)))} onClick={()=>void start()}>{uncertain?"Recover repair request":"Repair approved networks"}</button>}
-    {operation&&<div ref={status} tabIndex={-1} className="notice" role="status"><p>{state==="succeeded"?"Approved networks verified in simulation. Review the separately dated user checks below.":state==="needs_attention"?"Repair has an uncertain effect. Independent reconciliation is required; do not retry the write.":state==="failed"?"Repair was blocked or its context changed. Review the operation before taking further action.":"Approved-network repair queued or running."} <a href={`/operations/${operation}`} onClick={event=>followLink(event,`/operations/${operation}`,navigate)}>View operation</a></p>
+    {operation&&<div ref={status} tabIndex={-1} className="notice" role="status"><p>{state==="succeeded"?"Approved networks verified in simulation. Review the separately dated user checks below.":state==="needs_attention"?"Repair has an uncertain effect. Independent reconciliation is required; do not retry the write.":state==="failed"?"Repair was blocked or its context changed. Review the operation before taking further action.":"Approved-network repair queued or running."} <a href={operationHref(operation)} onClick={event=>followLink(event,operationHref(operation),navigate)}>View operation</a></p>
       {progress.isError&&<p role="alert">Unable to load repair progress. <button className="button secondary" onClick={()=>void progress.refetch()}>Refresh</button></p>}
       {refreshFailed&&<p role="alert">Repair finished, but a user-data refresh could not be started. Use Refresh user data to check the current boundary.</p>}
     </div>}

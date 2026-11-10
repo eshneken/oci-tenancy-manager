@@ -1,3 +1,4 @@
+import {operationHref} from "./operationNavigation";
 import { Select } from "./Select";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -75,7 +76,7 @@ export function SimulationInspection({
       });
       void client.invalidateQueries({ queryKey: ["operations", "list"] });
       dialog.current?.close();
-      navigate("/operations/" + accepted.operation_id);
+      navigate(operationHref(accepted.operation_id));
     } catch (error) {
       if (
         error instanceof ApiError &&

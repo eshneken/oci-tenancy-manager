@@ -166,7 +166,7 @@ export function Onboarding({
           Refresh setup
         </button>
       </div>
-      <p className="notice">{data.baseline ? <>Selected baseline: <a href={baselineHref(data.baseline.id,location.pathname)} onClick={event=>followLink(event,baselineHref(data.baseline!.id,location.pathname),navigate)}>Version {data.baseline.version_number}</a> · simulated. Retained through activation and retries.</> : "This older operation has no selected baseline. No version has been attached retroactively."}</p>
+      <p className="notice">{data.baseline ? <>Selected baseline: <a href={baselineHref(data.baseline.id,location.pathname+(location.pathname.startsWith("/operations/")?location.search:""))} onClick={event=>followLink(event,baselineHref(data.baseline!.id,location.pathname+(location.pathname.startsWith("/operations/")?location.search:"")),navigate)}>Version {data.baseline.version_number}</a> · simulated. Retained through activation and retries.</> : "This older operation has no selected baseline. No version has been attached retroactively."}</p>
       <p className="notice">
         <strong>Local simulation.</strong> No OCI activation email is sent, no key is issued
         and no OCI accounts are changed. The selected baseline is recorded;

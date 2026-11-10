@@ -1,3 +1,4 @@
+import {operationHref} from "./operationNavigation";
 import { Select } from "./Select";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -487,11 +488,11 @@ export function AuditHistory({
                               <span>Operation</span>
                               <a
                                 className="operation-link technical-id"
-                                href={"/operations/" + entry.operation_id}
+                                href={operationHref(entry.operation_id)}
                                 onClick={(event) =>
                                   followLink(
                                     event,
-                                    "/operations/" + entry.operation_id,
+                                    operationHref(entry.operation_id),
                                     navigate,
                                   )
                                 }

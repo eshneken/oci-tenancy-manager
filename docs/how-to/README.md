@@ -34,3 +34,5 @@ The [live OCI manifest](real-oci-test-manifest.md#pending-explicit-owner-retenti
 includes replacement verification, identity retention/removal and manual resource-cleanup qualification.
 
 - [Recovery-policy UI checkpoint](recovery-policy-ui-checkpoint.md): safe local inspection of independent user and console-policy controls.
+
+- [Review contextual operation Back links](operation-navigation.md) — source navigation follow-up; check its separate validation/install receipt before manual main review

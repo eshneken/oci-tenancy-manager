@@ -416,3 +416,50 @@ setup-specific custody/onboarding guidance rather than implying a disclosure win
 and display state are transient, with no additional persistent field or setting. Follow-up validation
 and installation pass in the separate receipt, with final-copy targeted scope explicitly distinguished
 from the preceding complete native run.
+
+
+## Context-sensitive return navigation — source follow-up
+
+**Targeted validation and preserved main installation pass.** Current frontend source shares
+`operationHref` and `operationReturn` from `operationNavigation.ts`. This adds no API/database field,
+provider behavior, permission or setting. [Separate receipt status](../history/recovery-password-checkpoint-2026-11-09.md#operation-return-navigation-follow-up).
+
+| URL/client value | Source and rule |
+| --- | --- |
+| `returnTo` | One optional query value on the actual operation-detail href; only the closed local-route allowlist below is accepted |
+| Source route | Current recognized page pathname, or exact tenancy UUID path with optional `#required-users`; arbitrary query/filter/page state is not captured |
+| Operation-to-operation link | Reuses the validated original return destination; does not create a chain of Back links through successive operation pages |
+| Check fragment | Separate operation fragment still identifies exact subject/kind, such as recovery-assignment or recovery-policy; return query never replaces this target |
+| Label/destination | Derived from validated return URL at render time, not session history, caller authority or a persisted preference |
+
+Recognized origins are `/tenancies`, `/organization`, `/organization/drift`, `/configuration`,
+`/configuration/drift`, `/audit-history`, `/configuration/drift/{UUID}` and `/tenancies/{UUID}`
+with optional `#required-users` on the tenancy route only.
+Labels are Back to tenancies, Back to Organization, Back to Organization drift, Back to configuration,
+Back to configuration drift, Back to audit history, Back to configuration check or Back to tenancy
+respectively. Operations-list
+origins, direct links, duplicate/invalid/unrecognized return values fall back to Back to operations.
+External URLs, protocol-relative paths and arbitrary return routes are never accepted redirects.
+
+The same helper constructs the rendered href and click navigation, so browser reload/history and
+open-in-new-tab retain the recognized return destination. Existing footer subject/kind anchors stay
+intact. This routing does not establish current access to the return page; its normal API/session
+authorization still applies. No request can use returnTo to change workspace or operation scope.
+
+[Manual navigation checks](../how-to/operation-navigation.md) describe the source follow-up; its
+validation/publication must be recorded separately from earlier qualified Operations behavior.
+
+Nested configuration-check/baseline returns use shared `operationDestination(candidate)`: an exact
+local operation UUID route, at most512 characters, no leading/trailing whitespace, optional **one**
+validated `returnTo` query and optional supported check anchor. Unknown/duplicate query keys, external
+paths and arbitrary fragments are rejected. The five anchors remain automation-presence, automation-
+assignment, recovery-presence, recovery-assignment and recovery-policy. This is transient URL parsing,
+not a new API/table field. Configuration-check and baseline Back links consume the same validator;
+onboarding baseline links retain the operation query, preserving a tenancy → operation → configuration/
+baseline → operation → tenancy route chain. This preserves only these bounded return contexts, not
+arbitrary filter/search/page query state.
+
+After upgrading, reload the originating tenancy page and reopen the operation link. A previously
+open/direct bare operation URL has no recoverable origin query and correctly falls back to Operations.
+The receipt distinguishes compiled-helper Chromium fixture evidence from a full React/API/native
+journey; no full native integration rerun is claimed for this navigation-only follow-up.

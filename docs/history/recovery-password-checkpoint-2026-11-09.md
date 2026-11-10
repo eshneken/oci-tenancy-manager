@@ -163,3 +163,37 @@ asset comparison and unauthenticated401 checks passed. No8444 environment or OCI
 The [current field map](../reference/operations.md#recovery-password-operation-progress) and source
 reference describe the installed panel. Earlier full/combined receipts retain their own source scope.
 All live-only provider/sign-in/restore cases and interactive network break/repair remain Pending.
+
+
+## Operation return navigation follow-up
+
+**Targeted validation and preserved main installation: PASS.** Actual hrefs retain a validated local
+origin through clicks, reload and new tabs. Configuration-check UUIDs have their own return label;
+nested configuration/baseline links validate the bounded operation destination, optional single
+returnTo and exact supported check anchors. No DB/API field, schema, setting, provider, permission,
+data or password behavior changes. Earlier full-suite receipts retain their own source scope.
+
+### Exact validation scope
+
+- Frontend unit-only: **611 passed**, **2041/2098 lines (97.28%)**,42 source files; TypeScript/Vite build passed.
+- Backend source is unchanged. Prior **2108 units /95.3369%** evidence is reused, **not rerun** here.
+- Bounded Chromium URL/DOM fixture using the actual compiled navigation helper passed real href,
+  new-tab/reload, native Back/Forward, explicit return, Operations-entry and 1280/390px containment
+  checks. It manually renders helper links **after document load**; this is not an API or complete
+  React SPA journey, and no full application-flow coverage is implied.
+- Independent source security and UX reviews passed. Secret scan852, publication scanner (zero
+  findings) and documentation checks passed. **Full native integration was not rerun.** Existing
+  Playwright URL/Back assertions were updated for the next applicable gate, not counted as executed.
+  This follows the approved targeted local cadence; no fresh full-suite claim is made.
+
+### Preserved publication and use
+
+Main8443 received matched API/worker and five immutable assets. All32 existing public tables were
+preserved; no new table, migration, schema or settings change. A private0600 backup’s catalog was
+validated, **not an actual restore drill**. Health, deep-link, asset and unauthenticated checks passed.
+No8444 environment or live OCI action was introduced; live/restore deferrals remain Pending.
+
+Reload the **tenancy page**, then reopen its operation link to attach the new origin query. An already
+open or direct bare operation URL cannot retrospectively infer its origin and falls back to Operations.
+See the [field map](../reference/operations.md#context-sensitive-return-navigation--source-follow-up)
+and [manual checks](../how-to/operation-navigation.md). Arbitrary filter queries remain outside scope.

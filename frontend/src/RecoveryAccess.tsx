@@ -1,3 +1,4 @@
+import {operationHref} from "./operationNavigation";
 import {useEffect,useRef,useState} from "react";
 import {useQuery,useQueryClient} from "@tanstack/react-query";
 import {api,ApiError} from "./api";
@@ -80,7 +81,7 @@ export function RecoveryAccess({tenancyId,checksRevision,expired,navigate}:{tena
     {disclosed?<div className="recovery-password-value"><label htmlFor="recovery-password">Recovery password</label><input ref={passwordInput} id="recovery-password" type={visible?"text":"password"} value={disclosed.password} readOnly autoComplete="off" spellCheck={false}/><div className="dialog-actions"><button type="button" className="button secondary" onClick={()=>setVisible(value=>!value)}>{visible?"Hide password":"Show password"}</button><button type="button" className="button secondary" onClick={()=>void copy()}>{copied?"Copied":"Copy password"}</button></div></div>:<label className="workflow-check"><input type="checkbox" checked={consent} disabled={busy||!data?.available} onChange={event=>setConsent(event.target.checked)}/><span>I understand this request is audited, notifies the responsible contacts and starts or joins the original four-hour rotation window.</span></label>}
     {error&&<p className="alert" role="alert">{error}</p>}
     <div className="dialog-actions"><button type="button" className="button secondary" onClick={close}>Close</button>{!disclosed&&<button type="submit" className="button primary" disabled={busy||!consent||!data?.available}>{busy?"Retrieving…":uncertain?"Retry same request":"Get password"}</button>}</div>
-    {operationId&&<p className="recovery-access-operation"><a href={`/operations/${operationId}`} onClick={event=>{close();followLink(event,`/operations/${operationId}`,navigate);}}>View password operation</a></p>}
+    {operationId&&<p className="recovery-access-operation"><a href={operationHref(operationId)} onClick={event=>{close();followLink(event,operationHref(operationId),navigate);}}>View password operation</a></p>}
    </form>}
   </dialog>
  </section>;

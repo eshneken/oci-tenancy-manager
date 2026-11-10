@@ -1,3 +1,4 @@
+import {operationHref} from "./operationNavigation";
 import { useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "./api";
@@ -33,7 +34,7 @@ function AssignmentFacts({access}:{access?:AdministratorAccessView}) {
 function CheckDate({label,kind,at,operationId,navigate,purpose}:{label:string;kind:string;purpose:string;at:string;operationId?:string|null;navigate:(path:string)=>void}) {
   const date=new Date(at).toLocaleDateString("en-US",{timeZone:"UTC",month:"short",day:"numeric",year:"numeric"});
   const full=new Date(at).toLocaleString("en-US",{timeZone:"UTC",timeZoneName:"short"});
-  const href=operationId?"/operations/"+encodeURIComponent(operationId)+"#"+purpose+"-"+kind:null;
+  const href=operationId?operationHref(operationId,purpose+"-"+kind):null;
   return <div><dt>{label} (UTC)</dt><dd>{href?<a href={href} aria-label={`View ${kind} check, ${date}`} title={full} onClick={event=>followLink(event,href,navigate)}><time dateTime={at}>{date}</time></a>:<time dateTime={at} title={full}>{date}</time>}</dd></div>;
 }
 
@@ -162,7 +163,7 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
               <div><dt>SCIM resource ID</dt><dd className="technical-id">{user.identity.scim_resource_id}</dd></div>
               <div><dt>Recorded (UTC)</dt><dd>{new Date(user.identity.recorded_at).toLocaleString("en-US", { timeZone: "UTC", timeZoneName: "short" })}</dd></div>
               {user.identity.retired_at && <div><dt>Record retired (UTC)</dt><dd>{new Date(user.identity.retired_at).toLocaleString("en-US", { timeZone: "UTC", timeZoneName: "short" })}</dd></div>}
-              <div><dt>Source</dt><dd><a href={"/operations/" + user.identity.source_operation_id} onClick={event => followLink(event, "/operations/" + user.identity!.source_operation_id, navigate)}>View setup operation</a></dd></div>
+              <div><dt>Source</dt><dd><a href={operationHref(user.identity.source_operation_id)} onClick={event => followLink(event, operationHref(user.identity!.source_operation_id), navigate)}>View setup operation</a></dd></div>
             </dl>
           </details>}
           </section>

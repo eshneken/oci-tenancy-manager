@@ -74,3 +74,5 @@ and [presence checks](user-presence-checks.md#retained-results-after-membership-
 Current source [Operations check-section mapping](operations.md#recorded-required-user-check-sections--source-follow-up) and [access mini-panel](required-users-screen.md#access-mini-panel-and-exact-check-destinations--source-follow-up) have separately recorded combined follow-up validation and preserved main installation.
 
 - [Recovery-password Operations progress](operations.md#recovery-password-operation-progress): immutable original-window projection and safe status panel; installed with separately recorded full-run and final-copy targeted evidence.
+
+- [Operation return URL field map](operations.md#context-sensitive-return-navigation--source-follow-up): closed frontend-only returnTo routes; targeted navigation checks and preserved main installation pass; no full native rerun.
