@@ -36,7 +36,10 @@ There is no product fault-injection panel. Automated unit/PostgreSQL cases cover
 weakened/earlier fallback rules, incomplete reads, new desired CIDRs, old queued checks and stale
 proof. A desired-policy change makes old policy evidence out of date without changing qualified
 presence; a new check compares independent retained fixture facts, never copies desired values into
-observed state. Policy distribution/repair is subsequent work, not an effect of a ConfigMap update.
+observed state. [Perimeter-only recovery-network repair](../reference/recovery-network-repair.md) is
+a separately confirmed preview/conditional-write flow, now locally qualified and published to the
+preserved main preview in the [final receipt](../history/recovery-network-repair-checkpoint-2026-11-09.md). Real OCI remains pending. Refresh stays read-only. Fleet propagation
+and broader repairs remain subsequent work; a ConfigMap update alone performs no provider repair.
 
 The protected release input/private operator settings are not edited from this page. No interactive
 email override or real CIDR list is needed for testing these screens. Actual egress, effective console

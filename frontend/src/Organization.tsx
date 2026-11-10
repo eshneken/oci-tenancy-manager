@@ -1,3 +1,4 @@
+import {operationHref} from "./operationNavigation";
 import { Select } from "./Select";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -407,7 +408,7 @@ export function Organization({
             ) : (
               <>
                 <section className="table-panel">
-                  <div className="table-toolbar">
+                  <div className="table-toolbar organization-toolbar directory-toolbar">
                     <label className="search-field">
                       Search employees
                       <input
@@ -542,13 +543,12 @@ export function Organization({
                                 <a
                                   className="cell-secondary"
                                   href={
-                                    "/operations/" + item.pending_operation_id
+                                    operationHref(item.pending_operation_id)
                                   }
                                   onClick={(event) =>
                                     followLink(
                                       event,
-                                      "/operations/" +
-                                        item.pending_operation_id,
+                                      operationHref(item.pending_operation_id),
                                       navigate,
                                     )
                                   }

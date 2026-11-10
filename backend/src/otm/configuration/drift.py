@@ -119,6 +119,9 @@ def check_rows(connection, workspace, identifier=None):
 
 # The existing organization store supplies session/grant locks and one native transaction.
 class ConfigurationChecks:
+    # Explicit host composition supplies the guard for versioned signing credentials.
+    signing_guard = None
+
     # Provider/queue availability is explicit; the service cannot invent a fallback cloud context.
     def __init__(self, store, *, policy=None, policy_loader=None, enqueuer=None):
         self.store, self.policy, self.policy_loader, self.enqueuer = (
@@ -237,6 +240,18 @@ class ConfigurationChecks:
             selected = [row for row in selected if row["id"] not in pending]
             if not selected:
                 raise OrganizationConflict("NO_CONFIGURATION_CHECK_TARGETS")
+            if self.signing_guard is not None:
+                eligible = []
+                for row in selected:
+                    try:
+                        self.signing_guard(connection, workspace, row["id"], at)
+                        eligible.append(row)
+                    except OrganizationConflict:
+                        if command.tenancy_id:
+                            raise
+                selected = eligible
+                if not selected:
+                    raise OrganizationConflict("NO_CONFIGURATION_CHECK_TARGETS")
             targets = tuple(capture_target(connection, workspace, row, policy) for row in selected)
             grant = (
                 connection.execute(

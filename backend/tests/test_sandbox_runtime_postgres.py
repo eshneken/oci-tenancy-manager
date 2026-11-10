@@ -128,6 +128,24 @@ def runtime(tmp_path_factory):
                 subprocess.run([client, "rm", "--force", name], check=True, capture_output=True)
 
 
+# The browser access journey requires real durable notices and an owned non-relaying SMTP capture.
+@pytest.fixture
+def browser_mail(runtime):
+    from test_notification_mailpit_postgres import captured_runtime, mail_capture
+
+    c = runtime
+    path = c.root / "application.toml"
+    original, settings = path.read_bytes(), c.settings
+    capture = mail_capture.__wrapped__()
+    try:
+        captured_runtime(c, next(capture))
+        yield
+    finally:
+        path.write_bytes(original)
+        c.settings = settings
+        capture.close()
+
+
 # Run the actual foreground factory against only this fixture's private worker credential/policy.
 def drain(c, monkeypatch):
     for key, value in environment(c.root, c.state, worker=True).items():
@@ -232,7 +250,7 @@ def test_worker_never_consumes_foreign_queue(runtime, monkeypatch):
 
 
 # The broad lifecycle regression retains its existing real-process browser coverage.
-def test_browser_submission_and_live_worker(runtime):
+def test_browser_submission_and_live_worker(runtime, browser_mail):
     run_browser_runtime(runtime, "e2e/simulation.spec.ts")
 
 
@@ -260,6 +278,7 @@ def run_browser_runtime(c, script, extra=None):
         OTM_APPLICATION_CONFIG=str(config), OTM_FRONTEND_DIST=str(PROJECT / "frontend/dist")
     )
     worker_env = environment(c.root, c.state, worker=True)
+    worker_env["OTM_APPLICATION_CONFIG"] = str(config)
     server = subprocess.Popen(
         [
             str(PROJECT / "backend/.venv/bin/python"),
@@ -401,8 +420,14 @@ def test_installed_organization_permissions_and_literal_source(runtime):
             connection.execute(text(statement))
 
 
+# Reset cases need an empty owned installation, independent of retained credential/UI history.
+@pytest.fixture(scope="module")
+def reset_runtime(tmp_path_factory):
+    yield from runtime.__wrapped__(tmp_path_factory)
+
+
 # Actual local operator cleanup preserves auth/history, restores guards and allows a fresh feed.
-def test_local_organization_reset_cycle_and_rollback(runtime):
+def test_local_organization_reset_cycle_and_rollback(reset_runtime):
     import csv
     from io import StringIO
     from unittest.mock import patch
@@ -415,7 +440,7 @@ def test_local_organization_reset_cycle_and_rollback(runtime):
     from otm.organization.web import OrganizationWeb
     from otm.storage.organization import SqlOrganizationStore
 
-    c = runtime
+    c = reset_runtime
 
     # Check every reviewed reset table by its exact public guard, including newly added kinds.
     def enabled_guards(connection):
@@ -423,9 +448,10 @@ def test_local_organization_reset_cycle_and_rollback(runtime):
             text(
                 "SELECT count(*) FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid "
                 "JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' "
-                "AND t.tgname=ANY(:names) AND t.tgenabled='O'"
+                "AND c.relname=ANY(:tables) AND t.tgname LIKE '%_no_truncate' "
+                "AND t.tgtype=34 AND t.tgenabled='O'"
             ),
-            {"names": [name + "_no_truncate" for name in TABLES]},
+            {"tables": list(TABLES)},
         )
 
     # Hash only synthetic rows locally; no credentials or private data are logged by assertions.
@@ -553,7 +579,7 @@ def test_local_organization_reset_cycle_and_rollback(runtime):
 
 # Installed API credentials can cancel only pending local work, and the old native delivery cannot
 # revive it.
-def test_installed_api_lifecycle_cancellation_permissions(runtime):
+def test_installed_api_lifecycle_cancellation_permissions(reset_runtime):
     from unittest.mock import Mock
 
     from otm.operations.contracts import InspectionPolicy
@@ -563,7 +589,7 @@ def test_installed_api_lifecycle_cancellation_permissions(runtime):
     from otm.tenancies.views import ReviewQuery, TenancyQuery
     from otm.tenancies.workflows import OrganizationWorkflows
 
-    c = runtime
+    c = reset_runtime
     clock = Mock(side_effect=lambda: datetime.now(UTC))
     store = SqlOrganizationStore(c.api, c.sessions, clock)
     policy = InspectionPolicy(
@@ -743,5 +769,140 @@ def test_installed_identity_binding_roles(runtime):
                     )
                 )
         assert caught.value.orig.sqlstate == "42501"
+    finally:
+        worker.dispose()
+
+
+# Installed API/worker roles expose reference reads while withholding credential-history rewrites.
+def test_installed_password_role_boundaries(runtime):
+    c = runtime
+    for statement in (
+        "INSERT INTO public.otm_credential DEFAULT VALUES",
+        "INSERT INTO public.otm_credential_version DEFAULT VALUES",
+        "UPDATE public.otm_credential SET location='{}'::jsonb WHERE false",
+        "UPDATE public.otm_credential SET current_version_id=NULL WHERE false",
+        "UPDATE public.otm_human_access_grant SET requesting_subject='foreign' WHERE false",
+        "DELETE FROM public.otm_credential WHERE false",
+        "TRUNCATE public.otm_credential_version",
+    ):
+        with pytest.raises(DBAPIError) as caught, c.api.begin() as connection:
+            connection.execute(text(statement))
+        assert caught.value.orig.sqlstate == "42501"
+    worker = maintenance_engine(database_url(c.state, worker=True), None)
+    try:
+        with worker.connect() as connection:
+            assert connection.scalar(
+                text("SELECT has_table_privilege(current_user,'public.otm_operation','INSERT')")
+            )
+            for table in ("otm_credential", "otm_credential_version", "otm_human_access_grant"):
+                assert connection.scalar(
+                    text("SELECT has_table_privilege(current_user,:table,'SELECT')"),
+                    {"table": "public." + table},
+                )
+            assert connection.scalar(
+                text(
+                    "SELECT has_table_privilege(current_user,"
+                    "'public.otm_credential_version','INSERT')"
+                )
+            )
+            assert not connection.scalar(
+                text(
+                    "SELECT has_table_privilege(current_user,"
+                    "'public.otm_human_access_grant','INSERT')"
+                )
+            )
+            assert not connection.scalar(
+                text(
+                    "SELECT has_column_privilege(current_user,'public.otm_credential',"
+                    "'source_operation_id','UPDATE')"
+                )
+            )
+        for statement in (
+            "UPDATE public.otm_operation SET current_intent_revision=2 WHERE false",
+            "DELETE FROM public.otm_operation WHERE false",
+            "UPDATE public.audit_event SET data='{}'::jsonb WHERE false",
+            "UPDATE public.otm_credential_version SET reference='{}'::jsonb WHERE false",
+        ):
+            with pytest.raises(DBAPIError) as caught, worker.begin() as connection:
+                connection.execute(text(statement))
+            assert caught.value.orig.sqlstate == "42501"
+    finally:
+        worker.dispose()
+
+
+# Value: protects=installed API/worker signing-head least-privilege SQL boundaries;
+# fails_when=API gains signer publication rights or worker gains immutable anchor mutation;
+# why_new=installed password-role assertions do not inspect the new signing-head table;
+# seam=none; no_claim=hosted OCI DB roles (owned disposable installer and real PostgreSQL).
+# Actual denied statements must fail as privilege errors before constraints or missing-row checks.
+def test_installed_signing_role_boundaries(runtime):
+    c = runtime
+    with c.api.connect() as connection:
+        assert connection.scalar(
+            text(
+                "SELECT has_table_privilege(current_user,'public.otm_signing_credential','SELECT')"
+            )
+        )
+        for column in ("state", "updated_at"):
+            assert connection.scalar(
+                text(
+                    "SELECT has_column_privilege(current_user,"
+                    "'public.otm_signing_credential',:column,'UPDATE')"
+                ),
+                {"column": column},
+            )
+    for statement in (
+        "INSERT INTO public.otm_signing_credential DEFAULT VALUES",
+        "DELETE FROM public.otm_signing_credential WHERE false",
+        "TRUNCATE public.otm_signing_credential",
+        "UPDATE public.otm_signing_credential SET current_key=NULL WHERE false",
+        "UPDATE public.otm_signing_credential SET current_hash=NULL WHERE false",
+        "UPDATE public.otm_signing_credential SET generation=2 WHERE false",
+        "UPDATE public.otm_signing_credential SET rotation_operation_id=NULL WHERE false",
+    ):
+        with pytest.raises(DBAPIError) as caught, c.api.begin() as connection:
+            connection.execute(text(statement))
+        assert caught.value.orig.sqlstate == "42501"
+    worker = maintenance_engine(database_url(c.state, worker=True), None)
+    try:
+        with worker.connect() as connection:
+            for privilege in ("SELECT", "INSERT"):
+                assert connection.scalar(
+                    text(
+                        "SELECT has_table_privilege(current_user,"
+                        "'public.otm_signing_credential',:privilege)"
+                    ),
+                    {"privilege": privilege},
+                )
+            for column in (
+                "current_key",
+                "current_hash",
+                "generation",
+                "state",
+                "retire_at",
+                "rotation_operation_id",
+                "updated_at",
+            ):
+                assert connection.scalar(
+                    text(
+                        "SELECT has_column_privilege(current_user,"
+                        "'public.otm_signing_credential',:column,'UPDATE')"
+                    ),
+                    {"column": column},
+                )
+        for statement in (
+            "UPDATE public.otm_signing_credential SET source_operation_id=NULL WHERE false",
+            "UPDATE public.otm_signing_credential SET source_evidence_event_id=NULL WHERE false",
+            "UPDATE public.otm_signing_credential SET principal_binding_id=NULL WHERE false",
+            "UPDATE public.otm_signing_credential SET connection_id=NULL WHERE false",
+            "UPDATE public.otm_signing_credential SET target='{}'::jsonb WHERE false",
+            "UPDATE public.otm_signing_credential SET target_hash=NULL WHERE false",
+            "UPDATE public.otm_signing_credential SET created_at=now() WHERE false",
+            "DELETE FROM public.otm_signing_credential WHERE false",
+            "TRUNCATE public.otm_signing_credential",
+        ):
+            with pytest.raises(DBAPIError) as caught, worker.begin() as connection:
+                connection.execute(text(statement))
+            assert caught.value.orig.sqlstate == "42501"
     finally:
         worker.dispose()

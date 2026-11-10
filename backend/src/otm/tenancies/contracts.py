@@ -182,13 +182,21 @@ class OrganizationIntent(Contract):
     pending_tenancy_id: UUID | None = None
     pending_association_id: UUID | None = None
     # Existing accepted intents retain the original one-step simulator when this is absent.
-    onboarding_version: Literal[1, 2, 3] | None = None
+    onboarding_version: Literal[1, 2, 3, 4] | None = None
     # New opted-in captures may register a simulated connection; absence preserves legacy bytes.
     presence_connection_contract: Literal["simulated-user-presence-1"] | None = Field(
         default=None, exclude_if=lambda value: value is None
     )
     # New setup freezes the desired security revision without putting private networks in intent.
     recovery_console_fingerprint: Annotated[str, Field(pattern=r"^[a-f0-9]{64}$")] | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
+    # Explicit setup opt-in; old accepted operations never create signing-key inventory fixtures.
+    automation_key_inventory_contract: Literal["automation-key-inventory-1"] | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
+    # Fresh setup explicitly prepares versioned custody; legacy inventory is never adopted.
+    signing_key_rotation_contract: Literal["signer-1"] | None = Field(
         default=None, exclude_if=lambda value: value is None
     )
     # Full immutable publication snapshot; absent only for previously accepted local operations.
@@ -213,16 +221,29 @@ class OrganizationIntent(Contract):
     # New setup graphs cannot silently omit configuration or reuse a legacy action boundary.
     @model_validator(mode="after")
     def baseline_setup_required(self):
-        if self.onboarding_version in {2, 3} and (
+        if self.onboarding_version in {2, 3, 4} and (
             self.action not in {"create_tenancy", "import_tenancy"}
             or self.baseline is None
             or self.baseline.published_at is None
         ):
             raise ValueError("PUBLISHED_ONBOARDING_BASELINE_REQUIRED")
-        if self.recovery_console_fingerprint is not None and self.onboarding_version != 3:
+        if self.recovery_console_fingerprint is not None and self.onboarding_version not in {3, 4}:
             raise ValueError("RECOVERY_CONSOLE_REQUIRES_FRESH_CAPTURE")
-        if self.presence_connection_contract is not None and self.onboarding_version != 3:
+        if self.presence_connection_contract is not None and self.onboarding_version not in {3, 4}:
             raise ValueError("PRESENCE_CONNECTION_REQUIRES_FRESH_CAPTURE")
+        if (
+            self.signing_key_rotation_contract is not None
+            and self.automation_key_inventory_contract is None
+        ):
+            raise ValueError("SIGNING_KEY_ROTATION_SETUP_INVALID")
+        if self.automation_key_inventory_contract is not None and (
+            self.onboarding_version not in {3, 4} or self.presence_connection_contract is None
+        ):
+            raise ValueError("AUTOMATION_KEYS_REQUIRE_FRESH_CAPTURE")
+        if self.onboarding_version == 4 and (
+            self.recovery_console_fingerprint is None or self.presence_connection_contract is None
+        ):
+            raise ValueError("RECOVERY_PASSWORD_REQUIRES_FRESH_SECURITY_CAPTURE")
         return self
 
 
@@ -259,5 +280,6 @@ class OrganizationActionOutcome(Contract):
         "LIFECYCLE_UNAVAILABLE",
         "EMAIL_ROUTING_CHANGED",
         "SIMULATION_CANCELLED",
+        "RECOVERY_PASSWORD_ROTATION_REQUIRED",
     ]
     verified_at: UtcInstant | None

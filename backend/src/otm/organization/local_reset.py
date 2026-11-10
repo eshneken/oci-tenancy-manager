@@ -10,6 +10,10 @@ from otm.storage.tables import metadata
 from otm.storage.transaction import require_transaction
 
 TABLES = (
+    "otm_signing_credential",
+    "otm_human_access_grant",
+    "otm_credential_version",
+    "otm_credential",
     "otm_user_presence_check",
     "otm_user_presence_connection",
     "otm_managed_object_binding",
@@ -29,6 +33,15 @@ TABLES = (
     "otm_tenancy",
     "otm_tenancy_membership",
 )
+
+
+# Frozen migrations use one older prefix for the signing table's truncate veto.
+TRUNCATE_GUARDS = {
+    name: "signing_credential_no_truncate"
+    if name == "otm_signing_credential"
+    else name + "_no_truncate"
+    for name in TABLES
+}
 
 
 # Require explicit local opt-in and verify Docker ownership/port before opening an owner connection.
@@ -82,7 +95,8 @@ def clear_organization(connection, workspace, issuer):
         connection.scalars(
             text(
                 "SELECT tablename FROM pg_tables WHERE schemaname='public' "
-                "AND (tablename='otm_managed_object_binding' "
+                "AND (tablename IN ('otm_credential','otm_credential_version',"
+                "'otm_human_access_grant','otm_managed_object_binding','otm_signing_credential') "
                 "OR left(tablename,17)='otm_user_presence' OR left(tablename,4)='org_' "
                 "OR left(tablename,11)='otm_tenancy' "
                 "OR left(tablename,12)='otm_baseline' OR left(tablename,17)='otm_configuration' "
@@ -113,10 +127,12 @@ def clear_organization(connection, workspace, issuer):
         text(
             "SELECT EXISTS(SELECT 1 FROM public.otm_operation WHERE workspace_id=:workspace A"
             "ND kind IN ('organization_action','configurati"
-            "on_update','configuration_check','cost_collection','required_user_check') AND "
+            "on_update','configuration_check','cost_collection','required_user_check',"
+            "'recovery_network_repair','recovery_password','signing_key') AND "
             "state IN "
             "('queued','running','waiting','needs_"
-            "attention'))"
+            "attention')) OR EXISTS(SELECT 1 FROM public.otm_credential) "
+            "OR EXISTS(SELECT 1 FROM public.otm_signing_credential)"
         ),
         {"workspace": workspace},
     )
@@ -139,11 +155,11 @@ def clear_organization(connection, workspace, issuer):
     }
     for name in TABLES:
         connection.exec_driver_sql(
-            "ALTER TABLE public." + name + " DISABLE TRIGGER " + name + "_no_truncate"
+            "ALTER TABLE public." + name + " DISABLE TRIGGER " + TRUNCATE_GUARDS[name]
         )
     connection.exec_driver_sql("TRUNCATE TABLE " + names)
     for name in TABLES:
         connection.exec_driver_sql(
-            "ALTER TABLE public." + name + " ENABLE TRIGGER " + name + "_no_truncate"
+            "ALTER TABLE public." + name + " ENABLE TRIGGER " + TRUNCATE_GUARDS[name]
         )
     return counts

@@ -1,0 +1,26 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "acknowledged": {
+      "title": "Acknowledged",
+      "type": "boolean"
+    },
+    "client_request_key": {
+      "format": "uuid",
+      "title": "Client Request Key",
+      "type": "string"
+    },
+    "preview_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Preview Hash",
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_request_key",
+    "preview_hash",
+    "acknowledged"
+  ],
+  "title": "RecoveryNetworkRequest",
+  "type": "object"
+}

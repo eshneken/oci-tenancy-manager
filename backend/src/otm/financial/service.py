@@ -32,6 +32,9 @@ class CostConflict(OrganizationConflict):
 
 # Database projections and read admission share current source keys but never perform provider GETs.
 class CostCollections:
+    # Explicit host composition supplies the guard for versioned signing credentials.
+    signing_guard = None
+
     # All authority comes from existing session/store/policy dependencies, never a client workspace.
     def __init__(self, store, *, policy, policy_loader, enqueuer, profile=None):
         self.store, self.policy, self.policy_loader, self.enqueuer = (
@@ -158,6 +161,12 @@ class CostCollections:
             targets, joined, skipped = [], set(), 0
             start, end = month_bounds(at)
             for row in rows:
+                if self.signing_guard is not None:
+                    try:
+                        self.signing_guard(connection, workspace, row["id"], at)
+                    except OrganizationConflict:
+                        skipped += 1
+                        continue
                 context = source_context(row, self.policy, self.profile)
                 if context is None or row["operation_id"]:
                     skipped += 1

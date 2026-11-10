@@ -62,9 +62,9 @@ it("queues the exact scope and keeps evidence visible until readback",async()=>{
  await userEvent.click(screen.getByRole("button",{name:"Check now"}));
  const message=await screen.findByText(/Check request accepted/);expect(message).toHaveFocus();
  expect(c.start).toHaveBeenCalledWith({client_request_key:expect.any(String),tenancy_id:id},expect.any(AbortSignal));
- expect(screen.getByRole("link",{name:"View operation"})).toHaveAttribute("href","/operations/"+op);
+ expect(screen.getByRole("link",{name:"View operation"})).toHaveAttribute("href","/operations/"+op+"?returnTo=%2Fconfiguration%2Fdrift");
  expect(screen.getByText("Allow observed")).toBeVisible();
- await userEvent.click(screen.getByRole("link",{name:"View operation"}));expect(c.navigate).toHaveBeenLastCalledWith("/operations/"+op);
+ await userEvent.click(screen.getByRole("link",{name:"View operation"}));expect(c.navigate).toHaveBeenLastCalledWith("/operations/"+op+"?returnTo=%2Fconfiguration%2Fdrift");
 });
 
 it("queues fleet scope and refreshes rows without an invented healthy result",async()=>{
@@ -288,4 +288,12 @@ it("does not refresh unrelated caches merely because a pending fleet view switch
  let complete!:(value:ConfigurationDriftDirectory)=>void;c.read.mockReturnValue(new Promise(resolve=>{complete=resolve;}));const invalidate=vi.spyOn(c.client,"invalidateQueries");
  await userEvent.click(screen.getByRole("button",{name:"Checks"}));await screen.findByText("Loading configuration checks…");expect(invalidate).not.toHaveBeenCalled();
  complete({...directory,checking_count:1});await screen.findByRole("link",{name:"Example tenancy"});expect(invalidate).not.toHaveBeenCalled();
+});
+
+// Child checks opened from a tenancy's operation keep that operation's validated origin on return.
+it("preserves a contextual operation URL through configuration details",async()=>{
+ const operation=`/operations/${op}?returnTo=${encodeURIComponent(`/tenancies/${id}`)}`;
+ const c=mount({identifier:id,url:`/configuration/drift/${id}?returnTo=${encodeURIComponent(operation)}`});
+ const back=await screen.findByRole("link",{name:"← Back to operation"});
+ expect(back).toHaveAttribute("href",operation);await userEvent.click(back);expect(c.navigate).toHaveBeenCalledWith(operation);
 });

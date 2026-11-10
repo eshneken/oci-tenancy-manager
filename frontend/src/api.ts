@@ -1,4 +1,7 @@
+import type {SigningKeyView,SigningKeyRequest} from "./contracts";
+import type {RecoveryPasswordView,RecoveryPasswordRequest,RecoveryPasswordDisclosure} from "./contracts";
 import type { RequiredUsersDirectory, PresenceCheckRequest } from "./contracts";
+import type {RecoveryNetworkPreview,RecoveryNetworkRequest} from "./contracts";
 import type { CostRefreshReceipt, CostRefreshRequest } from "./contracts";
 import type { EmailPolicyView } from "./contracts";
 import type { ResponsibilityCommand } from "./contracts";
@@ -75,7 +78,13 @@ async function request<T>(
         : { "Content-Type": "application/json", "X-OTM-Request": "1" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  if (!response.ok) throw new ApiError(response.status);
+  if (!response.ok) {
+    if(response.status===409){
+      const body=await response.json().catch(()=>({}));
+      if(body?.code==="RECOVERY_PASSWORD_ROTATION_REQUIRED")throw new WorkflowError(response.status,body.code);
+    }
+    throw new ApiError(response.status);
+  }
   return response.status === 204
     ? (undefined as T)
     : ((await response.json()) as T);
@@ -103,6 +112,19 @@ export class WorkflowError extends ApiError {
 }
 
 export const api = {
+  // Key metadata and replay-safe commands never carry private material or browser-selected identities.
+  signingKeyRotation(id:string,signal?:AbortSignal){return request<SigningKeyView>("/api/tenancies/"+encodeURIComponent(id)+"/signing-key-rotation","GET",undefined,signal);},
+  // Server preview/consent binds the current generation; response loss retries the identical UUID.
+  requestSigningKeyRotation(id:string,body:SigningKeyRequest,signal?:AbortSignal){return request<ActionReceipt>("/api/tenancies/"+encodeURIComponent(id)+"/signing-key-rotation","POST",body,signal);},
+
+  // Metadata only; never fetch a password from a GET or place disclosure responses in Query cache.
+  administratorAccess(id:string, signal?:AbortSignal) {
+    return request<RecoveryPasswordView>("/api/tenancies/"+encodeURIComponent(id)+"/administrator-access","GET",undefined,signal);
+  },
+  // Last-mile secret response must remain in the caller's transient component state only.
+  recoveryPassword(id:string, body:RecoveryPasswordRequest, signal?:AbortSignal) {
+    return request<RecoveryPasswordDisclosure>("/api/tenancies/"+encodeURIComponent(id)+"/administrator-access/password","POST",body,signal);
+  },
   // Nonsecret delivery policy remains administrator-only; never expose SMTP settings or credentials.
   emailPolicy(signal?:AbortSignal) { return request<EmailPolicyView>("/api/email-policy","GET",undefined,signal); },
   // Transfer workflow responsibility only; frozen creation intent and tenancy ownership stay unchanged.
@@ -279,6 +301,14 @@ export const api = {
   // Refresh stored account records only; this route never probes OCI or exposes credentials.
   checkRequiredUsers(id:string, command:PresenceCheckRequest) {
     return request<ActionReceipt>("/api/tenancies/"+encodeURIComponent(id)+"/required-users/check", "POST", command);
+  },
+  // Preview one exact owned perimeter; operational networks never cross this boundary.
+  previewRecoveryNetworks(id:string, signal?:AbortSignal) {
+    return request<RecoveryNetworkPreview>(`/api/tenancies/${encodeURIComponent(id)}/recovery-network-preview`,"GET",undefined,signal);
+  },
+  // Confirm the frozen preview and explicit consent through the ordinary CSRF-protected client.
+  repairRecoveryNetworks(id:string, command:RecoveryNetworkRequest, signal?:AbortSignal) {
+    return request<ActionReceipt>(`/api/tenancies/${encodeURIComponent(id)}/recovery-network-repair`,"POST",command,signal);
   },
   requiredUsers(id: string, signal?: AbortSignal) {
     return request<RequiredUsersDirectory>(

@@ -19,6 +19,7 @@ independent recovery access. This manifest does not itself authorize live resour
 
 | Area | Procedure / expected qualification | Status |
 | --- | --- | --- |
+| Initial multi-worker production sizing | [Two-worker qualification](#initial-multi-worker-production-qualification): staging one slot, production two one-slot workers; locks, child isolation, deadlines, crash recovery and connection budget. | Pending |
 | Configuration drift and selected repair | [Live scenario matrix](configuration-drift-runbook.md#pending-real-oci-manual-validation): exact objects, override preservation, permissions, partial outcomes, concurrency and unrelated-resource protection. | Pending |
 | Required-user presence | [Live presence matrix](configuration-drift-runbook.md#pending-required-user-presence-qualification): exact domain/SCIM/OCI identities, qualified absence, independent subjects and stale authority. | Pending |
 | Permanent-user capture during onboarding | Create and import a disposable child; retain provider-returned automation and recovery domain/SCIM/OCI identities independently. Verify durable values against OCI. Retry interrupted setup without adopting same-name/different-ID accounts or inventing bindings for older records. Preserve post-policy access checks before retiring temporary credentials. Version 3 implements simulated capture; qualification still requires a real adapter and approved disposable child. Saved previews must be deliberately upgraded before local UI review. | Pending |
@@ -137,7 +138,7 @@ Daily scheduled checks remain deferred until staging/Kubernetes qualification. S
 
 ## Credential security lifecycles
 
-Status: **Pending**. The [selected chapter22 design](../engineering-design/22-credential-security-lifecycles.md)
+Status: **Pending**. The [selected chapter 22 design](../engineering-design/22-credential-security-lifecycles.md)
 requires disposable-child qualification with synthetic identities and separately approved live mutations.
 Use private approved source ranges, never publish operational CIDRs/secrets in receipts or CI artifacts.
 
@@ -161,7 +162,7 @@ Use private approved source ranges, never publish operational CIDRs/secrets in r
    and CURRENT before resuming. No extra human account, TOTP broker or public bypass is required.
 5. Qualify domain key create/list/get/delete, exact IDs/fingerprints, permission/propagation and three-key
    capacity. Prove the new signer alone can operate, old use drains and exact old deletion is verified.
-6. Exercise day29/day30, unknown creation age, occupied slots, upload/delete timeouts, candidate failure,
+6. Exercise day 29/day 30, unknown creation age, occupied slots, upload/delete timeouts, candidate failure,
    overlapping scans and restore before activation. Never delete the sole working/unowned key or reset
    original age. Unresolved retirement remains overdue with scoped repair available. Inventory every
    registered managed automation principal and explicitly owned parent/hosting keys.
@@ -185,3 +186,105 @@ verified. Qualify coherent shared group facts, recovery identity replacement, cr
 substitution, stale connection/attempt publication, denied/partial coverage and persisted reload.
 Recovery Assigned must never by itself authorize password disclosure or imply console readiness.
 These cases remain pending real OCI; local fixtures do not qualify the live APIs.
+
+
+## Recovery network repair qualification
+
+**User deferral — 9 November 2026:** additional interactive recovery-network repair testing waits
+for real OCI and an approved actual policy break/repair. Do not create another local installation
+or manufacture drift in main 8443. The former8444 instance is retired;430-case automated simulator
+qualification remains valid, while every live case below remains Pending.
+
+All cases remain **Pending**. Local simulated repair is not provider/sign-in qualification.
+
+| Live case | Required evidence | Status |
+| --- | --- | --- |
+| Exact conditional authority | Prove the automation signer can replace this owned perimeter; qualify exact domain/SCIM IDs, ownership and provider compare-token semantics. Presence/group membership is insufficient. | Pending |
+| Narrow replacement and access | From confirmed network-only drift, preserve exact user/group, MFA exemption, application, policy and ordered allow/deny rules; verify allowed IPv4/IPv6 sources and denial elsewhere, including fallback rules. Never remove restrictions first. | Pending |
+| Concurrent owner/operator edit | First edit networks externally, run a fresh complete check and qualify repair against that sealed actual state without rewriting setup. An unrefreshed third state or changed perimeter/rules after preview/admission must block; reject changed compare tokens or retain unknown effects without overwriting unrelated changes. | Pending |
+| Readback and interruption | Qualify independent complete readback, propagation, lost write responses and process interruption. Unknown effects hold the operation; no blind duplicate write. | Pending |
+| Desired/authority/lifecycle changes | Replace desired policy, signer, bound identity or child lifecycle during work. No stale write or obsolete readiness; retain known applied-but-superseded evidence when necessary. | Pending |
+| Privacy and later checks | No CIDRs/rules in public responses/exports/errors; separate dated user/policy refresh reads actual applied facts. No password or credential action follows repair. | Pending |
+
+Use only an approved disposable child. This flow does not qualify assignment repair, user recreation,
+password custody, rotation or fleet rollout. See the [current source field map](../reference/recovery-network-repair.md).
+
+
+## Recovery password custody and original-window qualification
+
+All cases remain **Pending**. Source/local simulator work does not qualify OCI/Vault or sign-in.
+Use an approved disposable real child when available; main 8443 remains the sole saved local review
+environment. Interactive recovery-network break/repair remains deferred; no legacy custody backfill.
+
+| Live case | Required evidence | Status |
+| --- | --- | --- |
+| Version4 setup | Stage/allocate real custody and verify exact recovery user, child password and CURRENT before temporary cleanup; preserve old accepted versions/unrelated users. | Pending |
+| CURRENT and references | Use actual returned Vault locator, CURRENT for normal reads and exact candidates for writes; no invented OCID, LATEST or historical DB fallback. | Pending |
+| Original window | Persist request/audit/notices/due work before release; lost response and transient read failure preserve first-attempt+4h, joining requests never extend, unexpected version blocks. | Pending |
+| Independent authority | Qualify automation context, exact recovery identity/assignments and MFA/CIDR controls. Stale/denied/incomplete facts are not readiness; no recovery signer fallback. | Pending |
+| Coupled rotation | Stage recoverably, change only bound child user, independently verify candidate, conditionally promote CURRENT and read back; unknown effects never permit blind reset. | Pending |
+| Lifecycle and restore | Exercise concurrency, requester departure, target/connection replacement, busy child and paused worker; preserve original deadlines and D54 paused manual reconciliation. | Pending |
+| Notices and disclosure | Other-admin/owner/direct-manager attempt notices, admin failure notices, frozen roles/routing and environment checks; no secret in email/audit/log/cache/export; exceptional response is authenticated/no-store. | Pending |
+| Sign-in limits | Verify actual allowed-source sign-in/outside denial separately; rotation does not promise existing-session termination; preserve independent same-account manual recovery. | Pending |
+
+[WIP UI steps](../reference/recovery-password-access.md#current-dialog-and-future-main-only-manual-review)
+require future local qualification/publication and do not establish that milestone today.
+
+
+## Automation signing-key inventory qualification
+
+All cases remain **Pending**; local inventory simulation cannot qualify real key/signer behavior.
+
+| Live case | Required evidence | Status |
+| --- | --- | --- |
+| Exact key resource/subject | Normalize actual identity-domain SCIM/composite API-key resource ID and fingerprint; require exact automation domain/user context, not an OCID-shaped assumption or name match. | Pending |
+| Complete list | Qualify pagination, authorization, supported lifecycle state, duplicates and bounds; complete empty differs from denied/partial/unavailable. Never truncate a list and certify zero or complete coverage. | Pending |
+| Original creation evidence | Identify trustworthy provider key creation/upload timestamp and normalize UTC; absent/future/untrusted time yields Unknown age, never observation/user/connection/feed time or a new lease. | Pending |
+| Repeated/historical views | Preserve original timestamps through refresh/restart; current server-time age and historical capture-time age remain explicitly distinct. Test exact day 29/day 30 and stale/clock boundaries. | Pending |
+| No added authority | Inventory must not expose PEM/private material, select a signer, establish custody/compliance, rotate/delete, notify or block unrelated work. Existing parent/recovery fallback remains forbidden. | Pending |
+
+Broader30-day rotation, key capacity, new-signer verification and verified old-key retirement remain
+pending in chapter22’s separate matrix. See the [current source map](../reference/automation-signing-keys.md).
+
+## Managed signing-key rotation qualification
+
+Status: **Pending — real OCI and hosted execution**. The [targeted local checkpoint](../history/signing-key-rotation-checkpoint-2026-11-10.md)
+uses nonusable simulator material and cannot establish any live behavior below. Use approved disposable
+children/test mailboxes and exact scoped credentials; do not create another local saved instance.
+
+| Live case | Required evidence | Status |
+| --- | --- | --- |
+| Fresh create/import enrollment | Exact canonical automation identity, real original keypair/material clock, source bindings, no legacy/inventory adoption or premature temporary-admin cleanup | Pending |
+| Exact signer and Vault custody | Original exact immutable secret version, least required custody permissions, independently created candidate signer, no CURRENT/LATEST or old-signer fallback | Pending |
+| Key CRUD/slots | Actual identity-domain key IDs/fingerprints, complete listing, occupied three-key capacity, inactive/unknown keys, no unowned/sole-working deletion | Pending |
+| Upload and propagation | Before-dispatch persistence, lost response/restart, same candidate fingerprint reconciliation, absent-after-uncertain hold and no blind reupload | Pending |
+| Candidate permissions | Fresh current OCI identity, identity-domain admin/group and root-configuration capability; removed grants/denied/incomplete reads cannot reuse retained onboarding proof | Pending |
+| Activation and retirement | Exact-generation CAS, original old deadline across activation, exact old ID/fingerprint deletion/response loss, continuing replacement proof and full old absence | Pending |
+| Native OKE execution | Day29 original ETA/day30 guard, scheduled/manual priority and same-operation locks, hourly bounded rescue deployment, no competing rotation, restart/crash manual recovery | Pending |
+| Recovery-password overlap | Active original four-hour window drains before child reservation; due closure runs between key phases, no deadline extension/deadlock or unsafe old-key fallback | Pending |
+| Isolation and notices | Cached views/other children continue; no raw key material; one original-operation/admin incident across holds/resume/activation with frozen routing and no uncertain resend | Pending |
+| Lifecycle/restore | Confirmed termination tombstones only that child; pending termination defers; D54 paused restore reconciles actual key custody/provider effects before continuation, no resurrection | Pending |
+
+
+## Initial multi-worker production qualification
+
+**Pending — staging/OKE and real OCI required.** Start one staging worker/one slot, then qualify the
+initial two-worker/one-slot-each production target from the
+[accepted sizing decision](../engineering-design/06-platform-and-delivery.md#accepted-initial-worker-sizing--10-november-2026).
+Measure queue wait/provider latency and database connection use. Confirm unrelated-child progress,
+operation lock/claim exclusion, the per-child rotation pause, duplicate delivery, graceful and abrupt
+worker death, and recovery-password closure while a signing rotation drains. No uncertain write may
+be retried merely because a second worker is available. Local simulation is not evidence of live
+permissions, provider propagation or production timing guarantees.
+
+
+### Initial signer authority and overlapping closure
+
+**Pending — approved real provider/staging environment required.** Revoke or change the responsible
+onboarding administrator after signer setup admission but before execution, and hold the parent
+operation; prove no enrollment or parent continuation. Explicitly transfer responsibility to a live
+administrator and qualify the correct continuation. Verify a due password closure remains system-owned
+after the requester loses access. Exercise a real open password window while signing rotation drains:
+the closure must finish without losing its original deadline before key activation/old-key retirement.
+Local setup/privilege/consumer and isolated drain tests do not qualify provider propagation or OKE
+queue latency. Keep the existing fixed window and retirement deadlines during this exercise.

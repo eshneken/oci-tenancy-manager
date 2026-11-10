@@ -525,3 +525,12 @@ cleanup boundary, so an accepted waiting operation cannot finish on obsolete cac
 `capture_required_users` retains the private normalized producer policy alongside exact identities;
 public onboarding views do not return those rules or configured ranges. Legacy accepted operations
 omit the new field and never gain automatic policy proof. See the [field map and current UI scope](recovery-console-verification.md).
+
+
+## Background password-setup polling — source checkpoint
+
+The signing-key checkpoint includes an existing onboarding-display correction: queued/running work
+and `waiting` with phase `configuring` continue polling while system password setup runs. Human
+waits and terminal phases stop polling. A completed operation must not leave a stale Setting up
+access view. This is read-only progress acquisition, not another setup command, policy setting or
+persistence field. Final qualification/install status is in the [qualified targeted signing-key receipt](../history/automation-signing-key-inventory-checkpoint-2026-11-09.md).

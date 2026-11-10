@@ -63,6 +63,15 @@ const detail: OperationDetail = {
   events_limited: false,
 };
 
+// Security writes retain uncertainty guidance and never inherit read-only 'no action' wording.
+it.each(["succeeded","needs_attention"] as const)("describes %s network repair history accurately",async(state)=>{
+ vi.spyOn(api,"operation").mockResolvedValue({...detail,operation:{...row,kind:"recovery_network_repair",state}});
+ mount(<Operations operationId={id} expired={vi.fn()} navigate={vi.fn()}/>);
+ if(state==="succeeded")expect(await screen.findByText(/Approved recovery networks verified in simulation/)).toBeVisible();
+ else expect(await screen.findByText(/tenancy remains reserved until independent reconciliation/)).toBeVisible();
+ expect(screen.queryByText(/Simulation ended with an issue. No action is required/)).not.toBeInTheDocument();
+});
+
 // Keep optional sandbox discovery explicitly unavailable in read-only list scenarios.
 beforeEach(() => {
   vi.spyOn(api, "inspectionSandbox").mockRejectedValue(new ApiError(404));
@@ -160,7 +169,7 @@ describe("Recorded operations list", () => {
   });
 
   // Filtered no-match results never masquerade as an empty operation history.
-  it("distinguishes an empty history from no matches and clears both filters", async () => {
+  it("distinguishes an empty history from no matches and clears all filters", async () => {
     const read = vi
       .spyOn(api, "operations")
       .mockResolvedValue({ ...directory, items: [], total: 0, pages: 1 });
@@ -175,6 +184,7 @@ describe("Recorded operations list", () => {
       screen.getByLabelText("State", { exact: true }),
       "failed",
     );
+    await userEvent.selectOptions(screen.getByLabelText("Operation type", {exact:true}), "signing_key");
     await userEvent.type(screen.getByRole("searchbox"), "missing");
     expect(
       await screen.findByText("No operations match your filters"),
@@ -187,7 +197,7 @@ describe("Recorded operations list", () => {
     expect(screen.getByLabelText("State", { exact: true })).toHaveValue("");
     await waitFor(() =>
       expect(read).toHaveBeenLastCalledWith(
-        expect.objectContaining({ state: "", query: "" }),
+        expect.objectContaining({ state: "", kind: "", query: "" }),
         expect.any(AbortSignal),
       ),
     );
@@ -530,4 +540,126 @@ it("labels an incomplete read-only check without directing a destructive workflo
  vi.spyOn(api,"operation").mockResolvedValue({...detail,operation:{...row,kind:"configuration_check",state:"needs_attention"}});
  mount(<Operations operationId={id} expired={vi.fn()} navigate={vi.fn()}/>);
  await screen.findByText("Check incomplete");expect(screen.getByText(/read-only check did not complete/)).toBeVisible();expect(screen.queryByText(/pending associations remain/)).toBeNull();
+});
+
+// Historical policy and assignment details come from this operation, not current tenancy reads.
+it("shows separate linked historical required-user sections",async()=>{
+ vi.spyOn(api,"operation").mockResolvedValue({...detail,operation:{...row,kind:"required_user_check"},events:[{kind:"required_user_check_outcome",at:row.updated_at,safe_code:null,user_checks:[
+ {anchor:"automation-assignment",checked_at:row.updated_at,facts:[{label:"Administrators group",state:"missing"}]},
+ {anchor:"recovery-policy",checked_at:row.updated_at,facts:[{label:"Console MFA exemption",state:"verified"},{label:"Approved-network restriction",state:"drift"}]},
+ ]}]});
+ history.replaceState(null,"","/operations/"+id+"#automation-assignment");
+ const c=mount(<Operations operationId={id} expired={vi.fn()} navigate={vi.fn()}/>);
+ expect(await screen.findByRole("heading",{name:"Recovery user · Console policy"})).toBeVisible();
+ await waitFor(()=>expect(document.getElementById("automation-assignment")).toHaveFocus());
+ const back=screen.getByRole("link",{name:"← Back to operations"});
+ back.focus();
+ act(()=>c.client.setQueryData<OperationDetail>(["operations","detail",id],current=>({...current!,events:[...current!.events,{kind:"inspection_outcome",at:row.updated_at,safe_code:null,summary:"Additional recorded result"}]})));
+ await screen.findByRole("heading",{name:"Additional recorded result"});
+ await act(async()=>{await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));});
+ expect(back).toHaveFocus();
+ history.replaceState(null,"","/operations/"+id+"#recovery-policy");
+ c.rerender(<QueryClientProvider client={c.client}><Operations operationId={id} expired={vi.fn()} navigate={vi.fn()}/></QueryClientProvider>);
+ await waitFor(()=>expect(document.getElementById("recovery-policy")).toHaveFocus());
+ expect(screen.getByText("Drift detected")).toBeVisible();
+ expect(document.getElementById("automation-assignment")).toHaveTextContent("Missing");
+ expect(document.getElementById("recovery-policy")).toHaveTextContent("Console MFA exemption");
+});
+
+// Recovery outcomes cannot fall through to unrelated inspection or pending-association messages.
+it.each(["setup","rotation"] as const)("composes %s recovery progress with truthful terminal copy",async phase=>{
+ vi.spyOn(api,"operation").mockResolvedValue({...detail,operation:{...row,kind:"recovery_password"},recovery_password:{phase,tenancy_id:id,user_name:"otm-recovery",request_count:phase==="rotation"?2:0,first_request_at:phase==="rotation"?row.accepted_at:null,rotation_due_at:phase==="rotation"?"2026-10-30T16:00:00Z":null}});
+ mount(<Operations operationId={id} expired={vi.fn()} navigate={vi.fn()}/>);
+ expect(await screen.findByRole("heading",{name:phase==="setup"?"Password preparation":"Password rotation"})).toBeVisible();
+ expect(screen.getByText(/Recovery password operation verified in local simulation/)).toBeVisible();
+ expect(screen.queryByText(/Review the recorded deadline/)).not.toBeInTheDocument();
+ expect(screen.queryByText(/Inspection completed successfully/)).not.toBeInTheDocument();
+});
+
+// Directory summaries cannot invent a disclosure window for a failed setup operation.
+it("uses phase-neutral password failure guidance in the operation list",async()=>{
+ vi.spyOn(api,"operations").mockResolvedValue({...directory,items:[{...row,kind:"recovery_password",state:"needs_attention"}],total:1,pages:1});
+ mount(<Operations operationId={null} expired={vi.fn()} navigate={vi.fn()}/>);
+ expect(await screen.findByText("Password work requires reconciliation. Review the recorded outcome before further access.")).toBeVisible();
+ expect(screen.queryByText(/original rotation obligation remains/)).not.toBeInTheDocument();
+});
+
+// Detail reload and same-operation history changes use their own URL context, not global sticky state.
+it("returns to the originating tenancy and resets for directory entry",async()=>{
+ vi.spyOn(api,"operation").mockResolvedValue(detail);
+ const target=`/tenancies/${id}#required-users`,navigate=vi.fn();
+ history.replaceState(null,"",`/operations/${id}?${new URLSearchParams({returnTo:target})}`);
+ const c=mount(<Operations operationId={id} expired={vi.fn()} navigate={navigate}/>);
+ const back=screen.getByRole("link",{name:"← Back to tenancy"});
+ expect(back).toHaveAttribute("href",target);await userEvent.click(back);expect(navigate).toHaveBeenCalledWith(target);
+ history.replaceState(null,"",`/operations/${id}`);
+ c.rerender(<QueryClientProvider client={c.client}><Operations operationId={id} expired={vi.fn()} navigate={navigate}/></QueryClientProvider>);
+ expect(screen.getByRole("link",{name:"← Back to operations"})).toHaveAttribute("href","/operations");
+});
+
+
+// Key-age history is frozen to this operation and supports an independently focusable anchor.
+it("opens signing-key history without loading current tenancy inventory",async()=>{
+  vi.spyOn(api,"operation").mockResolvedValue({...detail,operation:{...row,kind:"required_user_check"},events:[{kind:"required_user_check_outcome",at:row.updated_at,safe_code:null,automation_keys:{state:"known",checked_at:row.updated_at,age_as_of:row.updated_at,operation_id:id,keys:[]}}]});
+  const current=vi.spyOn(api,"requiredUsers");
+  history.replaceState(null,"","/operations/"+id+"#automation-keys");
+  mount(<Operations operationId={id} expired={vi.fn()} navigate={vi.fn()}/>);
+  await screen.findByRole("heading",{name:"Automation signing keys"});
+  await waitFor(()=>expect(document.getElementById("automation-keys")).toHaveFocus());
+  expect(screen.getByText(/Age at observation/)).toBeVisible();
+  expect(current).not.toHaveBeenCalled();
+});
+
+
+// Future execution is distinct from submission in both the list and the operation detail.
+it("shows the future rotation schedule without implying a month-long provider pause",async()=>{
+  const scheduled={...row,kind:"signing_key" as const,state:"waiting" as const,completed_at:null,title:"Rotate automation signing key",scheduled_for:"2026-12-09T12:00:00Z"};
+  vi.spyOn(api,"operations").mockResolvedValue({...directory,items:[scheduled],total:1,pages:1});
+  const list=mount(<Operations operationId={null} expired={vi.fn()} navigate={vi.fn()}/>);
+  await screen.findByText(/Scheduled start:/);
+  expect(screen.getByText(/Scheduled start:/).querySelector("time")).toHaveAttribute("datetime",scheduled.scheduled_for);
+  list.unmount();list.client.clear();
+  vi.spyOn(api,"operation").mockResolvedValue({...detail,operation:scheduled,steps:[],events:[]});
+  const view=mount(<Operations operationId={id} expired={vi.fn()} navigate={vi.fn()}/>);
+  await screen.findByText(/Scheduled start \(UTC\):/);
+  expect(screen.getByText(/not paused while it waits/)).toBeVisible();
+  expect(screen.getByText(/Scheduled start \(UTC\):/).querySelector("time")).toHaveAttribute("datetime",scheduled.scheduled_for);
+  view.client.clear();
+});
+
+
+// Checkpoint summaries explain one rotation without presenting upload authorization as completion.
+it("uses descriptive signing checkpoint labels and omits only redundant generic progress codes",async()=>{
+  vi.spyOn(api,"operation").mockResolvedValue({...detail,operation:{...row,kind:"signing_key"},steps:[],events:[
+    {kind:"signing_key_outcome",at:row.updated_at,safe_code:"SIGNING_KEY_PROGRESS",summary:"Public-key upload authorized; verification pending"},
+    {kind:"signing_key_outcome",at:row.updated_at,safe_code:"SIGNING_KEY_ROTATED",summary:"Key rotation completed"},
+  ]});
+  const c=mount(<Operations operationId={id} expired={vi.fn()} navigate={vi.fn()}/>);
+  expect(await screen.findByRole("heading",{name:"Public-key upload authorized; verification pending"})).toBeVisible();
+  expect(screen.getByRole("heading",{name:"Key rotation completed"})).toBeVisible();
+  expect(screen.queryByText("SIGNING_KEY_PROGRESS")).not.toBeInTheDocument();
+  expect(screen.getByText("SIGNING_KEY_ROTATED")).toBeVisible();c.client.clear();
+});
+
+// Kind changes reset paging without discarding state/search; the view cache retains detail/back context.
+it("filters operation types and retains the combined review context", async () => {
+  const read = vi.spyOn(api, "operations").mockImplementation(readPage);
+  const {client} = mount(<Operations operationId={null} expired={vi.fn()} navigate={vi.fn()}/>);
+  await screen.findByRole("link", {name:/Import inspection/});
+  await userEvent.selectOptions(screen.getByLabelText("State", {exact:true}), "waiting");
+  await userEvent.type(screen.getByRole("searchbox"), "unit");
+  await waitFor(()=>expect(read).toHaveBeenLastCalledWith(expect.objectContaining({query:"unit"}), expect.any(AbortSignal)));
+  await userEvent.click(screen.getByRole("button", {name:"Page 3"}));
+  await screen.findByText("Page 3 of 3");
+  await userEvent.selectOptions(screen.getByLabelText("Operation type", {exact:true}), "signing_key");
+  await waitFor(()=>expect(read).toHaveBeenLastCalledWith(expect.objectContaining({kind:"signing_key",state:"waiting",query:"unit",page:1}), expect.any(AbortSignal)));
+  expect(client.getQueryData(["operations","view"])).toMatchObject({kind:"signing_key",state:"waiting",query:"unit",page:1});
+});
+
+// Unresolved maintenance must direct review instead of dismissing a supported administrator action.
+it("explains that signing-key attention requires reviewing the original rotation", async () => {
+  vi.spyOn(api,"operations").mockResolvedValue({...directory,items:[{...row,kind:"signing_key",state:"needs_attention"}]});
+  mount(<Operations operationId={null} expired={vi.fn()} navigate={vi.fn()}/>);
+  expect(await screen.findByText(/Key rotation is unresolved/)).toBeVisible();
+  expect(screen.queryByText(/No action is required/)).not.toBeInTheDocument();
 });

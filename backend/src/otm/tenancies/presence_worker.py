@@ -1,21 +1,17 @@
 """Fenced user-presence reads release database locks before any provider work."""
 
-import json
 from datetime import timedelta
 from uuid import uuid4
 
 from sqlalchemy import select, update
 
-from otm.operations.contracts import canonical_hash
 from otm.providers.required_user import paired_observation
 from otm.providers.required_user_contracts import (
     InspectRequiredUser,
     RequiredUserReadContext,
 )
-from otm.storage.tables import administrator, audit_event, operation, org_workspace, tenancy
+from otm.storage.tables import administrator, operation, org_workspace, tenancy
 from otm.storage.tables import user_presence_check as checks
-from otm.storage.tables import user_presence_connection as connections
-from otm.tenancies.onboarding_contracts import OnboardingEvidence
 from otm.tenancies.presence_context import capture_snapshot
 from otm.tenancies.presence_records import decode_intent, operation_rows, seal, unknown
 
@@ -39,8 +35,12 @@ class UserPresenceWorker:
         recovery_console_loader=None,
         recovery_inspection_factory=None,
         administrator_inspection_factory=None,
+        key_inspection_factory=None,
+        signing_dispatch=None,
     ):
         self.administrator_inspection_factory = administrator_inspection_factory
+        self.key_inspection_factory = key_inspection_factory
+        self.signing_dispatch = signing_dispatch
         self.engine, self.workspace, self.clock = engine, workspace, clock
         self.notifications = notifications
         self.recovery_console_loader = recovery_console_loader
@@ -78,6 +78,7 @@ class UserPresenceWorker:
         console = self.read_console(commands[1], source, frozen.intent.snapshot)
         assignments = self.read_administrator(commands[0], source)
         recovery_assignments = self.read_administrator(commands[1], source)
+        keys = self.read_keys(commands[0], source)
         self.finish(
             identifier,
             check["attempt_id"],
@@ -86,7 +87,39 @@ class UserPresenceWorker:
             console,
             assignments,
             recovery_assignments,
+            keys=keys,
         )
+
+    # Inventory failures remain independent of presence and never become known zero-key reads.
+    def read_keys(self, command, source):
+        from otm.providers.automation_keys import AutomationKeyCheck, InspectAutomationKeys
+
+        if self.key_inspection_factory is None:
+            return None
+        fallback = AutomationKeyCheck(
+            context=command.context,
+            target=command.target,
+            checked_at=self.clock(),
+            state="unavailable",
+        )
+        if source is None:
+            return fallback
+        try:
+            request = InspectAutomationKeys(context=command.context, target=command.target)
+            started = self.clock()
+            result = AutomationKeyCheck.model_validate(
+                self.key_inspection_factory(request, source, self.clock).inspect(request)
+            )
+            finished = self.clock()
+            if (
+                result.context != request.context
+                or result.target != request.target
+                or not started <= result.checked_at <= finished <= started + READ_WINDOW
+            ):
+                return fallback
+            return result
+        except Exception:
+            return fallback
 
     # Missing legacy capture, failed reads and substituted subjects never gain inferred assignments.
     def read_administrator(self, subject_command, source):
@@ -260,40 +293,11 @@ class UserPresenceWorker:
             == intent.snapshot
         )
 
-    # Producer evidence is independently authenticated; current expected user IDs never seed facts.
+    # Shared source authentication preserves exact setup/repair evidence for every read and repair.
     def source(self, connection, snapshot):
-        binding = (
-            connection.execute(
-                select(connections).where(
-                    connections.c.workspace_id == self.workspace,
-                    connections.c.tenancy_id == snapshot.tenancy_id,
-                    connections.c.id == snapshot.connection_id,
-                )
-            )
-            .mappings()
-            .one()
-        )
-        event = (
-            connection.execute(
-                select(audit_event).where(
-                    audit_event.c.workspace_id == self.workspace,
-                    audit_event.c.operation_id == binding["created_operation_id"],
-                    audit_event.c.id == binding["source_evidence_event_id"],
-                    audit_event.c.kind == "onboarding_outcome",
-                )
-            )
-            .mappings()
-            .one()
-        )
-        evidence = OnboardingEvidence.model_validate_json(json.dumps(event["data"]))
-        if (
-            canonical_hash(event["data"]) != event["data_hash"]
-            or evidence.step != "capture_required_users"
-            or evidence.outcome != "verified"
-            or evidence.required_users is None
-        ):
-            raise ValueError("PRESENCE_SOURCE_INVALID")
-        return evidence.required_users
+        from otm.tenancies.presence_source import load_presence_source
+
+        return load_presence_source(connection, snapshot)
 
     # Persist attempt identity before dispatch, then release the transaction and all row locks.
     def begin(self, identifier):
@@ -346,7 +350,10 @@ class UserPresenceWorker:
             )
             source = None
             try:
-                if self.current(connection, frozen, child):
+                if self.current(connection, frozen, child) and (
+                    self.signing_dispatch is None
+                    or self.signing_dispatch(connection, self.workspace, child["id"], self.clock())
+                ):
                     source = self.source(connection, frozen.intent.snapshot)
             except (ValueError, RuntimeError):
                 source = None
@@ -362,6 +369,7 @@ class UserPresenceWorker:
         console=None,
         assignments=None,
         recovery_assignments=None,
+        keys=None,
     ):
         with self.engine.begin() as connection:
             locked = self.locked(connection, identifier)
@@ -422,6 +430,15 @@ class UserPresenceWorker:
                     else None
                     for item in (assignments, recovery_assignments)
                 )
+            if keys is not None and (
+                not current
+                or clock_invalid
+                or at - check["started_at"] > READ_WINDOW
+                or not check["started_at"] <= keys.checked_at <= at
+            ):
+                keys = keys.model_copy(
+                    update={"checked_at": at, "state": "unavailable", "keys": ()}
+                )
             episodes, opened = None, ()
             if frozen.intent.notice_policy_version == 1:
                 from otm.tenancies.presence_alerts import advance_episodes
@@ -440,6 +457,7 @@ class UserPresenceWorker:
                 recovery_console=console,
                 administrator_access=assignments,
                 recovery_administrator_access=recovery_assignments,
+                automation_keys=keys,
             )
             if opened and self.notifications is not None:
                 from otm.tenancies.presence_alerts import stage_missing

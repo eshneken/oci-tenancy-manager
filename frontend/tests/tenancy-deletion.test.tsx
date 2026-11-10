@@ -236,3 +236,12 @@ it("closes deletion on inventory navigation and does not open it for the next te
   await screen.findByRole("button", { name: "Delete tenancy" });
   expect(screen.queryByRole("dialog")).toBeNull();
 });
+
+// A durable access/rotation obligation explains why termination cannot proceed without replaying it.
+it("explains the recovery-password termination hold",async()=>{
+ const {WorkflowError}=await import("../src/api");
+ const c=mount();c.write.mockRejectedValue(new WorkflowError(409,"RECOVERY_PASSWORD_ROTATION_REQUIRED"));
+ await userEvent.click(await screen.findByRole("checkbox"));await userEvent.click(screen.getByRole("button",{name:"Initiate termination"}));
+ expect(await screen.findByRole("alert")).toHaveTextContent("Review Administrator access and its password operation");
+ expect(c.write).toHaveBeenCalledTimes(1);
+});

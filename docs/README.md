@@ -3,11 +3,19 @@
 Use this index for the current application. Historical checkpoints explain past decisions; they
 are not competing implementation instructions or proof of real OCI behavior.
 
+**Current local environment — 9 November 2026:** use only [Atlas on localhost:8443](https://localhost:8443).
+The [former8444 instance is retired](how-to/parallel-local-instance.md); no additional local instances
+are requested. Interactive recovery-network repair testing is [deferred until real OCI](reference/recovery-network-repair.md#manual-local-checkpoint-runbook).
+Earlier dated preservation receipts remain historical evidence.
+
 | Need | Start here |
 | --- | --- |
 | Product scope and acceptance criteria | [Product specification](product/oci-tenancy-manager-spec.md) |
 | Current architecture and approved future design | [Engineering design](engineering-design/README.md) |
 | Lifecycle action/failure email | [Responsible-only scope and parity](reference/lifecycle-email.md#lifecycle-notice-parity--6-november-2026), [source checkpoint](history/lifecycle-notice-parity-checkpoint-2026-11-06.md) |
+| Find recorded work by type | [Operations filters](reference/operations.md#operation-type-filtering--10-november-2026), [checkpoint receipt](history/operations-filter-checkpoint-2026-11-10.md) |
+| Signer setup authority and rotation regression scope | [Current authority checks](reference/signing-key-rotation.md#setup-authority-and-ship-regression-checks--10-november-2026) |
+| Worker deployment sizing | [Staging/production targets and qualification](engineering-design/06-platform-and-delivery.md#accepted-initial-worker-sizing--10-november-2026) |
 | Run the application | [Local HTTPS setup](reference/local-application.md) |
 | Manual required-user presence checks | [Current check fields, authority and ER](reference/user-presence-checks.md) |
 | Presence-only connection foundation | [Current fields, ER and qualification boundary](reference/user-presence-connections.md) |
@@ -27,14 +35,17 @@ are not competing implementation instructions or proof of real OCI behavior.
 | Former-owner retention/removal qualification | [Current workflow](reference/organization-workflows.md), [dated receipt](history/ownership-disposition-checkpoint-2026-11-07.md) |
 | Saved costs and user results | [Read compatibility and persistence](reference/README.md), [qualified fix](history/persisted-read-compatibility-checkpoint-2026-11-07.md) — membership changes retain compatible dated database observations |
 | Confirmed missing required-user notices | [Incident/routing model and full field dictionary](reference/required-user-alerts.md), [qualified checkpoint](history/required-user-alerts-checkpoint-2026-11-07.md) |
-| Local build cadence | [Batched UI checkpoints and the 15-minute integration limit](engineering-test-plan.md#current-local-cadence-and-integration-budget--7-november-2026) |
+| Local build cadence | [Targeted UI checks, full milestone/PR gates and the 15-minute budget](engineering-test-plan.md#current-local-cadence-and-integration-budget--9-november-2026) |
 | Prior checkpoints | [Dated history](history/README.md) |
 
 ## Source of truth
 
 [Selected credential security design](engineering-design/22-credential-security-lifecycles.md):
 recovery-only MFA exemption with configurable console CIDRs and 30-day automation-key retirement.
-User-selected design; implementation and live OCI qualification remain pending.
+User-selected design; local policy checks, perimeter-only repair,
+[password custody/rotation](reference/recovery-password-access.md) and
+[managed signing-key rotation](reference/signing-key-rotation.md) have their separately recorded
+local qualification. Full milestone and live OCI qualification remain separate.
 
 Current [manual required-user checks](reference/user-presence-checks.md) connect the internal presence
 boundary, exact identity mappings and one selected simulated connection to asynchronous acquisition
@@ -149,4 +160,28 @@ The [Recovery overview and matching header actions checkpoint](history/check-dat
 
 The backend [implementation overview](../backend/README.md) and current required-user field dictionaries
 were reconciled during the whole-milestone publication audit. Historical checkpoint counts retain
-their original scope; current application metadata contains 25 OTM tables through migration 0025.
+their original scope; current application metadata contains 29 OTM tables through migration 0028.
+
+- [Guarded recovery-network repair](reference/recovery-network-repair.md): qualified simulated conditional perimeter-only repair and preserved main preview; live OCI pending.
+
+The [recovery-network repair source subset](reference/recovery-network-repair.md) reuses existing operations, steps, audit and checks. Migration 0026 extends CHECK-constraint branches only; the 25 existing OTM tables were unchanged at that checkpoint. Full local UI/integration qualification and preserved main-preview publication pass; live OCI remains pending.
+
+- [Recovery-network repair final checkpoint](history/recovery-network-repair-checkpoint-2026-11-09.md): 430 complete integration cases, independent reviews and preserved main data/settings.
+
+- [Recovery-password source subset](reference/recovery-password-access.md): explicit simulator, version4 custody handoff and original-window rotation; qualification/install status is in its checkpoint receipt.
+
+- [Recovery-password checkpoint](history/recovery-password-checkpoint-2026-11-09.md):440 clean-tree integration cases, independent reviews and preserved main installation; live OCI pending.
+
+- [Access-panel and historical-check follow-up](history/recovery-password-checkpoint-2026-11-09.md#access-panel-and-recorded-results-follow-up): installed mini-panel layout and exact Operations results; combined438+2 integration evidence is separate from earlier clean440 receipts.
+
+- [Password operation progress follow-up](history/recovery-password-checkpoint-2026-11-09.md#password-operation-progress-follow-up): installed original-window status panel;440 complete cases plus later explicitly targeted-qualified copy.
+
+- [Context-sensitive operation returns](history/recovery-password-checkpoint-2026-11-09.md#operation-return-navigation-follow-up): recognized local origins, durable href context and exact result anchors; targeted validation and preserved main installation pass; no full native rerun.
+
+- [Automation signing-key inventory source checkpoint](reference/automation-signing-keys.md): separate observation-only panel and original-time age; targeted qualification/main installation pass; rotation enforcement separate.
+
+- [Signing-key inventory checkpoint status](history/automation-signing-key-inventory-checkpoint-2026-11-09.md): targeted public metadata/age checkpoint installed; no new full-suite/milestone/PR qualification.
+
+- [Managed signing-key rotation](reference/signing-key-rotation.md): candidate 0028 head, field dictionary/ER, schedule, pause/drain and failure-email accounting; targeted local qualification/saved installation PASS; full-suite/PR/live Pending.
+
+- [Signing-key rotation targeted checkpoint](history/signing-key-rotation-checkpoint-2026-11-10.md): nine targeted PG/native/SMTP/browser cases and source-unit gates pass; preserved saved publication PASS; full-suite/PR and live OCI Pending. [Operator review after installation](how-to/signing-key-rotation-runbook.md).

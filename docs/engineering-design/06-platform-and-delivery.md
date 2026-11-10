@@ -390,3 +390,23 @@ plus required automated secret/static/dependency checks and applicable image/IaC
 build. [Security policy](../security-review-policy.md) defines threat boundaries, evidence, severity
 disposition, exact artifact/lockfile review and no-real-PII publication. P0 must prove the gate before
 feature merges; scans or hosted controls are not configured merely by documenting them.
+
+
+## Accepted initial worker sizing — 10 November 2026
+
+Start staging with one worker pod and one execution slot. Measure actual OCI request duration,
+queue wait, credential-closure timeliness and contention before adjusting it. The initial production
+target is two small worker pods with one slot each, qualified together before deployment. This
+provides process availability and allows unrelated tenancies to progress while another provider call
+waits. The local saved worker remains one process/one slot; this decision does not deploy pods.
+
+Workers share the existing PostgreSQL/Procrastinate queue; no separate queue service or scheduler
+is added. Native operation locks and application claim/revision checks remain required. The
+per-tenancy signing-key pause still serializes protected work for that child across all pods.
+Additional workers do not make uncertain external writes safe to retry or automatically recover
+an operation left running after a crash. Owned manual reconciliation remains the V1 boundary.
+
+Before production qualification, exercise two independent processes against the same queue,
+per-tenancy exclusion, unrelated-child progress, duplicate delivery and worker death. Include
+recovery-password closure while signing-key work drains. Record real-OCI timings and bound the
+PostgreSQL connection budget for API and worker replicas; replica count alone is not a latency SLA.

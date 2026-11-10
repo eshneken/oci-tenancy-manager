@@ -8,7 +8,10 @@
 
 The [confirmed-Missing email subset](../reference/required-user-alerts.md) is now implemented for
 manual checks using the simpler existing evidence/outbox model. Broader privilege observations,
-repair, recovery readiness and daily scheduling below remain proposed/unqualified.
+broader repair, recovery readiness and daily scheduling below remain proposed/unqualified.
+The [narrow perimeter-only recovery-network repair](../reference/recovery-network-repair.md) is now
+locally qualified in simulation with preserved main publication; real OCI remains pending. It does not edit
+MFA/rules, repair assignments or recreate users.
 
 ## Scope and authority
 
@@ -17,8 +20,9 @@ requires setup and subsequent recovery checks to verify BOTH the exact recovery-
 exemption and deny-outside enforcement for the current approved CIDRs. User presence or missing MFA
 enrollment is insufficient. Unexpected MFA enforcement or unrestricted access is policy drift;
 incomplete/stale/denied inspection is Unable to verify. Block readiness/new disclosure until verified;
-read-only checks never silently change policy. This remains future readiness validation, separate
-from the currently implemented presence-only refresh; scheduling remains separately qualified.
+read-only checks never silently change policy. Current refresh implements separate simulated
+presence, assignment and recovery-policy observations; full credential readiness and scheduling
+remain separately unqualified. The explicitly confirmed network-repair command is separate from refresh.
 
 This slice designs the tenancy-detail **Required access** page, scoped observation acquisition and
 repair preview. It preserves owner full administration, the existing organization/prototype behavior,
@@ -447,3 +451,5 @@ group and domain administrator role assignments. Broader effective privileges, s
 and repairs remain deferred. Recovery assignments use the same exact-subject read contract,
 separate capture/result evidence, automation signer and independent dated UI projection. No new access-profile tables,
 policy interpreter, credential fallback or live OCI adapter are required for this slice.
+
+The perimeter-only subset’s [final local receipt](../history/recovery-network-repair-checkpoint-2026-11-09.md) records complete qualification and unchanged main data/settings. Broader repairs and credential readiness remain deferred.

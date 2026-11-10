@@ -27,6 +27,9 @@
     "0022-onboarding-users.sql": "0365d01790d92e662b3477db55ce384d3e7647a75bb59490876609309e297173",
     "0023-managed-identity-bindings.sql": "911ef84b844f867bc85b2c381fd8cd23354aec7f785e24a869de513d338522c0",
     "0024-user-presence-connections.sql": "fdca14b8e766d8da61944565cb23d7312402680d39a738a897ba2751b0381d07",
-    "0025-user-presence-checks.sql": "253c7dfc794e1c5722b984666803427f21c80bb44d9bb399f49ed1ea2738060b"
+    "0025-user-presence-checks.sql": "253c7dfc794e1c5722b984666803427f21c80bb44d9bb399f49ed1ea2738060b",
+    "0026-recovery-network-repair.sql": "b4864a4762d376d8457de52dd84a1e74cf9edfd0630d2a3ce375f6d984ab6148",
+    "0027-recovery-passwords.sql": "331aec3da0c8544d74c73349afc1eea528c22e4bee35ca899ad361c8fcff7c01",
+    "0028-signing-credentials.sql": "d5895716c62ba4d0a3892598ff4a6ceed954cba79f0c363cc0b78271fa228f3e"
   }
 }

@@ -73,23 +73,37 @@ test failures. Individual test/browser/database limits and the 95% coverage gate
 Earlier timed-out runs remain incomplete evidence. A fresh complete manual-presence run now passes all 351 postgres cases in 429.457 seconds, with zero failures/errors/skips and valid JUnit. Separate unit lanes pass 1,556 backend and 446 frontend cases. The disjoint backend selections cover 1,907 tests, not an overlapping sum. [Final local receipt](history/manual-presence-checkpoint-2026-11-06.md). The earlier deadline-expired attempts supply no completed full-suite evidence. Missing, failed, skipped, cancelled, timed-out or
 invalid reports still block qualification. Do not add counts from overlapping historical runs.
 
-### Current local cadence and integration budget — 7 November 2026
+### Current local cadence and integration budget — 9 November 2026
 
-The user approved increasing the aggregate integration deadline to **900 seconds (15 minutes)**.
-This supersedes the earlier 600-second runner limit; it changes no individual browser/test/I/O
-limit, assertion, completeness/no-skip rule, unit-only coverage target or protected-master gate.
-The CI integration job retains its existing 25-minute outer limit for setup and the test runner.
-Historical receipts keep the actual limits and results under which they were produced.
+The user approved complete integration runs at **milestone/PR checkpoints**, rather than every
+turn, UI inspection or cosmetic change. This supersedes the 7 November requirement to rerun the
+complete suite at every UI checkpoint. Historical receipts retain their actual evidence and limits.
 
-Related internal development slices may proceed through several backend/frontend steps before
-integration execution. Run focused units, static/contract checks and both full-source 95% unit-only
-gates during implementation. Author database/native/browser regressions with the feature, then
-execute the complete integration suite once a coherent end-user UI flow is ready for qualification.
-Fix failures and repeat the applicable gates before saved-preview publication or merge. An internal
-step without that final evidence is implemented/unqualified, not a completed tested milestone.
-Documentation/security reviews remain part of the relevant slices; final responsive UI review covers
-the complete interaction. This cadence applies locally only: every CI build still runs all required
-unit, database and Playwright suites. No test omission, reclassification or check bypass is authorized.
+Batch related internal slices and add regression tests alongside implementation. Run focused unit,
+static and contract checks per slice. At UI checkpoints, pass both complete-source backend/frontend
+unit-only coverage gates at **at least 95%**. Target disposable PostgreSQL/native-worker/SMTP/browser
+cases to changed behavior; cover important positive/negative admission, persistence and interaction
+paths. Cosmetic-only changes over qualified unchanged behavior may use affected units, frontend
+build and independent responsive/source review. This does not permit omitting a relevant failing or
+missing test, reclassifying a behavior change as cosmetic or claiming unexecuted coverage.
+
+Run the complete suite before a milestone is ready, its PR is opened or it merges. Also run it on
+explicit request or when justified cross-cutting risk warrants broad validation. Every CI build
+still executes all required unit/coverage, database, Playwright and security gates; no path filters,
+optional statuses, skips or protected-master bypass are introduced.
+
+Saved-main 8443 updates may follow passing relevant targeted gates plus independent documentation/
+security/responsive reviews and verified private backup/preservation. Publish matched API/worker/
+immutable assets only, preserving existing data/settings as required. Reports must say whether
+validation was targeted or full, which earlier complete evidence remains applicable and what was
+not rerun. A targeted installed UI checkpoint is not a fresh full-suite or completed milestone claim.
+No additional local instance or artificial main drift is authorized. Live-only cases remain Pending.
+
+The aggregate integration deadline remains **900 seconds (15 minutes)**; individual test/browser/I/O
+limits and completeness/no-skip evidence rules do not change. The CI job keeps its existing 25-minute
+outer limit. Frontend unit/browser tooling and `scripts/run_backend_postgres_tests.py` run sequentially
+because the runner’s `npm ci` replaces shared `frontend/node_modules`; concurrent writes caused
+ENOTEMPTY install failures and worker exits. Backend-only units/docs can remain independent.
 
 ### Prototype-to-production transition
 
@@ -1296,3 +1310,23 @@ stored policy and existing cleanup/expiry cases remain mandatory. Existing sessi
 
 Cleanup PostgreSQL fixtures explicitly retain an already-issued 1,800-second policy, so laptop
 default changes cannot silently relax the mandatory 30-minute idle expiry/polling tests.
+
+## Signing-key rotation targeted checkpoint — 10 November 2026
+
+[Exact evidence](history/signing-key-rotation-checkpoint-2026-11-10.md) records nine targeted disposable PG/native/SMTP/browser cases, not a new complete-suite gate. Preserve coverage for fresh enrollment/no legacy adoption, same-generation request replay, day 29 ETA versus manual queue priority, exact original clocks, upload uncertainty, immutable candidate/CAS/retirement, drain/password closure, original administrator incident dedup/resume eligibility, confirmed termination and restricted installed-role grants. [Live equivalents](how-to/real-oci-test-manifest.md#managed-signing-key-rotation-qualification) remain Pending. Full milestone/PR/merge gates are unchanged.
+
+
+### Recovery/signing milestone ship regression scope — 10 November 2026
+
+Qualify initial signer setup against the live responsible administrator and exact waiting parent;
+changed authorization or held parent must prevent enrollment/publication, while audited takeover
+must authorize the replacement. Retain system-owned due closure after actual requester revocation.
+Run installed API/worker signing-table negative privilege checks and ordinary configuration/cost/
+lifecycle worker guard-wiring cases in addition to signer helper truth tables. Local organization
+reset must preserve its rollback/guard-restoration assertions with the frozen signing trigger name.
+Browser fixture interception must finish outstanding handlers before navigation; precise inventory
+link assertions must distinguish the newly added scheduled-rotation link.
+
+These cases belong to the complete milestone gate. The earlier targeted UI receipts remain scoped
+to their original source and do not become full-suite passes retroactively. Live interoperation and
+native overlapping closure timing remain in the [manual test manifest](how-to/real-oci-test-manifest.md#initial-signer-authority-and-overlapping-closure).

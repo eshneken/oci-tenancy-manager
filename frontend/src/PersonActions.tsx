@@ -1,3 +1,4 @@
+import {operationHref} from "./operationNavigation";
 import { CleanupResponsibilities } from "./CleanupResponsibilities";
 import { EmailContactSummary } from "./EmailContacts";
 import { baselineHref } from "./baselineNavigation";
@@ -33,6 +34,7 @@ const labels: Record<Action, string> = {
   cancel_simulation: "Cancel local simulation",
 };
 const guidance: Record<string, string> = {
+  RECOVERY_PASSWORD_ROTATION_REQUIRED:"Termination is blocked while recovery access or password reconciliation is outstanding. Review Administrator access on the tenancy and its password operation before retrying.",
   DESTRUCTIVE_CONFIRMATION_REQUIRED: "Review the action and acknowledge its consequences before continuing.",
   SIMULATION_ALREADY_FINISHED:
     "This simulation has already finished or changed. Reload the preview before making another decision.",
@@ -427,12 +429,12 @@ export function PersonActions({
             </p>
             {receipt.operation_id && (
               <a
-                href={"/operations/" + receipt.operation_id}
+                href={operationHref(receipt.operation_id)}
                 onClick={(event) => {
                   close();
                   followLink(
                     event,
-                    "/operations/" + receipt.operation_id,
+                    operationHref(receipt.operation_id),
                     navigate,
                   );
                 }}
@@ -490,12 +492,12 @@ export function PersonActions({
                   <p className="notice">
                     This employee has pending work.{" "}
                     <a
-                      href={"/operations/" + data.pending_operation_id}
+                      href={operationHref(data.pending_operation_id)}
                       onClick={(event) => {
                         close();
                         followLink(
                           event,
-                          "/operations/" + data.pending_operation_id,
+                          operationHref(data.pending_operation_id),
                           navigate,
                         );
                       }}

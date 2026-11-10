@@ -26,6 +26,8 @@ def capture_users(facade, intent, discovery):
         or users.domain_ocid != source.domain_ocid
     ):
         raise ValueError("REQUIRED_USER_IDENTITIES_UNVERIFIED")
+    if intent.automation_key_inventory_contract is not None and users.automation_keys is None:
+        raise ValueError("AUTOMATION_KEY_CAPTURE_UNAVAILABLE")
     temporary_ocids = {source.bootstrap_user_ocid, source.activation_user_ocid}
     temporary_scim_ids = {source.bootstrap_scim_id, source.activation_scim_id}
     for subject in (users.automation, users.recovery):

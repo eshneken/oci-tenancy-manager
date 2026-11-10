@@ -1,3 +1,4 @@
+import {operationHref} from "./operationNavigation";
 import { Select } from "./Select";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -33,11 +34,12 @@ const columns = [
 // Turn an allowed recorded event kind into a readable label without inventing an outcome.
 function eventLabel(kind: AuditEntry["kind"]) {
   const labels: Record<AuditEntry["kind"], string> = {
+    signing_key_outcome:"Signing-key maintenance",signing_key_requested:"Signing-key rotation requested",
     configuration_review_staged: "Override review staged",
     baseline_draft_saved: "Baseline draft saved",
     baseline_published: "Baseline published",
     baseline_default_changed: "Baseline default changed",
-    operation_intent: "Operation intent recorded",
+    recovery_password_disclosed:"Recovery password requested",recovery_password_outcome:"Recovery password outcome",operation_intent: "Operation intent recorded",
     inspection_dispatch: "Inspection dispatched",
     inspection_outcome: "Inspection outcome",
     administrator_revoked: "Administrator access revoked",
@@ -58,6 +60,7 @@ function eventLabel(kind: AuditEntry["kind"]) {
     cost_refresh_requested: "Cost refresh requested",
     cost_collection_outcome: "Cost collection result",
     required_user_check_outcome: "User presence check result",
+    recovery_network_outcome: "Recovery network repair result",
     configuration_check_outcome: "Configuration check result",
     configuration_retry: "Configuration retry",
     operation_responsibility_changed: "Operation responsibility changed",
@@ -486,11 +489,11 @@ export function AuditHistory({
                               <span>Operation</span>
                               <a
                                 className="operation-link technical-id"
-                                href={"/operations/" + entry.operation_id}
+                                href={operationHref(entry.operation_id)}
                                 onClick={(event) =>
                                   followLink(
                                     event,
-                                    "/operations/" + entry.operation_id,
+                                    operationHref(entry.operation_id),
                                     navigate,
                                   )
                                 }

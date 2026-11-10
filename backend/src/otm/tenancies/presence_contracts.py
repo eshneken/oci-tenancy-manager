@@ -8,6 +8,7 @@ from pydantic import Field, model_validator
 from otm.configuration.rollout_contracts import ConfigurationOperationTarget, Digest
 from otm.contracts import Contract, Generation, Text, UtcInstant
 from otm.providers.administrator_access import AdministratorCheck
+from otm.providers.automation_keys import AutomationKeyCheck
 from otm.providers.recovery_console import RecoveryConsoleCheck
 from otm.providers.required_user_contracts import RequiredUserObservation, RequiredUserTarget
 
@@ -120,6 +121,11 @@ class PresenceCheckEvidence(Contract):
         default=None, exclude_if=lambda value: value is None
     )
 
+    # Observed signing-key metadata is absent from legacy evidence, not an inferred empty list.
+    automation_keys: AutomationKeyCheck | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
+
     # Policy verification is independent of the two user-existence results.
     recovery_console: RecoveryConsoleCheck | None = Field(
         default=None, exclude_if=lambda value: value is None
@@ -148,6 +154,16 @@ class PresenceCheckEvidence(Contract):
                 and (access.result.group != "unknown" or access.result.domain_role != "unknown")
             ):
                 raise ValueError("ADMINISTRATOR_CHECK_SCOPE_INVALID")
+        if self.automation_keys is not None:
+            keys = self.automation_keys
+            if (
+                keys.context != self.results[0].context
+                or keys.target != self.results[0].target
+                or not self.started_at <= keys.checked_at <= self.checked_at
+                or self.state == "superseded"
+                and keys.state != "unavailable"
+            ):
+                raise ValueError("AUTOMATION_KEY_CHECK_SCOPE_INVALID")
         if self.recovery_console is not None:
             policy = self.recovery_console
             if (

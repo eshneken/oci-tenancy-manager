@@ -48,6 +48,9 @@ def create_local_application():
         path.resolve().is_relative_to(frontend.resolve())
         for path in (
             custody_path,
+            Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "recovery-passwords",
+            Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "automation-key-inventory",
+            Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "signing-key-custody",
             Path(os.environ["OTM_APPLICATION_CONFIG"]),
             *(
                 [Path(os.environ["OTM_ORGANIZATION_CONFIG"])]
@@ -97,6 +100,12 @@ def create_local_application():
             def organization_policy():
                 return load_sandbox(path, workspace)
 
+            from otm.providers.automation_keys_simulator import SimulatedAutomationKeys
+
+            keys = SimulatedAutomationKeys(
+                Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "automation-key-inventory",
+                clock,
+            )
             policy = organization_policy().policy
             workflow = OrganizationWorkflows(
                 organization_store,
@@ -108,12 +117,27 @@ def create_local_application():
                     policy,
                     recovery_console=settings.recovery_console,
                     recovery_console_loader=recovery_console_policy,
+                    automation_keys=keys,
                 ),
+                automation_key_inventory_enabled=True,
+                signing_key_setup_enabled=True,
                 recovery_console=settings.recovery_console,
                 policy_loader=organization_policy,
                 mail_policy=settings.mail_policy(),
                 notifications=notifier,
             )
+        if workflow.mode == "simulated":
+            from otm.storage.enqueue import SIGNING_KEY_TASK
+            from otm.tenancies.signing_keys import SigningKeys, require_signing_admission
+
+            workflow.signing_key_rotations = SigningKeys(
+                organization_store,
+                workflow.policy_loader,
+                InspectionEnqueuer(
+                    workspace_queue(settings.local_auth.workspace_id), task=SIGNING_KEY_TASK
+                ),
+            )
+            workflow.signing_guard = require_signing_admission
         from otm.configuration.drift import ConfigurationChecks
         from otm.configuration.rollout import ConfigurationRollouts
         from otm.providers.baseline_simulator import SimulatedBaselineQualifier
@@ -145,6 +169,42 @@ def create_local_application():
             if workflow.policy
             else None,
         )
+        from otm.providers.recovery_network_simulator import simulated_network_repair
+        from otm.storage.enqueue import RECOVERY_NETWORK_TASK
+        from otm.tenancies.recovery_network import RecoveryNetworkRepairs
+
+        workflow.recovery_network_repairs = RecoveryNetworkRepairs(
+            workflow.presence_checks,
+            simulated_network_repair,
+            InspectionEnqueuer(
+                queue=workspace_queue(settings.local_auth.workspace_id), task=RECOVERY_NETWORK_TASK
+            )
+            if workflow.policy
+            else None,
+        )
+
+        if workflow.policy is not None and settings.recovery_console is not None:
+            from otm.providers.recovery_password_simulator import SimulatedRecoveryPasswords
+            from otm.storage.enqueue import RECOVERY_PASSWORD_TASK
+            from otm.tenancies.recovery_password import RecoveryPasswordAccess
+            from otm.tenancies.recovery_password_setup import RecoveryPasswordSetup
+
+            if settings.environment != "local":
+                raise ValueError("LOCAL_PASSWORD_SIMULATOR_REQUIRES_LOCAL")
+            passwords = SimulatedRecoveryPasswords(
+                Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "recovery-passwords",
+            )
+            password_queue = InspectionEnqueuer(
+                queue=workspace_queue(settings.local_auth.workspace_id),
+                task=RECOVERY_PASSWORD_TASK,
+            )
+            workflow.recovery_password_setup = RecoveryPasswordSetup(password_queue)
+            workflow.recovery_passwords = RecoveryPasswordAccess(
+                workflow.presence_checks,
+                passwords,
+                password_queue,
+                notifier=notifier,
+            )
 
         from otm.financial.service import CostCollections
         from otm.storage.enqueue import COST_TASK
@@ -161,6 +221,29 @@ def create_local_application():
             else None,
         )
         workflow.cost_collections = costs
+        for guarded_service in (
+            workflow.presence_checks,
+            workflow.recovery_network_repairs,
+            workflow.recovery_passwords,
+            costs,
+            checks,
+        ):
+            if guarded_service is not None:
+                guarded_service.signing_guard = workflow.signing_guard
+        rollouts = ConfigurationRollouts(
+            organization_store,
+            repair_facade=SimulatedConfigurationFacade(workflow.policy)
+            if workflow.policy
+            else None,
+            policy=workflow.policy,
+            policy_loader=workflow.policy_loader,
+            enqueuer=InspectionEnqueuer(
+                queue=workspace_queue(settings.local_auth.workspace_id), task=CONFIGURATION_TASK
+            )
+            if workflow.policy
+            else None,
+        )
+        rollouts.signing_guard = workflow.signing_guard
         app = create_app(
             sessions,
             BrowserSettings(public_origin=origin),
@@ -175,19 +258,7 @@ def create_local_application():
             baseline_qualifier=SimulatedBaselineQualifier(),
             configuration_checks=checks,
             cost_collections=costs,
-            configuration_rollouts=ConfigurationRollouts(
-                organization_store,
-                repair_facade=SimulatedConfigurationFacade(workflow.policy)
-                if workflow.policy
-                else None,
-                policy=workflow.policy,
-                policy_loader=workflow.policy_loader,
-                enqueuer=InspectionEnqueuer(
-                    queue=workspace_queue(settings.local_auth.workspace_id), task=CONFIGURATION_TASK
-                )
-                if workflow.policy
-                else None,
-            ),
+            configuration_rollouts=rollouts,
             organization=OrganizationWeb(
                 organization_store,
                 clock,

@@ -1,3 +1,4 @@
+import {recoveryAccess} from "./recovery-access";
 import {keepOwnershipRoundTrip,removeFormerOwner} from "./ownership-transfer";
 import {tenancyOverrides} from "./tenancy-overrides";
 import {existingCompartmentMembership} from "./shared-membership";
@@ -392,7 +393,7 @@ async function organizationFlows(page: Page) {
       const pendingUsers = page.getByRole("region", { name: "Required users", exact: true });
       await expect(pendingUsers.getByText("Not recorded", { exact: true })).toHaveCount(4);
       await expect(pendingUsers.getByText(/Setup is still in progress/)).toBeVisible();
-      await expect(pendingUsers.locator("details")).toHaveCount(0);
+      await expect(pendingUsers.locator("details.required-user-details")).toHaveCount(0);
       await page.goto(setupUrl);
       await expect(review).toBeVisible();
       await reviewCheckboxControl(
@@ -444,9 +445,13 @@ async function organizationFlows(page: Page) {
       const checkId = (await response.json()).operation_id;
       await expect(users.getByText("Present", { exact: true })).toHaveCount(2, { timeout: 20_000 });
       await expect(users.getByText("Not checked", { exact: true })).toHaveCount(0);
+      const keyPanel=page.getByRole("region",{name:"Automation signing keys",exact:true});
+      await expect(keyPanel.getByText("Fingerprint",{exact:true})).toBeVisible();
+      await expect(keyPanel.getByText("Under 30 days",{exact:true})).toBeVisible();
+      await expect(keyPanel.getByRole("link",{name:/^View automation signing-key inventory check,/})).toHaveAttribute("href",new RegExp("/operations/"+checkId+"\\?returnTo=[^#]+#automation-keys$"));
       const automation = users.locator(".required-user-card").filter({has:page.getByRole("heading",{name:"Automation user",exact:true})});
       await expect(automation.getByText("Verified in simulation",{exact:true})).toHaveCount(2);
-      await expect(automation.getByRole("link",{name:/^View assignment check, /})).toHaveAttribute("href",/\/operations\/[a-f0-9-]+$/);
+      await expect(automation.getByRole("link",{name:/^View assignment check, /})).toHaveAttribute("href",/\/operations\/[a-f0-9-]+\?returnTo=[^#]+#automation-assignment$/);
       await expect(users.getByText("Console MFA exemption", { exact: true })).toBeVisible();
       await expect(users.getByText("Approved-network restriction", { exact: true })).toBeVisible();
       await expect(users.locator(".required-user-card").filter({has:page.getByRole("heading",{name:"Recovery user",exact:true})}).getByText("Verified in simulation", { exact: true })).toHaveCount(4);
@@ -468,8 +473,14 @@ async function organizationFlows(page: Page) {
         userRefreshCaptured=true;
       }
       await users.getByRole("link", { name: /^View presence check, / }).first().click();
-      await expect(page).toHaveURL(new RegExp("/operations/" + checkId + "$"));
+      await expect(page).toHaveURL(new RegExp("/operations/" + checkId + "\\?returnTo=[^#]+#automation-presence$"));
       await expect(page.getByRole("heading", { level: 1 })).toHaveText("Check required users");
+      await expect(page.getByRole("link",{name:"← Back to tenancy",exact:true})).toHaveAttribute("href",new URL(childUrl).pathname);
+
+      await expect(page.getByRole("heading", {name:"Recovery user · Console policy",exact:true})).toBeVisible();
+      await expect(page.locator("#automation-presence")).toBeFocused();
+      await expect(page.locator("#recovery-policy").getByText("Console MFA exemption",{exact:true})).toBeVisible();
+
       await expect(page.getByText("Completed", { exact: true }).first()).toBeVisible();
       await page.goto(childUrl);
       await expect(users.getByText("Present", { exact: true })).toHaveCount(2);
@@ -491,21 +502,27 @@ async function organizationFlows(page: Page) {
       await expect(page).toHaveURL(new RegExp("#required-users$"));
       await expect(users.getByRole("heading",{name:"Required users",exact:true})).toBeFocused();
       await expect(users.getByText("Present", { exact: true })).toHaveCount(2);
-      const disclosure = users.locator("details").first().locator("summary");
+      const disclosure = users.locator("details.required-user-details").first().locator("summary");
       await disclosure.focus(); await disclosure.press("Enter");
-      await expect(users.locator("details").first()).toHaveAttribute("open", "");
-      await expect(users.getByRole("link", { name: "View setup operation" }).first()).toHaveAttribute("href", /\/operations\/[a-f0-9-]+$/);
+      await expect(users.locator("details.required-user-details").first()).toHaveAttribute("open", "");
+      await expect(users.getByRole("link", { name: "View setup operation" }).first()).toHaveAttribute("href", /\/operations\/[a-f0-9-]+\?returnTo=[^#]+$/);
       const recoveryCard=users.locator(".required-user-card").nth(1);
       await expect(recoveryCard.getByLabel("Administrator assignments: Assigned (simulation)")).toBeVisible();
       const recoveryDetails=recoveryCard.getByText("Identity details",{exact:true});
       await recoveryDetails.focus(); await recoveryDetails.press("Enter");
       await expect(recoveryCard.getByText("Administrators group",{exact:true})).toBeVisible();
       await expect(recoveryCard.getByText("Domain administrator role",{exact:true})).toBeVisible();
-      await expect(recoveryCard.getByRole("link",{name:/^View assignment check, /})).toHaveAttribute("href",/\/operations\/[a-f0-9-]+$/);
+      await expect(recoveryCard.getByRole("link",{name:/^View assignment check, /})).toHaveAttribute("href",/\/operations\/[a-f0-9-]+\?returnTo=[^#]+#recovery-assignment$/);
       await recoveryDetails.press("Enter");
       for (const width of [1280, 1024, 768, 390, 320]) {
         await page.setViewportSize({ width, height: 900 });
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        const accessPanel=users.getByRole("region",{name:"Administrator access",exact:true});
+        const accessBox=await accessPanel.boundingBox();
+        const automationBox=await users.locator(".required-user-card").first().boundingBox();
+        expect(Math.abs(accessBox!.x-automationBox!.x)).toBeLessThan(2);
+        expect(Math.abs(accessBox!.width-automationBox!.width)).toBeLessThan(2);
+        expect(accessBox!.y-(automationBox!.y+automationBox!.height)).toBeGreaterThanOrEqual(15);
         const cards = await users.locator(".required-user-card").evaluateAll(elements => elements.map(e => {
           const r = e.getBoundingClientRect(); return { x: r.x, y: r.y };
         }));
@@ -552,7 +569,10 @@ async function organizationFlows(page: Page) {
           else expect(dates[1].y).toBeGreaterThan(dates[0].y);
           for(const link of await footer.getByRole("link").all()){
             await expect(link).toHaveText(/^[A-Z][a-z]{2} \d{1,2}, \d{4}$/);
-            await expect(link).toHaveAttribute("href",/\/operations\/[a-f0-9-]+$/);
+            const purpose=await card.getByRole("heading",{name:"Recovery user",exact:true}).count()?"recovery":"automation";
+            const name=await link.getAttribute("aria-label");
+            const kind=name?.includes("assignment")?"assignment":name?.includes("policy")?"policy":"presence";
+            await expect(link).toHaveAttribute("href",new RegExp("/operations/[a-f0-9-]+\\?returnTo=[^#]+#"+purpose+"-"+kind+"$"));
           }
         }
         const costs = page.getByRole("region",{name:"Current month costs",exact:true});
@@ -568,19 +588,35 @@ async function organizationFlows(page: Page) {
           expect(overrideBox!.x).toBeGreaterThanOrEqual(costBox!.x+costBox!.width);
         } else expect(overrideBox!.y).toBeGreaterThanOrEqual(costBox!.y+costBox!.height);
         // Whole-section rhythm matters as much as card internals: no panel may touch its neighbour.
-        const gridBox = await page.locator(".tenancy-summary-grid").boundingBox();
-        const usersBox = await users.boundingBox();
-        const membersBox = await page.locator(".table-panel").filter({has:page.getByRole("heading",{name:"Current members",exact:true})}).boundingBox();
-        expect(gridBox).not.toBeNull(); expect(usersBox).not.toBeNull(); expect(membersBox).not.toBeNull();
-        expect(gridBox!.y-(usersBox!.y+usersBox!.height)).toBeCloseTo(24,0);
         const rollout = page.getByRole("region",{name:"Tenancy baseline update",exact:true});
-        const rolloutBox = await rollout.count() ? await rollout.boundingBox() : null;
+        // Snapshot panel geometry together: delayed focus scrolling must not mix viewport origins.
+        const layout=await page.evaluate(({grid,users,members,keys,rollout})=>{
+          // Copy one optional panel rectangle into the shared viewport snapshot.
+          const rect=(node:Element|null)=>{
+            if(!node)return null;
+            const box=node.getBoundingClientRect();
+            return {x:box.x,y:box.y,width:box.width,height:box.height};
+          };
+          return {gridBox:rect(grid),usersBox:rect(users),membersBox:rect(members),keysBox:rect(keys),rolloutBox:rect(rollout)};
+        },{
+          grid:await page.locator(".tenancy-summary-grid").elementHandle(),
+          users:await users.elementHandle(),
+          members:await page.locator(".table-panel").filter({has:page.getByRole("heading",{name:"Current members",exact:true})}).elementHandle(),
+          keys:await keyPanel.elementHandle(),
+          rollout:await rollout.count()?await rollout.elementHandle():null,
+        });
+        const {gridBox,usersBox,membersBox,keysBox,rolloutBox}=layout;
+        expect(gridBox).not.toBeNull(); expect(usersBox).not.toBeNull(); expect(membersBox).not.toBeNull();
+        expect(keysBox).not.toBeNull();
+        expect(keysBox!.y-(usersBox!.y+usersBox!.height)).toBeCloseTo(24,0);
+        expect(gridBox!.y-(keysBox!.y+keysBox!.height)).toBeCloseTo(24,0);
         if(rolloutBox) {
           expect(rolloutBox.y-(gridBox!.y+gridBox!.height)).toBeCloseTo(24,0);
           expect(membersBox!.y-(rolloutBox.y+rolloutBox.height)).toBeCloseTo(24,0);
         } else expect(membersBox!.y-(gridBox!.y+gridBox!.height)).toBeCloseTo(24,0);
         if(width > 1000) expect(overrideBox!.x-(costBox!.x+costBox!.width)).toBeCloseTo(24,0);
         else expect(overrideBox!.y-(costBox!.y+costBox!.height)).toBeCloseTo(24,0);
+        await keyPanel.screenshot({path:resolve(".local-dev/browser",`automation-keys-${action === "Create tenancy" ? "create" : "import"}-${width}.png`)});
         await page.screenshot({path:resolve(".local-dev/browser",`tenancy-detail-spacing-${action === "Create tenancy" ? "create" : "import"}-${rolloutBox ? "baseline-update" : "no-baseline-update"}-${width}.png`),fullPage:true});
         await page.locator(".tenancy-summary-grid").screenshot({path:resolve(".local-dev/browser",`tenancy-summary-${action === "Create tenancy" ? "create" : "import"}-${width}.png`)});
         await users.screenshot({ path: resolve(".local-dev/browser", `required-users-${action === "Create tenancy" ? "create" : "import"}-${width}.png`) });
@@ -588,27 +624,42 @@ async function organizationFlows(page: Page) {
       if(!assignmentRenderReviewed){
         assignmentRenderReviewed=true;
         const resource="**/api"+new URL(childUrl).pathname+"/required-users";
-        // Render-only browser fixtures complement real persisted negative cases in PostgreSQL tests.
+        // Render-only cases use separate ephemeral pages so old-document requests cannot satisfy assertions.
+        const assignmentBaseline=JSON.parse(privateBody);
         for(const stale of [false,true]){
-          await page.route(resource,async route=>{
-            const response=await route.fetch();
-            const body=await response.json();
-            body.users[0].administrator_access={...body.users[0].administrator_access,group:stale?"verified":"missing",domain_role:"verified",stale};
-            body.users[1].administrator_access={...body.users[1].administrator_access,group:stale?"verified":"missing",domain_role:"verified",stale};
-            await route.fulfill({response,json:body});
-          });
+          const fixturePage=await page.context().newPage();
+          const fixtureErrors:string[]=[];
+          fixturePage.on("pageerror",error=>fixtureErrors.push(error.name));
+          // Capture one fixed response per page; real persisted negative cases remain in PostgreSQL tests.
+          const assignmentFixture=async (route: import("@playwright/test").Route)=>{
+            const body=structuredClone(assignmentBaseline);
+            for(const user of body.users){
+              user.administrator_access={...user.administrator_access,group:stale?"verified":"missing",domain_role:"verified",stale};
+            }
+            await route.fulfill({status:200,json:body});
+          };
           try{
-            await page.reload();
-            const card=users.locator(".required-user-card").first();
+            await fixturePage.route(resource,assignmentFixture);
+            const loaded=fixturePage.waitForResponse(response=>response.request().method()==="GET" && response.url().endsWith(new URL(childUrl).pathname+"/required-users"));
+            await fixturePage.goto(childUrl);
+            const fixture=await (await loaded).json();
+            expect(fixture.users[0].administrator_access.stale).toBe(stale);
+            expect(fixture.users[1].administrator_access.stale).toBe(stale);
+            const fixtureUsers=fixturePage.getByRole("region",{name:"Required users",exact:true});
+            const card=fixtureUsers.locator(".required-user-card").first();
             await expect(card.getByText(stale?"Check out of date":"Missing or disabled",{exact:true})).toHaveCount(stale?2:1);
-            const recoveryCard=users.locator(".required-user-card").nth(1);
+            const recoveryCard=fixtureUsers.locator(".required-user-card").nth(1);
             await expect(recoveryCard.getByLabel(`Administrator assignments: ${stale?"Out of date":"Missing"} (simulation)`)).toBeVisible();
             for(const width of [1280,320]){
-              await page.setViewportSize({width,height:900});
-              expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-              await page.screenshot({path:resolve(".local-dev/browser",`automation-assignment-render-only-${stale?"stale":"missing"}-${width}.png`),fullPage:true});
+              await fixturePage.setViewportSize({width,height:900});
+              expect(await fixturePage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+              await fixturePage.screenshot({path:resolve(".local-dev/browser",`automation-assignment-render-only-${stale?"stale":"missing"}-${width}.png`),fullPage:true});
             }
-          }finally{await page.unroute(resource);}
+            expect(fixtureErrors).toEqual([]);
+          }finally{
+            await fixturePage.unrouteAll({behavior:"wait"});
+            await fixturePage.close();
+          }
         }
         await page.reload();
         await expect(users.locator(".required-user-card").first().getByText("Verified in simulation",{exact:true})).toHaveCount(2);
@@ -993,6 +1044,7 @@ async function organizationFlows(page: Page) {
   await modal.getByRole("combobox",{name:"Tenancy type",exact:true}).selectOption("shared");
   await finish("Create tenancy");
   await removeFormerOwner(page);
+  await recoveryAccess(page);
 
 }
 

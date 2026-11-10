@@ -1,6 +1,6 @@
 # 22: recovery console CIDR boundary and scheduled API-key rotation
 
-7 November 2026 | User-selected V1 design | Local read-only policy UI qualified; remaining credential flows and live OCI qualification pending
+7 November 2026 | User-selected V1 design | Local simulated policy/repair, password and signing-key subsets qualified; full milestone/live OCI qualification separate
 
 [Design hub](README.md) · [Administrator access](13-local-support-and-emergency-access.md) ·
 [Credential model](11-production-data-model.md#identity-access-and-credential-model) ·
@@ -63,8 +63,8 @@ or stale evidence is Unable to verify, never compliant. Block readiness/new pass
 surface the failed control through existing required-access/Operations and applicable alert policy.
 Repairs require existing preview/authority/target checks; validation itself is read-only and never
 silently disables MFA or rewrites policy. The [current local UI implementation](../reference/recovery-console-verification.md) adds these independent
-read-only controls and exact setup capture. Policy repair, actual provider enforcement and live
-qualification remain pending.
+read-only controls and exact setup capture. The [perimeter-only local repair](../reference/recovery-network-repair.md) is separately qualified;
+actual provider enforcement and live qualification remain pending.
 
 Qualify actual sign-in behavior from allowed and outside sources using the disposable-child test
 procedure, including a broad fallback allow rule. Ordinary validation inspects qualified effective
@@ -316,3 +316,45 @@ and domain administrator role grants independently of automation grants and reco
 Assigned means those two simulated assignments only. It does not implement password retrieval,
 Vault custody, a recovery signer fallback, or the durable four-hour rotation flow. Credential
 disclosure remains unavailable until custody and rotation qualify together.
+
+
+### Perimeter-only repair source subset — 9 November 2026
+
+[Guarded recovery-network repair](../reference/recovery-network-repair.md) is locally qualified in simulation,
+with preserved main publication recorded in the [final receipt](../history/recovery-network-repair-checkpoint-2026-11-09.md). Real OCI remains pending. It replaces only the retained perimeter's CIDR list
+under exact scoped authority and a conditional compare token, preserving all rules and the standing
+exact-user exemption. The latest sealed policy observation pins actual before-state; setup/last-repair capture authenticates
+ownership/bindings rather than freezing networks forever. Fresh preview and first worker authority
+must match that observation; preview counts come from fresh authority. Unrefreshed third states,
+changed before-state or a changed persisted compare token block dispatch. Preview exposes counts/hashes only; explicit unchecked acknowledgment is
+required. Readback must verify networks and unchanged surrounding policy. Applied-but-superseded
+capture is retained without current readiness; unknown writes remain held without automatic retry.
+No assignment repair, MFA/rule edits, user recreation, password custody/rotation or fleet rollout is
+implemented by this subset. Migration 0026 extends existing constraints with zero new tables.
+
+
+### Password source subset — 9 November 2026
+
+The [current custody/disclosure/rotation source subset](../reference/recovery-password-access.md) is
+an implemented local subset; [the checkpoint receipt](../history/recovery-password-checkpoint-2026-11-09.md) records qualification and main8443 installation separately. It preserves the standing exact-user MFA/
+CIDR boundary, CURRENT and the original first-attempt four-hour deadline. API-key retirement, live
+provider qualification and deferred interactive network break/repair remain separate pending work.
+
+
+### Read-only signing-key inventory predecessor — source checkpoint
+
+The [automation signing-key field map](../reference/automation-signing-keys.md) describes the first
+bounded inventory/age slice and approved separate panel below Required users. It reuses Refresh
+and optional sealed evidence, with original provider creation timestamps and no legacy backfill.
+It does not implement custody, selected-signer verification, rotation, retirement, alerts or30-day
+work blocking/compliance. All remaining retirement/enforcement requirements above stay Pending.
+Targeted local UI qualification and preserved main installation pass in the [inventory receipt](../history/automation-signing-key-inventory-checkpoint-2026-11-09.md). This is not completed rotation/enforcement or a new full-suite/milestone/PR gate.
+
+
+### Detailed rotation accounting proposal — 9 November 2026
+
+[Chapter 23](23-signing-key-rotation.md) now records the implemented local one-head execution accounting, explicit fresh
+onboarding, native scheduling/query/deduplication, approved brief per-child provider pause, password-
+window drain, staged/upload/probe/CAS/retire phases and recovery/overdue evidence. Its
+[dated receipt](../history/signing-key-rotation-checkpoint-2026-11-10.md) records targeted local
+qualification and saved installation. No installed OKE CronJob or live provider qualification is claimed.

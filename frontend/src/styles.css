@@ -1405,20 +1405,35 @@ dialog p {
   }
 }
 
-/* Keep the shared-only shortcut readable between search and onboarding at tablet widths. */
-.tenancy-toolbar {
+/* Center directory links/checks beside search; wrap controls before search becomes unusable. */
+.directory-toolbar {
+  align-items: center;
   flex-wrap: wrap;
 }
-.tenancy-toolbar .search-field {
+.directory-toolbar > a,
+.directory-toolbar > .directory-filter {
+  align-self: flex-end;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.directory-toolbar .search-field {
   flex: 1 1 240px;
   min-width: 0;
 }
-.tenancy-toolbar .directory-filter {
+.directory-toolbar .directory-filter {
   flex: 0 0 auto;
   max-width: none;
 }
 @media (max-width: 700px) {
-  .tenancy-toolbar .search-field {
+  .directory-toolbar {
+    align-items: stretch;
+  }
+  .directory-toolbar > a,
+  .directory-toolbar > .directory-filter {
+    align-self: stretch;
+  }
+  .directory-toolbar .search-field {
     flex-basis: auto;
   }
 }
@@ -1790,8 +1805,9 @@ dialog p {
 .required-users-heading h2 { margin:0; }
 .required-users-heading .button { min-height:44px; }
 .required-users-grid { align-items:start; list-style:none; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; padding:0; margin:20px 0 0; }
-.required-user-card { min-width:0; padding:18px; border:1px solid #d4deea; border-radius:3px; background:#f8fafc; }
+.required-user-card, .administrator-access-card { min-width:0; padding:18px; border:1px solid #d4deea; border-radius:3px; background:#f8fafc; }
 .required-user-card h3 { margin:0 0 16px; font-size:16px; line-height:1.4; }
+.required-user-card > h3 {min-height:44px;display:flex;align-items:center;}
 .required-user-facts { margin:0; display:grid; gap:12px; }
 .required-user-facts dt { color:#5b6877; font-size:12px; margin-bottom:4px; }
 .required-user-facts dd { margin:0; overflow-wrap:anywhere; }
@@ -1848,4 +1864,49 @@ dialog p {
 @media(min-width:1001px) and (max-width:1150px) {
   .tenancy-summary-grid .cost-panel-heading { display:grid; grid-template-columns:minmax(0,1fr); }
   .tenancy-summary-grid .cost-panel-heading > :not(h2) { justify-self:end; }
+}
+
+/* Recovery access follows the shared compact spacing and routine-action emphasis. */
+.required-user-column {min-width:0;display:grid;gap:16px;}
+.recovery-access {margin:0;}
+.recovery-user-heading {display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+.recovery-user-heading h3 {margin:0;font-size:16px;line-height:1.4;}
+.recovery-user-heading .button {min-height:44px;max-width:100%;margin-inline-start:auto;}
+.recovery-access-summary {display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;}
+.recovery-password-value {margin-block:1rem;}
+.recovery-password-value input {font-family:monospace;max-width:100%;}
+
+.recovery-access-operation {margin-block-start:1rem;}
+
+/* Original-window details reuse compact facts and stack before UTC timestamps become cramped. */
+.recovery-password-progress .operation-facts {grid-template-columns:repeat(2,minmax(0,1fr));}
+@media(max-width:700px){.recovery-password-progress .operation-facts{grid-template-columns:minmax(0,1fr);}}
+
+/* Compact independent inventory preserves the required-user card symmetry. */
+.signing-key-panel .presence-missing{background:#fee2e2;color:#991b1b}
+.signing-key-list{list-style:none;padding:0;margin:16px 0}.signing-key-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:16px;padding:14px 0;border-top:1px solid var(--border,#d5dfea)}.signing-key-fingerprint{display:flex;flex-direction:column;gap:8px;min-width:0}.signing-key-fingerprint code{overflow-wrap:anywhere;font-size:12px}.signing-key-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0}.signing-key-facts dt{font-size:12px;color:#526176}.signing-key-facts dd{margin:6px 0 0}.signing-key-provenance{margin-bottom:0}.signing-key-panel{scroll-margin-top:24px}@media(max-width:900px){.signing-key-row{grid-template-columns:minmax(0,1fr)}}@media(max-width:480px){.signing-key-facts{grid-template-columns:minmax(0,1fr)}}
+
+/* Rotation controls remain within the compact signing-key panel and use routine-action emphasis. */
+.signing-rotation{border-top:1px solid #d5dfea;padding-top:20px;margin-top:20px}.signing-rotation h3{margin:0 0 8px}.signing-rotation .required-users-heading{margin-bottom:16px}.signing-rotation .signing-key-facts{margin-top:16px}.signing-rotation>p:last-of-type{margin-bottom:0}
+
+.signing-rotation-summary{display:flex;flex-wrap:wrap;align-items:center;gap:16px}
+
+/* Type labels fit a laptop toolbar; small screens wrap at words inside the viewport. */
+.operation-kind-filter {
+  flex: 0 1 auto;
+  width: 19rem;
+  max-width: 100%;
+}
+
+/* Search remains usable when the laptop toolbar wraps rather than shrinking to one word. */
+.operations-toolbar .search-field {
+  flex: 1 1 16rem;
+  min-width: min(16rem, 100%);
+}
+@media (max-width: 700px) {
+  .operations-toolbar .search-field,
+  .operations-toolbar .operation-kind-filter {
+    flex: none;
+    width: 100%;
+  }
 }

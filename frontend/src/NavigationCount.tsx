@@ -4,7 +4,7 @@ import { api, ApiError } from "./api";
 import type { OperationQuery, ReviewQuery } from "./contracts";
 
 const operationQuery: Required<OperationQuery> = {
-  page: 1, page_size: 10, sort: "accepted_at", direction: "desc", state: "", query: "",
+  page: 1, page_size: 10, sort: "accepted_at", direction: "desc", state: "", kind: "", query: "",
 };
 const reviewQuery: Required<ReviewQuery> = {
   category: "actionable", query: "", page: 1, page_size: 10, sort: "first_seen_at", direction: "asc",

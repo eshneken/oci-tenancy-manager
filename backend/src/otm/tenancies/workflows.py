@@ -70,12 +70,22 @@ class OrganizationWorkflows:
         mail_policy=None,
         notifications=None,
         recovery_console=None,
+        recovery_password_setup=None,
+        automation_key_inventory_enabled=False,
+        signing_key_setup_enabled=False,
     ):
         self.store, self.enqueuer, self.policy, self.facade = store, enqueuer, policy, facade
         self.mail_policy, self.notifications = mail_policy, notifications
         self.recovery_console = recovery_console
+        self.recovery_password_setup = recovery_password_setup
+        self.automation_key_inventory_enabled = automation_key_inventory_enabled
+        self.signing_key_setup_enabled = signing_key_setup_enabled
+        self.signing_key_rotations = None
+        self.signing_guard = None
+        self.recovery_passwords = None
         self.configuration_checks = configuration_checks
         self.presence_checks = None
+        self.recovery_network_repairs = None
         self.cost_collections = cost_collections
         self.policy_loader = policy_loader
         self.mode = "simulated" if policy and facade and enqueuer else "unavailable"
@@ -225,7 +235,7 @@ class OrganizationWorkflows:
                         audit_event.c.kind == "operation_intent",
                     )
                 ).scalar_one_or_none()
-                if candidate and candidate["intent"].get("onboarding_version") in {1, 2, 3}:
+                if candidate and candidate["intent"].get("onboarding_version") in {1, 2, 3, 4}:
                     onboarding_id = row["operation_id"]
             config_operation = row["operation_id"] or row.get("last_operation_id")
             cost = (
@@ -1175,6 +1185,8 @@ class OrganizationWorkflows:
                 or state.associations(person=person.id, tenant=row["id"])
             ):
                 raise OrganizationConflict("AVAILABLE_SHARED_TENANCY_REQUIRED")
+            if self.signing_guard is not None:
+                self.signing_guard(connection, state.workspace, row["id"], at)
             choices = {p.ocid: p for p in self.facade.compartments(row["tenancy_ocid"])}
             if command.existing_compartment_ocid is not None:
                 if (
@@ -1198,6 +1210,9 @@ class OrganizationWorkflows:
             baseline = current_baseline(connection, state.workspace)
             if baseline is None:
                 raise OrganizationConflict("PUBLISHED_BASELINE_REQUIRED")
+        if self.signing_guard is not None:
+            for association in plan:
+                self.signing_guard(connection, state.workspace, association.tenancy_id, at)
         grant = connection.execute(
             select(org_person.c.id).where(
                 org_person.c.workspace_id == state.workspace, org_person.c.id == person.id
@@ -1241,6 +1256,13 @@ class OrganizationWorkflows:
                         self.mail_policy.guard(route)
             except EmailPolicyBlocked:
                 raise OrganizationConflict("EMAIL_CONTACT_CONFIGURATION_REQUIRED") from None
+        from otm.tenancies.recovery_password_lifecycle import require_termination_ready
+
+        require_termination_ready(
+            connection,
+            state.workspace,
+            (item.tenancy_id for item in plan if item.action == "delete"),
+        )
         intent = OrganizationIntent(
             workspace_id=state.workspace,
             policy_revision=self.policy.policy_revision,
@@ -1254,10 +1276,18 @@ class OrganizationWorkflows:
             presence_connection_contract="simulated-user-presence-1"
             if command.action in {"create_tenancy", "import_tenancy"}
             else None,
+            automation_key_inventory_contract="automation-key-inventory-1"
+            if self.automation_key_inventory_enabled
+            and command.action in {"create_tenancy", "import_tenancy"}
+            else None,
+            signing_key_rotation_contract="signer-1"
+            if self.signing_key_setup_enabled
+            and command.action in {"create_tenancy", "import_tenancy"}
+            else None,
             recovery_console_fingerprint=self.recovery_console.fingerprint
             if command.action in {"create_tenancy", "import_tenancy"} and self.recovery_console
             else None,
-            onboarding_version=3
+            onboarding_version=(4 if self.recovery_password_setup and self.recovery_console else 3)
             if command.action in {"create_tenancy", "import_tenancy"}
             else None,
             activation_email=contacts.activation.effective_email

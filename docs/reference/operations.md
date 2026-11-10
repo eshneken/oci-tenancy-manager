@@ -55,6 +55,7 @@ Current session denial and verification-outage diagnostics retain their existing
 | `sort` | `accepted_at`, `updated_at`, `state` or `stage`; default `accepted_at`. |
 | `direction` | `asc` or `desc`; default `desc`. A UUID tie-break gives stable ordering. |
 | `state` | Empty for all, or `queued`, `running`, `waiting`, `needs_attention`, `succeeded`, `cancelled`, `failed`. |
+| `kind` | Empty for all (default), or `inspect_import`, `organization_action`, `configuration_update`, `configuration_check`, `cost_collection`, `required_user_check`, `recovery_network_repair`, `recovery_password`, `signing_key`. Closed allowlist; exact match. |
 | `query` | At most 128 characters; literal case-insensitive containment over operation UUID text or current-intent target tenancy OCID. `%`/`_` are escaped rather than becoming SQL wildcards. |
 
 SQL sort columns come from an allowlist; no caller-supplied identifier is interpolated. The filtered
@@ -103,6 +104,7 @@ Processing/event timestamps are not relabeled as provider observation/capture ti
 | State badge: `operation.state` | `otm_operation.state`, independent of native job success. Inspection-read issues use no-action guidance; lifecycle attention remains linked to person/tenancy context. Stored states/filters are unchanged. |
 | Stage: `operation.stage` | `otm_operation.stage`; UI replaces underscores for display without adding progress percentages. |
 | Accepted: `operation.accepted_at` | `otm_operation.accepted_at`, rendered in UTC. |
+| Scheduled start: `operation.scheduled_for` | Optional derived immutable `SigningKeyIntent.due_at`, only for signing-key rotation in `waiting/signing_rotation_due`; omitted for queued, running, drain waits or terminal work. Earliest eligibility, not acceptance or guaranteed execution time; no new SQL column. |
 | Updated: `operation.updated_at` | `otm_operation.updated_at`, rendered in UTC. |
 | Completed: `operation.completed_at` | Nullable `otm_operation.completed_at`; no completion time is synthesized. |
 | Initiated by: `operation.initiated_by` | Exact current intent event `audit_event.data.actor.display_name`, after actor-key validation; nullable, with no raw-subject fallback. |
@@ -115,6 +117,7 @@ Processing/event timestamps are not relabeled as provider observation/capture ti
 | Verified: `steps[].verified_at` | Nullable `otm_operation_step.verified_at`, set by committed worker verification, except `handoff`, where it records accepted administrator input; not a provider capture timestamp. |
 | Step outcome code: `steps[].safe_code` | Validated `otm_operation_step.last_outcome.safe_code`, or null when no outcome exists. |
 | Event heading/kind: `events[].kind` | `audit_event.kind`: `operation_intent`, `inspection_dispatch`, `inspection_outcome`, `organization_action_outcome`, `onboarding_action` or `onboarding_outcome`, mapped to recorded event labels. |
+| Friendly event heading: `events[].summary` | Optional omitted-null server projection from validated `SigningKeyEvidence` state/checkpoint/dispatch fences using `signing_event_summary`; shared with Audit, no stored summary or history rewrite. Authorized dispatch is explicitly verification pending, not proof of completion. |
 | Event date: `events[].at` | `audit_event.at`, rendered in UTC. |
 | Event code: `events[].safe_code` | Validated outcome event `audit_event.data.safe_code`; null for acceptance/dispatch. |
 | Event-limit message: `events_limited` | True when the operation snapshot has an event beyond the newest 50 returned. |
@@ -311,8 +314,8 @@ POST /api/operations/{uuid}/responsibility accepts only a request UUID and expec
 revision, returns HTTP 200 ActionReceipt and queues no job. Original creator, activation mailbox,
 provider intent and tenancy owner stay unchanged.
 
-OperationSummary now has 18 fields: responsible_administrator_name, responsible_administrator_id,
-responsibility_revision, can_take_responsibility, id, kind, state, stage, accepted_at, updated_at,
+OperationSummary now has 19 fields: responsible_administrator_name, responsible_administrator_id,
+responsibility_revision, can_take_responsibility, id, kind, state, stage, accepted_at, scheduled_for, updated_at,
 completed_at, initiated_by, target_tenancy_ocid, title, target_label, provider_mode, guided_onboarding
 and result_tenancy_id. The first four are computed for guided detail, with nullable/false defaults
 elsewhere. The [complete new-field/source map](responsibility.md#complete-field-and-storage-map)
@@ -347,3 +350,200 @@ bounded outcomes were recorded, including Missing or Unable to verify; it does n
 health. No retry/repair or actionable navigation count is added for these diagnostics. Return to the
 child's Required users context for a new explicit Check now. See the
 [full source/storage map](user-presence-checks.md).
+
+
+## Recorded required-user check sections — source follow-up
+
+**Local validation and main installation pass for this follow-up.** Its separate receipt records
+combined438+2 evidence, not a single clean440 rerun. The earlier password checkpoint retains its own scope. Existing operation/event reads now expose
+five closed historical check sections from hash-checked, validated `PresenceCheckEvidence`. No
+provider acquisition, repair, table, migration or raw JSON response is added.
+
+| Public field | Exact meaning |
+| --- | --- |
+| `OperationEventView.user_checks` | Tuple of safe `UserCheckSection` values on required-user outcome events only; other event kinds return an empty tuple |
+| `UserCheckSection.anchor` | One of automation-presence, automation-assignment, recovery-presence, recovery-assignment, recovery-policy |
+| `checked_at` | That particular captured observation’s time; null for omitted legacy checks, never fabricated from the event/request/retrieval time |
+| `facts` | Closed `UserCheckFact` values; no binding IDs, provider contexts, raw lists, CIDRs, private references or credentials |
+| Fact `label` | Presence, Administrators group, Domain administrator role, Console MFA exemption, Approved-network restriction |
+| Fact `state` | not_checked, present, missing, unknown, verified, drift; displayed as Not checked, Present, Missing, Unable to verify, Verified in simulation or Drift detected |
+
+The page’s **Recorded user check results** uses the latest included event carrying these sections
+within the existing bounded event history. Each named section displays its own date and safe facts.
+Old evidence that omitted assignments/policy explicitly shows Not checked with no invented date.
+These are the operation’s historical observations, not current head/freshness/readiness decisions.
+Opening the page cannot refresh or repair anything.
+
+Required-user footer links use `/operations/{operation UUID}#{purpose}-{kind}`. Exact anchors are
+`automation-presence`, `automation-assignment`, `recovery-presence`, `recovery-assignment` and
+`recovery-policy`. The matching loaded section receives scroll/focus; missing operation references
+remain plain dates. Malformed evidence still fails closed through the existing directory boundary.
+The new public fields are derived from retained audit evidence, not new persisted state.
+
+[Follow-up validation/install status](../history/recovery-password-checkpoint-2026-11-09.md#access-panel-and-recorded-results-follow-up).
+
+
+## Recovery-password operation progress
+
+This source follow-up adds optional `OperationDetail.recovery_password`, a closed read-only
+`RecoveryPasswordProgress` projection. Validation and saved-install status are recorded in its
+[separate receipt section](../history/recovery-password-checkpoint-2026-11-09.md#password-operation-progress-follow-up).
+The receipt records the440-case complete run and later targeted-qualified copy separately; earlier
+password/check-result receipts retain their original scope.
+
+| Field | Exact source and meaning |
+| --- | --- |
+| `phase` | setup or rotation, from this operation’s original validated immutable password intent |
+| `tenancy_id` | Exact intended child, used by Open tenancy; no caller-selected alternate target |
+| `user_name` | Intended recovery username; not a secret or machine signer |
+| `first_request_at` | The shared original first-authorized attempt from matching immutable disclosure grants; null for setup |
+| `rotation_due_at` | Original intent due time; null for setup, exactly first request+4h for rotation |
+| `request_count` | Number of distinct authorized request records for this operation/window, including failed/lost delivery; setup is0 and request-key retries do not add another record |
+
+Rotation aggregates match exact workspace, operation, credential, child and exposure generation.
+All retained original first/deadline values must agree; rotation requires at least one matching
+request and exactly four hours. Missing/inconsistent history is unavailable, not reconstructed
+from current credential heads or a later window. Setup requires null window dates and zero requests.
+No new table, column, migration, stored status, provider call or configuration setting is introduced.
+
+Operations shows **Password preparation** or **Password rotation**, with the exact recorded dates,
+request count where applicable, verified/ended time and **Open tenancy**. Labels distinguish pending/
+scheduled, preparing/rotating, overdue, verified simulation success and reconciliation required.
+Overdue/attention guidance preserves the original obligation; historical success remains historical
+even when a newer credential/window exists. Collapsed help explains the four-hour window and session
+limits. This panel cannot disclose a password, retry a reset, extend a deadline or establish delivery.
+
+The deadline timer refreshes display-only overdue presentation even when polling returns unchanged
+data; it neither schedules provider work nor moves the recorded deadline. Failed preparation uses
+setup-specific custody/onboarding guidance rather than implying a disclosure window exists. Timer
+and display state are transient, with no additional persistent field or setting. Follow-up validation
+and installation pass in the separate receipt, with final-copy targeted scope explicitly distinguished
+from the preceding complete native run.
+
+
+## Context-sensitive return navigation — source follow-up
+
+**Targeted validation and preserved main installation pass.** Current frontend source shares
+`operationHref` and `operationReturn` from `operationNavigation.ts`. This adds no API/database field,
+provider behavior, permission or setting. [Separate receipt status](../history/recovery-password-checkpoint-2026-11-09.md#operation-return-navigation-follow-up).
+
+| URL/client value | Source and rule |
+| --- | --- |
+| `returnTo` | One optional query value on the actual operation-detail href; only the closed local-route allowlist below is accepted |
+| Source route | Current recognized page pathname, or exact tenancy UUID path with optional `#required-users`; arbitrary query/filter/page state is not captured |
+| Operation-to-operation link | Reuses the validated original return destination; does not create a chain of Back links through successive operation pages |
+| Check fragment | Separate operation fragment still identifies exact subject/kind, such as recovery-assignment or recovery-policy; return query never replaces this target |
+| Label/destination | Derived from validated return URL at render time, not session history, caller authority or a persisted preference |
+
+Recognized origins are `/tenancies`, `/organization`, `/organization/drift`, `/configuration`,
+`/configuration/drift`, `/audit-history`, `/configuration/drift/{UUID}` and `/tenancies/{UUID}`
+with optional `#required-users` on the tenancy route only.
+Labels are Back to tenancies, Back to Organization, Back to Organization drift, Back to configuration,
+Back to configuration drift, Back to audit history, Back to configuration check or Back to tenancy
+respectively. Operations-list
+origins, direct links, duplicate/invalid/unrecognized return values fall back to Back to operations.
+External URLs, protocol-relative paths and arbitrary return routes are never accepted redirects.
+
+The same helper constructs the rendered href and click navigation, so browser reload/history and
+open-in-new-tab retain the recognized return destination. Existing footer subject/kind anchors stay
+intact. This routing does not establish current access to the return page; its normal API/session
+authorization still applies. No request can use returnTo to change workspace or operation scope.
+
+[Manual navigation checks](../how-to/operation-navigation.md) describe the source follow-up; its
+validation/publication must be recorded separately from earlier qualified Operations behavior.
+
+Nested configuration-check/baseline returns use shared `operationDestination(candidate)`: an exact
+local operation UUID route, at most512 characters, no leading/trailing whitespace, optional **one**
+validated `returnTo` query and optional supported check anchor. Unknown/duplicate query keys, external
+paths and arbitrary fragments are rejected. The supported anchors are automation-presence, automation-
+assignment, recovery-presence, recovery-assignment, recovery-policy and the subsequent inventory
+anchor automation-keys. This is transient URL parsing,
+not a new API/table field. Configuration-check and baseline Back links consume the same validator;
+onboarding baseline links retain the operation query, preserving a tenancy → operation → configuration/
+baseline → operation → tenancy route chain. This preserves only these bounded return contexts, not
+arbitrary filter/search/page query state.
+
+After upgrading, reload the originating tenancy page and reopen the operation link. A previously
+open/direct bare operation URL has no recoverable origin query and correctly falls back to Operations.
+The receipt distinguishes compiled-helper Chromium fixture evidence from a full React/API/native
+journey; no full native integration rerun is claimed for this navigation-only follow-up.
+
+
+## Signing-key historical age — source checkpoint
+
+Optional `OperationEventView.automation_keys` now projects an `AutomationKeysView` from validated
+sealed required-user evidence. Other event kinds have no inventory. Operations reuses the separate
+Automation signing keys panel in historical mode, with recorded-check/age-at-observation dates.
+The [complete field map](automation-signing-keys.md#field-dictionary-and-existing-persistence)
+contains public key IDs/fingerprints/provider timestamps and closed inventory/age states only.
+Historical age uses the recorded key-check basis; current tenancy age uses server read time.
+Missing legacy metadata cannot become known zero keys. No credential head, PEM, signer selection
+or compliance proof is added. The new exact inventory fragment is `#automation-keys`, distinct
+from the original five subject/kind sections. Timestamp/anchor source alignment is implemented; targeted checkpoint validation and
+preserved installation [pass with separately recorded scope](../history/automation-signing-key-inventory-checkpoint-2026-11-09.md).
+
+## Signing rotation schedule clarification — 10 November 2026
+
+Combined clarity follow-up: targeted gates, final independent UX and preserved saved republication PASS.
+The separate checkpoint receipt records the earlier feature and later clarification evidence. Operations list shows Scheduled start
+under Accepted, and detail shows Scheduled start (UTC) with an earliest-eligibility tooltip. Existing
+work or a recovery window can delay actual execution; waiting for the future schedule does not pause
+provider work. `scheduled_for` is an omitted-if-null projection, not a new table/column or job trigger.
+Manual Rotate now expedites that same scheduled operation; it no longer projects a future scheduled
+start once queued/running/draining. Verified completion creates a new successor operation.
+
+## Signing event labels — combined clarification patch
+
+Combined clarity targeted gates, final history-visual UX and preserved saved republication PASS. Operations and Audit share a fixed
+server mapping from validated typed signing evidence. Existing history gains readable projections on
+refresh; immutable payloads are not rewritten. Operations prefers `events[].summary` when present and
+hides only redundant `SIGNING_KEY_PROGRESS` code text in that case. Failure and final codes remain
+visible; other event kinds retain their existing labels. This optional DTO field adds no SQL column.
+
+| Evidence | Heading meaning |
+| --- | --- |
+| Upload phase, no dispatch | Replacement key staged |
+| Upload dispatched | Public-key upload authorized; verification pending |
+| Verify phase | Replacement public key observed |
+| Activate phase | Replacement signer verified |
+| Retire phase, no dispatch | Replacement activated; old-key retirement pending |
+| Retire dispatched | Old-key removal authorized; verification pending |
+| Complete checkpoint | Old key absent; replacement access verified |
+| Verified outcome | Automation signer prepared, or Key rotation completed |
+| Attention/cancelled/no checkpoint | Explicit setup/rotation attention, cancellation or generic progress; no inferred success |
+
+
+## Operation-type filtering — 10 November 2026
+
+The Operations toolbar combines **Search operations**, **Operation type** and **State**.
+All operation types are included initially; selecting a type resets page 1 while retaining search,
+state, sort and page size. Clear filters resets search/type/state, retaining sort and page size.
+Opening an operation and returning preserves controls within the authenticated query cache; a full
+browser reload starts the default list. The existing tenancy-context return link is unchanged.
+
+Tenancy & organization workflows groups existing `organization_action` operations, including
+create/import, membership, ownership and offboarding. Signing-key maintenance includes initial
+signer enrollment and later rotations; it does not imply every matching operation is a rotation.
+A scheduled start remains the earliest eligible execution time, separate from acceptance.
+
+`OperationQuery.kind` is a validated optional read control. SQLAlchemy binds the exact kind value
+in both the count and page predicates in the same read-only snapshot. Invalid kinds return the
+existing fixed 400 query error. Workspace still comes exclusively from the verified session.
+The workspace-wide actionable badge is independent of every list filter; a filtered list can be
+empty while another operation type still requires action. No table, migration, provider call,
+queue dispatch, credential exposure or state transition is introduced by filtering.
+
+
+### Local manual review
+
+After the paired preview is updated, open Operations on the sole saved instance. Select
+Signing-key maintenance to isolate enrollment/rotations, then combine it with Waiting to see future
+scheduled work. Open a record and return to confirm that both filters remain selected. Choose a
+rare operation type to inspect the no-match state; Clear filters returns to all types/states and
+clears search. These are read-only checks: do not trigger a rotation just to populate the list.
+
+Tenancies and Organization share centered directory toolbars: shortcut links and checkbox labels
+align vertically with the search textbox on laptops, then stack on narrow screens.
+No directory filtering or mutation semantics change with this alignment refinement.
+
+Historical check deep links focus their recorded section once after it becomes available. Later operation polling preserves the administrator's current focus and scroll position; switching the operation/hash target permits a new focus.

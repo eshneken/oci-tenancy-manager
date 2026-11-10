@@ -14,7 +14,10 @@ from otm.tenancies.contracts import ActionReceipt, OrganizationAction
 from otm.tenancies.deletion import TenancyDeletionCommand, TenancyDeletionPreview
 from otm.tenancies.onboarding_contracts import OnboardingCommand, OnboardingView
 from otm.tenancies.presence_contracts import PresenceCheckRequest
+from otm.tenancies.recovery_network_contracts import RecoveryNetworkPreview, RecoveryNetworkRequest
+from otm.tenancies.recovery_password_contracts import RecoveryPasswordRequest, RecoveryPasswordView
 from otm.tenancies.required_users import RequiredUsersDirectory
+from otm.tenancies.signing_key_contracts import SigningKeyRequest, SigningKeyView
 from otm.tenancies.views import (
     PersonWorkflow,
     ReviewDirectory,
@@ -29,6 +32,19 @@ from otm.tenancies.views import (
 PUBLIC_CONFLICTS = frozenset(
     {
         "REQUIRED_USERS_CHECK_UNAVAILABLE",
+        "SIGNING_KEY_MAINTENANCE_REQUIRED",
+        "SIGNING_KEY_CONFIRMATION_REQUIRED",
+        "SIGNING_KEY_ROTATION_UNAVAILABLE",
+        "SIGNING_KEY_PREVIEW_CHANGED",
+        "RECOVERY_PASSWORD_UNAVAILABLE",
+        "RECOVERY_PASSWORD_READ_UNAVAILABLE",
+        "RECOVERY_PASSWORD_CONFIRMATION_REQUIRED",
+        "RECOVERY_PASSWORD_PREVIEW_CHANGED",
+        "RECOVERY_PASSWORD_REQUEST_CLOSED",
+        "RECOVERY_PASSWORD_ROTATION_REQUIRED",
+        "RECOVERY_NETWORK_REPAIR_BLOCKED",
+        "RECOVERY_NETWORK_CONFIRMATION_REQUIRED",
+        "RECOVERY_NETWORK_PREVIEW_CHANGED",
         "RESPONSIBILITY_PREVIEW_CHANGED",
         "EMAIL_CONTACT_CONFIGURATION_REQUIRED",
         "PUBLISHED_BASELINE_REQUIRED",
@@ -86,6 +102,8 @@ def guarded(call):
         return JSONResponse({"code": "REQUEST_KEY_REUSED"}, status_code=409)
     except OrganizationConflict as error:
         code = str(error)
+        if code == "RECOVERY_PASSWORD_READ_UNAVAILABLE":
+            return JSONResponse({"code": code}, status_code=503)
         if code in {
             "RESPONSIBILITY_OPERATION_NOT_FOUND",
             "TENANCY_NOT_FOUND",
@@ -102,10 +120,72 @@ def guarded(call):
         return JSONResponse({"code": "ORGANIZATION_WORKFLOW_UNAVAILABLE"}, status_code=503)
 
 
+# Only this last-mile password response is sensitive; errors and metadata remain non-cacheable too.
+def private_password_response(result):
+    headers = {"Cache-Control": "no-store", "Pragma": "no-cache", "Expires": "0"}
+    if isinstance(result, JSONResponse):
+        result.headers.update(headers)
+        return result
+    body = result.model_dump(mode="json") if isinstance(result, RecoveryPasswordView) else result
+    return JSONResponse(body, headers=headers)
+
+
 # All URLs remain behind the existing session/CSRF middleware; none accepts actor or workspace
 # input.
 def workflow_router(service):
     router = APIRouter()
+
+    # Missing composition disables password capabilities without a secret-store fallback.
+    def password_access():
+        if service.recovery_passwords is None:
+            raise OrganizationConflict("RECOVERY_PASSWORD_UNAVAILABLE")
+        return service.recovery_passwords
+
+    # Read-only progress never initializes legacy keys or obtains private material.
+    @router.get("/api/tenancies/{identifier}/signing-key-rotation", response_model=SigningKeyView)
+    def signing_key_rotation(identifier: UUID, request: Request):
+        if service.signing_key_rotations is None:
+            return JSONResponse({"code": "SIGNING_KEY_ROTATION_UNAVAILABLE"}, status_code=409)
+        return guarded(lambda: service.signing_key_rotations.view(request.user, identifier))
+
+    # Preview/consent and durable replay precede reference-only native deferral.
+    @router.post("/api/tenancies/{identifier}/signing-key-rotation")
+    async def request_signing_key_rotation(identifier: UUID, request: Request):
+        from otm.configuration.rollout_http import bounded_command
+
+        command = await bounded_command(request, SigningKeyRequest, 4096)
+        if isinstance(command, JSONResponse):
+            return command
+        if service.signing_key_rotations is None:
+            return JSONResponse({"code": "SIGNING_KEY_ROTATION_UNAVAILABLE"}, status_code=409)
+        result = await run_in_threadpool(
+            guarded,
+            lambda: service.signing_key_rotations.request(request.user, identifier, command),
+        )
+        if isinstance(result, JSONResponse):
+            return result
+        return JSONResponse(result.model_dump(mode="json"), status_code=202)
+
+    # Opening the access dialog reads metadata only and cannot initialize or disclose a secret.
+    @router.get("/api/tenancies/{identifier}/administrator-access")
+    def administrator_access(identifier: UUID, request: Request):
+        return private_password_response(
+            guarded(lambda: password_access().view(request.user, identifier))
+        )
+
+    # Explicit consent/current authority precede durable audit, notices and the due rotation task.
+    @router.post("/api/tenancies/{identifier}/administrator-access/password")
+    async def recovery_password(identifier: UUID, request: Request):
+        from otm.configuration.rollout_http import bounded_command
+
+        command = await bounded_command(request, RecoveryPasswordRequest, 4096)
+        if isinstance(command, JSONResponse):
+            return private_password_response(command)
+        result = await run_in_threadpool(
+            guarded,
+            lambda: password_access().disclose(request.user, identifier, command),
+        )
+        return private_password_response(result)
 
     # A durable inbox/history page reads only this session's organization and registry.
     @router.get("/api/organization/reviews", response_model=ReviewDirectory)
@@ -279,6 +359,35 @@ def workflow_router(service):
         )
 
     # A foreign tenancy is indistinguishable from an unknown local identifier.
+    @router.get(
+        "/api/tenancies/{identifier}/recovery-network-preview",
+        response_model=RecoveryNetworkPreview,
+    )
+    def recovery_network_preview(identifier: UUID, request: Request):
+        if service.recovery_network_repairs is None:
+            return JSONResponse({"code": "RECOVERY_NETWORK_REPAIR_BLOCKED"}, status_code=409)
+        return guarded(lambda: service.recovery_network_repairs.preview(request.user, identifier))
+
+    # Explicit security-change consent and an exact preview are required even for direct API calls.
+    @router.post(
+        "/api/tenancies/{identifier}/recovery-network-repair",
+        response_model=ActionReceipt,
+        status_code=202,
+    )
+    async def recovery_network_repair(identifier: UUID, request: Request):
+        from otm.configuration.rollout_http import bounded_command
+
+        command = await bounded_command(request, RecoveryNetworkRequest, 4096)
+        if isinstance(command, JSONResponse):
+            return command
+        if service.recovery_network_repairs is None:
+            return JSONResponse({"code": "RECOVERY_NETWORK_REPAIR_BLOCKED"}, status_code=409)
+        return await run_in_threadpool(
+            guarded,
+            lambda: service.recovery_network_repairs.start(request.user, identifier, command),
+        )
+
+    # Detail remains a retained database projection, never a provider or credential action.
     @router.get("/api/tenancies/{identifier}", response_model=TenancyDetail)
     def detail(identifier: UUID, request: Request):
         return guarded(lambda: service.tenancy_detail(request.user, identifier))

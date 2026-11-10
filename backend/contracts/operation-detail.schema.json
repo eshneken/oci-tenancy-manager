@@ -1,5 +1,154 @@
 {
   "$defs": {
+    "AutomationKeyView": {
+      "additionalProperties": false,
+      "properties": {
+        "age_days": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Age Days"
+        },
+        "age_state": {
+          "enum": [
+            "within_limit",
+            "due_soon",
+            "overdue",
+            "unknown",
+            "inactive"
+          ],
+          "title": "Age State",
+          "type": "string"
+        },
+        "created_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Created At"
+        },
+        "fingerprint": {
+          "pattern": "^[0-9a-f]{2}(?::[0-9a-f]{2}){15}$",
+          "title": "Fingerprint",
+          "type": "string"
+        },
+        "key_state": {
+          "enum": [
+            "active",
+            "inactive",
+            "unknown"
+          ],
+          "title": "Key State",
+          "type": "string"
+        },
+        "provider_key_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Provider Key Id",
+          "type": "string"
+        },
+        "retirement_due_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Retirement Due At"
+        }
+      },
+      "required": [
+        "provider_key_id",
+        "fingerprint",
+        "created_at",
+        "key_state",
+        "age_state"
+      ],
+      "title": "AutomationKeyView",
+      "type": "object"
+    },
+    "AutomationKeysView": {
+      "additionalProperties": false,
+      "properties": {
+        "age_as_of": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Age As Of"
+        },
+        "checked_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Checked At"
+        },
+        "keys": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/AutomationKeyView"
+          },
+          "maxItems": 16,
+          "title": "Keys",
+          "type": "array"
+        },
+        "operation_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Operation Id"
+        },
+        "state": {
+          "default": "not_checked",
+          "enum": [
+            "not_checked",
+            "known",
+            "unavailable",
+            "stale"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "title": "AutomationKeysView",
+      "type": "object"
+    },
     "NotificationSummary": {
       "additionalProperties": false,
       "properties": {
@@ -19,7 +168,10 @@
             "action_required",
             "terminal_failure",
             "cost_read_failed",
-            "required_user_missing"
+            "signing_key_attention",
+            "required_user_missing",
+            "recovery_password_requested",
+            "recovery_password_rotation_failed"
           ],
           "title": "Event",
           "type": "string"
@@ -171,6 +323,17 @@
           "title": "At",
           "type": "string"
         },
+        "automation_keys": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AutomationKeysView"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "kind": {
           "enum": [
             "operation_responsibility_changed",
@@ -185,7 +348,12 @@
             "configuration_retry",
             "configuration_check_outcome",
             "cost_collection_outcome",
-            "required_user_check_outcome"
+            "required_user_check_outcome",
+            "recovery_network_outcome",
+            "recovery_password_outcome",
+            "recovery_password_disclosed",
+            "signing_key_outcome",
+            "signing_key_requested"
           ],
           "title": "Kind",
           "type": "string"
@@ -202,6 +370,28 @@
             }
           ],
           "title": "Safe Code"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        },
+        "user_checks": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/UserCheckSection"
+          },
+          "title": "User Checks",
+          "type": "array"
         }
       },
       "required": [
@@ -243,7 +433,7 @@
           "type": "string"
         },
         "step_key": {
-          "pattern": "^(inspect_target|apply_lifecycle|handoff|inspect_bootstrap|establish_automation|verify_automation|configure_required|verify_required|retire_temporary|configure_baseline|verify_configured_access|capture_required_users|configuration_check:[0-9a-f-]{36}|required_users:[0-9a-f-]{36}|cost:[0-9a-f-]{36}|(remove_member_groups|delete_member_user):[0-9a-f-]{36}|configuration:[0-9a-f-]{36})$",
+          "pattern": "^(inspect_target|apply_lifecycle|handoff|inspect_bootstrap|establish_automation|verify_automation|configure_required|verify_required|retire_temporary|configure_baseline|verify_configured_access|capture_required_users|prepare_automation_signer|prepare_recovery_password|configuration_check:[0-9a-f-]{36}|required_users:[0-9a-f-]{36}|recovery_network:[0-9a-f-]{36}|recovery_password:[0-9a-f-]{36}|signing_key:[0-9a-f-]{36}|cost:[0-9a-f-]{36}|(remove_member_groups|delete_member_user):[0-9a-f-]{36}|configuration:[0-9a-f-]{36})$",
           "title": "Step Key",
           "type": "string"
         },
@@ -325,7 +515,10 @@
             "configuration_update",
             "configuration_check",
             "cost_collection",
-            "required_user_check"
+            "required_user_check",
+            "recovery_network_repair",
+            "recovery_password",
+            "signing_key"
           ],
           "title": "Kind",
           "type": "string"
@@ -387,6 +580,19 @@
           ],
           "default": null,
           "title": "Result Tenancy Id"
+        },
+        "scheduled_for": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Scheduled For"
         },
         "stage": {
           "maxLength": 256,
@@ -468,6 +674,145 @@
       ],
       "title": "OperationSummary",
       "type": "object"
+    },
+    "RecoveryPasswordProgress": {
+      "additionalProperties": false,
+      "properties": {
+        "first_request_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "First Request At"
+        },
+        "phase": {
+          "enum": [
+            "setup",
+            "rotation"
+          ],
+          "title": "Phase",
+          "type": "string"
+        },
+        "request_count": {
+          "minimum": 0,
+          "title": "Request Count",
+          "type": "integer"
+        },
+        "rotation_due_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rotation Due At"
+        },
+        "tenancy_id": {
+          "format": "uuid",
+          "title": "Tenancy Id",
+          "type": "string"
+        },
+        "user_name": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "User Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "phase",
+        "tenancy_id",
+        "user_name",
+        "request_count"
+      ],
+      "title": "RecoveryPasswordProgress",
+      "type": "object"
+    },
+    "UserCheckFact": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "enum": [
+            "Presence",
+            "Administrators group",
+            "Domain administrator role",
+            "Console MFA exemption",
+            "Approved-network restriction"
+          ],
+          "title": "Label",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "not_checked",
+            "present",
+            "missing",
+            "unknown",
+            "verified",
+            "drift"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "state"
+      ],
+      "title": "UserCheckFact",
+      "type": "object"
+    },
+    "UserCheckSection": {
+      "additionalProperties": false,
+      "properties": {
+        "anchor": {
+          "enum": [
+            "automation-presence",
+            "automation-assignment",
+            "recovery-presence",
+            "recovery-assignment",
+            "recovery-policy"
+          ],
+          "title": "Anchor",
+          "type": "string"
+        },
+        "checked_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Checked At"
+        },
+        "facts": {
+          "items": {
+            "$ref": "#/$defs/UserCheckFact"
+          },
+          "title": "Facts",
+          "type": "array"
+        }
+      },
+      "required": [
+        "anchor",
+        "facts"
+      ],
+      "title": "UserCheckSection",
+      "type": "object"
     }
   },
   "additionalProperties": false,
@@ -493,6 +838,17 @@
     },
     "operation": {
       "$ref": "#/$defs/OperationSummary"
+    },
+    "recovery_password": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RecoveryPasswordProgress"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "steps": {
       "items": {

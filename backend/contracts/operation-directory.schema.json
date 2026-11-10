@@ -55,7 +55,10 @@
             "configuration_update",
             "configuration_check",
             "cost_collection",
-            "required_user_check"
+            "required_user_check",
+            "recovery_network_repair",
+            "recovery_password",
+            "signing_key"
           ],
           "title": "Kind",
           "type": "string"
@@ -117,6 +120,19 @@
           ],
           "default": null,
           "title": "Result Tenancy Id"
+        },
+        "scheduled_for": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Scheduled For"
         },
         "stage": {
           "maxLength": 256,

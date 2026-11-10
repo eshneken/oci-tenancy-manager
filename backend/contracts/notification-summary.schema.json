@@ -17,7 +17,10 @@
         "action_required",
         "terminal_failure",
         "cost_read_failed",
-        "required_user_missing"
+        "signing_key_attention",
+        "required_user_missing",
+        "recovery_password_requested",
+        "recovery_password_rotation_failed"
       ],
       "title": "Event",
       "type": "string"

@@ -1,8 +1,12 @@
+import {operationHref} from "./operationNavigation";
 import { useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "./api";
 import { followLink } from "./navigation";
 import type { AdministratorAccessView } from "./contracts";
+import {AutomationKeys} from "./AutomationKeys";
+import {RecoveryAccess} from "./RecoveryAccess";
+import {RecoveryNetworkRepair} from "./RecoveryNetworkRepair";
 
 const purposes = { automation: "Automation user", recovery: "Recovery user" };
 const presenceNames = {not_checked:"Not checked", present:"Present", missing:"Missing", unknown:"Unable to verify"};
@@ -28,10 +32,10 @@ function AssignmentFacts({access}:{access?:AdministratorAccessView}) {
 }
 
 // Keep dated provenance compact while preserving the full UTC instant and exact operation target.
-function CheckDate({label,kind,at,operationId,navigate}:{label:string;kind:string;at:string;operationId?:string|null;navigate:(path:string)=>void}) {
+function CheckDate({label,kind,at,operationId,navigate,purpose}:{label:string;kind:string;purpose:string;at:string;operationId?:string|null;navigate:(path:string)=>void}) {
   const date=new Date(at).toLocaleDateString("en-US",{timeZone:"UTC",month:"short",day:"numeric",year:"numeric"});
   const full=new Date(at).toLocaleString("en-US",{timeZone:"UTC",timeZoneName:"short"});
-  const href=operationId?"/operations/"+encodeURIComponent(operationId):null;
+  const href=operationId?operationHref(operationId,purpose+"-"+kind):null;
   return <div><dt>{label} (UTC)</dt><dd>{href?<a href={href} aria-label={`View ${kind} check, ${date}`} title={full} onClick={event=>followLink(event,href,navigate)}><time dateTime={at}>{date}</time></a>:<time dateTime={at} title={full}>{date}</time>}</dd></div>;
 }
 
@@ -75,6 +79,8 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
     if (authorizationLost) expired();
   }, [authorizationLost, expired]);
   const data = authorizationLost ? undefined : result.data;
+  // Inventory read-time/age changes are independent; all recovery-readiness changes still invalidate.
+  const recoveryChecksRevision=JSON.stringify({...data,automation_keys:undefined});
   // Stored result changes refresh inventory/history without fetching any provider from a GET.
   useEffect(()=>{
     if(!data)return;
@@ -101,7 +107,7 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
     keys.current.set(tenancyId,key);
     mutation.mutate({tenancyId,key});
   }
-  return <section id="required-users" className="operation-panel required-users" aria-labelledby="required-users-title" aria-busy={result.isFetching}>
+  return <><section id="required-users" className="operation-panel required-users" aria-labelledby="required-users-title" aria-busy={result.isFetching}>
     <div className="required-users-heading">
       <h2 ref={heading} tabIndex={-1} id="required-users-title">Required users</h2>
       <div className="required-users-actions">
@@ -128,7 +134,7 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
           const consolePolicy = data.recovery_console;
           const administrator = user.administrator_access;
           const label = presence.stale ? "Check out of date" : presenceNames[presence.state];
-          return <li key={user.purpose} className="required-user-card">
+          return <li key={user.purpose} className="required-user-column"><section className="required-user-card">
           <h3>{purposes[user.purpose]}</h3>
           <dl className={"required-user-facts"+(user.purpose === "recovery" ? " required-recovery-facts" : "")}>
             <div className="required-user-fact-wide"><dt>Username</dt><dd>{user.identity?.user_name ?? "Not recorded"}</dd></div>
@@ -146,10 +152,11 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
 
           </dl>
           {(presence.checked_at || administrator?.checked_at || (user.purpose === "recovery" && consolePolicy?.checked_at)) && <dl className="required-user-checks">
-            {administrator?.checked_at && <CheckDate label="Assignments checked" kind="assignment" at={administrator.checked_at} operationId={administrator.operation_id} navigate={navigate}/>}
-            {presence.checked_at && <CheckDate label={presence.state === "unknown" ? "Presence last attempt" : "Presence checked"} kind="presence" at={presence.checked_at} operationId={presence.operation_id} navigate={navigate}/>}
-            {user.purpose === "recovery" && consolePolicy?.checked_at && <CheckDate label="Policy checked" kind="policy" at={consolePolicy.checked_at} operationId={consolePolicy.operation_id} navigate={navigate}/>}
+            {administrator?.checked_at && <CheckDate purpose={user.purpose} label="Assignments checked" kind="assignment" at={administrator.checked_at} operationId={administrator.operation_id} navigate={navigate}/>}
+            {presence.checked_at && <CheckDate purpose={user.purpose} label={presence.state === "unknown" ? "Presence last attempt" : "Presence checked"} kind="presence" at={presence.checked_at} operationId={presence.operation_id} navigate={navigate}/>}
+            {user.purpose === "recovery" && consolePolicy?.checked_at && <CheckDate purpose={user.purpose} label="Policy checked" kind="policy" at={consolePolicy.checked_at} operationId={consolePolicy.operation_id} navigate={navigate}/>}
           </dl>}
+          {user.purpose === "recovery" && <RecoveryNetworkRepair key={tenancyId} tenancyId={tenancyId} eligible={Boolean(data.check_available&&!checking&&presence.state==="present"&&!presence.stale&&consolePolicy?.state==="drift"&&consolePolicy.mfa_exemption==="verified"&&consolePolicy.network_boundary==="drift")} policy={consolePolicy} expired={expired} navigate={navigate}/>}
           {user.identity && <details className="required-user-details">
             <summary>Identity details</summary>
             <dl className="required-user-facts">
@@ -159,11 +166,13 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
               <div><dt>SCIM resource ID</dt><dd className="technical-id">{user.identity.scim_resource_id}</dd></div>
               <div><dt>Recorded (UTC)</dt><dd>{new Date(user.identity.recorded_at).toLocaleString("en-US", { timeZone: "UTC", timeZoneName: "short" })}</dd></div>
               {user.identity.retired_at && <div><dt>Record retired (UTC)</dt><dd>{new Date(user.identity.retired_at).toLocaleString("en-US", { timeZone: "UTC", timeZoneName: "short" })}</dd></div>}
-              <div><dt>Source</dt><dd><a href={"/operations/" + user.identity.source_operation_id} onClick={event => followLink(event, "/operations/" + user.identity!.source_operation_id, navigate)}>View setup operation</a></dd></div>
+              <div><dt>Source</dt><dd><a href={operationHref(user.identity.source_operation_id)} onClick={event => followLink(event, operationHref(user.identity!.source_operation_id), navigate)}>View setup operation</a></dd></div>
             </dl>
           </details>}
+          </section>
+          {user.purpose === "automation" && <RecoveryAccess key={"password-"+tenancyId} tenancyId={tenancyId} checksRevision={recoveryChecksRevision} expired={expired} navigate={navigate}/>}
         </li>;})}
       </ul>
     </>}
-  </section>;
+  </section>{data && <AutomationKeys inventory={data.automation_keys} navigate={navigate} tenancyId={data.signing_rotation_available?tenancyId:undefined} expired={expired}/>}</>;
 }

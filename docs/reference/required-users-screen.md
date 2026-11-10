@@ -101,8 +101,10 @@ real account discovery and cannot qualify SDK/network failures or actual authori
 
 See the [manual local runbook](../how-to/required-users-runbook.md) and
 [pending real OCI manifest](../how-to/real-oci-test-manifest.md). Privilege, credential custody,
-readiness and repair remain separate future work; presence-only reads do not require fabricated
-assignment/profile tables.
+readiness and broader identity/assignment repair remain separate future work.
+[Perimeter-only network repair](recovery-network-repair.md) is locally qualified through a separate
+explicit command, with preserved main publication in the [final receipt](../history/recovery-network-repair-checkpoint-2026-11-09.md). Real OCI remains pending.
+Refresh stays read-only and presence reads require no fabricated assignment/profile tables.
 
 ## Inventory summary — source checkpoint
 
@@ -160,3 +162,13 @@ Recovery Permissions now summarizes separately retained group/role evidence. Its
 remain under Identity details. Assignment, presence and policy dates flow in two columns below the
 overview badges; mobile stacks them. See the [current field map](administrator-assignments.md).
 No password disclosure or all-effective-permissions claim is introduced.
+
+
+## Access mini-panel and exact check destinations — source follow-up
+
+The user cards retain their paired layout; a separate **Administrator access** mini-panel below
+Automation user offers **Request password**. It uses the same recovery credential/dialog and
+existing guards; its position does not make the automation user a human login. Footer dates now
+link to exact subject/kind anchors in [Recorded user check results](operations.md#recorded-required-user-check-sections--source-follow-up).
+Historical assignment/policy omissions are Not checked, not inferred success. No table or permission
+change is introduced. This follow-up’s [validation/installation](../history/recovery-password-checkpoint-2026-11-09.md#access-panel-and-recorded-results-follow-up) passes with the separately recorded combined evidence; earlier440-case/focused receipts retain their own scope.

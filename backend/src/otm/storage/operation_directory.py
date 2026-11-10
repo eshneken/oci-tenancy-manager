@@ -22,6 +22,9 @@ from otm.operations.views import (
     OperationQuery,
     OperationStepView,
     OperationSummary,
+    RecoveryPasswordProgress,
+    UserCheckFact,
+    UserCheckSection,
 )
 from otm.storage.read_snapshot import read_snapshot
 from otm.storage.tables import (
@@ -30,12 +33,109 @@ from otm.storage.tables import (
     operation,
     operation_step,
     org_person,
+    recovery_grant,
     tenancy,
 )
+from otm.tenancies.automation_keys import inventory_view
 from otm.tenancies.contracts import OrganizationActionOutcome
 from otm.tenancies.labels import ACTION_LABELS
 from otm.tenancies.onboarding_contracts import OnboardingEvidence
 from otm.tenancies.presence_contracts import PresenceCheckEvidence
+from otm.tenancies.recovery_network_contracts import RecoveryNetworkEvidence
+from otm.tenancies.recovery_password_contracts import (
+    RecoveryDisclosureEvidence,
+    RecoveryPasswordEvidence,
+)
+from otm.tenancies.signing_key_contracts import (
+    SigningKeyEvidence,
+    SigningKeyRequestEvidence,
+    signing_event_summary,
+)
+
+
+# Reconstruct only the five historical check summaries from validated immutable event evidence.
+def user_check_sections(evidence):
+    sections = []
+    for observation, assignment in zip(
+        evidence.results,
+        (evidence.administrator_access, evidence.recovery_administrator_access),
+        strict=True,
+    ):
+        purpose = observation.target.purpose
+        sections.append(
+            UserCheckSection(
+                anchor=f"{purpose}-presence",
+                checked_at=observation.captured_at,
+                facts=(UserCheckFact(label="Presence", state=observation.state),),
+            )
+        )
+        sections.append(
+            UserCheckSection(
+                anchor=f"{purpose}-assignment",
+                checked_at=assignment.checked_at if assignment else None,
+                facts=tuple(
+                    UserCheckFact(
+                        label=label,
+                        state=getattr(assignment.result, key) if assignment else "not_checked",
+                    )
+                    for label, key in (
+                        ("Administrators group", "group"),
+                        ("Domain administrator role", "domain_role"),
+                    )
+                ),
+            )
+        )
+    policy = evidence.recovery_console
+    sections.append(
+        UserCheckSection(
+            anchor="recovery-policy",
+            checked_at=policy.checked_at if policy else None,
+            facts=tuple(
+                UserCheckFact(
+                    label=label, state=getattr(policy.result, key) if policy else "not_checked"
+                )
+                for label, key in (
+                    ("Console MFA exemption", "mfa_exemption"),
+                    ("Approved-network restriction", "network_boundary"),
+                )
+            ),
+        )
+    )
+    return tuple(sections)
+
+
+# Read the original window; later rotations and current heads cannot rewrite its history.
+def password_progress(connection, row, intent):
+    if intent.kind != "recovery_password" or row["kind"] != intent.kind:
+        raise ValueError("INVALID_RECOVERY_PROGRESS")
+    first = None
+    count = 0
+    if intent.phase == "rotation":
+        count, first, last, earliest_due, latest_due = connection.execute(
+            select(
+                func.count(),
+                func.min(recovery_grant.c.first_disclosure_attempt_at),
+                func.max(recovery_grant.c.first_disclosure_attempt_at),
+                func.min(recovery_grant.c.due_at),
+                func.max(recovery_grant.c.due_at),
+            ).where(
+                recovery_grant.c.workspace_id == row["workspace_id"],
+                recovery_grant.c.accepted_operation_id == row["id"],
+                recovery_grant.c.credential_id == intent.credential_id,
+                recovery_grant.c.tenancy_id == intent.location.target.tenancy_id,
+                recovery_grant.c.exposure_generation == intent.exposure_generation,
+            )
+        ).one()
+        if first != last or earliest_due != intent.due_at or latest_due != intent.due_at:
+            raise ValueError("INVALID_RECOVERY_PROGRESS")
+    return RecoveryPasswordProgress(
+        phase=intent.phase,
+        tenancy_id=intent.location.target.tenancy_id,
+        user_name=intent.location.target.user_name,
+        first_request_at=utc(first),
+        rotation_due_at=intent.due_at,
+        request_count=count,
+    )
 
 
 # Convert stored timestamps to UTC without substituting a retrieval time for missing evidence.
@@ -99,11 +199,17 @@ class SqlOperationDirectory:
             state=row["state"],
             stage=row["stage"],
             accepted_at=utc(row["accepted_at"]),
+            scheduled_for=frozen.intent.due_at
+            if frozen.intent.kind == "signing_key"
+            and frozen.intent.phase == "rotation"
+            and row["state"] == "waiting"
+            and row.get("wait_reason") == "signing_rotation_due"
+            else None,
             updated_at=utc(row["updated_at"]),
             completed_at=utc(row["completed_at"]),
             initiated_by=frozen.actor.display_name,
             result_tenancy_id=row.get("registered_tenancy_id")
-            if row["state"] == "succeeded"
+            if (row["state"] == "succeeded" or frozen.intent.kind == "signing_key")
             and frozen.intent.kind
             in {
                 "organization_action",
@@ -111,13 +217,28 @@ class SqlOperationDirectory:
                 "configuration_check",
                 "cost_collection",
                 "required_user_check",
+                "recovery_network_repair",
+                "recovery_password",
+                "signing_key",
             }
             else None,
             guided_onboarding=frozen.intent.kind == "organization_action"
-            and frozen.intent.onboarding_version in {1, 2, 3},
+            and frozen.intent.onboarding_version in {1, 2, 3, 4},
             target_tenancy_ocid=frozen.intent.target.tenancy_ocid,
             title=ACTION_LABELS[frozen.intent.action]
             if frozen.intent.kind == "organization_action"
+            else (
+                "Prepare recovery password"
+                if frozen.intent.phase == "setup"
+                else "Rotate recovery password"
+            )
+            if frozen.intent.kind == "recovery_password"
+            else "Rotate automation signing key"
+            if frozen.intent.kind == "signing_key" and frozen.intent.phase == "rotation"
+            else "Prepare automation signing credential"
+            if frozen.intent.kind == "signing_key"
+            else "Repair approved recovery networks"
+            if frozen.intent.kind == "recovery_network_repair"
             else "Check required users"
             if frozen.intent.kind == "required_user_check"
             else "Refresh current month costs"
@@ -141,6 +262,9 @@ class SqlOperationDirectory:
                 "configuration_check",
                 "cost_collection",
                 "required_user_check",
+                "recovery_network_repair",
+                "recovery_password",
+                "signing_key",
             }
             else None,
         )
@@ -159,7 +283,7 @@ class SqlOperationDirectory:
             .exists()
         )
         guided = and_(
-            audit_event.c.data["intent"]["onboarding_version"].astext.in_(("1", "2", "3")),
+            audit_event.c.data["intent"]["onboarding_version"].astext.in_(("1", "2", "3", "4")),
             or_(
                 operation.c.state == "needs_attention",
                 operation.c.wait_reason.in_(("onboarding_handoff", "onboarding_review")),
@@ -179,6 +303,8 @@ class SqlOperationDirectory:
         where = [operation.c.workspace_id == workspace]
         if query.state:
             where.append(operation.c.state == query.state)
+        if query.kind:
+            where.append(operation.c.kind == query.kind)
         if query.query:
             target = audit_event.c.data["intent"]["target"]["tenancy_ocid"].astext
             where.append(
@@ -298,6 +424,9 @@ class SqlOperationDirectory:
                 .all()
             )
             return OperationDetail(
+                recovery_password=password_progress(connection, row, frozen.intent)
+                if row["kind"] == "recovery_password"
+                else None,
                 notifications=list_for_operation(connection, workspace, identifier),
                 operation=summary,
                 steps=[self.step(step) for step in steps],
@@ -309,7 +438,13 @@ class SqlOperationDirectory:
     def step(self, row):
         outcome = (
             (
-                PresenceCheckEvidence
+                SigningKeyEvidence
+                if row["command_kind"] == "signing_key"
+                else RecoveryPasswordEvidence
+                if row["command_kind"] == "recovery_password"
+                else RecoveryNetworkEvidence
+                if row["command_kind"] == "recovery_network_repair"
+                else PresenceCheckEvidence
                 if row["command_kind"] == "required_user_check"
                 else CostEvidence
                 if row["command_kind"] == "cost_collection"
@@ -338,13 +473,23 @@ class SqlOperationDirectory:
     def event(self, row):
         if canonical_hash(row["data"]) != row["data_hash"]:
             raise ValueError("INVALID_OPERATION_EVIDENCE")
+        if row["kind"] == "recovery_password_disclosed":
+            RecoveryDisclosureEvidence.model_validate_json(json.dumps(row["data"]))
         if row["kind"] == "email_delivery":
             NotificationEvidence.model_validate_json(json.dumps(row["data"]))
         if row["kind"] == "operation_responsibility_changed":
             ResponsibilityEvidence.model_validate_json(json.dumps(row["data"]))
         outcome = (
             (
-                PresenceCheckEvidence
+                SigningKeyEvidence
+                if row["kind"] == "signing_key_outcome"
+                else SigningKeyRequestEvidence
+                if row["kind"] == "signing_key_requested"
+                else RecoveryPasswordEvidence
+                if row["kind"] == "recovery_password_outcome"
+                else RecoveryNetworkEvidence
+                if row["kind"] == "recovery_network_outcome"
+                else PresenceCheckEvidence
                 if row["kind"] == "required_user_check_outcome"
                 else CostEvidence
                 if row["kind"] == "cost_collection_outcome"
@@ -367,6 +512,10 @@ class SqlOperationDirectory:
                 "configuration_check_outcome",
                 "cost_collection_outcome",
                 "required_user_check_outcome",
+                "recovery_network_outcome",
+                "recovery_password_outcome",
+                "signing_key_outcome",
+                "signing_key_requested",
                 "configuration_retry",
                 "organization_action_outcome",
                 "onboarding_action",
@@ -375,5 +524,22 @@ class SqlOperationDirectory:
             else None
         )
         return OperationEventView(
-            kind=row["kind"], at=utc(row["at"]), safe_code=outcome.safe_code if outcome else None
+            summary=signing_event_summary(outcome)
+            if isinstance(outcome, SigningKeyEvidence)
+            else None,
+            automation_keys=inventory_view(
+                outcome.automation_keys,
+                outcome.operation_id,
+                outcome.automation_keys.checked_at
+                if outcome.automation_keys
+                else outcome.checked_at,
+            )
+            if isinstance(outcome, PresenceCheckEvidence)
+            else None,
+            kind=row["kind"],
+            at=utc(row["at"]),
+            safe_code=outcome.safe_code if outcome else None,
+            user_checks=user_check_sections(outcome)
+            if isinstance(outcome, PresenceCheckEvidence)
+            else (),
         )

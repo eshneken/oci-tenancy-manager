@@ -4,6 +4,16 @@ import type { MappingRequest } from "../src/contracts";
 
 // Isolate transport contracts and ensure factors appear only in the POST body.
 describe("API transport", () => {
+  // Recovery-network commands retain target encoding, cancellation, CSRF and closed body fields.
+  it("keeps network repair previews and consent on fixed same-origin endpoints",async()=>{
+    const fetch=vi.fn().mockResolvedValue({ok:true,status:200,json:async()=>({})});
+    vi.stubGlobal("fetch",fetch);const signal=new AbortController().signal;
+    await api.previewRecoveryNetworks("unit/id",signal);
+    expect(fetch).toHaveBeenLastCalledWith("/api/tenancies/unit%2Fid/recovery-network-preview",expect.objectContaining({method:"GET",signal,cache:"no-store",credentials:"same-origin"}));
+    const command={client_request_key:"11111111-1111-4111-8111-111111111111",preview_hash:"a".repeat(64),acknowledged:true};
+    await api.repairRecoveryNetworks("unit/id",command,signal);
+    expect(fetch).toHaveBeenLastCalledWith("/api/tenancies/unit%2Fid/recovery-network-repair",expect.objectContaining({method:"POST",signal,body:JSON.stringify(command),headers:{"Content-Type":"application/json","X-OTM-Request":"1"}}));
+  });
   // Verify routing, abort signals, privacy options and exact grant revisions.
   it("sends same-origin requests without caching or URL factor leakage", async () => {
     const session = {
@@ -367,4 +377,17 @@ it("posts a scoped required-user check without browser-selected authority", asyn
     method:"POST", cache:"no-store", credentials:"same-origin",
     body:JSON.stringify({client_request_key:"request-key"}),
   }));
+});
+
+// Secret acquisition stays on an imperative guarded POST; metadata GET cannot disclose it.
+it("keeps recovery access transport private and recognizes the closed termination hold",async()=>{
+ const fetch=vi.fn().mockResolvedValue({ok:true,status:200,json:async()=>({})});vi.stubGlobal("fetch",fetch);
+ const signal=new AbortController().signal;
+ await api.administratorAccess("unit/id",signal);
+ expect(fetch).toHaveBeenLastCalledWith("/api/tenancies/unit%2Fid/administrator-access",expect.objectContaining({method:"GET",cache:"no-store",credentials:"same-origin",signal}));
+ const command={client_request_key:"11111111-1111-4111-8111-111111111111",preview_hash:"a".repeat(64),acknowledged:true};
+ await api.recoveryPassword("unit/id",command,signal);
+ expect(fetch).toHaveBeenLastCalledWith("/api/tenancies/unit%2Fid/administrator-access/password",expect.objectContaining({method:"POST",cache:"no-store",body:JSON.stringify(command),headers:{"Content-Type":"application/json","X-OTM-Request":"1"}}));
+ fetch.mockResolvedValue({ok:false,status:409,json:async()=>({code:"RECOVERY_PASSWORD_ROTATION_REQUIRED"})});
+ await expect(api.administratorAccess("unit/id")).rejects.toMatchObject({code:"RECOVERY_PASSWORD_ROTATION_REQUIRED"});
 });

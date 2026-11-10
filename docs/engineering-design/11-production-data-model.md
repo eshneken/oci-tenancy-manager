@@ -2180,3 +2180,114 @@ exact recovery SCIM identity/domain binding and separate observed group/applicat
 `RequiredUsersSummary.recovery_administrator_access` supplies the recovery inventory warning.
 Existing audit/check rows retain these fields; no new table, migration or index is required.
 Historical omitted bytes stay stable, and source capture is never backfilled from presence.
+
+
+## Recovery-network repair: existing-record linkage — 9 November 2026
+
+The [source-implemented field map](../reference/recovery-network-repair.md#fields-and-existing-storage)
+adds operation kind `recovery_network_repair`, step command of the same name with
+`recovery_network:{tenancy UUID}`, and audit kind `recovery_network_outcome`. Migration 0026 extends
+existing CHECK constraints only. There are still **25 OTM application tables**, excluding the separately
+owned runner tables; no new table, column, foreign-key relationship or competing ER is introduced.
+Full local UI/integration qualification and preserved main publication of this subset pass; real OCI remains pending.
+
+- Existing immutable operation-intent audit JSON carries `RecoveryNetworkIntent`: contract/kind,
+  workspace/admin/authorization revision, exact `PresenceSnapshot`, source check operation UUID
+  (`source_check_id`), producer ownership/binding `source_hash`, desired fingerprint, latest sealed actual-check
+  `observed_fingerprint`, `preview_hash`, exact
+  target and `expires_at`. The source ID refers to the operation, not the physical check-row UUID.
+- The existing operation step records attempt identity and, before possible dispatch, private
+  `RecoveryNetworkAuthority` in `inputs`: exact command/context/subject/resource bindings/desired
+  policy, observation time/facts, scoped replace permission, conditional-update/ownership proof and
+  opaque compare token. Both preview and first worker authority must match the sealed source check’s actual-before
+  fingerprint. Setup/last-repair facts authenticate ownership and bindings, not current networks.
+  A changed refreshed token or before-state blocks the write rather than
+  substituting unrecorded authority. The step/operation effect becomes unknown before possible send.
+- Existing `recovery_network_outcome` audit JSON and step `last_outcome`/evidence reference carry
+  `RecoveryNetworkEvidence`: operation/tenancy/snapshot, effect/state/safe code, checked time and
+  optional private capture. Only known verified or applied-but-superseded outcomes retain capture;
+  unknown remains held, with no automatic duplicate write. Public projections expose safe fields.
+- Existing child `operation_id` reserves the target. Known outcomes release it; uncertain effects
+  retain it. Existing native transaction enqueue and operation/step/audit history own execution.
+- Subsequent simulated reads recover the latest known applied private capture by joining the repair’s
+  immutable source-check operation UUID to existing `otm_user_presence_check.acquisition_sequence`.
+  This monotonic source order avoids timestamp/UUID ties without another ordering table. Scope and
+  hashes remain validated; applied older desired revisions do not certify current desired readiness.
+- Separate required-user refresh writes its own dated existing check/outcome. Repair does not rewrite
+  prior presence/assignment/policy observations or fabricate a newly passing check at GET time.
+
+This perimeter-only model does not add MFA/rule editing, assignment repair, user recreation, Vault
+custody, password disclosure/rotation, key retirement or fleet rollout. Those remain separately scoped.
+
+The before-state correction adds no field or relationship: existing `observed_fingerprint` is sourced
+from the latest sealed policy check, whereas `source_hash` still pins producer ownership/binding
+provenance. Fresh actual authority supplies preview network counts. Independently observed external
+network edits are repairable after refresh; unrefreshed third states or post-admission changes block.
+The [final local receipt](../history/recovery-network-repair-checkpoint-2026-11-09.md) records430 complete integration cases and preserved main publication. Real OCI, broader repair and credential flows remain pending.
+
+
+## Recovery-password source subset — 9 November 2026
+
+The [field-complete source dictionary](../reference/recovery-password-access.md#physical-field-dictionary)
+and [actual-subset ER source](../architecture/diagrams/recovery-passwords-implemented.mmd) describe
+migration0027: `otm_credential` (18 columns), `otm_credential_version` (8), and
+`otm_human_access_grant` (15). This extends source metadata from25 to28 OTM application tables,
+excluding runner-owned tables. Qualification and installed migration/saved-app status are recorded
+only in the [checkpoint receipt](../history/recovery-password-checkpoint-2026-11-09.md).
+The broader proposed identity/access context tables and generic credential kinds above are not
+silently implemented by these three existing planned names.
+
+Head FKs scope child, exact principal binding, onboarding origin and current system operation.
+Composite same-credential pointers reference immutable version evidence and append-only root request;
+request rows separately reference exact disclosed version, rotation operation and their shared root.
+Deferred head/version/root constraints support atomic circular insertion. Per-subject/active-child
+and provider-secret uniqueness avoid competing custody; requester request keys preserve replay.
+Database window constraints retain exactly+four hours; no plaintext credential column exists.
+
+`location`/`location_hash` and version `reference`/`reference_hash` are typed nonsecret JSON. Initial
+setup accepts a null provider locator until staged custody allocates a real returned reference;
+a usable version cannot remain unallocated. CURRENT is resolved for ordinary retrieval, with exact
+returned version checked against reconciled evidence. Stored current pointers are not read fallback.
+Original first/due times and exposure/root IDs live on the head and immutable requests; fixed duration/
+anchor live in typed disclosure evidence, not invented physical policy columns. Request resolution
+is derived from head generation and operation outcomes; there are no grant state/resolved columns
+in this implemented subset. This is distinct from additional fields in the broader proposal.
+
+Version4 setup admits the system operation/head/queue within the onboarding transaction, waits
+before temporary cleanup and resumes only after coupled child/custody verification. Existing versions
+are preserved without legacy backfill. Intent/step/outcome/audit/outbox fields are mapped in the
+reference; transient plaintext is confined to the exceptional authenticated response and explicit
+local simulator custody. Due rotation survives requester deprovisioning, keeps its original deadline
+and acquires execution exclusion only when needed. D54 manual paused restore remains authoritative.
+No new local instance, external journal, account/TOTP workflow or live OCI claim is introduced.
+
+
+### Password UI fields and cleanup boundary — implemented subset
+
+`RecoveryAccess.tsx` consumes `RecoveryPasswordView` and exceptional no-store
+`RecoveryPasswordDisclosure`: request ID, username/password, original first/due timestamps, rotation
+operation and simulated mode. Only the exceptional response contains transient plaintext. Consent,
+mask/show/copy/close, focus and clearing on navigation/hidden/deadline are client state, not columns;
+query/audit/ordinary metadata excludes the password. Transient CURRENT acquisition failure preserves
+the admitted window for retry; only an unexpected returned version holds custody unknown. Local
+cleanup includes the new FK tables only when empty and refuses retained credential/version/request
+evidence. The checkpoint receipt, not this field map, establishes qualification and saved8443 installation.
+
+
+## Automation key inventory JSON subset — source checkpoint
+
+The [field dictionary](../reference/automation-signing-keys.md) adds optional legacy-omitted
+`OrganizationIntent.automation_key_inventory_contract`, `OnboardingUsers.automation_keys` and
+`PresenceCheckEvidence.automation_keys` in existing immutable intent/onboarding/check evidence.
+`RequiredUsersDirectory.automation_keys` is a safe derived `AutomationKeysView`, preserving exact
+subject/attempt provenance and observation time separately from age assessment time. Known empty
+versus unavailable inventory and per-key unknown creation age remain distinct. No table, column,
+index, migration, credential head, selected signer or competing ER is introduced. The physical
+28-table OTM model is unchanged. The [checkpoint receipt](../history/automation-signing-key-inventory-checkpoint-2026-11-09.md)
+records passing targeted local qualification/publication, not new complete milestone/PR qualification. Historical `OperationEventView.automation_keys` now uses the key check’s own
+recorded time for age, separately from the current server-time projection. Future-at-capture values
+remain Unknown until a fresh qualified read. No new SQL field or signer proof is introduced.
+
+## Managed signing-head implemented subset — 10 November 2026
+
+Candidate migration 0028 adds one `otm_signing_credential` (17 columns), reusing existing operations, steps, audit, bindings, immutable presence connections and outbox. [Exact field and JSON map](../reference/signing-key-rotation.md) and [editable ER](../architecture/diagrams/signing-credentials-implemented.mmd) distinguish written source from targeted local qualification/saved installation PASS; full-suite/PR/live Pending. Installed totals are 29 OTM/ 33 public tables; all 32 preexisting public tables were preserved. No separate key-version/history/notification table or recovery-password CURRENT reuse. This local subset does not qualify real generation, Vault/OCI signing, dynamic privilege proof or hosted deployment.

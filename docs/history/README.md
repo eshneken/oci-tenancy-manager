@@ -54,3 +54,19 @@ Private original feeds, raw evidence, screenshots and machine-specific paths are
 The [Recovery/header refinement](check-date-footer-local-session-checkpoint-2026-11-09.md#recovery-overview-and-matching-header-actions) extends that same UI checkpoint with a readable tablet layout and matching panel actions.
 
 - [Recovery assignments UI checkpoint](recovery-assignments-checkpoint-2026-11-09.md): independent recovery group/role results and compact permission summary.
+
+- [Recovery-network repair checkpoint — 9 November 2026](recovery-network-repair-checkpoint-2026-11-09.md): 430 final integration cases, guarded conditional repair and preserved main data/settings.
+
+- [Recovery-password checkpoint](recovery-password-checkpoint-2026-11-09.md):440 clean-tree integration cases, independent reviews and preserved main installation with three empty custody tables.
+
+- [Access-panel and recorded-results source follow-up](recovery-password-checkpoint-2026-11-09.md#access-panel-and-recorded-results-follow-up): installed layout and exact historical check sections;438 passing cases plus both corrected native journeys rerun successfully, not a clean440 rerun.
+
+- [Password operation progress source follow-up](recovery-password-checkpoint-2026-11-09.md#password-operation-progress-follow-up): installed original-window dates/counts and phase/status;440 complete cases plus final-copy targeted qualification.
+
+- [Operation return navigation follow-up](recovery-password-checkpoint-2026-11-09.md#operation-return-navigation-follow-up): contextual links; targeted validation and preserved main installation pass; no full native rerun.
+
+- [Automation signing-key inventory checkpoint](automation-signing-key-inventory-checkpoint-2026-11-09.md): targeted read-only age panel qualified/installed; four targeted cases, not a complete-suite gate.
+
+- [Signing-key rotation targeted UI checkpoint — 10 November 2026](signing-key-rotation-checkpoint-2026-11-10.md): targeted local qualification and preserved installation PASS; full-suite/PR/live Pending.
+
+- [Operations discovery and directory alignment — 10 November 2026](operations-filter-checkpoint-2026-11-10.md): read-only kind filter, responsive controls and worker-sizing decision; see receipt for qualification/install state.

@@ -384,3 +384,13 @@ it.each(["create","import"] as const)("guides %s bootstrap email to the recorded
  const instruction=screen.getByText(/use the recorded bootstrap contact/,{selector:"li"});expect(instruction).toHaveTextContent("capture@example.test");expect(instruction).not.toHaveTextContent("creator@example.test");
  if(origin==="import")expect(screen.queryByText(/Activation delivery:/)).toBeNull();
 });
+
+
+// Background password preparation is a machine wait, so polling must continue until setup completes.
+it("continues polling while configuring waits on its password worker",async()=>{
+  const c=mount({...verified,state:"waiting",phase:"configuring",available_actions:[]});
+  c.read.mockResolvedValue({...verified,state:"succeeded",phase:"complete",available_actions:[]});
+  await screen.findByText(/worker is processing/);
+  await screen.findByRole("heading",{name:"Local setup verified"},{timeout:4000});
+  expect(c.read).toHaveBeenCalledTimes(2);
+});

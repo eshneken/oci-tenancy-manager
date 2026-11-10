@@ -411,6 +411,7 @@ def create_app(
             sort: str = "accepted_at",
             direction: str = "desc",
             state: str = "",
+            kind: str = "",
             query: str = "",
         ):
             principal = request.user
@@ -422,6 +423,7 @@ def create_app(
                     sort=sort,
                     direction=direction,
                     state=state,
+                    kind=kind,
                     query=query,
                 )
             except ValueError:

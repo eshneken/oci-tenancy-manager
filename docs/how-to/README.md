@@ -13,7 +13,7 @@ isolated synthetic fixtures; private enrollment factors do not belong in reports
 - [Local review: lifecycle email and environment routing](lifecycle-email-runbook.md), including [additional lifecycle notices](lifecycle-email-runbook.md#additional-lifecycle-notices)
 - [Local quality checks](local-quality-checks.md)
 - [Organization Mapping — manual test runbook](organization-mapping-runbook.md), including [return/consent correction checks](organization-mapping-runbook.md#return-and-destructive-consent-correction-review-after-installation) after deliberate installation
-- [Parallel Atlas Test instance](parallel-local-instance.md)
+- [Retired parallel Atlas Test instance](parallel-local-instance.md) — historical instructions only; current local use is8443 only, with no new instance creation
 - [Manual review: administrator responsibility takeover](responsibility-runbook.md)
 - [Manual review: tenancy detail, shared access and onboarding](tenancy-refinements-runbook.md)
 
@@ -34,3 +34,7 @@ The [live OCI manifest](real-oci-test-manifest.md#pending-explicit-owner-retenti
 includes replacement verification, identity retention/removal and manual resource-cleanup qualification.
 
 - [Recovery-policy UI checkpoint](recovery-policy-ui-checkpoint.md): safe local inspection of independent user and console-policy controls.
+
+- [Review contextual operation Back links](operation-navigation.md) — source navigation follow-up; check its separate validation/install receipt before manual main review
+
+- [Managed signing-key rotation local review](signing-key-rotation-runbook.md): newly onboarded simulated child, original schedule, guarded manual expedite and immutable history; use after confirmed installation.

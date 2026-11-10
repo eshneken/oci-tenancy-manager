@@ -157,6 +157,7 @@ def seal(
     recovery_console=None,
     administrator_access=None,
     recovery_administrator_access=None,
+    automation_keys=None,
 ):
     validate_result_scope(check, results)
     if recovery_console is not None:
@@ -182,6 +183,7 @@ def seal(
         recovery_console=recovery_console,
         administrator_access=administrator_access,
         recovery_administrator_access=recovery_administrator_access,
+        automation_keys=automation_keys,
     )
     payload = evidence.model_dump(mode="json")
     event = uuid4()

@@ -1,3 +1,4 @@
+import {operationHref} from "./operationNavigation";
 import { CleanupResponsibilities } from "./CleanupResponsibilities";
 import { AddSharedMember } from "./AddSharedMember";
 import { RequiredUserSummary } from "./RequiredUserSummary";
@@ -235,7 +236,7 @@ export function Tenancies({
             ))}
           </div>
           <section className="table-panel">
-            <div className="table-toolbar tenancy-toolbar">
+            <div className="table-toolbar tenancy-toolbar directory-toolbar">
               <label className="search-field">
                 Search tenancies
                 <input
@@ -379,11 +380,11 @@ export function Tenancies({
                               {hasInventoryOperation(row) && (
                                 <a
                                   className="cell-secondary"
-                                  href={"/operations/" + row.operation_id}
+                                  href={operationHref(row.operation_id)}
                                   onClick={(event) =>
                                     followLink(
                                       event,
-                                      "/operations/" + row.operation_id,
+                                      operationHref(row.operation_id),
                                       navigate,
                                     )
                                   }
@@ -557,11 +558,11 @@ export function Tenancies({
                 {tenant.operation_id && (
                   <a
                     className="tenancy-operation-link"
-                    href={"/operations/" + tenant.operation_id}
+                    href={operationHref(tenant.operation_id)}
                     onClick={(event) =>
                       followLink(
                         event,
-                        "/operations/" + tenant.operation_id,
+                        operationHref(tenant.operation_id),
                         navigate,
                       )
                     }

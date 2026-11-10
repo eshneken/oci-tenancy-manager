@@ -39,6 +39,71 @@ def event(kind="local_sign_in_succeeded", operator=False):
         display_name=None if operator else "Example administrator",
     )
     data = {"private_marker": "must-not-escape"}
+    if kind == "signing_key_outcome":
+        from otm.tenancies.signing_key_contracts import SigningKeyEvidence
+
+        data = SigningKeyEvidence(
+            operation_id=uuid4(),
+            credential_id=uuid4(),
+            tenancy_id=uuid4(),
+            phase="rotation",
+            state="attention",
+            safe_code="SIGNING_KEY_UNAVAILABLE",
+            checked_at=NOW,
+        ).model_dump(mode="json")
+    if kind == "signing_key_requested":
+        from otm.tenancies.signing_key_contracts import SigningKeyRequestEvidence
+
+        data = SigningKeyRequestEvidence(
+            operation_id=uuid4(),
+            tenancy_id=uuid4(),
+            client_request_key=uuid4(),
+            request_digest="a" * 64,
+            action="rotate",
+        ).model_dump(mode="json")
+    if kind == "recovery_password_outcome":
+        from otm.tenancies.recovery_password_contracts import RecoveryPasswordEvidence
+
+        data = RecoveryPasswordEvidence(
+            credential_id=uuid4(),
+            tenancy_id=uuid4(),
+            operation_id=uuid4(),
+            phase="rotation",
+            state="blocked",
+            effect="none",
+            safe_code="RECOVERY_PASSWORD_BLOCKED",
+            checked_at=NOW,
+        ).model_dump(mode="json")
+    if kind == "recovery_password_disclosed":
+        from datetime import timedelta
+
+        from otm.tenancies.recovery_password_contracts import RecoveryDisclosureEvidence
+
+        data = RecoveryDisclosureEvidence(
+            grant_id=uuid4(),
+            credential_id=uuid4(),
+            tenancy_id=uuid4(),
+            disclosed_version_id=uuid4(),
+            window_root_grant_id=uuid4(),
+            exposure_generation=1,
+            first_disclosure_at=NOW,
+            rotation_due_at=NOW + timedelta(hours=4),
+        ).model_dump(mode="json")
+    if kind == "recovery_network_outcome":
+        from test_user_presence_check_units import case
+
+        from otm.tenancies.recovery_network_contracts import RecoveryNetworkEvidence
+
+        sample = case()
+        data = RecoveryNetworkEvidence(
+            operation_id=uuid4(),
+            tenancy_id=sample.snapshot.tenancy_id,
+            snapshot=sample.snapshot,
+            effect="none",
+            state="blocked",
+            safe_code="RECOVERY_NETWORK_BLOCKED",
+            checked_at=NOW,
+        ).model_dump(mode="json")
     if kind == "required_user_check_outcome":
         from test_user_presence_check_units import case
 
@@ -186,7 +251,13 @@ def event(kind="local_sign_in_succeeded", operator=False):
         workspace_id="audit-org",
         at=NOW,
         kind=kind,
-        actor_subject="otm-worker:user-presence"
+        actor_subject="otm-worker:signing-key"
+        if kind == "signing_key_outcome"
+        else "otm-worker:recovery-password"
+        if kind == "recovery_password_outcome"
+        else "otm-worker:recovery-network"
+        if kind == "recovery_network_outcome"
+        else "otm-worker:user-presence"
         if kind == "required_user_check_outcome"
         else "otm-worker:costs"
         if kind == "cost_collection_outcome"
@@ -201,7 +272,13 @@ def event(kind="local_sign_in_succeeded", operator=False):
         else "otm-worker:inspection"
         if worker
         else actor.key,
-        actor_snapshot={"kind": "worker", "subject": "user-presence"}
+        actor_snapshot={"kind": "worker", "subject": "signing-key"}
+        if kind == "signing_key_outcome"
+        else {"kind": "worker", "subject": "recovery-password"}
+        if kind == "recovery_password_outcome"
+        else {"kind": "worker", "subject": "recovery-network"}
+        if kind == "recovery_network_outcome"
+        else {"kind": "worker", "subject": "user-presence"}
         if kind == "required_user_check_outcome"
         else {"kind": "worker", "subject": "costs"}
         if kind == "cost_collection_outcome"
@@ -267,6 +344,12 @@ def test_public_projection_all_kinds(kind):
     )
     if kind == "local_sign_in_failed":
         assert result.actor_name is None
+    elif kind == "signing_key_outcome":
+        assert result.actor_name == "Signing-key worker"
+    elif kind == "recovery_password_outcome":
+        assert result.actor_name == "Recovery password worker"
+    elif kind == "recovery_network_outcome":
+        assert result.actor_name == "Recovery network worker"
     elif kind == "required_user_check_outcome":
         assert result.actor_name == "User presence worker"
     elif kind == "cost_collection_outcome":
@@ -284,7 +367,15 @@ def test_public_projection_all_kinds(kind):
     else:
         assert result.actor_name == "Example administrator"
     assert result.safe_code == (
-        "USER_PRESENCE_CHECK_COMPLETE"
+        "SIGNING_KEY_UNAVAILABLE"
+        if kind == "signing_key_outcome"
+        else "SIGNING_KEY_REQUESTED"
+        if kind == "signing_key_requested"
+        else "RECOVERY_PASSWORD_BLOCKED"
+        if kind == "recovery_password_outcome"
+        else "RECOVERY_NETWORK_BLOCKED"
+        if kind == "recovery_network_outcome"
+        else "USER_PRESENCE_CHECK_COMPLETE"
         if kind == "required_user_check_outcome"
         else "COST_READ_COMPLETE"
         if kind == "cost_collection_outcome"

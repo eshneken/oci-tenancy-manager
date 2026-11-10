@@ -53,7 +53,7 @@ def eligible(row, intent):
         row["state"] in {"waiting", "needs_attention"}
         and isinstance(intent, OrganizationIntent)
         and intent.action in {"create_tenancy", "import_tenancy"}
-        and intent.onboarding_version in {1, 2, 3}
+        and intent.onboarding_version in {1, 2, 3, 4}
     )
 
 
@@ -91,7 +91,7 @@ def latest_claim(connection, row):
 # Fresh grant validation still happens at dispatch; a revoke/regrant cannot revive captured
 # authority.
 def execution_authority(connection, row, frozen):
-    if frozen.intent.onboarding_version not in {1, 2, 3}:
+    if frozen.intent.onboarding_version not in {1, 2, 3, 4}:
         if row["responsible_actor_subject"] != frozen.actor.key:
             raise ValueError("RESPONSIBILITY_PROOF_REQUIRED")
         return frozen.intent.administrator_id, frozen.intent.authorization_revision, frozen.actor
@@ -103,7 +103,7 @@ def execution_authority(connection, row, frozen):
     proof = decode_evidence(recorded)
     if (
         not isinstance(frozen.intent, OrganizationIntent)
-        or frozen.intent.onboarding_version not in {1, 2, 3}
+        or frozen.intent.onboarding_version not in {1, 2, 3, 4}
         or frozen.intent.action not in {"create_tenancy", "import_tenancy"}
         or proof.after_actor.key != row["responsible_actor_subject"]
         or proof.operation_revision > row["revision"]

@@ -106,6 +106,8 @@ class OnboardingEvidence(Contract):
         "configure_baseline",
         "verify_configured_access",
         "capture_required_users",
+        "prepare_recovery_password",
+        "prepare_automation_signer",
     ]
     outcome: Literal["accepted", "verified", "blocked"]
     safe_code: Literal[

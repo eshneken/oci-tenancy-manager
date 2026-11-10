@@ -1,3 +1,6 @@
+import {AutomationKeys} from "./AutomationKeys";
+import {operationHref,operationReturn} from "./operationNavigation";
+import {RecoveryPasswordOperation} from "./RecoveryPasswordOperation";
 import { EmailNotifications } from "./EmailNotifications";
 import { Select } from "./Select";
 import { useEffect, useRef, useState } from "react";
@@ -19,12 +22,24 @@ const states: Record<OperationState, string> = {
   cancelled: "Cancelled",
   failed: "Failed",
 };
+const kinds: Record<OperationSummary["kind"], string> = {
+  organization_action: "Tenancy & organization workflows",
+  inspect_import: "Import inspection",
+  configuration_update: "Configuration updates",
+  configuration_check: "Configuration checks",
+  cost_collection: "Cost collection",
+  required_user_check: "Required-user checks",
+  recovery_network_repair: "Recovery network repair",
+  recovery_password: "Recovery password access",
+  signing_key: "Signing-key maintenance",
+};
 const initialQuery: OperationFilters = {
   page: 1,
   page_size: 10,
   sort: "accepted_at",
   direction: "desc",
   state: "",
+  kind: "",
   query: "",
 };
 const columns = [
@@ -117,8 +132,7 @@ function OperationList({
   const client = useQueryClient();
   const [query, setQuery] = useState<OperationFilters>(
     () =>
-      client.getQueryData<OperationFilters>(["operations", "view"]) ??
-      initialQuery,
+      ({...initialQuery, ...client.getQueryData<OperationFilters>(["operations", "view"])}),
   );
   const [search, setSearch] = useState(query.query);
   useEffect(() => {
@@ -144,7 +158,7 @@ function OperationList({
   });
   useReadDenial(result.error, expired);
   const data = result.data;
-  const filtered = Boolean(query.query || query.state);
+  const filtered = Boolean(query.query || query.state || query.kind);
   const page = data?.page ?? 1;
   const pageCount = data?.pages ?? 1;
   const firstPage = Math.max(1, Math.min(page - 2, pageCount - 4));
@@ -162,10 +176,10 @@ function OperationList({
         previous.sort === key && previous.direction === "asc" ? "desc" : "asc",
     }));
   }
-  // Clearing a no-match state resets both user filters while preserving ordering and row count.
+  // Clearing a no-match state resets all user filters while preserving ordering and row count.
   function clearFilters() {
     setSearch("");
-    setQuery((previous) => ({ ...previous, query: "", state: "", page: 1 }));
+    setQuery((previous) => ({ ...previous, query: "", state: "", kind: "", page: 1 }));
   }
   return (
     <>
@@ -193,6 +207,25 @@ function OperationList({
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
+          </label>
+          <label className="state-filter operation-kind-filter">
+            Operation type
+            <Select
+              aria-label="Operation type"
+              value={query.kind}
+              onChange={(event) =>
+                setQuery((previous) => ({
+                  ...previous,
+                  kind: event.target.value as OperationFilters["kind"],
+                  page: 1,
+                }))
+              }
+            >
+              <option value="">All operation types</option>
+              {Object.entries(kinds).map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
+            </Select>
           </label>
           <label className="state-filter">
             State
@@ -242,7 +275,7 @@ function OperationList({
                 </h2>
                 <p>
                   {filtered
-                    ? "Change or clear the search and state filter."
+                    ? "Change or clear the search, operation type and state filters."
                     : "Recorded operations will appear here after a workflow or inspection is accepted."}
                 </p>
                 {filtered && (
@@ -301,11 +334,11 @@ function OperationList({
                         <td>
                           <a
                             className="operation-link"
-                            href={"/operations/" + operation.id}
+                            href={operationHref(operation.id)}
                             onClick={(event) =>
                               followLink(
                                 event,
-                                "/operations/" + operation.id,
+                                operationHref(operation.id),
                                 navigate,
                               )
                             }
@@ -329,7 +362,13 @@ function OperationList({
                           </span>
                           {simulationIssue(operation) && (
                             <p className="operation-issue-note">
-                              {operation.kind === "organization_action"
+                              {operation.kind === "recovery_password"
+                                ? "Password work requires reconciliation. Review the recorded outcome before further access."
+                                : operation.kind === "recovery_network_repair"
+                                ? "Repair effect is unverified. Review the operation for independent reconciliation; do not retry the write."
+                                : operation.kind === "signing_key"
+                                ? "Key rotation is unresolved. Review the original operation before resuming from the tenancy page."
+                                : operation.kind === "organization_action"
                                 ? "Local workflow is blocked. Review the employee or tenancy record."
                                 : "Simulation ended with an issue. No action is required."}
                             </p>
@@ -340,6 +379,7 @@ function OperationList({
                           <time dateTime={operation.accepted_at}>
                             {stamp(operation.accepted_at)}
                           </time>
+                          {operation.scheduled_for&&<span className="cell-secondary">Scheduled start: <time dateTime={operation.scheduled_for}>{stamp(operation.scheduled_for)}</time></span>}
                         </td>
                         <td>
                           <time dateTime={operation.updated_at}>
@@ -503,11 +543,32 @@ function OperationDetail({
   useReadDenial(result.error, expired);
   const detail = result.data;
   const operation = detail?.operation;
+  const userChecks=detail?.events.find(event=>event.user_checks?.length)?.user_checks??[];
+  const keyInventory=detail?.events.find(event=>event.automation_keys)?.automation_keys;
+  // Deep links wait for recorded results; never fetch current tenancy facts as historical evidence.
+  const checkAnchor=location.hash.slice(1);
+  const focusedCheck=useRef<string|null>(null);
+  useEffect(()=>{
+    const anchor=checkAnchor;
+    const context=operationId+"#"+anchor;
+    if(focusedCheck.current!==context)focusedCheck.current=null;
+    // Polling can update history without taking focus away from the administrator's current control.
+    if(focusedCheck.current===context)return;
+    if(!userChecks.some(check=>check.anchor===anchor) && !(anchor==="automation-keys"&&keyInventory))return;
+    const frame=requestAnimationFrame(()=>{
+      const section=document.getElementById(anchor);
+      if(section){section.scrollIntoView?.({block:"start"});section.focus();focusedCheck.current=context;}
+    });
+    return ()=>cancelAnimationFrame(frame);
+  },[detail,checkAnchor,operationId]);
+
+  const back=operationReturn();
   const HistoryContainer = operation?.guided_onboarding ? "details" : "div";
   const notFound =
     result.error instanceof ApiError && result.error.status === 404;
   const eventNames = {
-    operation_intent: "Operation accepted",
+    signing_key_outcome:"Signing-key maintenance",signing_key_requested:"Signing-key rotation requested",
+    recovery_password_disclosed:"Recovery password requested",recovery_password_outcome:"Recovery password outcome",operation_intent: "Operation accepted",
     inspection_dispatch: "Inspection dispatched",
     inspection_outcome: "Inspection outcome",
     organization_action_outcome: "Simulated lifecycle result",
@@ -515,7 +576,8 @@ function OperationDetail({
     onboarding_outcome: "Onboarding check",
     configuration_outcome: "Configuration verification",
     cost_collection_outcome: "Cost collection result",
-    required_user_check_outcome: "User presence check result",
+    required_user_check_outcome: "Required-user check results",
+    recovery_network_outcome: "Recovery network repair result",
     configuration_check_outcome: "Configuration check result",
     configuration_retry: "Configuration retry",
     operation_responsibility_changed: "Operation responsibility changed",
@@ -525,10 +587,10 @@ function OperationDetail({
     <>
       <a
         className="back-link"
-        href="/operations"
-        onClick={(event) => followLink(event, "/operations", navigate)}
+        href={back.path}
+        onClick={(event) => followLink(event, back.path, navigate)}
       >
-        ← Back to operations
+        ← {back.label}
       </a>
       <div className="page-heading">
         <div>
@@ -569,10 +631,13 @@ function OperationDetail({
                 {stateLabel(operation)}
               </span>
               <span>Stage: {stageLabel(operation.stage)}</span>
+              {operation.scheduled_for&&<span title="Earliest scheduled start. Existing work or recovery access may delay execution.">Scheduled start (UTC): <time dateTime={operation.scheduled_for}>{stamp(operation.scheduled_for)}</time></span>}
             </div>
-            {simulationIssue(operation) && (
+            {operation.scheduled_for&&<p className="muted">This operation is waiting for its scheduled start. Tenancy provider work is not paused while it waits.</p>}
+            {detail.recovery_password&&<RecoveryPasswordOperation operation={operation} progress={detail.recovery_password} navigate={navigate}/>}
+            {simulationIssue(operation) && operation.kind!=="recovery_password" && (
               <p className="notice" role="status">
-                {operation.kind === "cost_collection" ? "Cost reads exhausted retries or their collection context changed. Open the tenancy to retry eligible current-month reads. No tenancy settings were changed." : operation.kind === "configuration_check" ? "The read-only check did not complete. Review configuration checks; no tenancy settings were changed." : operation.kind === "configuration_update"
+                {operation.kind === "signing_key" ? "Signing-key maintenance is unresolved. Open the tenancy to review the original rotation and its supported resume action; provider work remains paused. No new key pair is created by resuming." : operation.kind === "recovery_network_repair" ? "The network repair has an uncertain effect. The tenancy remains reserved until independent reconciliation. Do not retry the write or start another repair." : operation.kind === "cost_collection" ? "Cost reads exhausted retries or their collection context changed. Open the tenancy to retry eligible current-month reads. No tenancy settings were changed." : operation.kind === "configuration_check" ? "The read-only check did not complete. Review configuration checks; no tenancy settings were changed." : operation.kind === "configuration_update"
                   ? "Baseline update is blocked. Open its configuration progress to review incomplete tenancies and available retries."
                   : operation.kind !== "inspect_import"
                   ? "Local workflow is blocked. Review the employee or tenancy record; pending associations remain until handled."
@@ -581,10 +646,10 @@ function OperationDetail({
             )}
             {operation.state === "succeeded" && (
               <p className="notice">
-                {operation.kind === "required_user_check" ? "Simulated user check completed. Review the tenancy for presence, automation and recovery administrator assignments and recovery-policy results; completion does not establish recovery readiness. Password readiness and all effective permissions were not checked." : operation.kind === "cost_collection" ? "Cost collection completed in local simulation. Review each tenancy for partial or unqualified source data; no OCI resources were changed." : operation.kind === "configuration_check" ? "Read-only configuration check completed. Review its results for differences or categories that could not be verified; completion does not mean the configuration matches." : operation.kind === "configuration_update" ? "Baseline update verified in local simulation; no OCI resources were changed." : operation.kind === "organization_action"
+                {operation.kind === "signing_key" ? "Signing credential operation verified in local simulation. Preparation establishes the managed signer; rotation completes only after replacement verification and old-key retirement. No OCI keys were changed." : operation.kind === "recovery_password" ? "Recovery password operation verified in local simulation. Review the recorded outcome above." : operation.kind === "recovery_network_repair" ? "Approved recovery networks verified in simulation. Review the separately dated user checks; no OCI resources or credentials were changed." : operation.kind === "required_user_check" ? "Simulated user check completed. Review the tenancy for presence, automation and recovery administrator assignments and recovery-policy results; completion does not establish recovery readiness. Password readiness and all effective permissions were not checked." : operation.kind === "cost_collection" ? "Cost collection completed in local simulation. Review each tenancy for partial or unqualified source data; no OCI resources were changed." : operation.kind === "configuration_check" ? "Read-only configuration check completed. Review its results for differences or categories that could not be verified; completion does not mean the configuration matches." : operation.kind === "configuration_update" ? "Baseline update verified in local simulation; no OCI resources were changed." : operation.kind === "organization_action"
                   ? "Local lifecycle simulation completed. Registry changes are verified; no OCI resources were changed."
                   : "Inspection completed successfully. This tenancy has not been adopted by this inspection."}
-                {operation.kind !== "configuration_check" && operation.result_tenancy_id && (
+                {!["configuration_check","recovery_password"].includes(operation.kind) && operation.result_tenancy_id && (
                   <>
                     {" "}
                     <a
@@ -603,7 +668,8 @@ function OperationDetail({
                 )}
               </p>
             )}
-            {operation.kind === "configuration_check" && <p><a href={"/configuration/drift"+(operation.result_tenancy_id?"/"+operation.result_tenancy_id+"?returnTo="+encodeURIComponent("/operations/"+operationId):"?tab=checks")} onClick={event=>followLink(event,"/configuration/drift"+(operation.result_tenancy_id?"/"+operation.result_tenancy_id+"?returnTo="+encodeURIComponent("/operations/"+operationId):"?tab=checks"),navigate)}>View configuration checks</a></p>}
+            {operation.kind === "configuration_check" && <p><a href={"/configuration/drift"+(operation.result_tenancy_id?"/"+operation.result_tenancy_id+"?returnTo="+encodeURIComponent(operationHref(operationId)):"?tab=checks")} onClick={event=>followLink(event,"/configuration/drift"+(operation.result_tenancy_id?"/"+operation.result_tenancy_id+"?returnTo="+encodeURIComponent(operationHref(operationId)):"?tab=checks"),navigate)}>View configuration checks</a></p>}
+            {operation.kind === "signing_key" && operation.result_tenancy_id && operation.state!=="succeeded" && <p><a href={"/tenancies/"+operation.result_tenancy_id} onClick={event=>followLink(event,"/tenancies/"+operation.result_tenancy_id,navigate)}>Review tenancy signing keys</a></p>}
             {operation.kind === "configuration_update" && <p><a href={"/configuration?update="+operationId} onClick={event=>followLink(event,"/configuration?update="+operationId,navigate)}>Open baseline update</a></p>}
             {operation.guided_onboarding && <Responsibility key={"responsibility-"+operationId} operation={operation} expired={expired}/>}
             {operation.guided_onboarding && (
@@ -616,6 +682,16 @@ function OperationDetail({
               />
             )}
             {(operation.guided_onboarding||Boolean(detail.notifications?.length))&&<EmailNotifications notifications={detail.notifications??[]}/>}
+            {userChecks.length>0&&<section className="operation-panel" aria-label="Recorded user check results">
+              <h2>Recorded user check results</h2>
+              <p className="muted">Historical observations from this operation in local simulation. These results do not establish current access or password readiness.</p>
+              <div className="required-users-grid">{userChecks.map(check=><section key={check.anchor} id={check.anchor} tabIndex={-1} className="required-user-card">
+                <h3>{{"automation-presence":"Automation user · Presence","automation-assignment":"Automation user · Assignments","recovery-presence":"Recovery user · Presence","recovery-assignment":"Recovery user · Assignments","recovery-policy":"Recovery user · Console policy"}[check.anchor]}</h3>
+                <dl className="required-user-facts">{check.facts.map(fact=><div key={fact.label}><dt>{fact.label}</dt><dd><span className={"badge "+(["present","verified"].includes(fact.state)?"active":["missing","drift"].includes(fact.state)?"presence-missing":"required-user-state")}>{{not_checked:"Not checked",present:"Present",missing:"Missing",unknown:"Unable to verify",verified:"Verified in simulation",drift:"Drift detected"}[fact.state]}</span></dd></div>)}</dl>
+                <p className="muted">Checked: {stamp(check.checked_at??null)}</p>
+              </section>)}</div>
+            </section>}
+            {keyInventory && <AutomationKeys inventory={keyInventory} historical navigate={navigate}/>}
             <HistoryContainer
               className={
                 operation.guided_onboarding ? "onboarding-history" : undefined
@@ -662,7 +738,7 @@ function OperationDetail({
                     {detail.steps.map((step) => (
                       <li key={step.step_key}>
                         <h3>
-                          {step.step_key.startsWith("required_users:") ? "Read required-user presence" : step.step_key.startsWith("cost:") ? "Read current month costs" : step.step_key.startsWith("configuration_check:") ? "Check assigned managed configuration" : step.step_key === "inspect_target"
+                          {step.step_key.startsWith("signing_key:") ? "Maintain automation signing credential" : step.step_key.startsWith("recovery_password:") ? detail.recovery_password?.phase==="setup"?"Prepare recovery password custody":"Rotate recovery password" : step.step_key.startsWith("required_users:") ? "Check required users, assignments and recovery policy" : step.step_key.startsWith("cost:") ? "Read current month costs" : step.step_key.startsWith("configuration_check:") ? "Check assigned managed configuration" : step.step_key === "inspect_target"
                             ? "Inspect target"
                             : step.step_key.startsWith("remove_member_groups:") ? "Remove user group memberships" : step.step_key.startsWith("delete_member_user:") ? "Delete tenancy user" : step.step_key === "apply_lifecycle"
                               ? "Apply simulated lifecycle"
@@ -705,11 +781,11 @@ function OperationDetail({
                   <ol className="operation-timeline">
                     {detail.events.map((event, index) => (
                       <li key={index}>
-                        <h3>{eventNames[event.kind]}</h3>
+                        <h3>{event.summary??eventNames[event.kind]}</h3>
                         <p>
                           <time dateTime={event.at}>{stamp(event.at)}</time>
                         </p>
-                        {event.safe_code && (
+                        {event.safe_code && !(event.summary&&event.safe_code==="SIGNING_KEY_PROGRESS") && (
                           <p>
                             Outcome code: <code>{event.safe_code}</code>
                           </p>

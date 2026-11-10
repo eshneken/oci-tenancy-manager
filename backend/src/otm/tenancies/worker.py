@@ -40,8 +40,14 @@ class OrganizationLifecycleWorker:
         *,
         mail_policy_loader=None,
         notifications=None,
+        recovery_setup=None,
+        signing_setup=None,
+        signing_dispatch=None,
     ):
         self.engine, self.workspace, self.clock = engine, workspace, clock
+        self.recovery_setup = recovery_setup
+        self.signing_setup = signing_setup
+        self.signing_dispatch = signing_dispatch
         self.mail_policy_loader, self.notifications = mail_policy_loader, notifications
         self.policy_loader, self.facade = policy_loader, facade
 
@@ -159,6 +165,15 @@ class OrganizationLifecycleWorker:
                         raise LifecycleBlocked("EMAIL_ROUTING_CHANGED") from None
                 state = registry_state(connection, self.workspace)
                 self._validate(state, intent, identifier)
+                if self.signing_dispatch is not None and intent.onboarding_version is None:
+                    targets = {item.tenancy_id for item in intent.associations}
+                    if intent.pending_tenancy_id is not None:
+                        targets.add(intent.pending_tenancy_id)
+                    if any(
+                        not self.signing_dispatch(connection, self.workspace, target, at)
+                        for target in targets
+                    ):
+                        raise LifecycleBlocked("LIFECYCLE_UNAVAILABLE")
                 from otm.tenancies.membership_access import validate_removal_targets
 
                 validate_removal_targets(connection, self.workspace, intent)
@@ -172,12 +187,34 @@ class OrganizationLifecycleWorker:
                             raise ValueError("BASELINE_PIN_CHANGED")
                     except (ValueError, RuntimeError, OrganizationConflict):
                         raise LifecycleBlocked("TARGET_CHANGED") from None
-                if intent.onboarding_version in {1, 2, 3}:
+                if intent.onboarding_version in {1, 2, 3, 4}:
                     from otm.tenancies.onboarding import advance
 
-                    if not advance(connection, row, intent, self.facade, at):
+                    if not advance(
+                        connection,
+                        row,
+                        intent,
+                        self.facade,
+                        at,
+                        recovery_setup=self.recovery_setup,
+                        signing_setup=self.signing_setup,
+                    ):
                         self._stage_email(connection, identifier, at)
                         return
+                from otm.tenancies.recovery_password_lifecycle import require_termination_ready
+
+                try:
+                    require_termination_ready(
+                        connection,
+                        self.workspace,
+                        (
+                            item.tenancy_id
+                            for item in intent.associations
+                            if item.action == "delete"
+                        ),
+                    )
+                except OrganizationConflict:
+                    raise LifecycleBlocked("RECOVERY_PASSWORD_ROTATION_REQUIRED") from None
                 if any(item.removes_identity for item in intent.associations):
                     # An attempted identity write stays uncertain until independent readback passes.
                     connection.execute(
@@ -541,10 +578,19 @@ class OrganizationLifecycleWorker:
         from otm.tenancies.membership_access import validate_removals
 
         validate_removals(intent, completion)
+        from otm.tenancies.recovery_password_lifecycle import retire_terminated_credentials
+
         if intent.whole_tenancy_deletion:
             from otm.tenancies.deletion import publish_deletion
 
-            return publish_deletion(connection, state, intent, completion, identifier, at)
+            result = publish_deletion(connection, state, intent, completion, identifier, at)
+            retire_terminated_credentials(
+                connection,
+                self.workspace,
+                (item.tenancy_id for item in intent.associations if item.action == "delete"),
+                at,
+            )
+            return result
         expected = {
             item.new_association_id: (item.tenancy_ocid, item.recipient_person_id)
             for item in intent.associations
@@ -753,4 +799,10 @@ class OrganizationLifecycleWorker:
                 "operation_id": str(identifier),
                 "provider_mode": "simulated",
             },
+        )
+        retire_terminated_credentials(
+            connection,
+            self.workspace,
+            (item.tenancy_id for item in intent.associations if item.action == "delete"),
+            at,
         )

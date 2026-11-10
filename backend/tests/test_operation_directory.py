@@ -16,7 +16,12 @@ from otm.app import create_app
 from otm.auth.http import BrowserSettings
 from otm.operations.contracts import InspectionIntent, IntentEventData, canonical_hash
 from otm.operations.execution_contracts import InspectionOutcome
-from otm.operations.views import OperationDetail, OperationDirectory, OperationQuery
+from otm.operations.views import (
+    OperationDetail,
+    OperationDirectory,
+    OperationQuery,
+    OperationSummary,
+)
 from otm.storage.operation_directory import SqlOperationDirectory
 
 __all__ = ["session_case", "admission"]
@@ -168,8 +173,18 @@ def test_operation_http_boundaries(session_case, directory_case):
         response = client.get("/api/operations?workspace_id=foreign", headers=headers)
         assert response.status_code == 200
         assert store.directory.call_args.args[0] == session_case.session.workspace_id
-        for query in ("page=0", "page_size=7", "query=" + "x" * 129, "sort=drop", "state=made_up"):
+        for query in (
+            "page=0",
+            "page_size=7",
+            "query=" + "x" * 129,
+            "sort=drop",
+            "state=made_up",
+            "kind=made_up",
+            "kind=signing_key%27%20OR%201=1",
+        ):
             assert client.get("/api/operations?" + query, headers=headers).status_code == 400
+        assert client.get("/api/operations?kind=signing_key", headers=headers).status_code == 200
+        assert store.directory.call_args.args[1].kind == "signing_key"
         identifier = uuid4()
         assert client.get(f"/api/operations/{identifier}", headers=headers).status_code == 200
         assert store.detail.call_args.args == (
@@ -212,3 +227,86 @@ def test_attention_count_has_independent_scoped_predicate(directory_case):
     assert ["onboarding_handoff", "onboarding_review"] in predicate.params.values()
     assert "pending_operation_id" in str(predicate) and "EXISTS" in str(predicate)
     assert "missing" not in predicate.params.values()
+
+
+# Historical sections use recorded outcomes; absent legacy checks remain unchecked.
+@pytest.mark.parametrize("extended", [False, True])
+def test_required_user_event_sections(directory_case, extended):
+    from test_user_presence_check_units import case
+
+    from otm.providers.administrator_access import AdministratorCheck, AdministratorResult
+    from otm.providers.recovery_console import RecoveryConsoleCheck, RecoveryConsoleResult
+    from otm.tenancies.presence_contracts import PresenceCheckEvidence
+
+    c = case()
+    evidence = c.evidence
+    if extended:
+        assignment = AdministratorCheck(
+            context=c.results[0].context,
+            target=c.results[0].target,
+            checked_at=evidence.checked_at,
+            result=AdministratorResult(group="missing", domain_role="verified"),
+        )
+        policy = RecoveryConsoleCheck(
+            context=c.results[1].context,
+            target=c.results[1].target,
+            checked_at=evidence.checked_at,
+            result=RecoveryConsoleResult(
+                state="unknown",
+                mfa_exemption="unknown",
+                network_boundary="unknown",
+                desired_fingerprint="a" * 64,
+                safe_code="RECOVERY_CONSOLE_UNVERIFIED",
+            ),
+        )
+        evidence = PresenceCheckEvidence.model_validate(
+            evidence.model_copy(
+                update={
+                    "administrator_access": assignment,
+                    "recovery_administrator_access": assignment.model_copy(
+                        update={"context": c.results[1].context, "target": c.results[1].target}
+                    ),
+                    "recovery_console": policy,
+                }
+            ).model_dump()
+        )
+    data = evidence.model_dump(mode="json")
+    row = dict(
+        kind="required_user_check_outcome", at=NOW, data=data, data_hash=canonical_hash(data)
+    )
+    result = directory_case.store.event(row)
+    assert [section.anchor for section in result.user_checks] == [
+        "automation-presence",
+        "automation-assignment",
+        "recovery-presence",
+        "recovery-assignment",
+        "recovery-policy",
+    ]
+    assert result.user_checks[0].facts[0].state == "present"
+    assert result.user_checks[1].facts[0].state == ("missing" if extended else "not_checked")
+    assert result.user_checks[-1].facts[0].state == ("unknown" if extended else "not_checked")
+    assert result.user_checks[-1].checked_at == (evidence.checked_at if extended else None)
+    assert "context" not in result.model_dump_json() and "binding" not in result.model_dump_json()
+    with pytest.raises(ValueError, match="INVALID_OPERATION_EVIDENCE"):
+        directory_case.store.event({**row, "data_hash": "0" * 64})
+
+
+# Kind predicates use bound values on both page and total while attention stays workspace-wide.
+@pytest.mark.parametrize("kind", list(OperationSummary.model_fields["kind"].annotation.__args__))
+def test_kind_filter_is_bound_and_does_not_narrow_attention(directory_case, kind):
+    c = directory_case
+    c.connection.scalar.side_effect = [4, 0]
+    c.connection.execute.return_value.mappings.return_value.all.return_value = []
+    result = c.store.directory(c.row["workspace_id"], OperationQuery(kind=kind))
+    assert result.total == 0 and result.attention_count == 4
+    page = c.connection.execute.call_args.args[0].compile(dialect=postgresql.dialect())
+    count = c.connection.scalar.call_args_list[1].args[0].compile(dialect=postgresql.dialect())
+    attention = c.connection.scalar.call_args_list[0].args[0].compile(dialect=postgresql.dialect())
+    for statement in (page, count):
+        assert kind in statement.params.values()
+        assert "otm_operation.kind =" in str(statement)
+    c.connection.scalar.side_effect = [4, 0]
+    c.connection.scalar.reset_mock()
+    c.store.directory(c.row["workspace_id"], OperationQuery())
+    unfiltered = c.connection.scalar.call_args_list[0].args[0].compile(dialect=postgresql.dialect())
+    assert str(attention) == str(unfiltered) and attention.params == unfiltered.params

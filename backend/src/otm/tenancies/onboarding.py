@@ -32,7 +32,7 @@ STEPS = (
 
 # New onboarding applies the accepted baseline and reprobes access before retiring its bootstrap.
 def onboarding_steps(intent):
-    if intent.onboarding_version in {2, 3} and intent.baseline is not None:
+    if intent.onboarding_version in {2, 3, 4} and intent.baseline is not None:
         return (
             STEPS[:-1]
             + (
@@ -44,7 +44,22 @@ def onboarding_steps(intent):
             )
             + (
                 (("capture_required_users", "Record permanent user identities"),)
-                if intent.onboarding_version == 3
+                + (
+                    (
+                        (
+                            "prepare_automation_signer",
+                            "Prepare versioned automation signing credential",
+                        ),
+                    )
+                    if intent.signing_key_rotation_contract is not None
+                    else ()
+                )
+                if intent.onboarding_version in {3, 4}
+                else ()
+            )
+            + (
+                (("prepare_recovery_password", "Prepare and verify recovery password custody"),)
+                if intent.onboarding_version == 4
                 else ()
             )
             + STEPS[-1:]
@@ -88,7 +103,7 @@ def load_intent(connection, row, *, onboarding_only=True):
         or frozen.intent.workspace_id != row["workspace_id"]
     ):
         raise ValueError("INVALID_ONBOARDING_INTENT")
-    if onboarding_only and frozen.intent.onboarding_version not in {1, 2, 3}:
+    if onboarding_only and frozen.intent.onboarding_version not in {1, 2, 3, 4}:
         raise OrganizationConflict("ONBOARDING_NOT_AVAILABLE")
     return frozen
 
@@ -207,6 +222,8 @@ def progress(connection, row, facade):
         or (phase == "blocked" and inspection and inspection["state"] == "verified")
         else ()
     )
+    if intent.onboarding_version == 4 and row["wait_reason"] == "onboarding_password":
+        actions = ()
     issue = next(
         (s["last_outcome"]["safe_code"] for s in steps.values() if s["state"] == "needs_attention"),
         None,
@@ -315,7 +332,7 @@ def submit(service, connection, state, row, principal, command, at):
 
 
 # Execute deterministic facade capabilities in order; never retire access before replacement checks.
-def advance(connection, row, intent, facade, at):
+def advance(connection, row, intent, facade, at, *, recovery_setup=None, signing_setup=None):
     steps = step_rows(connection, row)
     handoff = steps.get("handoff")
     if handoff is None:
@@ -390,6 +407,32 @@ def advance(connection, row, intent, facade, at):
         for current, _ in onboarding_steps(intent)[1:]:
             if current in steps and steps[current]["state"] == "verified":
                 continue
+            if current == "prepare_automation_signer":
+                if signing_setup is None:
+                    raise ValueError("REQUIRED_ACCESS_UNVERIFIED")
+                signing_setup.admit(connection, row, intent, at)
+                transition(
+                    connection,
+                    row,
+                    at,
+                    "waiting",
+                    "Prepare automation signing credential",
+                    "onboarding_signer",
+                )
+                return False
+            if current == "prepare_recovery_password":
+                if recovery_setup is None:
+                    raise ValueError("REQUIRED_ACCESS_UNVERIFIED")
+                recovery_setup.admit(connection, row, intent, at)
+                transition(
+                    connection,
+                    row,
+                    at,
+                    "waiting",
+                    "Prepare recovery password custody",
+                    "onboarding_password",
+                )
+                return False
             captured = None
             if current == "capture_required_users":
                 from otm.tenancies.onboarding_users import capture_users

@@ -1,0 +1,146 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "available": {
+      "default": false,
+      "title": "Available",
+      "type": "boolean"
+    },
+    "generation": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Generation",
+      "type": "integer"
+    },
+    "last_rotated_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Last Rotated At"
+    },
+    "last_rotation_operation_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Last Rotation Operation Id"
+    },
+    "operation_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Operation Id"
+    },
+    "preview_hash": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Preview Hash"
+    },
+    "provider_mode": {
+      "const": "simulated",
+      "default": "simulated",
+      "title": "Provider Mode",
+      "type": "string"
+    },
+    "retire_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Retire At"
+    },
+    "safe_code": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Safe Code"
+    },
+    "starts_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Starts At"
+    },
+    "state": {
+      "enum": [
+        "not_prepared",
+        "preparing",
+        "scheduled",
+        "rotating",
+        "attention",
+        "overdue",
+        "inactive",
+        "unavailable"
+      ],
+      "title": "State",
+      "type": "string"
+    },
+    "tenancy_id": {
+      "format": "uuid",
+      "title": "Tenancy Id",
+      "type": "string"
+    },
+    "tenancy_name": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Tenancy Name",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenancy_id",
+    "tenancy_name",
+    "state"
+  ],
+  "title": "SigningKeyView",
+  "type": "object"
+}

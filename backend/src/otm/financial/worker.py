@@ -55,8 +55,10 @@ class CostCollectionWorker:
         profile,
         profile_loader=None,
         notifications=None,
+        signing_dispatch=None,
     ):
         self.engine, self.workspace, self.clock = engine, workspace, clock
+        self.signing_dispatch = signing_dispatch
         self.policy_loader, self.facade, self.enqueuer = policy_loader, facade, enqueuer
         self.profile, self.profile_loader, self.notifications = (
             profile,
@@ -188,6 +190,12 @@ class CostCollectionWorker:
             or current.policy != self.facade.policy
             or (self.profile_loader and self.profile_loader() != self.profile)
             or target.profile != self.profile
+        ):
+            return "COST_CONTEXT_UNAVAILABLE"
+        if (
+            row is not None
+            and self.signing_dispatch is not None
+            and not self.signing_dispatch(connection, self.workspace, row["id"], at)
         ):
             return "COST_CONTEXT_UNAVAILABLE"
         source = source_context(row, current.policy, self.profile) if row else None

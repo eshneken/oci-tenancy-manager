@@ -1,3 +1,4 @@
+import {operationHref} from "./operationNavigation";
 import {useEffect,useRef,useState} from "react";
 import {useQuery,useQueryClient} from "@tanstack/react-query";
 import {api,ApiError} from "./api";
@@ -45,7 +46,7 @@ export function ConfigurationRepair({summary,expired,navigate}:{summary:Configur
  const ready=Boolean(preview&&preview.baseline&&preview.tenancy_id===summary.tenancy_id&&preview.ready_count===1&&!preview.blockers.length&&!preview.pending_count&&selected.every(category=>Boolean(preview.repair_expected?.[category])&&Object.hasOwn(preview.repair_observed??{},category)));
  return <>
   {(eligible||uncertain)&&<button ref={launch} className="button secondary" onClick={start}>{uncertain?"Recover repair request":"Repair configuration"}</button>}
-  {operation&&<section className="operation-panel" aria-label="Configuration repair progress"><p ref={status} tabIndex={-1} role="status">{progress.data?.state==="succeeded"?"Selected objects verified. Current check results are shown below.":progress.data?.state==="needs_attention"?"Repair could not be verified. Existing findings remain open.":"Configuration repair queued or running. Findings remain until verification."} <a href={`/operations/${operation}`} onClick={event=>followLink(event,`/operations/${operation}`,navigate)}>View operation</a></p>{progress.isError&&<p role="alert">Repair progress could not be loaded. <button className="button secondary" onClick={()=>void progress.refetch()}>Refresh progress</button></p>}</section>}
+  {operation&&<section className="operation-panel" aria-label="Configuration repair progress"><p ref={status} tabIndex={-1} role="status">{progress.data?.state==="succeeded"?"Selected objects verified. Current check results are shown below.":progress.data?.state==="needs_attention"?"Repair could not be verified. Existing findings remain open.":"Configuration repair queued or running. Findings remain until verification."} <a href={operationHref(operation)} onClick={event=>followLink(event,operationHref(operation),navigate)}>View operation</a></p>{progress.isError&&<p role="alert">Repair progress could not be loaded. <button className="button secondary" onClick={()=>void progress.refetch()}>Refresh progress</button></p>}</section>}
   <dialog ref={dialog} className="workflow-dialog" aria-labelledby="repair-title" onCancel={event=>{event.preventDefault();close();}}>
    <h2 id="repair-title" ref={heading} tabIndex={-1}>{preview?"Confirm configuration repair":"Select configuration to repair"}</h2>
    <p>{summary.tenancy_name} · Assigned baseline v{preview?.baseline?.version_number??summary.baseline_version_number}</p>

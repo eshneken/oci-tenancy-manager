@@ -15,7 +15,10 @@ def capture_connection(connection, row, intent, event_id, at):
     require_transaction(connection)
     if intent.presence_connection_contract is None:
         return None
-    if intent.onboarding_version != 3 or intent.action not in {"create_tenancy", "import_tenancy"}:
+    if intent.onboarding_version not in {3, 4} or intent.action not in {
+        "create_tenancy",
+        "import_tenancy",
+    }:
         raise ValueError("PRESENCE_CONNECTION_SOURCE_UNVERIFIED")
     rows = list(
         connection.execute(

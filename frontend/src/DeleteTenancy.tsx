@@ -1,6 +1,7 @@
+import {operationHref} from "./operationNavigation";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api, ApiError } from "./api";
+import { api, ApiError, WorkflowError } from "./api";
 import { refreshOrganization } from "./PersonActions";
 import { followLink } from "./navigation";
 import type { ActionReceipt } from "./contracts";
@@ -86,6 +87,8 @@ export function DeleteTenancy({
       if (signal.aborted) return;
       if (failure instanceof ApiError && [401, 403].includes(failure.status))
         expired();
+      else if(failure instanceof WorkflowError&&failure.code==="RECOVERY_PASSWORD_ROTATION_REQUIRED")
+        setError("Termination is blocked while recovery access or password reconciliation is outstanding. Review Administrator access and its password operation on this tenancy before retrying.");
       else
         setError(
           "Termination could not be confirmed. Retry with unchanged confirmation to recover this request, or reload the preview to review current memberships.",
@@ -127,12 +130,12 @@ export function DeleteTenancy({
             deletion does not explicitly offboard them.
           </p>
           <a
-            href={"/operations/" + receipt.operation_id}
+            href={operationHref(receipt.operation_id)}
             onClick={(event) => {
               close();
               followLink(
                 event,
-                "/operations/" + receipt.operation_id,
+                operationHref(receipt.operation_id),
                 navigate,
               );
             }}

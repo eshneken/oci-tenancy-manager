@@ -102,3 +102,39 @@ def register_presence_task(app, worker, queue):
         worker.run(identifier)
 
     return required_user_check
+
+
+# A separate fixed write capability shares the existing native queue and reference-only payload.
+def register_recovery_network_task(app, worker, queue):
+    from otm.storage.enqueue import RECOVERY_NETWORK_TASK
+
+    # No automatic retry can duplicate a possibly-sent security-policy mutation.
+    @app.task(name=RECOVERY_NETWORK_TASK, queue=queue, retry=False)
+    def repair_recovery_network(operation_id):
+        worker.run(UUID(operation_id))
+
+    return repair_recovery_network
+
+
+# Password writes are a fixed reference-only native capability; no blind retries are enabled.
+def register_recovery_password_task(app, worker, queue):
+    from otm.storage.enqueue import RECOVERY_PASSWORD_TASK
+
+    # Existing operation/credential heads govern every delivery, including delayed system work.
+    @app.task(name=RECOVERY_PASSWORD_TASK, queue=queue, retry=False)
+    def recovery_password(operation_id):
+        worker.run(UUID(operation_id))
+
+    return recovery_password
+
+
+# Signing-key jobs share the existing native queue and carry only immutable operation references.
+def register_signing_key_task(app, worker, queue):
+    from otm.storage.enqueue import SIGNING_KEY_TASK
+
+    # Business checkpoints reconcile uncertain effects; native delivery never creates another pair.
+    @app.task(name=SIGNING_KEY_TASK, queue=queue, retry=False)
+    def signing_key(operation_id):
+        worker.run(UUID(operation_id))
+
+    return signing_key

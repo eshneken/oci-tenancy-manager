@@ -64,3 +64,23 @@ and [presence checks](user-presence-checks.md#retained-results-after-membership-
 - [Recovery console checks](recovery-console-verification.md): private settings, exact setup capture and qualified independent policy/presence UI; custody/rotation remain pending.
 
 - [Required-user administrator assignments](administrator-assignments.md): separate exact group/role checks and persistent detail/inventory results.
+
+- [Repair approved recovery networks](recovery-network-repair.md): exact conditional perimeter update, consent, private evidence and manual steps; local qualification/main publication pass, live OCI pending.
+
+- [Recovery-network repair qualification](../history/recovery-network-repair-checkpoint-2026-11-09.md): final local gates and main-only preservation.
+
+- [Recovery-password custody and original-window rotation](recovery-password-access.md) — implemented source subset; actual fields and pending live boundaries; checkpoint receipt records qualification/install status.
+
+Current source [Operations check-section mapping](operations.md#recorded-required-user-check-sections--source-follow-up) and [access mini-panel](required-users-screen.md#access-mini-panel-and-exact-check-destinations--source-follow-up) have separately recorded combined follow-up validation and preserved main installation.
+
+- [Recovery-password Operations progress](operations.md#recovery-password-operation-progress): immutable original-window projection and safe status panel; installed with separately recorded full-run and final-copy targeted evidence.
+
+- [Operation return URL field map](operations.md#context-sensitive-return-navigation--source-follow-up): closed frontend-only returnTo routes; targeted navigation checks and preserved main installation pass; no full native rerun.
+
+- [Automation signing-key inventory and observed age](automation-signing-keys.md): exact public metadata, legacy omission and current/historical age basis; targeted local checkpoint qualified and installed; live enforcement pending.
+
+- [Managed signing-key rotation](signing-key-rotation.md): all 17 candidate head columns and existing JSON/outbox fields; targeted local qualification/saved installation PASS; full-suite/PR/live Pending.
+
+- [Signing rotation targeted qualification/install status](../history/signing-key-rotation-checkpoint-2026-11-10.md): targeted local qualification and preserved installation PASS; full-suite/PR/live remain separate.
+
+Operations now supports [type/state/search filtering](operations.md#operation-type-filtering--10-november-2026) without changing workspace-wide action counts.

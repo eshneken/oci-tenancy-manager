@@ -113,7 +113,12 @@ security; this visual decision does not authorize Git check-ins or publishing.
 
 ## Saved local preview consistency
 
-Saved review instances on 8443/8444 must serve a per-instance snapshot of qualified built frontend
+As of 9 November 2026, 8444 is retired and 8443 is the only saved local review instance.
+Do not create additional persistent review instances unless the user requests them. Required
+automated tests still use their owned temporary disposable environments. Interactive recovery-network
+repair testing is deferred to a real OCI tenancy; do not manufacture drift in the saved main app.
+
+The sole saved review instance on 8443 must serve a private snapshot of qualified built frontend
 assets. Do not point their running APIs at the mutable shared frontend/dist while building the next
 slice: a new form can otherwise reach an older in-memory API. Publish frontend and backend together,
 with the existing private backup, migration and preserved-data checks. Disposable tests may use the
@@ -150,18 +155,32 @@ bypasses. Keep commit metadata publication-safe and use the configured GitHub no
 Update docs/README.md and affected section indexes with documentation structure changes.
 
 
-## Local development checkpoints — 7 November 2026
+## Local development cadence — 9 November 2026
 
-The user approved batching related internal slices until a coherent end-user-verifiable UI flow.
-During those internal slices, run focused unit/static/contract checks and keep both complete-source
-unit-only coverage gates at 95% or higher. Add PostgreSQL and Playwright cases alongside the code,
-but defer executing integration suites until the UI checkpoint. Then run the complete required
-PostgreSQL/native-worker/SMTP/Playwright suite and address every failure before declaring the flow
-qualified, updating a saved preview or merging. Do not publish partial API/frontend/worker snapshots.
-Independent documentation/security reviews continue during relevant work; final UI review includes
-the complete flow and responsive screens. Incomplete internal slices are not integration-qualified.
+The user approved reserving complete integration runs for milestone/PR checkpoints, not every turn
+or UI inspection. This supersedes the 7 November full-suite-at-every-UI-checkpoint rule. Batch
+related slices; run focused units/static/contracts while implementing and add meaningful regression
+tests alongside changes. At UI checkpoints, both backend/frontend complete-source unit-only coverage
+gates must pass at 95% or higher. Run targeted disposable PostgreSQL/native-worker/SMTP/browser
+cases for changed behavior. Cosmetic changes over already qualified behavior may use affected
+units, build and independent responsive review instead of another full integration run.
 
-The aggregate integration-runner timeout is now 900 seconds (15 minutes), explicitly approved by
-the user. Individual test/browser/I/O limits, all assertions, no-skip completeness checks, separate
-95% coverage gates and protected-master requirements remain unchanged. Every CI build still runs
-all required suites; this local cadence does not authorize CI path filters, optional checks or bypasses.
+Run the complete required suite before declaring a milestone ready, opening its PR or merging;
+also run it when explicitly requested or when justified cross-cutting risk requires it. All relevant
+tests must pass: no missing/failing relevant result can be hidden by choosing a narrower scope.
+Every CI build still runs all required suites with no path-skip, optional gate or merge bypass.
+The 900-second aggregate budget, individual timeouts, no-skip evidence rules and coverage thresholds
+are unchanged. Frontend tooling and the integration runner must still run sequentially below.
+
+The sole saved 8443 application may receive a matched API/assets/worker update after relevant targeted
+gates and independent documentation/security/responsive reviews, with private backup and exact data/
+settings-preservation checks. Never publish partial snapshots. Record targeted versus full validation
+explicitly; a targeted UI checkpoint is not a new full-suite/milestone qualification. Keep live-only
+cases Pending in the manual manifest.
+
+Run frontend unit tests and browser tooling **sequentially** with
+`scripts/run_backend_postgres_tests.py`. That runner executes `npm ci`, replacing the shared
+`frontend/node_modules`; concurrent Vitest/tool writes have caused ENOTEMPTY reinstall failures
+and worker exits. Wait for one frontend-consuming lane to finish before starting the other.
+Backend-only unit and documentation checks can remain independent. This scheduling rule changes
+no tests, required gates, coverage threshold or timeout.

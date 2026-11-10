@@ -1,3 +1,4 @@
+import {operationHref} from "./operationNavigation";
 import { Select } from "./Select";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -463,11 +464,11 @@ export function OrganizationReviews({
                               {row.operation_id && (
                                 <a
                                   className="cell-secondary"
-                                  href={"/operations/" + row.operation_id}
+                                  href={operationHref(row.operation_id)}
                                   onClick={(event) =>
                                     followLink(
                                       event,
-                                      "/operations/" + row.operation_id,
+                                      operationHref(row.operation_id),
                                       navigate,
                                     )
                                   }

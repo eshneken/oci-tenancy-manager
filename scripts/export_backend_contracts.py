@@ -70,7 +70,17 @@ from otm.tenancies.contracts import ActionReceipt, OrganizationAction
 from otm.tenancies.deletion import TenancyDeletionCommand, TenancyDeletionPreview
 from otm.tenancies.onboarding_contracts import OnboardingCommand, OnboardingView
 from otm.tenancies.presence_contracts import PresenceCheckRequest
+from otm.tenancies.recovery_network_contracts import (
+    RecoveryNetworkPreview,
+    RecoveryNetworkRequest,
+)
+from otm.tenancies.recovery_password_contracts import (
+    RecoveryPasswordDisclosure,
+    RecoveryPasswordRequest,
+    RecoveryPasswordView,
+)
 from otm.tenancies.required_users import RequiredUsersDirectory
+from otm.tenancies.signing_key_contracts import SigningKeyRequest, SigningKeyView
 from otm.tenancies.views import (
     PersonWorkflow,
     ReviewDirectory,
@@ -86,6 +96,11 @@ ROOT = Path(__file__).resolve().parents[1]
 # Export implemented auth, history, branding and operation contracts, not design-only APIs.
 def contracts() -> dict[str, dict]:
     return {
+        "recovery-password-view.schema.json": RecoveryPasswordView.model_json_schema(),
+        "recovery-password-request.schema.json": RecoveryPasswordRequest.model_json_schema(),
+        "recovery-password-disclosure.schema.json": RecoveryPasswordDisclosure.model_json_schema(),
+        "recovery-network-preview.schema.json": RecoveryNetworkPreview.model_json_schema(),
+        "recovery-network-request.schema.json": RecoveryNetworkRequest.model_json_schema(),
         "cost-refresh-request.schema.json": CostRefreshRequest.model_json_schema(),
         "cost-refresh-receipt.schema.json": CostRefreshReceipt.model_json_schema(),
         "cost-view.schema.json": CostView.model_json_schema(),
@@ -132,6 +147,8 @@ def contracts() -> dict[str, dict]:
         "tenancy-directory.schema.json": TenancyDirectory.model_json_schema(),
         "tenancy-detail.schema.json": TenancyDetail.model_json_schema(),
         "required-users-directory.schema.json": RequiredUsersDirectory.model_json_schema(),
+        "signing-key-view.schema.json": SigningKeyView.model_json_schema(),
+        "signing-key-request.schema.json": SigningKeyRequest.model_json_schema(),
         "presence-check-request.schema.json": PresenceCheckRequest.model_json_schema(),
         "tenancy-query.schema.json": TenancyQuery.model_json_schema(),
         "organization-directory.schema.json": OrganizationDirectory.model_json_schema(),
