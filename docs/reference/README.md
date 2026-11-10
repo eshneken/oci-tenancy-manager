@@ -82,3 +82,5 @@ Current source [Operations check-section mapping](operations.md#recorded-require
 - [Managed signing-key rotation](signing-key-rotation.md): all 17 candidate head columns and existing JSON/outbox fields; targeted local qualification/saved installation PASS; full-suite/PR/live Pending.
 
 - [Signing rotation targeted qualification/install status](../history/signing-key-rotation-checkpoint-2026-11-10.md): targeted local qualification and preserved installation PASS; full-suite/PR/live remain separate.
+
+Operations now supports [type/state/search filtering](operations.md#operation-type-filtering--10-november-2026) without changing workspace-wide action counts.

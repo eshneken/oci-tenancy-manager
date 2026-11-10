@@ -408,7 +408,7 @@ export function Organization({
             ) : (
               <>
                 <section className="table-panel">
-                  <div className="table-toolbar">
+                  <div className="table-toolbar organization-toolbar directory-toolbar">
                     <label className="search-field">
                       Search employees
                       <input

@@ -79,3 +79,5 @@ Owner retention, verified identity removal and manual cleanup: [explicit former-
 Confirmed required-user email: [current incident/routing/storage contract](../reference/required-user-alerts.md).
 
 Implemented source: [recovery-password custody/disclosure/rotation subset](../reference/recovery-password-access.md). Migration0027 adds three tables; the [checkpoint receipt](../history/recovery-password-checkpoint-2026-11-09.md) records qualification and saved-app status. Main8443 remains the sole local review environment.
+
+Accepted worker sizing: [one staging worker; initially two production workers after qualification](06-platform-and-delivery.md#accepted-initial-worker-sizing--10-november-2026). The local saved worker is unchanged.

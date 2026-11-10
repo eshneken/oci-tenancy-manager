@@ -68,3 +68,5 @@ The [Recovery/header refinement](check-date-footer-local-session-checkpoint-2026
 - [Automation signing-key inventory checkpoint](automation-signing-key-inventory-checkpoint-2026-11-09.md): targeted read-only age panel qualified/installed; four targeted cases, not a complete-suite gate.
 
 - [Signing-key rotation targeted UI checkpoint — 10 November 2026](signing-key-rotation-checkpoint-2026-11-10.md): targeted local qualification and preserved installation PASS; full-suite/PR/live Pending.
+
+- [Operations discovery and directory alignment — 10 November 2026](operations-filter-checkpoint-2026-11-10.md): read-only kind filter, responsive controls and worker-sizing decision; see receipt for qualification/install state.

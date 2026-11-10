@@ -236,7 +236,7 @@ export function Tenancies({
             ))}
           </div>
           <section className="table-panel">
-            <div className="table-toolbar tenancy-toolbar">
+            <div className="table-toolbar tenancy-toolbar directory-toolbar">
               <label className="search-field">
                 Search tenancies
                 <input

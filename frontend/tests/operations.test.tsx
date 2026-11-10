@@ -169,7 +169,7 @@ describe("Recorded operations list", () => {
   });
 
   // Filtered no-match results never masquerade as an empty operation history.
-  it("distinguishes an empty history from no matches and clears both filters", async () => {
+  it("distinguishes an empty history from no matches and clears all filters", async () => {
     const read = vi
       .spyOn(api, "operations")
       .mockResolvedValue({ ...directory, items: [], total: 0, pages: 1 });
@@ -184,6 +184,7 @@ describe("Recorded operations list", () => {
       screen.getByLabelText("State", { exact: true }),
       "failed",
     );
+    await userEvent.selectOptions(screen.getByLabelText("Operation type", {exact:true}), "signing_key");
     await userEvent.type(screen.getByRole("searchbox"), "missing");
     expect(
       await screen.findByText("No operations match your filters"),
@@ -196,7 +197,7 @@ describe("Recorded operations list", () => {
     expect(screen.getByLabelText("State", { exact: true })).toHaveValue("");
     await waitFor(() =>
       expect(read).toHaveBeenLastCalledWith(
-        expect.objectContaining({ state: "", query: "" }),
+        expect.objectContaining({ state: "", kind: "", query: "" }),
         expect.any(AbortSignal),
       ),
     );
@@ -632,4 +633,27 @@ it("uses descriptive signing checkpoint labels and omits only redundant generic 
   expect(screen.getByRole("heading",{name:"Key rotation completed"})).toBeVisible();
   expect(screen.queryByText("SIGNING_KEY_PROGRESS")).not.toBeInTheDocument();
   expect(screen.getByText("SIGNING_KEY_ROTATED")).toBeVisible();c.client.clear();
+});
+
+// Kind changes reset paging without discarding state/search; the view cache retains detail/back context.
+it("filters operation types and retains the combined review context", async () => {
+  const read = vi.spyOn(api, "operations").mockImplementation(readPage);
+  const {client} = mount(<Operations operationId={null} expired={vi.fn()} navigate={vi.fn()}/>);
+  await screen.findByRole("link", {name:/Import inspection/});
+  await userEvent.selectOptions(screen.getByLabelText("State", {exact:true}), "waiting");
+  await userEvent.type(screen.getByRole("searchbox"), "unit");
+  await waitFor(()=>expect(read).toHaveBeenLastCalledWith(expect.objectContaining({query:"unit"}), expect.any(AbortSignal)));
+  await userEvent.click(screen.getByRole("button", {name:"Page 3"}));
+  await screen.findByText("Page 3 of 3");
+  await userEvent.selectOptions(screen.getByLabelText("Operation type", {exact:true}), "signing_key");
+  await waitFor(()=>expect(read).toHaveBeenLastCalledWith(expect.objectContaining({kind:"signing_key",state:"waiting",query:"unit",page:1}), expect.any(AbortSignal)));
+  expect(client.getQueryData(["operations","view"])).toMatchObject({kind:"signing_key",state:"waiting",query:"unit",page:1});
+});
+
+// Unresolved maintenance must direct review instead of dismissing a supported administrator action.
+it("explains that signing-key attention requires reviewing the original rotation", async () => {
+  vi.spyOn(api,"operations").mockResolvedValue({...directory,items:[{...row,kind:"signing_key",state:"needs_attention"}]});
+  mount(<Operations operationId={null} expired={vi.fn()} navigate={vi.fn()}/>);
+  expect(await screen.findByText(/Key rotation is unresolved/)).toBeVisible();
+  expect(screen.queryByText(/No action is required/)).not.toBeInTheDocument();
 });

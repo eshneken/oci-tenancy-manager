@@ -13,6 +13,8 @@ Earlier dated preservation receipts remain historical evidence.
 | Product scope and acceptance criteria | [Product specification](product/oci-tenancy-manager-spec.md) |
 | Current architecture and approved future design | [Engineering design](engineering-design/README.md) |
 | Lifecycle action/failure email | [Responsible-only scope and parity](reference/lifecycle-email.md#lifecycle-notice-parity--6-november-2026), [source checkpoint](history/lifecycle-notice-parity-checkpoint-2026-11-06.md) |
+| Find recorded work by type | [Operations filters](reference/operations.md#operation-type-filtering--10-november-2026), [checkpoint receipt](history/operations-filter-checkpoint-2026-11-10.md) |
+| Worker deployment sizing | [Staging/production targets and qualification](engineering-design/06-platform-and-delivery.md#accepted-initial-worker-sizing--10-november-2026) |
 | Run the application | [Local HTTPS setup](reference/local-application.md) |
 | Manual required-user presence checks | [Current check fields, authority and ER](reference/user-presence-checks.md) |
 | Presence-only connection foundation | [Current fields, ER and qualification boundary](reference/user-presence-connections.md) |

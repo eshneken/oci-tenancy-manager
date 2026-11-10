@@ -1405,20 +1405,35 @@ dialog p {
   }
 }
 
-/* Keep the shared-only shortcut readable between search and onboarding at tablet widths. */
-.tenancy-toolbar {
+/* Center directory links/checks beside search; wrap controls before search becomes unusable. */
+.directory-toolbar {
+  align-items: center;
   flex-wrap: wrap;
 }
-.tenancy-toolbar .search-field {
+.directory-toolbar > a,
+.directory-toolbar > .directory-filter {
+  align-self: flex-end;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.directory-toolbar .search-field {
   flex: 1 1 240px;
   min-width: 0;
 }
-.tenancy-toolbar .directory-filter {
+.directory-toolbar .directory-filter {
   flex: 0 0 auto;
   max-width: none;
 }
 @media (max-width: 700px) {
-  .tenancy-toolbar .search-field {
+  .directory-toolbar {
+    align-items: stretch;
+  }
+  .directory-toolbar > a,
+  .directory-toolbar > .directory-filter {
+    align-self: stretch;
+  }
+  .directory-toolbar .search-field {
     flex-basis: auto;
   }
 }
@@ -1875,3 +1890,23 @@ dialog p {
 .signing-rotation{border-top:1px solid #d5dfea;padding-top:20px;margin-top:20px}.signing-rotation h3{margin:0 0 8px}.signing-rotation .required-users-heading{margin-bottom:16px}.signing-rotation .signing-key-facts{margin-top:16px}.signing-rotation>p:last-of-type{margin-bottom:0}
 
 .signing-rotation-summary{display:flex;flex-wrap:wrap;align-items:center;gap:16px}
+
+/* Type labels fit a laptop toolbar; small screens wrap at words inside the viewport. */
+.operation-kind-filter {
+  flex: 0 1 auto;
+  width: 19rem;
+  max-width: 100%;
+}
+
+/* Search remains usable when the laptop toolbar wraps rather than shrinking to one word. */
+.operations-toolbar .search-field {
+  flex: 1 1 16rem;
+  min-width: min(16rem, 100%);
+}
+@media (max-width: 700px) {
+  .operations-toolbar .search-field,
+  .operations-toolbar .operation-kind-filter {
+    flex: none;
+    width: 100%;
+  }
+}

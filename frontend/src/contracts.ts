@@ -1225,6 +1225,17 @@ export type StepKey = string;
 export type VerifiedAt3 = string | null;
 export type Steps = OperationStepView[];
 export type Direction5 = "asc" | "desc";
+export type Kind5 =
+  | ""
+  | "inspect_import"
+  | "organization_action"
+  | "configuration_update"
+  | "configuration_check"
+  | "cost_collection"
+  | "required_user_check"
+  | "recovery_network_repair"
+  | "recovery_password"
+  | "signing_key";
 export type Page14 = number;
 export type PageSize13 = 10 | 25 | 50 | 100;
 export type Query5 = string;
@@ -1273,7 +1284,7 @@ export type Category4 =
  */
 export type Changes1 = string[];
 export type Id15 = string;
-export type Kind5 =
+export type Kind6 =
   | "email_delivery"
   | "signing_key_outcome"
   | "signing_key_requested"
@@ -1312,7 +1323,7 @@ export type Kind5 =
 export type OperationId20 = string | null;
 export type OrganizationSubjectName = string | null;
 export type Id16 = string;
-export type Kind6 = "tenancy" | "person";
+export type Kind7 = "tenancy" | "person";
 export type Name12 = string;
 /**
  * @maxItems 501
@@ -2527,6 +2538,7 @@ export interface OperationStepView {
 }
 export interface OperationQuery {
   direction?: Direction5;
+  kind?: Kind5;
   page?: Page14;
   page_size?: PageSize13;
   query?: Query5;
@@ -2568,7 +2580,7 @@ export interface AuditEntry {
   category: Category4;
   changes?: Changes1;
   id: Id15;
-  kind: Kind5;
+  kind: Kind6;
   operation_id: OperationId20;
   organization_subject_name?: OrganizationSubjectName;
   resources?: Resources;
@@ -2577,7 +2589,7 @@ export interface AuditEntry {
 }
 export interface AuditResource {
   id: Id16;
-  kind: Kind6;
+  kind: Kind7;
   name: Name12;
 }
 export interface AuditQuery {

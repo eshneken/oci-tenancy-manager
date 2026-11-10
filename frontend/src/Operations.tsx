@@ -22,12 +22,24 @@ const states: Record<OperationState, string> = {
   cancelled: "Cancelled",
   failed: "Failed",
 };
+const kinds: Record<OperationSummary["kind"], string> = {
+  organization_action: "Tenancy & organization workflows",
+  inspect_import: "Import inspection",
+  configuration_update: "Configuration updates",
+  configuration_check: "Configuration checks",
+  cost_collection: "Cost collection",
+  required_user_check: "Required-user checks",
+  recovery_network_repair: "Recovery network repair",
+  recovery_password: "Recovery password access",
+  signing_key: "Signing-key maintenance",
+};
 const initialQuery: OperationFilters = {
   page: 1,
   page_size: 10,
   sort: "accepted_at",
   direction: "desc",
   state: "",
+  kind: "",
   query: "",
 };
 const columns = [
@@ -120,8 +132,7 @@ function OperationList({
   const client = useQueryClient();
   const [query, setQuery] = useState<OperationFilters>(
     () =>
-      client.getQueryData<OperationFilters>(["operations", "view"]) ??
-      initialQuery,
+      ({...initialQuery, ...client.getQueryData<OperationFilters>(["operations", "view"])}),
   );
   const [search, setSearch] = useState(query.query);
   useEffect(() => {
@@ -147,7 +158,7 @@ function OperationList({
   });
   useReadDenial(result.error, expired);
   const data = result.data;
-  const filtered = Boolean(query.query || query.state);
+  const filtered = Boolean(query.query || query.state || query.kind);
   const page = data?.page ?? 1;
   const pageCount = data?.pages ?? 1;
   const firstPage = Math.max(1, Math.min(page - 2, pageCount - 4));
@@ -165,10 +176,10 @@ function OperationList({
         previous.sort === key && previous.direction === "asc" ? "desc" : "asc",
     }));
   }
-  // Clearing a no-match state resets both user filters while preserving ordering and row count.
+  // Clearing a no-match state resets all user filters while preserving ordering and row count.
   function clearFilters() {
     setSearch("");
-    setQuery((previous) => ({ ...previous, query: "", state: "", page: 1 }));
+    setQuery((previous) => ({ ...previous, query: "", state: "", kind: "", page: 1 }));
   }
   return (
     <>
@@ -196,6 +207,25 @@ function OperationList({
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
+          </label>
+          <label className="state-filter operation-kind-filter">
+            Operation type
+            <Select
+              aria-label="Operation type"
+              value={query.kind}
+              onChange={(event) =>
+                setQuery((previous) => ({
+                  ...previous,
+                  kind: event.target.value as OperationFilters["kind"],
+                  page: 1,
+                }))
+              }
+            >
+              <option value="">All operation types</option>
+              {Object.entries(kinds).map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
+            </Select>
           </label>
           <label className="state-filter">
             State
@@ -245,7 +275,7 @@ function OperationList({
                 </h2>
                 <p>
                   {filtered
-                    ? "Change or clear the search and state filter."
+                    ? "Change or clear the search, operation type and state filters."
                     : "Recorded operations will appear here after a workflow or inspection is accepted."}
                 </p>
                 {filtered && (
@@ -336,6 +366,8 @@ function OperationList({
                                 ? "Password work requires reconciliation. Review the recorded outcome before further access."
                                 : operation.kind === "recovery_network_repair"
                                 ? "Repair effect is unverified. Review the operation for independent reconciliation; do not retry the write."
+                                : operation.kind === "signing_key"
+                                ? "Key rotation is unresolved. Review the original operation before resuming from the tenancy page."
                                 : operation.kind === "organization_action"
                                 ? "Local workflow is blocked. Review the employee or tenancy record."
                                 : "Simulation ended with an issue. No action is required."}

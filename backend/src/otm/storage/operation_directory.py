@@ -303,6 +303,8 @@ class SqlOperationDirectory:
         where = [operation.c.workspace_id == workspace]
         if query.state:
             where.append(operation.c.state == query.state)
+        if query.kind:
+            where.append(operation.c.kind == query.kind)
         if query.query:
             target = audit_event.c.data["intent"]["target"]["tenancy_ocid"].astext
             where.append(

@@ -198,3 +198,13 @@ reads, then rechecks grant/context and seals per-subject immutable results. Nati
 separate from account presence; no automatic provider fallback, daily schedule or email is added.
 The 30-second bound rejects late returned results and is not a network cancellation timeout.
 See [authority, attempts and all persisted fields](user-presence-checks.md). Local qualification and the main-preview upgrade pass; [the receipt](../history/manual-presence-checkpoint-2026-11-06.md) records separate complete lanes and preservation.
+
+
+## Initial staging and production sizing
+
+The [accepted platform sizing](../engineering-design/06-platform-and-delivery.md#accepted-initial-worker-sizing--10-november-2026)
+starts staging at one worker/one slot and targets production at two independently qualified workers,
+one slot each. The saved local app stays one worker. Shared queue locks and business-state fences
+still govern each operation; an interrupted uncertain write is not automatically retryable just
+because another worker is available. Actual OKE replica/connection settings and live timings remain
+staging/pilot qualification, not an implemented local deployment change.

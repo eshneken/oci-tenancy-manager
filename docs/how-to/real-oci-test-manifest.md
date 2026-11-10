@@ -19,6 +19,7 @@ independent recovery access. This manifest does not itself authorize live resour
 
 | Area | Procedure / expected qualification | Status |
 | --- | --- | --- |
+| Initial multi-worker production sizing | [Two-worker qualification](#initial-multi-worker-production-qualification): staging one slot, production two one-slot workers; locks, child isolation, deadlines, crash recovery and connection budget. | Pending |
 | Configuration drift and selected repair | [Live scenario matrix](configuration-drift-runbook.md#pending-real-oci-manual-validation): exact objects, override preservation, permissions, partial outcomes, concurrency and unrelated-resource protection. | Pending |
 | Required-user presence | [Live presence matrix](configuration-drift-runbook.md#pending-required-user-presence-qualification): exact domain/SCIM/OCI identities, qualified absence, independent subjects and stale authority. | Pending |
 | Permanent-user capture during onboarding | Create and import a disposable child; retain provider-returned automation and recovery domain/SCIM/OCI identities independently. Verify durable values against OCI. Retry interrupted setup without adopting same-name/different-ID accounts or inventing bindings for older records. Preserve post-policy access checks before retiring temporary credentials. Version 3 implements simulated capture; qualification still requires a real adapter and approved disposable child. Saved previews must be deliberately upgraded before local UI review. | Pending |
@@ -263,3 +264,15 @@ children/test mailboxes and exact scoped credentials; do not create another loca
 | Recovery-password overlap | Active original four-hour window drains before child reservation; due closure runs between key phases, no deadline extension/deadlock or unsafe old-key fallback | Pending |
 | Isolation and notices | Cached views/other children continue; no raw key material; one original-operation/admin incident across holds/resume/activation with frozen routing and no uncertain resend | Pending |
 | Lifecycle/restore | Confirmed termination tombstones only that child; pending termination defers; D54 paused restore reconciles actual key custody/provider effects before continuation, no resurrection | Pending |
+
+
+## Initial multi-worker production qualification
+
+**Pending — staging/OKE and real OCI required.** Start one staging worker/one slot, then qualify the
+initial two-worker/one-slot-each production target from the
+[accepted sizing decision](../engineering-design/06-platform-and-delivery.md#accepted-initial-worker-sizing--10-november-2026).
+Measure queue wait/provider latency and database connection use. Confirm unrelated-child progress,
+operation lock/claim exclusion, the per-child rotation pause, duplicate delivery, graceful and abrupt
+worker death, and recovery-password closure while a signing rotation drains. No uncertain write may
+be retried merely because a second worker is available. Local simulation is not evidence of live
+permissions, provider propagation or production timing guarantees.

@@ -22,6 +22,19 @@ class OperationQuery(Contract):
     state: Literal[
         "", "queued", "running", "waiting", "needs_attention", "succeeded", "cancelled", "failed"
     ] = ""
+    # Empty includes every supported operation; a concrete kind narrows reads, never execution.
+    kind: Literal[
+        "",
+        "inspect_import",
+        "organization_action",
+        "configuration_update",
+        "configuration_check",
+        "cost_collection",
+        "required_user_check",
+        "recovery_network_repair",
+        "recovery_password",
+        "signing_key",
+    ] = ""
     query: Annotated[str, Field(max_length=128)] = ""
 
 
@@ -111,7 +124,7 @@ class UserCheckSection(Contract):
 
 # Preserve event ordering and bounded historical visibility without disclosing authorization data.
 class OperationEventView(Contract):
-    # Fixed server-derived checkpoint text; raw outcomes and private version references stay private.
+    # Fixed checkpoint text excludes raw outcomes and private version references.
     summary: Text | None = Field(default=None, exclude_if=lambda value: value is None)
     # Only required-user outcomes carry these safe historical result sections.
     user_checks: tuple[UserCheckSection, ...] = ()

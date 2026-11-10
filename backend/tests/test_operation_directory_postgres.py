@@ -62,6 +62,17 @@ def test_real_directory_query_controls(pg_case):
     )
     assert reads.directory(workspace, OperationQuery(query="%_")).total == 0
     assert reads.directory(workspace, OperationQuery(query="' OR 1=1 --")).total == 0
+    assert reads.directory(workspace, OperationQuery(kind="inspect_import")).total == 12
+    assert reads.directory(workspace, OperationQuery(kind="signing_key")).total == 0
+    assert (
+        reads.directory(workspace, OperationQuery(kind="inspect_import", query="sandbox01")).total
+        == 1
+    )
+    assert (
+        reads.directory(workspace, OperationQuery(kind="inspect_import", state="succeeded")).total
+        == 0
+    )
+    assert reads.directory("foreign", OperationQuery(kind="inspect_import")).total == 0
     assert reads.directory("foreign", OperationQuery()).total == 0
 
 

@@ -55,6 +55,7 @@ Current session denial and verification-outage diagnostics retain their existing
 | `sort` | `accepted_at`, `updated_at`, `state` or `stage`; default `accepted_at`. |
 | `direction` | `asc` or `desc`; default `desc`. A UUID tie-break gives stable ordering. |
 | `state` | Empty for all, or `queued`, `running`, `waiting`, `needs_attention`, `succeeded`, `cancelled`, `failed`. |
+| `kind` | Empty for all (default), or `inspect_import`, `organization_action`, `configuration_update`, `configuration_check`, `cost_collection`, `required_user_check`, `recovery_network_repair`, `recovery_password`, `signing_key`. Closed allowlist; exact match. |
 | `query` | At most 128 characters; literal case-insensitive containment over operation UUID text or current-intent target tenancy OCID. `%`/`_` are escaped rather than becoming SQL wildcards. |
 
 SQL sort columns come from an allowlist; no caller-supplied identifier is interpolated. The filtered
@@ -510,3 +511,37 @@ visible; other event kinds retain their existing labels. This optional DTO field
 | Complete checkpoint | Old key absent; replacement access verified |
 | Verified outcome | Automation signer prepared, or Key rotation completed |
 | Attention/cancelled/no checkpoint | Explicit setup/rotation attention, cancellation or generic progress; no inferred success |
+
+
+## Operation-type filtering — 10 November 2026
+
+The Operations toolbar combines **Search operations**, **Operation type** and **State**.
+All operation types are included initially; selecting a type resets page 1 while retaining search,
+state, sort and page size. Clear filters resets search/type/state, retaining sort and page size.
+Opening an operation and returning preserves controls within the authenticated query cache; a full
+browser reload starts the default list. The existing tenancy-context return link is unchanged.
+
+Tenancy & organization workflows groups existing `organization_action` operations, including
+create/import, membership, ownership and offboarding. Signing-key maintenance includes initial
+signer enrollment and later rotations; it does not imply every matching operation is a rotation.
+A scheduled start remains the earliest eligible execution time, separate from acceptance.
+
+`OperationQuery.kind` is a validated optional read control. SQLAlchemy binds the exact kind value
+in both the count and page predicates in the same read-only snapshot. Invalid kinds return the
+existing fixed 400 query error. Workspace still comes exclusively from the verified session.
+The workspace-wide actionable badge is independent of every list filter; a filtered list can be
+empty while another operation type still requires action. No table, migration, provider call,
+queue dispatch, credential exposure or state transition is introduced by filtering.
+
+
+### Local manual review
+
+After the paired preview is updated, open Operations on the sole saved instance. Select
+Signing-key maintenance to isolate enrollment/rotations, then combine it with Waiting to see future
+scheduled work. Open a record and return to confirm that both filters remain selected. Choose a
+rare operation type to inspect the no-match state; Clear filters returns to all types/states and
+clears search. These are read-only checks: do not trigger a rotation just to populate the list.
+
+Tenancies and Organization share centered directory toolbars: shortcut links and checkbox labels
+align vertically with the search textbox on laptops, then stack on narrow screens.
+No directory filtering or mutation semantics change with this alignment refinement.

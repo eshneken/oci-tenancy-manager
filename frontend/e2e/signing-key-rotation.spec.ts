@@ -30,6 +30,26 @@ test("rotate a managed signing key through the independent native worker",async(
   await page.getByLabel("Authenticator code",{exact:true}).fill(authenticatorCode());
   await page.getByRole("button",{name:"Sign in",exact:true}).click();
   await expect(page.getByRole("heading",{name:"Tenancies",exact:true})).toBeVisible();
+  // Both daily directories center shortcuts against search and preserve their narrow stacked layout.
+  for(const path of ["tenancies","organization"]){
+    await page.goto("/"+path);
+    const toolbar=page.locator(".directory-toolbar");
+    await expect(toolbar.getByRole("searchbox")).toBeVisible();
+    for(const width of [1280,900,390,320]){
+      await page.setViewportSize({width,height:900});
+      expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+      await toolbar.scrollIntoViewIfNeeded();
+      if(width===1280){
+        const search=await toolbar.getByRole("searchbox").boundingBox();
+        const link=await toolbar.getByRole("link").boundingBox();
+        expect(Math.abs(search!.y+search!.height/2-link!.y-link!.height/2)).toBeLessThan(2);
+        const checkbox=await toolbar.locator(".directory-filter").boundingBox();
+        expect(Math.abs(search!.y+search!.height/2-checkbox!.y-checkbox!.height/2)).toBeLessThan(2);
+      }
+      await page.screenshot({path:resolve(".local-dev/browser",`directory-${path}-${width}.png`),fullPage:true});
+    }
+  }
+  await page.setViewportSize({width:1280,height:900});
   const id=process.env.OTM_E2E_TENANCY_ID!;
   await page.goto("/tenancies/"+id);
   const region=page.getByRole("region",{name:"Automatic key rotation"});
@@ -87,6 +107,41 @@ test("rotate a managed signing key through the independent native worker",async(
   await page.getByRole("link",{name:"← Back to tenancy",exact:true}).click();
   await expect(region.getByText(/Current key: generation 2/)).toBeVisible();
   await page.screenshot({path:resolve(".local-dev/browser","signing-key-completed-1280.png"),fullPage:true});
+  // Actual API filtering isolates recurring work without changing the workspace-wide action badge.
+  await page.getByRole("link",{name:"Operations",exact:true}).click();
+  await page.getByLabel("Operation type",{exact:true}).selectOption("configuration_check");
+  await expect(page.getByRole("heading",{name:"No operations match your filters"})).toBeVisible();
+  await page.getByRole("button",{name:"Clear filters",exact:true}).click();
+  await expect(page.getByLabel("Operation type",{exact:true})).toHaveValue("");
+  await page.getByLabel("Operation type",{exact:true}).selectOption("signing_key");
+  await page.getByLabel("State",{exact:true}).selectOption("waiting");
+  const operations=page.getByRole("region",{name:"Operations directory"});
+  await expect(operations.locator("tbody tr")).toHaveCount(1);
+  for(const width of [1280,900,390,320]){
+    await page.setViewportSize({width,height:900});
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    const searchBounds=await page.getByRole("searchbox",{name:"Search operations"}).boundingBox();
+    expect(searchBounds!.width).toBeGreaterThan(200);
+    await page.screenshot({path:resolve(".local-dev/browser",`operation-type-filter-${width}.png`),fullPage:true});
+    await page.getByLabel("Operation type",{exact:true}).click();
+    await page.getByRole("option",{name:"Tenancy & organization workflows",exact:true}).scrollIntoViewIfNeeded();
+    await expect(page.getByRole("option",{name:"Tenancy & organization workflows",exact:true})).toBeVisible();
+    await page.screenshot({path:resolve(".local-dev/browser",`operation-type-menu-${width}.png`)});
+    await page.keyboard.press("Escape");
+    await expect(page.getByLabel("Operation type",{exact:true})).toBeFocused();
+    await page.getByLabel("State",{exact:true}).click();
+    await expect(page.getByRole("option",{name:"Needs attention",exact:true})).toBeVisible();
+    await page.screenshot({path:resolve(".local-dev/browser",`operation-state-menu-${width}.png`)});
+    await page.keyboard.press("Escape");
+    await expect(page.getByLabel("State",{exact:true})).toBeFocused();
+  }
+  await page.setViewportSize({width:1280,height:900});
+  await operations.locator("tbody tr").getByRole("link").first().click();
+  await expect(page.getByText(/Scheduled start \(UTC\):/)).toBeVisible();
+  await page.getByRole("link",{name:"← Back to operations",exact:true}).click();
+  await expect(page.getByLabel("Operation type",{exact:true})).toHaveValue("signing_key");
+  await expect(page.getByLabel("State",{exact:true})).toHaveValue("waiting");
+  await page.goto("/tenancies/"+id);
   // Browser-only response fixtures inspect rare presentation states without adding app controls.
   const endpoint="**/api/tenancies/"+id+"/signing-key-rotation";
   const current=await(await page.request.get("/api/tenancies/"+id+"/signing-key-rotation")).json();

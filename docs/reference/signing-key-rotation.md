@@ -39,7 +39,7 @@ checkpoints use existing operation-step and immutable audit records. Upload disp
 the call; absence after an uncertain upload does not authorize a resend. Activation preserves the old
 original deadline until exact old ID/fingerprint absence and continuing replacement proof.
 
-A completed nonterminal phase commits `queued` plus its next native job; priority -100 password jobs
+A completed nonterminal phase commits `queued` plus its next native job; priority 100 password jobs
 can run between phases. Initial future admission alone sets `scheduled_rotation=True` (priority -1);
 immediate/manual/resume/phase/drain jobs use priority 0. This avoids an earlier scheduled job on the
 same operation lock blocking a manual run, without adding a queue or changing lock identity. Automatic delivery cannot take over `running` or resume `needs_attention`.
