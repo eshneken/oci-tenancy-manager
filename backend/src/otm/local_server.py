@@ -51,6 +51,7 @@ def create_local_application():
             Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "recovery-passwords",
             Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "automation-key-inventory",
             Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "signing-key-custody",
+            Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "bootstrap-key-custody",
             Path(os.environ["OTM_APPLICATION_CONFIG"]),
             *(
                 [Path(os.environ["OTM_ORGANIZATION_CONFIG"])]
@@ -101,6 +102,13 @@ def create_local_application():
                 return load_sandbox(path, workspace)
 
             from otm.providers.automation_keys_simulator import SimulatedAutomationKeys
+            from otm.providers.bootstrap_keys_local import LocalBootstrapKeys
+
+            bootstrap_path = (
+                Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "bootstrap-key-custody"
+            )
+            bootstrap_path.mkdir(mode=0o700, exist_ok=True)
+            bootstrap_keys = LocalBootstrapKeys(bootstrap_path)
 
             keys = SimulatedAutomationKeys(
                 Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "automation-key-inventory",
@@ -121,6 +129,7 @@ def create_local_application():
                 ),
                 automation_key_inventory_enabled=True,
                 signing_key_setup_enabled=True,
+                bootstrap_keys=bootstrap_keys,
                 recovery_console=settings.recovery_console,
                 policy_loader=organization_policy,
                 mail_policy=settings.mail_policy(),
@@ -128,7 +137,11 @@ def create_local_application():
             )
         if workflow.mode == "simulated":
             from otm.storage.enqueue import SIGNING_KEY_TASK
-            from otm.tenancies.signing_keys import SigningKeys, require_signing_admission
+            from otm.tenancies.signing_keys import (
+                SigningKeys,
+                require_signing_admission,
+                require_signing_window_admission,
+            )
 
             workflow.signing_key_rotations = SigningKeys(
                 organization_store,
@@ -230,6 +243,8 @@ def create_local_application():
         ):
             if guarded_service is not None:
                 guarded_service.signing_guard = workflow.signing_guard
+        if workflow.recovery_passwords is not None and workflow.mode == "simulated":
+            workflow.recovery_passwords.new_window_guard = require_signing_window_admission
         rollouts = ConfigurationRollouts(
             organization_store,
             repair_facade=SimulatedConfigurationFacade(workflow.policy)

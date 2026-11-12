@@ -1,0 +1,11 @@
+EMPLOYEE_FULL_NAME,EMAIL,MGR,TOP_MGR
+Morgan Lane,morgan.lane@example.test,,
+Avery Patel,avery.patel@example.test,morgan.lane@example.test,morgan.lane@example.test
+Jordan Reed,jordan.reed@example.test,morgan.lane@example.test,morgan.lane@example.test
+Priya Shah,priya.shah@example.test,avery.patel@example.test,avery.patel@example.test
+Noah Kim,noah.kim@example.test,jordan.reed@example.test,jordan.reed@example.test
+Casey Taylor,casey.morgan@example.test,noah.kim@example.test,jordan.reed@example.test
+Quinn Reyes,quinn.reyes@example.test,noah.kim@example.test,jordan.reed@example.test
+Taylor Brooks,taylor.brooks@example.test,noah.kim@example.test,jordan.reed@example.test
+Sam Chen,sam.chen@example.test,priya.shah@example.test,avery.patel@example.test
+Drew Park,drew.park@example.test,priya.shah@example.test,avery.patel@example.test

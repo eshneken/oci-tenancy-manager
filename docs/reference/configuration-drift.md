@@ -299,3 +299,11 @@ both unit-only line-coverage gates exceed 95%; focused PostgreSQL/HTTP and nativ
 browser checks pass. Independent security, documentation and UI/UX reviews pass. Both saved
 instances are refreshed, preserving existing rows and schema. Daily scheduled admission remains
 deferred until staging/Kubernetes and its noninteractive-authority qualification.
+
+
+## Unified dashboard acquisition — 12 November 2026
+
+The Tenancies dashboard [Refresh all data](fleet-refresh.md) independently admits this existing
+read workflow for eligible registered children across all pages/filters. Detail controls and this
+page's stored-result refresh semantics remain unchanged. Admission and job completion do not prove
+healthy/fresh observations. This source change has targeted local qualification PASS; saved publication PASS.

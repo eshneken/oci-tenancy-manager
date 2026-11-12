@@ -53,7 +53,7 @@ One failed child cannot roll back another child's observations.
 |---|---|---|
 | Daily CronJob | Workspace + child + source kind + configured daily slot; duplicate delivery uses the same occurrence key | One logical child collection; existing accepted occurrence is returned |
 | Manual Refresh costs | New actor command key for a deliberate request; re-delivery retains that key | Join compatible active work or accept a new child collection; return operation ID after commit |
-| Refresh all costs | Freeze eligible registered child IDs; one bounded child acceptance per target | Report accepted/joined/skipped targets honestly; new children wait for their next trigger |
+| Refresh all data | Server-select currently eligible registered children on each request; independently admit existing cost/user/configuration reads | Report operation IDs and admission skips/failures; no persisted batch receipt/frozen fleet. See [replay limits](../reference/fleet-refresh.md#replay-and-storage-boundary). |
 | Retry | Original collection/occurrence with a new attempt ID and bounded backoff | Does not masquerade as a new user request or a new provider calculation |
 | Recovery after restore | D12/D54 deployment maintenance, stopped old processes, held work and reconciled current bindings | Normal dispatch stays paused until release; restored queue does not self-authorize work |
 

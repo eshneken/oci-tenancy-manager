@@ -6,7 +6,6 @@ import hmac
 import json
 import os
 import re
-import secrets
 import stat
 from contextlib import contextmanager
 from pathlib import Path
@@ -14,6 +13,7 @@ from uuid import UUID, uuid4
 
 from pydantic import SecretStr
 
+from otm.providers.password_generation import generate_recovery_password, valid_generated_password
 from otm.providers.recovery_password import (
     PasswordChange,
     PasswordLocation,
@@ -156,7 +156,7 @@ class SimulatedRecoveryPasswords:
                     "scope": self.scope(location),
                     "version": version,
                     "operation_id": str(operation_id),
-                    "password": "aA1!" + secrets.token_urlsafe(37),
+                    "password": generate_recovery_password(location.target.user_name),
                 }
                 self.write(directory, filename, value)
             self.material(location, value)
@@ -168,7 +168,11 @@ class SimulatedRecoveryPasswords:
             set(value) != {"scope", "version", "operation_id", "password"}
             or value["scope"] != self.scope(location)
             or not isinstance(value["password"], str)
-            or len(value["password"]) != 54
+            # Preserve historical simulated CURRENT/candidates; validate new 32-character records.
+            or (
+                len(value["password"]) != 54
+                and not valid_generated_password(value["password"], location.target.user_name)
+            )
             or UUID(value["operation_id"]).hex != value["version"]
         ):
             raise PasswordCustodyUnavailable()

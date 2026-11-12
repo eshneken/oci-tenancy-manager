@@ -214,3 +214,24 @@ password dialog. Current source excludes `automation_keys` from `checksRevision`
 consent and displayed transient password across those independent updates. User identity, recovery
 policy and other security-readiness changes still clear access under existing guards. No new stored
 field, expiry extension or credential authority is added. [Targeted checkpoint qualification and preserved main installation](../history/automation-signing-key-inventory-checkpoint-2026-11-09.md) pass; broader live claims remain pending.
+
+
+## Generated password candidates — 12 November 2026
+
+Current source change; targeted bundle qualification PASS; saved publication PASS. Setup/rotation traces
+through worker execution, custody staging and `SimulatedRecoveryPasswords.stage` to
+`password_generation.generate_recovery_password`. New candidates are 32 characters selected with
+cryptographic randomness from lower-case letters, upper-case letters, digits and the explicit special
+set `!@#%+-_=`. At least one of each class is guaranteed; Fisher–Yates shuffle removes the old
+predictable class prefix. The exact user name is excluded case-insensitively. Bounded candidate
+rejection fails closed rather than returning a weak fallback.
+
+This changes new candidate generation only. Existing 54-character CURRENT/candidate values and
+idempotent stage/replay retain their original bytes; no secret reset, database edit or backfill is
+required. Secret values still remain outside SQL/API/audit/logs. Meeting this local template is not
+proof of acceptance under a child's effective custom policy, user-name restrictions or password
+history. Actual OCI policy selection and password acceptance remain Pending live qualification.
+
+Oracle's [CNC Console guide, section 5.2](https://docs.oracle.com/en/industries/communications/cloud-native-core/3.25.2.2xx.0/cnc_console_user_guide/cnc-console-user-guide.pdf) documents a Default PasswordPolicy (Custom) example with length 12–40, at least one lower/upper/digit, zero required special characters, name/username exclusion and four-password history. The 32-character template satisfies that example's length/class minima with a stronger special-character minimum; it does not establish universal OCI policy compliance. [OCI identity-domain policy guidance](https://docs.oracle.com/en-us/iaas/Content/Identity/passwordpolicies/Managing-Password-Policies_set-password-policies-your-identity-domain.htm) permits custom criteria and prioritized group policies. The generator does not know first/last names or password history; effective-policy/provider acceptance remains a required live check.
+
+Targeted bundle evidence: [qualification scope](fleet-refresh.md#targeted-bundle-qualification--12-november-2026). Saved publication PASS.

@@ -113,6 +113,7 @@ class SigningKeyView(Contract):
         "not_prepared",
         "preparing",
         "scheduled",
+        "waiting",
         "rotating",
         "attention",
         "overdue",

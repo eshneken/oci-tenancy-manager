@@ -1,0 +1,45 @@
+{
+  "$defs": {
+    "RefreshJob": {
+      "additionalProperties": false,
+      "properties": {
+        "operation_id": {
+          "format": "uuid",
+          "title": "Operation Id",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "pending",
+            "finished",
+            "failed",
+            "unavailable"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "operation_id",
+        "state"
+      ],
+      "title": "RefreshJob",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "jobs": {
+      "items": {
+        "$ref": "#/$defs/RefreshJob"
+      },
+      "title": "Jobs",
+      "type": "array"
+    }
+  },
+  "required": [
+    "jobs"
+  ],
+  "title": "FleetRefreshStatus",
+  "type": "object"
+}

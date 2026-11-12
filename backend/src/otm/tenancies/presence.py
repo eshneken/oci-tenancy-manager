@@ -168,16 +168,16 @@ class PresenceChecks:
         )
 
     # An identical request UUID replays its durable receipt; distinct requests remain independent.
-    def start(self, principal, identifier, command):
+    def start(self, principal, identifier, command, *, join_pending=False):
         try:
-            return self._start(principal, identifier, command)
+            return self._start(principal, identifier, command, join_pending=join_pending)
         except (OrganizationConflict, RequestConflict):
             raise
         except (ValueError, KeyError):
             raise RuntimeError("REQUIRED_USERS_CHECK_UNAVAILABLE") from None
 
     # The admitted operation, snapshot, audit and native deferral share one active transaction.
-    def _start(self, principal, identifier, command):
+    def _start(self, principal, identifier, command, *, join_pending=False):
         digest = canonical_hash(
             {
                 "kind": "required_user_check",
@@ -220,6 +220,13 @@ class PresenceChecks:
                 raise OrganizationConflict("REQUIRED_USERS_CHECK_UNAVAILABLE")
             context = snapshot.model_dump(mode="json")
             context_hash = canonical_hash(context)
+            # Fleet refresh joins only the exact still-pending snapshot under the workspace lock.
+            if join_pending:
+                for pending in operation_rows(
+                    connection, workspace, tenancy_id=identifier, pending=True
+                ):
+                    if decode_intent(pending).intent.context_hash == context_hash:
+                        return receipt(pending)
             grant = (
                 connection.execute(
                     select(administrator).where(

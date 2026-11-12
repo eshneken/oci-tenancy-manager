@@ -198,7 +198,7 @@ class ConfigurationChecks:
 
     # Freeze current assigned state and enqueue once atomically; no desired/verified head is
     # updated.
-    def start(self, principal, command):
+    def start(self, principal, command, *, join_pending=False):
         digest = canonical_hash({"kind": "configuration_check", **command.model_dump(mode="json")})
         with self.store._write(principal) as (connection, workspace, at):
             self.store._workspace(connection, workspace, lock=True)
@@ -235,6 +235,24 @@ class ConfigurationChecks:
                 row for row in rows if registered_child(row, policy) and not row["operation_id"]
             ]
             pending = self.pending(connection, workspace, selected, policy)
+            # Batch reads may join the exact assigned-context job instead of duplicating it.
+            if join_pending and command.tenancy_id in pending:
+                joined = (
+                    connection.execute(
+                        select(operation).where(
+                            operation.c.workspace_id == workspace,
+                            operation.c.id == pending[command.tenancy_id],
+                        )
+                    )
+                    .mappings()
+                    .one()
+                )
+                return ActionReceipt(
+                    operation_id=joined["id"],
+                    state=joined["state"],
+                    provider_mode="simulated",
+                    accepted_at=joined["accepted_at"],
+                )
             if command.tenancy_id and (not selected or command.tenancy_id in pending):
                 raise OrganizationConflict("CONFIGURATION_CHECK_BUSY")
             selected = [row for row in selected if row["id"] not in pending]

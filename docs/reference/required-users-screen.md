@@ -172,3 +172,11 @@ existing guards; its position does not make the automation user a human login. F
 link to exact subject/kind anchors in [Recorded user check results](operations.md#recorded-required-user-check-sections--source-follow-up).
 Historical assignment/policy omissions are Not checked, not inferred success. No table or permission
 change is introduced. This follow-up’s [validation/installation](../history/recovery-password-checkpoint-2026-11-09.md#access-panel-and-recorded-results-follow-up) passes with the separately recorded combined evidence; earlier440-case/focused receipts retain their own scope.
+
+
+## Unified dashboard acquisition — 12 November 2026
+
+The Tenancies dashboard [Refresh all data](fleet-refresh.md) independently admits this existing
+read workflow for eligible registered children across all pages/filters. Detail controls and this
+page's stored-result refresh semantics remain unchanged. Admission and job completion do not prove
+healthy/fresh observations. This source change has targeted local qualification PASS; saved publication PASS.

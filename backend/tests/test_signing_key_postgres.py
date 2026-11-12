@@ -3,10 +3,12 @@
 from datetime import timedelta
 from types import SimpleNamespace
 from unittest.mock import patch
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from sqlalchemy import select, update
+from test_financial_postgres import costs
+from test_financial_postgres import request as cost_request
 from test_notification_mailpit_postgres import mail_capture
 from test_organization_workflows_postgres import (
     action,
@@ -15,7 +17,12 @@ from test_organization_workflows_postgres import (
     organization_case,
     workflow_case,
 )
+from test_recovery_console_checks_postgres import refresh
+from test_recovery_password_postgres import password_pg
+from test_recovery_password_postgres import records as password_records
+from test_recovery_password_postgres import request as recovery_request
 
+from otm.financial.service import CostConflict
 from otm.operations.views import OperationQuery
 from otm.providers.automation_keys_simulator import SimulatedAutomationKeys
 from otm.providers.signing_key_rotation_simulator import SimulatedSigningKeys
@@ -26,13 +33,16 @@ from otm.storage.enqueue import (
     workspace_queue,
 )
 from otm.storage.operation_directory import SqlOperationDirectory
+from otm.storage.organization import OrganizationConflict
 from otm.storage.tables import (
     administrator,
     audit_event,
     notification_outbox,
     operation,
     operation_step,
+    recovery_credential,
     signing_credential,
+    tenancy,
 )
 from otm.tenancies.onboarding_contracts import OnboardingCommand
 from otm.tenancies.signing_key_contracts import SigningKeyRequest
@@ -41,12 +51,20 @@ from otm.tenancies.signing_key_worker import SigningKeyWorker
 from otm.tenancies.signing_keys import (
     SigningKeys,
     require_signing_admission,
+    require_signing_window_admission,
     signing_dispatch_allowed,
 )
 from otm.tenancies.views import TenancyQuery
 
 pytestmark = pytest.mark.postgres
-__all__ = ["factors", "login_case", "organization_case", "workflow_case", "mail_capture"]
+__all__ = [
+    "factors",
+    "login_case",
+    "organization_case",
+    "workflow_case",
+    "mail_capture",
+    "password_pg",
+]
 
 
 # One real scoped source/workflow uses separate persistent custody and provider inventory fixtures.
@@ -165,9 +183,12 @@ def test_enrollment_rotation_and_request_replay(signing_case):
     with c.engine.connect() as connection:
         from otm.storage.organization import OrganizationConflict
 
+        require_signing_admission(connection, c.policy.workspace_id, c.child.id, c.clock())
+        assert signing_dispatch_allowed(connection, c.policy.workspace_id, c.child.id, c.clock())
+    c.keys.run(queued.operation_id)
+    with c.engine.connect() as connection:
         with pytest.raises(OrganizationConflict, match="SIGNING_KEY_MAINTENANCE_REQUIRED"):
             require_signing_admission(connection, c.policy.workspace_id, c.child.id, c.clock())
-        assert signing_dispatch_allowed(connection, c.policy.workspace_id, c.child.id, c.clock())
     for _ in range(8):
         c.keys.run(queued.operation_id)
     completed = SqlOperationDirectory(c.engine).detail(c.policy.workspace_id, queued.operation_id)
@@ -581,3 +602,164 @@ def test_signer_setup_rechecks_parent_authority(signing_case, mode):
         enroll_key.assert_not_called()
         assert current["generation"] == 0 and current["current_key"] is None
         assert parent["state"] != "queued"
+
+
+# Compose real recovery and signer setup together before onboarding a second disposable child.
+@pytest.fixture
+def overlap_case(password_pg, tmp_path):
+    c = password_pg
+    inventory = SimulatedAutomationKeys(tmp_path / "overlap-inventory", c.clock)
+    root = tmp_path / "overlap-signing"
+    root.mkdir(mode=0o700)
+    provider = SimulatedSigningKeys(root, inventory, c.clock)
+    queue = InspectionEnqueuer(workspace_queue(c.policy.workspace_id), task=SIGNING_KEY_TASK)
+    c.workflow.automation_key_inventory_enabled = True
+    c.workflow.signing_key_setup_enabled = True
+    c.workflow.signing_guard = require_signing_admission
+    c.worker.signing_setup = SigningKeySetup(queue, c.loader)
+    c.provider.automation_keys = inventory
+    c.keys = SigningKeyWorker(
+        c.engine, c.policy.workspace_id, c.clock, c.loader, provider, queue, c.workflow.enqueuer
+    )
+    c.signing = SigningKeys(c.store, c.loader, queue)
+    parent, head = enroll(c, complete=False)
+    c.keys.run(head["rotation_operation_id"])
+    # Resume onboarding to admit password setup only after the signer is verified.
+    c.worker.run(parent)
+    with c.engine.connect() as connection:
+        password = (
+            connection.execute(
+                select(recovery_credential).where(
+                    recovery_credential.c.tenancy_id == head["tenancy_id"]
+                )
+            )
+            .mappings()
+            .one()
+        )
+    c.rotation.run(password["rotation_operation_id"])
+    c.worker.run(parent)
+    assert c.workflow.onboarding(c.principal, parent).phase == "complete"
+    c.child = next(
+        row
+        for row in c.workflow.tenancies(c.principal, TenancyQuery()).items
+        if row.id == head["tenancy_id"]
+    )
+    c.signer_id = head["id"]
+    c.access.signing_guard = c.service.signing_guard = require_signing_admission
+    c.access.new_window_guard = require_signing_window_admission
+    c.reader.signing_dispatch = signing_dispatch_allowed
+    refresh(c)
+    c.costs, c.cost_worker, _ = costs(c)
+    c.costs.signing_guard = require_signing_admission
+    c.cost_worker.signing_dispatch = signing_dispatch_allowed
+    return c
+
+
+# Cost reads and same-window grants work throughout recovery wait; key switching still fences work.
+@pytest.mark.parametrize("legacy", [False, True])
+def test_recovery_wait_allows_costs_until_key_switch(overlap_case, legacy):
+    c = overlap_case
+    original_command, disclosed = recovery_request(c)
+    due = disclosed["rotation_due_at"]
+    preview = c.signing.view(c.principal, c.child.id)
+    command = SigningKeyRequest(
+        client_request_key=uuid4(), preview_hash=preview.preview_hash, acknowledged=True
+    )
+    started = c.signing.request(c.principal, c.child.id, command)
+    if legacy:
+        # Reproduce the prior release's untouched drain, only in this disposable fixture.
+        with c.engine.begin() as connection:
+            connection.execute(
+                update(signing_credential)
+                .where(signing_credential.c.id == c.signer_id)
+                .values(state="rotating")
+            )
+            connection.execute(
+                update(operation)
+                .where(operation.c.id == started.operation_id)
+                .values(state="waiting", wait_reason="signing_drain")
+            )
+    c.keys.run(started.operation_id)
+    waiting = c.signing.view(c.principal, c.child.id)
+    assert waiting.state == "waiting" and not waiting.available
+    assert c.signing.request(c.principal, c.child.id, command).operation_id == started.operation_id
+    with pytest.raises(OrganizationConflict, match="SIGNING_KEY_ROTATION_UNAVAILABLE"):
+        c.signing.request(
+            c.principal,
+            c.child.id,
+            SigningKeyRequest(
+                client_request_key=uuid4(), preview_hash=waiting.preview_hash, acknowledged=True
+            ),
+        )
+    with c.engine.connect() as connection:
+        head = (
+            connection.execute(
+                select(signing_credential).where(signing_credential.c.id == c.signer_id)
+            )
+            .mappings()
+            .one()
+        )
+        assert head["state"] == "usable"
+        assert (
+            connection.scalar(select(tenancy.c.operation_id).where(tenancy.c.id == c.child.id))
+            is None
+        )
+        assert (
+            connection.scalar(
+                select(operation_step.c.operation_id).where(
+                    operation_step.c.operation_id == started.operation_id
+                )
+            )
+            is None
+        )
+    receipt = c.costs.start(c.principal, cost_request(c.child.id))
+    assert receipt.accepted_count == 1
+    c.cost_worker.run(receipt.operation_ids[0])
+    assert c.workflow.tenancy_detail(c.principal, c.child.id).tenancy.costs.state == "current"
+    refresh(c)
+    assert c.access.disclose(c.principal, c.child.id, original_command)["rotation_due_at"] == due
+    _, second = recovery_request(c)
+    assert second["rotation_due_at"] == due
+    c.keys.run(started.operation_id)
+    c.clock.return_value += timedelta(hours=4, seconds=1)
+    c.rotation.run(UUID(disclosed["operation_id"]))
+    assert not c.access.view(c.principal, c.child.id).available
+    c.keys.run(started.operation_id)
+    assert c.signing.view(c.principal, c.child.id).state == "rotating"
+    with pytest.raises(CostConflict, match="NO_COST_REFRESH_TARGETS"):
+        c.costs.start(c.principal, cost_request(c.child.id))
+    for _ in range(8):
+        c.keys.run(started.operation_id)
+    final = c.signing.view(c.principal, c.child.id)
+    assert final.state == "scheduled" and final.generation == 2
+    assert c.access.view(c.principal, c.child.id).available
+    assert c.costs.start(c.principal, cost_request(c.child.id)).accepted_count == 1
+
+
+# In the opposite transaction order, rotation admission wins and no new exposure window can open.
+def test_rotation_request_blocks_first_recovery_window(overlap_case):
+    from otm.tenancies.recovery_password_contracts import RecoveryPasswordRequest
+
+    c = overlap_case
+    preview = c.access.view(c.principal, c.child.id)
+    assert preview.available
+    view = c.signing.view(c.principal, c.child.id)
+    c.signing.request(
+        c.principal,
+        c.child.id,
+        SigningKeyRequest(
+            client_request_key=uuid4(), preview_hash=view.preview_hash, acknowledged=True
+        ),
+    )
+    assert not c.access.view(c.principal, c.child.id).available
+    with pytest.raises(OrganizationConflict, match="SIGNING_KEY_MAINTENANCE_REQUIRED"):
+        c.access.disclose(
+            c.principal,
+            c.child.id,
+            RecoveryPasswordRequest(
+                client_request_key=uuid4(), preview_hash=preview.preview_hash, acknowledged=True
+            ),
+        )
+    assert all(
+        row["active_window_grant_id"] is None for row in password_records(c, recovery_credential)
+    )

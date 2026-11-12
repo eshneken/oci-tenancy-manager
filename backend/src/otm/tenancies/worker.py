@@ -43,11 +43,13 @@ class OrganizationLifecycleWorker:
         recovery_setup=None,
         signing_setup=None,
         signing_dispatch=None,
+        bootstrap_keys=None,
     ):
         self.engine, self.workspace, self.clock = engine, workspace, clock
         self.recovery_setup = recovery_setup
         self.signing_setup = signing_setup
         self.signing_dispatch = signing_dispatch
+        self.bootstrap_keys = bootstrap_keys
         self.mail_policy_loader, self.notifications = mail_policy_loader, notifications
         self.policy_loader, self.facade = policy_loader, facade
 
@@ -198,6 +200,7 @@ class OrganizationLifecycleWorker:
                         at,
                         recovery_setup=self.recovery_setup,
                         signing_setup=self.signing_setup,
+                        bootstrap_keys=self.bootstrap_keys,
                     ):
                         self._stage_email(connection, identifier, at)
                         return

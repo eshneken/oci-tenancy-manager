@@ -1,3 +1,4 @@
+import type { FleetRefreshRequest, FleetRefreshReceipt, FleetRefreshStatus } from "./contracts";
 import type {SigningKeyView,SigningKeyRequest} from "./contracts";
 import type {RecoveryPasswordView,RecoveryPasswordRequest,RecoveryPasswordDisclosure} from "./contracts";
 import type { RequiredUsersDirectory, PresenceCheckRequest } from "./contracts";
@@ -112,6 +113,10 @@ export class WorkflowError extends ApiError {
 }
 
 export const api = {
+  // Queue read checks across the registered active fleet; filters never select provider scope.
+  refreshAllData(command: FleetRefreshRequest) { return request<FleetRefreshReceipt>("/api/tenancies/refresh", "POST", command); },
+  // One compact authorized projection polls read-job progress without provider acquisition.
+  refreshAllStatus(ids: string[], signal?: AbortSignal) { return request<FleetRefreshStatus>("/api/tenancies/refresh/status", "POST", {operation_ids: ids}, signal); },
   // Key metadata and replay-safe commands never carry private material or browser-selected identities.
   signingKeyRotation(id:string,signal?:AbortSignal){return request<SigningKeyView>("/api/tenancies/"+encodeURIComponent(id)+"/signing-key-rotation","GET",undefined,signal);},
   // Server preview/consent binds the current generation; response loss retries the identical UUID.
@@ -298,7 +303,7 @@ export const api = {
       signal,
     );
   },
-  // Refresh stored account records only; this route never probes OCI or exposes credentials.
+  // Queue managed-user, permission, recovery-policy and key-inventory reads; GETs retain cached data.
   checkRequiredUsers(id:string, command:PresenceCheckRequest) {
     return request<ActionReceipt>("/api/tenancies/"+encodeURIComponent(id)+"/required-users/check", "POST", command);
   },

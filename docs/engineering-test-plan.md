@@ -1330,3 +1330,17 @@ link assertions must distinguish the newly added scheduled-rotation link.
 These cases belong to the complete milestone gate. The earlier targeted UI receipts remain scoped
 to their original source and do not become full-suite passes retroactively. Live interoperation and
 native overlapping closure timing remain in the [manual test manifest](how-to/real-oci-test-manifest.md#initial-signer-authority-and-overlapping-closure).
+
+### Recovery-window wait availability correction — 10 November 2026
+
+Targeted local qualification PASS; saved republication PASS. In an owned disposable fixture, request/due signing rotation during an
+existing recovery window: assert ordinary provider reads still dispatch and no child reservation or
+replacement step is created. New windows must be denied, while same-window redisclosure retains
+the original due time. After verified password closure, assert short I/O drain/reservation precedes
+replacement; crossing the original key deadline must still block ordinary reads. Assert the derived
+waiting UI and original operation reference. Test OLD untouched signing_drain normalization only with
+exact original key/current scope, no step/reservation; queued resume, attention, changed context or
+effectful work must not be reopened. Preserve hard deadlines, unknown-effect fences and all earlier
+assertions. Exact passing/failed-attempt scope is recorded in the current signing reference; no complete-suite or live timing claim follows.
+
+For this correction, unit gates pass at 2,356 backend/95.1148% and 640 frontend/97.10%. Batch ij5zhueu has 23 passing cases including both native browser journeys but also two test-only PG failures; corrected follow-up tv1rjknb passes 3 PG overlap/reverse-order cases. This combined targeted evidence is not a clean combined/full-suite run. [Exact scope and preserved publication](reference/signing-key-rotation.md#availability-correction-targeted-evidence--10-november-2026).

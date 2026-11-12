@@ -56,9 +56,7 @@ metadata: the new intent stores null requested values, the pending registry has 
 Pending discovery labels and a synthetic OCID reservation, and inspection replaces those labels
 with its simulated read-back. No simulator reservation is proof of an existing OCI child.
 
-Every screen explicitly says Local simulation. This slice sends no activation email, issues no
-usable public/private key, creates no IAM objects, stores no tenancy passwords and calls no OCI SDK.
-`public_key` is null. The local recovery administrator has no verified corporate mailbox; show Not
+Every screen explicitly says Local simulation. No activation email, IAM creation or OCI SDK call is implied. The current [bootstrap handoff](#public-bootstrap-handoff--12-november-2026) prepares a real local RSA public/private pair; only its public PEM is returned. Recovery-password custody is a separate later simulator subset, not a live child password installation. The local recovery administrator has no verified corporate mailbox; show Not
 configured instead of inventing one. A baseline is selected and pinned at new admission. New version 2/3 work also applies/reads back its
 four authored categories in the local simulator and then repeats access checks. Actual OCI
 configuration, identity probes and Vault custody remain unqualified. These local observations are
@@ -68,7 +66,7 @@ not a claim of production readiness; version 1 retains the earlier selection-onl
 
 The live setup panel carries a six-step checklist with direct Oracle links. These are documentation-backed
 manual steps for the future OCI integration, not evidence that the current simulator has activated a child,
-issued a key, granted privileges or tested live OCI. Local testing uses **Use simulated handoff** without
+installed a key in OCI, granted privileges or tested live OCI. Local testing uses **Use simulated handoff** without
 performing any of these OCI actions. Last checked against Oracle documentation on 31 October 2026.
 
 1. **Create only:** use the activation message delivered to the initiating administrator's verified mailbox;
@@ -191,7 +189,8 @@ real-provider qualification.
 `GET /api/tenancy-onboarding/{operation_id}` returns `OnboardingView` only for current-workspace guided
 organization actions. It never schedules work. `POST` on the same path accepts at most 4,096 bytes of
 closed JSON `OnboardingCommand`: request UUID, positive revision, action `verify_handoff` with a
-nonsecret handoff, or `start_setup` with explicit cleanup confirmation. Arbitrary fields, credentials
+nonsecret handoff, `start_setup` with explicit cleanup confirmation, or `prepare_bootstrap_key`
+without handoff/cleanup inputs for the explicit local key-preparation retry. Arbitrary fields, credentials
 and real bootstrap-user IDs are rejected. Queued acceptance returns202; a replayed terminal result
 may return200. Both routes use normal session/Origin/CSRF guards and generic safe failure responses.
 
@@ -203,7 +202,7 @@ is introduced. Long IDs wrap; desktop/mobile controls retain the shared Field Co
 
 ## Complete contract field dictionary
 
-The six onboarding DTOs have52fields in total; reused BaselineVersion is mapped separately in the
+The six onboarding DTOs have54fields in total; reused BaselineVersion is mapped separately in the
 [baseline dictionary](baseline-authoring.md#complete-model-and-source-map), not counted as a seventh
 onboarding model here. Nested models are included in the generated
 [command](../../backend/contracts/onboarding-command.schema.json) and [view](../../backend/contracts/onboarding-view.schema.json)
@@ -212,11 +211,11 @@ schemas; immutable evidence remains server-side. Names below match the code exac
 | Contract | Every field | Source, defaults and nullability |
 |---|---|---|
 | `OnboardingHandoff` (3) | `tenancy_ocid`, `bootstrap_user_ocid`, `activation_user_ocid` | Administrator input or explicit synthetic helper. Exact child target; bootstrap user must have the simulated-user prefix. Activation user is nullable for import and required for create by admission. |
-| `OnboardingCommand` (5) | `client_request_key`, `revision`, `action`, `handoff`, `confirm_cleanup` | Browser request UUID and displayed positive operation revision. Action is verify_handoff/start_setup. Handoff is required only for verification; cleanup defaults false and must be true for start_setup. No secret or arbitrary SDK fields. |
+| `OnboardingCommand` (5) | `client_request_key`, `revision`, `action`, `handoff`, `confirm_cleanup` | Browser request UUID and displayed positive operation revision. Action is verify_handoff/start_setup/prepare_bootstrap_key. Handoff is required only for verification and prohibited for other actions; cleanup defaults false and must be true only for start_setup. Key preparation uses no handoff or cleanup consent. No secret or arbitrary SDK fields. |
 | `OnboardingDiscovery` (10) | `tenancy_ocid`, `name`, `home_region`, `parent_tenancy_ocid`, `organization_id`, `domain_ocid`, `bootstrap_user_ocid`, `bootstrap_scim_id`, `activation_user_ocid`, `activation_scim_id` | Facade read-back checked against frozen child/parent/organization and submitted user bindings. Stored in inspection step and immutable discovery evidence. Activation fields are null for import; create requires the exact account and a SCIM binding. Other fields are required. |
 | `OnboardingCheck` (4) | `key`, `label`, `state`, `verified_at` | Ordered server step catalog plus current step state/time. Missing steps project pending; verified_at is null until recorded verification. Fixed labels do not use employee data. |
-| `OnboardingView` (23) | `email_contacts`, `baseline`, `operation_id`, `tenancy_id`, `revision`, `state`, `phase`, `origin`, `requested_name`, `requested_home_region`, `can_act`, `expected_parent_tenancy_ocid`, `owner_name`, `administrator_name`, `administrator_email`, `suggested_handoff`, `submitted_handoff`, `discovery`, `bootstrap_username`, `public_key`, `checks`, `issue_code`, `available_actions` | baseline defaults null for historical operations; otherwise it is the complete immutable published BaselineVersion frozen at acceptance, never a fresh default lookup. It records selection, not application. IDs/revision/state come from accepted intent/operation; phase is derived from state/wait. Origin distinguishes create/import. requested_name/requested_home_region are nullable frozen create inputs; imports and missing historical values remain null, independently of observed discovery facts. can_act is false and actions empty for another responsible administrator. email_contacts is nullable for historical operations and otherwise returns exact frozen original/effective activation/bootstrap/owner/person routes; current global override never rewrites it. Parent comes from frozen intent; owner/admin labels are frozen snapshots, not browser claims. administrator_name is the original initiator and the create/import subtitle says Initiated by; current responsible is a separate OperationSummary projection. administrator_email remains the original activation contact, nullable with no verified local mailbox implied. Suggested handoff is deterministic simulation data; submitted handoff and discovery are null before their steps. Username is derived from operation UUID; public_key is always null here. Checks are ordered step projections; issue_code is nullable and closed. |
-| `OnboardingEvidence` (8) | `contract_version`, `step`, `outcome`, `safe_code`, `client_request_key`, `request_hash`, `handoff`, `discovery` | Append-only typed audit payload; version onboarding-1. Step/outcome/code are closed. Accepted human commands have request key/hash; worker evidence leaves these null. Exact nonsecret handoff/discovery payloads are nullable and populated only by their corresponding event. No credentials are serialized. |
+| `OnboardingView` (23) | `email_contacts`, `baseline`, `operation_id`, `tenancy_id`, `revision`, `state`, `phase`, `origin`, `requested_name`, `requested_home_region`, `can_act`, `expected_parent_tenancy_ocid`, `owner_name`, `administrator_name`, `administrator_email`, `suggested_handoff`, `submitted_handoff`, `discovery`, `bootstrap_username`, `public_key`, `checks`, `issue_code`, `available_actions` | baseline defaults null for historical operations; otherwise it is the complete immutable published BaselineVersion frozen at acceptance, never a fresh default lookup. It records selection, not application. IDs/revision/state come from accepted intent/operation; phase is derived from state/wait. Origin distinguishes create/import. requested_name/requested_home_region are nullable frozen create inputs; imports and missing historical values remain null, independently of observed discovery facts. can_act is false and actions empty for another responsible administrator. email_contacts is nullable for historical operations and otherwise returns exact frozen original/effective activation/bootstrap/owner/person routes; current global override never rewrites it. Parent comes from frozen intent; owner/admin labels are frozen snapshots, not browser claims. administrator_name is the original initiator and the create/import subtitle says Initiated by; current responsible is a separate OperationSummary projection. administrator_email remains the original activation contact, nullable with no verified local mailbox implied. Suggested handoff is deterministic simulation data; submitted handoff and discovery are null before their steps. Username is derived from operation UUID; public_key is the separately stored public PEM, or null before explicit preparation. GET does not generate keys or read private custody. Checks are ordered step projections; issue_code is nullable and closed. |
+| `OnboardingEvidence` (9) | `contract_version`, `step`, `outcome`, `safe_code`, `client_request_key`, `request_hash`, `handoff`, `discovery`, `required_users` | Append-only typed audit payload; version onboarding-1. Step/outcome/code are closed. Accepted human commands have request key/hash; worker evidence leaves these null. Exact nonsecret handoff/discovery/required_users payloads are nullable and populated only by their corresponding event. required_users records verified permanent user identities. No credentials are serialized. |
 
 `can_act` and `available_actions` are affordances, not permission tokens; POST repeats current checks.
 The discovery's parent is an observed simulator fact, while expected_parent_tenancy_ocid is the
@@ -415,7 +414,9 @@ does not imply a new activation. The manual bootstrap username remains distinct 
 contact. Legacy contacts=null preserve their accepted instructions.
 
 Application action/failure notices can reach local SMTP capture, while the simulator sends no OCI
-activation/invitation email and issues no usable key. Owner invitation contact is a future guarded
+activation/invitation email and installs or authenticates no OCI key. The explicit laptop adapter
+does prepare a real RSA bootstrap key pair in local custody for the public handoff. Owner invitation
+contact is a future guarded
 OCI path, not an extra SMTP recipient. Current notice routing follows the responsible admin; original
 activation contact and provider intent stay unchanged through takeover.
 [Field/policy/outbox guide](lifecycle-email.md) ·
@@ -534,3 +535,60 @@ and `waiting` with phase `configuring` continue polling while system password se
 waits and terminal phases stop polling. A completed operation must not leave a stale Setting up
 access view. This is read-only progress acquisition, not another setup command, policy setting or
 persistence field. Final qualification/install status is in the [qualified targeted signing-key receipt](../history/automation-signing-key-inventory-checkpoint-2026-11-09.md).
+
+
+## Public bootstrap handoff — 12 November 2026
+
+Current source bundle; targeted local qualification PASS; saved publication PASS. This applies to both
+create and import. **Enter in OCI** keeps the operation-derived bootstrap username and public PEM
+visible with separate Copy controls. Both fields use grey read-only styling; the public PEM field
+grows to fit its wrapped contents without internal scrollbars, including after viewport changes.
+Contacts and the operator checklist are separate collapsed help;
+copying a field neither installs a key nor verifies access. Local tests still use simulated handoff.
+
+The explicitly composed `BootstrapKeys` port has `prepare(workspace, operation_id)` and public-only
+`public(workspace, operation_id)`. Laptop composition uses `LocalBootstrapKeys` with an operator-owned
+ignored `bootstrap-key-custody` directory. Fixed OpenSSL arguments create RSA 2048-bit material once
+per exact workspace/operation. Separate owner-only private/public JSON records hold respectively
+`workspace`, `operation_id`, `private_pem` and `workspace`, `operation_id`, `public_pem`. No private PEM
+enters PostgreSQL, audit, queue payloads, HTTP responses or logs. This is local file custody, not Vault.
+
+The native first handoff prepares once. Public GET reads only the public record; it cannot allocate
+or load the private record. Missing legacy public metadata exposes Generate bootstrap key in the UI. The explicit
+`OnboardingCommand.action=prepare_bootstrap_key` remains idempotently admissible throughout handoff,
+even when the public record already exists; existing responsible-administrator, revision,
+current-context and request replay guards apply before preparation and audit. This action does not
+reset handoff forms, restart onboarding or rewrite previous operation history. Explicit retry can
+derive missing public metadata from retained private material; orphan public metadata cannot authorize
+replacement of a lost private key. The existing `OnboardingView.public_key` remains nullable.
+
+There is no new table or ER relationship. Bounded local file preparation currently runs inside the
+existing simulated workflow transaction, an explicit laptop-only exception. Future Vault/network
+effects must use the external-effect boundary outside database transactions. Real Vault custody, OCI
+key installation, authentication, permissions and cleanup remain live qualification Pending.
+
+The local RSA/SPKI public PEM format follows [OCI API signing-key requirements](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm), which require PEM-format RSA keys of at least 2048 bits. Documentation-backed format compatibility does not prove live installation, account binding or authenticated access.
+
+This idempotent handoff action also recovers custody committed before its database audit write was
+interrupted: it retains the same key pair, operation revision and handoff data, then records/replays
+the existing request evidence. Existing public material does not authorize generation of a new pair.
+
+Targeted bundle evidence: [fleet-refresh qualification scope](fleet-refresh.md#targeted-bundle-qualification--12-november-2026). Saved publication PASS.
+
+For manual review on saved 8443, a fresh create/import prepares the public key automatically when
+the native worker first reaches handoff. For an older operation **still waiting at handoff**, use
+Generate bootstrap key once if its public PEM is missing, then copy the displayed username/public
+key as needed. Completed operations are not reopened and have no preparation action. These controls
+do not install a key in OCI; use simulated handoff for local workflow testing.
+
+
+### Read-only public-key field sizing — 12 November 2026
+
+The public PEM uses the same read-only grey colors as the bootstrap username and remains selectable.
+It fits its wrapped contents, including borders, on value/width changes; it grows and shrinks without
+internal scrollbars. A width-only observer avoids refitting on its own height updates. Copy retains
+the exact PEM bytes. Frontend units PASS (650, 96.99% complete-source coverage), build PASS and
+isolated actual-component Chromium geometry/visual checks PASS at 320/390/768/1280px, including
+missing-to-present content and narrow-to-wide resizing. This cosmetic follow-up did not rerun the
+full application integration suite. Saved 8443 matched-snapshot republication PASS, with all 34 public
+tables, private settings and connection/password file preserved; no schema/data migration.

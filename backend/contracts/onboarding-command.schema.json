@@ -42,7 +42,8 @@
     "action": {
       "enum": [
         "verify_handoff",
-        "start_setup"
+        "start_setup",
+        "prepare_bootstrap_key"
       ],
       "title": "Action",
       "type": "string"

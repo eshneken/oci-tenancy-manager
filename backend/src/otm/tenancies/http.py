@@ -16,6 +16,12 @@ from otm.tenancies.onboarding_contracts import OnboardingCommand, OnboardingView
 from otm.tenancies.presence_contracts import PresenceCheckRequest
 from otm.tenancies.recovery_network_contracts import RecoveryNetworkPreview, RecoveryNetworkRequest
 from otm.tenancies.recovery_password_contracts import RecoveryPasswordRequest, RecoveryPasswordView
+from otm.tenancies.refresh_contracts import (
+    FleetRefreshReceipt,
+    FleetRefreshRequest,
+    FleetRefreshStatus,
+    FleetRefreshStatusRequest,
+)
 from otm.tenancies.required_users import RequiredUsersDirectory
 from otm.tenancies.signing_key_contracts import SigningKeyRequest, SigningKeyView
 from otm.tenancies.views import (
@@ -31,6 +37,7 @@ from otm.tenancies.views import (
 # text.
 PUBLIC_CONFLICTS = frozenset(
     {
+        "FLEET_REFRESH_TOO_LARGE",
         "REQUIRED_USERS_CHECK_UNAVAILABLE",
         "SIGNING_KEY_MAINTENANCE_REQUIRED",
         "SIGNING_KEY_CONFIRMATION_REQUIRED",
@@ -309,6 +316,32 @@ def workflow_router(service):
         if isinstance(result, ActionReceipt) and result.state == "queued":
             return JSONResponse(result.model_dump(mode="json"), status_code=202)
         return result
+
+    # A single authenticated command admits only independent read workflows for the scoped fleet.
+    @router.post("/api/tenancies/refresh", response_model=FleetRefreshReceipt, status_code=202)
+    async def refresh_all(request: Request):
+        from otm.configuration.rollout_http import bounded_command
+        from otm.tenancies.refresh import refresh_fleet
+
+        command = await bounded_command(request, FleetRefreshRequest, 4096)
+        if isinstance(command, JSONResponse):
+            return command
+        return await run_in_threadpool(
+            guarded, lambda: refresh_fleet(service, request.user, command)
+        )
+
+    # Progress is a bounded read-only projection; POST keeps a fleet's UUIDs out of URL logs.
+    @router.post("/api/tenancies/refresh/status", response_model=FleetRefreshStatus)
+    async def refresh_progress(request: Request):
+        from otm.configuration.rollout_http import bounded_command
+        from otm.tenancies.refresh import refresh_status
+
+        command = await bounded_command(request, FleetRefreshStatusRequest, 131072)
+        if isinstance(command, JSONResponse):
+            return command
+        return await run_in_threadpool(
+            guarded, lambda: refresh_status(service, request.user, command)
+        )
 
     # Inventory search/sort/pagination controls are allowlisted independently of SQL construction.
     @router.get("/api/tenancies", response_model=TenancyDirectory)

@@ -114,3 +114,16 @@ it.each(["not_prepared","preparing","overdue","inactive","unavailable"] as const
   await screen.findByRole("region",{name:"Automatic key rotation"});
   expect(screen.queryByRole("button",{name:"Rotate key"})).not.toBeInTheDocument();c.client.clear();
 });
+
+// Long recovery waits retain read access and never offer a second rotation command.
+it("distinguishes waiting with reads available from the short provider pause",async()=>{
+  const c=mount({...scheduled,state:"waiting",available:false});
+  expect(await screen.findByText("Waiting to rotate")).toBeVisible();
+  expect(screen.getByText(/Ordinary provider reads remain available/)).toBeVisible();
+  expect(screen.queryByRole("button",{name:"Rotate key"})).not.toBeInTheDocument();
+  c.read.mockResolvedValue({...scheduled,state:"rotating",available:false});
+  await act(()=>c.client.invalidateQueries({queryKey:["tenancies","signing-key-rotation",id]}));
+  expect(await screen.findByText(/New provider requests are briefly paused/)).toBeVisible();
+  expect(screen.queryByText(/Ordinary provider reads remain available/)).not.toBeInTheDocument();
+  c.client.clear();
+});

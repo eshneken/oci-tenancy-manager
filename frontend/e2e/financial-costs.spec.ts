@@ -34,10 +34,28 @@ test("check a qualified child through HTTPS and the separate native worker", asy
   const name=process.env.OTM_E2E_TENANCY_NAME!;
   const row=page.getByRole("row").filter({has:page.getByRole("link",{name,exact:true})});
   await expect(row.getByText("Not collected",{exact:true})).toBeVisible();
-  const accepted=page.waitForResponse(response=>response.url().endsWith("/api/costs/refresh")&&response.request().method()==="POST");
-  await page.getByRole("button",{name:"Refresh costs",exact:true}).click();
+  // Fleet scope must not shrink to the current filtered page.
+  await page.getByRole("searchbox",{name:"Search tenancies",exact:true}).fill("no-matching-tenancy");
+  await expect(row).toHaveCount(0);
+  const accepted=page.waitForResponse(response=>response.url().endsWith("/api/tenancies/refresh")&&response.request().method()==="POST");
+  await expect(page.getByRole("button",{name:"Refresh costs",exact:true})).toHaveCount(0);
+  await expect(page.getByRole("button",{name:"Refresh",exact:true})).toHaveCount(0);
+  await page.getByRole("button",{name:"Refresh all data",exact:true}).click();
   const response=await accepted;expect(response.status()).toBe(202);
-  const receipt=await response.json();expect(receipt.accepted_count).toBe(1);
+  const receipt=await response.json();expect(receipt.tenancy_count).toBe(1);
+  expect(receipt.categories.map((category:{category:string})=>category.category)).toEqual(["costs","users","configuration"]);
+  expect(receipt.categories.every((category:{operation_ids:string[]})=>category.operation_ids.length===1)).toBe(true);
+  const progress=page.getByRole("region",{name:"Fleet refresh progress",exact:true});
+  await expect(progress.getByText("Refresh finished",{exact:true})).toBeVisible({timeout:30000});
+  await expect(progress.getByText(/Includes tenancies outside this page/)).toBeVisible();
+  for(const width of [1280,768,390,320]){
+    await page.setViewportSize({width,height:900});
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    await page.screenshot({path:resolve(".local-dev/browser",`fleet-refresh-${width}.png`),fullPage:true});
+  }
+  await page.setViewportSize({width:1280,height:900});
+  await page.getByRole("searchbox",{name:"Search tenancies",exact:true}).fill("");
+  await expect(row).toHaveCount(1);
   await expect(row.getByText("Not collected",{exact:true})).toHaveCount(0,{timeout:20000});
   await expect(row.getByLabel("actual: $0.00, within budget",{exact:true})).toBeVisible();
   await expect(row.getByLabel("budget: $200.00",{exact:true})).toBeVisible();

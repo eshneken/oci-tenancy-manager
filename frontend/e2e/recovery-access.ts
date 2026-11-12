@@ -3,6 +3,7 @@ import {resolve} from "node:path";
 
 // Validate real disclosure without ever recording a password in screenshots, traces or logs.
 export async function recoveryAccess(page:Page){
+ const tenancyUrl=page.url();
  const users=page.getByRole("region",{name:"Required users",exact:true});
  const refreshed=page.waitForResponse(response=>response.request().method()==="POST"&&response.url().endsWith("/required-users/check"));
  await users.getByRole("button",{name:"Refresh user data",exact:true}).click();await refreshed;
@@ -50,5 +51,43 @@ export async function recoveryAccess(page:Page){
  await page.setViewportSize({width:1280,height:900});
  await progress.getByRole("link",{name:"Open tenancy",exact:true}).click();await expect(launcher).toBeVisible();
  await expect.poll(async()=>{const detail=await(await page.request.get("/api/operations/"+operationId)).json();return detail.notifications?.some((notice:{event:string;state:string})=>notice.event==="recovery_password_requested"&&notice.state==="sent");},{timeout:10000}).toBe(true);
- await page.getByRole("link",{name:"Audit history",exact:true}).click();await expect(page.getByRole("table").getByText("Recovery password requested",{exact:true}).first()).toBeVisible();
+ await page.getByRole("link",{name:"Audit history",exact:true}).click();
+ // Filter delivery traffic so pagination cannot hide the recovery-request event.
+ await page.getByRole("combobox",{name:"Category",exact:true}).selectOption("operations");
+ await expect(page.getByRole("table").getByText("Recovery password requested",{exact:true}).first()).toBeVisible();
+ // An actual open recovery window delays native signing work without blocking ordinary cost reads.
+ await page.goto(tenancyUrl);
+ const signing=page.getByRole("region",{name:"Automatic key rotation"});
+ await signing.getByRole("button",{name:"Rotate key",exact:true}).click();
+ const rotationDialog=page.getByRole("dialog");
+ await rotationDialog.getByRole("checkbox").check();
+ const requested=page.waitForResponse(response=>response.request().method()==="POST"&&response.url().endsWith("/signing-key-rotation"));
+ await rotationDialog.getByRole("button",{name:"Rotate now",exact:true}).click();
+ const rotationResponse=await requested;expect(rotationResponse.status()).toBe(202);
+ const rotationId=(await rotationResponse.json()).operation_id;
+ await expect.poll(async()=>{
+  const response=await page.request.get("/api/operations/"+rotationId);
+  expect(response.ok()).toBe(true);
+  return (await response.json()).operation.stage;
+ },{timeout:20000}).toBe("Waiting for recovery access to close before key rotation");
+ await expect(signing.getByText("Waiting to rotate",{exact:true})).toBeVisible();
+ await expect(signing.getByText(/Ordinary provider reads remain available/)).toBeVisible();
+ await expect(signing.getByRole("button",{name:"Rotate key",exact:true})).toHaveCount(0);
+ const costPanel=page.getByRole("region",{name:"Current month costs",exact:true});
+ const costRead=page.waitForResponse(response=>response.request().method()==="POST"&&response.url().endsWith("/costs/refresh"));
+ await costPanel.getByRole("button",{name:"Refresh costs",exact:true}).click();
+ const costResponse=await costRead;expect(costResponse.status()).toBe(202);
+ expect((await costResponse.json()).accepted_count).toBe(1);
+ await expect.poll(async()=>{
+  const response=await page.request.get(new URL(tenancyUrl).pathname.replace("/tenancies/","/api/tenancies/"));
+  expect(response.ok()).toBe(true);return (await response.json()).tenancy.costs.state;
+ },{timeout:20000}).toBe("current");
+ await page.reload();await expect(signing.getByText("Waiting to rotate",{exact:true})).toBeVisible();
+ await expect(costPanel.getByRole("button",{name:"Refresh costs",exact:true})).toBeEnabled();
+ for(const width of [1280,320]){
+  await page.setViewportSize({width,height:900});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await signing.screenshot({path:resolve(".local-dev/browser",`signing-recovery-wait-${width}.png`)});
+ }
+ await page.setViewportSize({width:1280,height:900});
 }

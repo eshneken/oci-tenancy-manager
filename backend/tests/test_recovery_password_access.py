@@ -374,3 +374,24 @@ def test_hold_is_generation_fenced(access_case, changed):
     with patch(MODULE + "record_event"):
         c.access.hold(c.intent.workspace_id, c.head["id"], 1)
     assert c.access.notifier.stage_recovery_failure.call_count == (0 if changed else 1)
+
+
+# Pending signing maintenance prevents only a new window, never another grant in the existing one.
+@pytest.mark.parametrize("exposed", [False, True])
+def test_new_window_preview_respects_signing_wait(access_case, exposed):
+    c = access_case
+    c.access.new_window_guard = Mock(
+        side_effect=OrganizationConflict("SIGNING_KEY_MAINTENANCE_REQUIRED")
+    )
+    if exposed:
+        c.head.update(first_disclosure_at=NOW, rotation_due_at=NOW + timedelta(hours=4))
+    with (
+        patch(MODULE + "current_head", return_value=c.head),
+        patch(MODULE + "disclosure_ready", return_value=True),
+    ):
+        view = c.access.project(c.connection, c.intent.workspace_id, c.child["id"], NOW)
+    assert view.available == exposed
+    if exposed:
+        c.access.new_window_guard.assert_not_called()
+    else:
+        c.access.new_window_guard.assert_called_once()

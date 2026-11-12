@@ -47,6 +47,7 @@ def test_admission_and_dispatch_limits(state):
 def test_public_state_projection(state):
     c = worker_case()
     service = SigningKeys(c.store, c.loader, Mock())
+    c.row.update(state="waiting", wait_reason="signing_rotation_due")
     if state == "inactive":
         c.child["status"] = "terminated"
     elif state == "expired":
@@ -68,7 +69,7 @@ def test_public_state_projection(state):
         "secret_reference" not in view.model_dump_json()
         and "secret_version" not in view.model_dump_json()
     )
-    assert view.available == (state in {"usable", "attention", "expired"})
+    assert view.available == (state in {"usable", "expired"})
 
 
 # Source-owned row selection cannot cross a workspace or silently create a missing child.
@@ -101,7 +102,12 @@ def test_explicit_request_guards(mode):
     service = SigningKeys(c.store, c.loader, queue)
     c.store._write.return_value = nullcontext((c.connection, c.a.workspace_id, c.clock()))
     c.row.update(
-        accepted_at=c.clock(), updated_at=c.clock(), effect_knowledge="none", completed_at=None
+        accepted_at=c.clock(),
+        updated_at=c.clock(),
+        effect_knowledge="none",
+        completed_at=None,
+        state="waiting",
+        wait_reason="signing_rotation_due",
     )
     c.connection.execute.return_value = result(c.row)
     preview = service.project(c.connection, c.principal, c.child, c.head)
@@ -287,3 +293,47 @@ def test_operation_schedule_separate_from_acceptance(state, reason, scheduled):
     assert summary.scheduled_for == (c.intent.due_at if scheduled else None)
     assert ("scheduled_for" in summary.model_dump()) == scheduled
     assert summary.accepted_at == c.clock()
+
+
+# A queued or waiting rotation stays visible without offering a second fresh request.
+@pytest.mark.parametrize(
+    "state,reason",
+    [("queued", None), ("waiting", "signing_recovery"), ("waiting", "signing_drain")],
+)
+def test_usable_pending_rotation_is_waiting(state, reason):
+    c = worker_case()
+    c.row.update(state=state, wait_reason=reason)
+    c.connection.execute.return_value = result(c.row)
+    view = SigningKeys(c.store, c.loader, Mock()).project(
+        c.connection, c.principal, c.child, c.head
+    )
+    assert view.state == "waiting" and not view.available
+    c.connection.execute.return_value = result(c.head)
+    require_signing_admission(c.connection, c.a.workspace_id, c.a.tenancy_id, c.clock())
+
+
+# New recovery windows cannot defer pending/due rotation; ordinary reads retain their own gate.
+@pytest.mark.parametrize("mode", ["legacy", "future", "due", "queued", "recovery_wait"])
+def test_new_recovery_window_admission(mode):
+    from otm.tenancies.signing_keys import require_signing_window_admission
+
+    c = worker_case()
+    pending = (
+        None
+        if mode == "legacy"
+        else dict(state="waiting", wait_reason="signing_rotation_due", retire_at=c.old.retire_at)
+    )
+    if mode == "queued":
+        pending.update(state="queued", wait_reason=None)
+    if mode == "recovery_wait":
+        pending["wait_reason"] = "signing_recovery"
+    c.connection.execute.side_effect = [
+        result(None if mode == "legacy" else c.head),
+        result(pending),
+    ]
+    at = c.intent.due_at if mode == "due" else c.clock()
+    if mode in {"legacy", "future"}:
+        require_signing_window_admission(c.connection, c.a.workspace_id, c.a.tenancy_id, at)
+    else:
+        with pytest.raises(OrganizationConflict, match="SIGNING_KEY_MAINTENANCE_REQUIRED"):
+            require_signing_window_admission(c.connection, c.a.workspace_id, c.a.tenancy_id, at)

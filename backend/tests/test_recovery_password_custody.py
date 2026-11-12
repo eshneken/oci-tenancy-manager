@@ -51,7 +51,7 @@ def test_private_candidate_current_and_independent_child(custody):
     assert vault.stage(location, operation) == first
     material = vault.candidate(first)
     assert isinstance(material.password, SecretStr)
-    assert len(material.password.get_secret_value()) == 54
+    assert len(material.password.get_secret_value()) == 32
     assert material.password.get_secret_value() not in repr(material)
     assert material.password.get_secret_value() not in first.model_dump_json()
     with pytest.raises(PasswordCustodyUnavailable):

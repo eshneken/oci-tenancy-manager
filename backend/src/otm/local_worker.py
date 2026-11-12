@@ -189,6 +189,11 @@ def run_worker(*, once=False):
             ),
             queue,
         )
+        from otm.providers.bootstrap_keys_local import LocalBootstrapKeys
+
+        bootstrap_path = Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "bootstrap-key-custody"
+        bootstrap_path.mkdir(mode=0o700, exist_ok=True)
+        bootstrap_keys = LocalBootstrapKeys(bootstrap_path)
         register_organization_task(
             native,
             OrganizationLifecycleWorker(
@@ -206,6 +211,7 @@ def run_worker(*, once=False):
                 notifications=notifier,
                 recovery_setup=password_setup,
                 signing_setup=signing_setup,
+                bootstrap_keys=bootstrap_keys,
                 signing_dispatch=signing_dispatch_allowed,
             ),
             queue,

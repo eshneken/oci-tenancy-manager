@@ -218,3 +218,11 @@ operation IDs or read authority. See the [current screen guide](required-users-s
 evidence beside presence/assignments/policy in the same operation. It cannot turn a failed read into
 known zero keys or a missing timestamp into age0. No signer/custody/rotation/compliance proof or
 new provider write is added. Targeted UI qualification and preserved main installation pass in the [inventory receipt](../history/automation-signing-key-inventory-checkpoint-2026-11-09.md); no new full-suite qualification is claimed.
+
+
+## Unified dashboard acquisition — 12 November 2026
+
+The Tenancies dashboard [Refresh all data](fleet-refresh.md) independently admits this existing
+read workflow for eligible registered children across all pages/filters. Detail controls and this
+page's stored-result refresh semantics remain unchanged. Admission and job completion do not prove
+healthy/fresh observations. This source change has targeted local qualification PASS; saved publication PASS.

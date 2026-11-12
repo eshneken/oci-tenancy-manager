@@ -93,7 +93,7 @@ LOB navigation; the V1 view uses labeled current management attribution. Histori
 
 A collection-refresh action queues observation work and keeps prior values visible until qualifying
 results publish. Loading a dashboard, sorting or paging performs no synchronous per-row SDK requests.
-The fleet action is labeled Refresh all costs and targets all eligible registered child-budget sources; tenancy detail Refresh costs targets only that child. Show the scope explicitly. Reuse matching active collection work under the same context/cycle, and preserve request idempotency; daily and manual request delivery cannot publish mixed responses or defeat capacity reserved for credential work. It cannot force OCI to recompute spending. Collection progress belongs in Operations.
+The current fleet action is [Refresh all data](../reference/fleet-refresh.md), including costs plus independent user/access/inventory and assigned-configuration reads across eligible registered children; tenancy detail Refresh costs targets only that child. Show the scope explicitly. Reuse matching active collection work under the same context/cycle, and preserve request idempotency; daily and manual request delivery cannot publish mixed responses or defeat capacity reserved for credential work. It cannot force OCI to recompute spending. Collection progress belongs in Operations.
 
 ### Selected tenancy: costs and configuration
 
@@ -206,7 +206,7 @@ D45 number backgrounds, accessible per-value status labels and hover titles deri
 
 Cost detail retains observed budget/actual/forecast, desired/pending amount, owner/direct manager/LOB,
 type, source/capture times, cycle/currency provenance, root source, budget OCID and binding generation.
-Refresh all costs targets eligible children; detail Refresh costs targets one child. Pending collection
+Refresh all data includes costs for eligible children across all filters/pages; detail Refresh costs targets one child. Its independent admissions and non-frozen retry boundary are documented in the [implemented fleet reference](../reference/fleet-refresh.md). Pending collection
 is C2-derived in production, transient only in the fixture. Acceptance preserves displayed values/
 timestamps and does not clear drift, force OCI recalculation, send mail or run a worker in this HTML.
 

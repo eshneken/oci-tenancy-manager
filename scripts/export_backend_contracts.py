@@ -79,6 +79,12 @@ from otm.tenancies.recovery_password_contracts import (
     RecoveryPasswordRequest,
     RecoveryPasswordView,
 )
+from otm.tenancies.refresh_contracts import (
+    FleetRefreshReceipt,
+    FleetRefreshRequest,
+    FleetRefreshStatus,
+    FleetRefreshStatusRequest,
+)
 from otm.tenancies.required_users import RequiredUsersDirectory
 from otm.tenancies.signing_key_contracts import SigningKeyRequest, SigningKeyView
 from otm.tenancies.views import (
@@ -144,6 +150,10 @@ def contracts() -> dict[str, dict]:
         "organization-person-workflow.schema.json": PersonWorkflow.model_json_schema(),
         "organization-review-directory.schema.json": ReviewDirectory.model_json_schema(),
         "organization-review-query.schema.json": ReviewQuery.model_json_schema(),
+        "fleet-refresh-request.schema.json": FleetRefreshRequest.model_json_schema(),
+        "fleet-refresh-receipt.schema.json": FleetRefreshReceipt.model_json_schema(),
+        "fleet-refresh-status-request.schema.json": FleetRefreshStatusRequest.model_json_schema(),
+        "fleet-refresh-status.schema.json": FleetRefreshStatus.model_json_schema(),
         "tenancy-directory.schema.json": TenancyDirectory.model_json_schema(),
         "tenancy-detail.schema.json": TenancyDetail.model_json_schema(),
         "required-users-directory.schema.json": RequiredUsersDirectory.model_json_schema(),

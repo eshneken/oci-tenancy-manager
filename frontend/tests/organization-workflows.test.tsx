@@ -148,6 +148,7 @@ const reviews: ReviewDirectory = {
 
 // Keep independent caches so acceptance invalidation cannot leak one synthetic person's data into another test.
 function mount(element: React.ReactNode) {
+  vi.spyOn(api, "refreshAllData").mockResolvedValue({tenancy_count:0,categories:[]});
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
@@ -611,7 +612,7 @@ describe("Tenancy inventory and organization inbox", () => {
       expect.objectContaining({ query: "Shared", page: 3, page_size: 25 }),
       expect.any(AbortSignal),
     );
-    await userEvent.click(screen.getByRole("button", { name: "Refresh" }));
+    await userEvent.click(screen.getByRole("button", { name: "Refresh all data" }));
     await userEvent.click(screen.getByRole("link", { name: tenant.name }));
     expect(navigate).toHaveBeenCalledWith("/tenancies/" + id);
     await userEvent.click(screen.getByRole("link", { name: "View operation" }));
@@ -691,7 +692,7 @@ describe("Tenancy inventory and organization inbox", () => {
     await userEvent.type(screen.getByRole("searchbox"), "unknown");
     await screen.findByText("No tenancies match your search");
     read.mockRejectedValue(new ApiError(403));
-    await userEvent.click(screen.getByRole("button", { name: "Refresh" }));
+    await userEvent.click(screen.getByRole("button", { name: "Refresh all data" }));
     await screen.findByRole("alert");
     expect(expired).toHaveBeenCalled();
     mounted.unmount();
@@ -1013,7 +1014,7 @@ it("groups assigned/latest baseline with status without completed operation link
  expect(screen.queryByRole("link",{name:"Oct 30, 2026"})).toBeNull();
  expect(screen.queryByRole("link",{name:"View operation"})).toBeNull();
  read.mockResolvedValue({...inventory,latest_baseline_id:other,latest_baseline_version_number:3,items:[{...tenant,baseline_version_id:id,baseline_version_number:2}]});
- await userEvent.click(screen.getByRole("button",{name:"Refresh"}));
+ await userEvent.click(screen.getByRole("button",{name:"Refresh all data"}));
  expect(await screen.findByRole("link",{name:`Update ${tenant.name} to baseline v3`})).toHaveAttribute("href","/tenancies/"+id);
 });
 
@@ -1169,8 +1170,8 @@ it("hides a retained required-user summary after inventory authorization is lost
   const expired=vi.fn();mount(<Tenancies identifier={null} expired={expired} navigate={vi.fn()}/>);
   await screen.findByRole("link",{name:`Users: 2/2 present for ${tenant.name}`});
   read.mockRejectedValue(new ApiError(403));
-  await userEvent.click(screen.getByRole("button",{name:/^Refresh$/}));
-  await screen.findByText("Tenancies could not be loaded. Use Refresh to try again.");
+  await userEvent.click(screen.getByRole("button",{name:/^Refresh all data$/}));
+  await screen.findByText("Tenancies could not be loaded. Use Refresh all data to try again.");
   expect(screen.queryByRole("link",{name:/Users: 2\/2 present/})).not.toBeInTheDocument();
   expect(expired).toHaveBeenCalled();
 });

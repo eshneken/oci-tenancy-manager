@@ -2291,3 +2291,8 @@ remain Unknown until a fresh qualified read. No new SQL field or signer proof is
 ## Managed signing-head implemented subset — 10 November 2026
 
 Candidate migration 0028 adds one `otm_signing_credential` (17 columns), reusing existing operations, steps, audit, bindings, immutable presence connections and outbox. [Exact field and JSON map](../reference/signing-key-rotation.md) and [editable ER](../architecture/diagrams/signing-credentials-implemented.mmd) distinguish written source from targeted local qualification/saved installation PASS; full-suite/PR/live Pending. Installed totals are 29 OTM/ 33 public tables; all 32 preexisting public tables were preserved. No separate key-version/history/notification table or recovery-password CURRENT reuse. This local subset does not qualify real generation, Vault/OCI signing, dynamic privilege proof or hosted deployment.
+
+
+## Bootstrap material and password candidate generation — 12 November 2026
+
+No new SQL table, column or ER relationship. Existing OnboardingView.public_key is a public-only nullable projection of separate local workspace/operation public JSON; private PEM remains owner-only file custody. The existing OnboardingCommand action enum admits prepare_bootstrap_key, with evidence in existing operation/audit records. [Exact fields and guards](../reference/tenancy-onboarding.md#public-bootstrap-handoff--12-november-2026). New recovery-password candidates use the [32-character generator](../reference/recovery-password-access.md#generated-password-candidates--12-november-2026); old custody versions and CURRENT/candidate bytes remain unchanged. This bundle is source implemented and targeted locally qualified; saved publication PASS, live OCI/Vault Pending.

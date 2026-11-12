@@ -119,9 +119,8 @@ describe("Guided tenancy setup", () => {
     );
     expect(screen.getByLabelText("Tenancy OCID")).not.toHaveAttribute("readonly");
     expect(screen.queryByLabelText(/password/i)).toBeNull();
-    expect(
-      screen.getByText(/Not configured for this local administrator/),
-    ).toBeInTheDocument();
+    await userEvent.click(screen.getByText("Delivery and administrator contacts"));
+    expect(screen.getByText("Original administrator contact",{exact:true}).nextElementSibling).toHaveTextContent("Not configured");
   });
 
   // OCI guidance distinguishes request/tenancy IDs and public-key upload from key generation.
@@ -365,22 +364,26 @@ it.each(["create","import"] as const)("keeps original %s attribution distinct af
  const panel=await screen.findByRole("region",{name:"Administrator responsibility"});expect(within(panel).getByText(creator)).toBeVisible();expect(within(panel).getByText(responsible)).toBeVisible();
  expect(await screen.findByText(`Owner: ${base.owner_name} · Initiated by: ${creator}`)).toBeVisible();
  expect(screen.queryByText(`Owner: ${base.owner_name} · Responsible administrator: ${creator}`)).toBeNull();
- if(origin==="create")expect(screen.getByText(/Activation mailbox: creator@example.test/)).toBeVisible();else expect(screen.queryByText(/Activation mailbox:/)).toBeNull();
+ await userEvent.click(screen.getByText("Delivery and administrator contacts"));
+ if(origin==="create")expect(screen.getByText("Activation delivery",{exact:true})).toBeVisible();else expect(screen.queryByText("Activation delivery",{exact:true})).toBeNull();
 });
 
 // Frozen external delivery is explicit while the initiating administrator's original mailbox remains intact.
 it("shows recorded testing contacts without relabeling the original activation mailbox",async()=>{
  const route={original_email:"owner@example.test",effective_email:"capture@example.test",environment:"staging" as const,policy_hash:"a".repeat(64),redirected:true};
  mount({...base,administrator_email:"creator@example.test",email_contacts:{activation:{...route,original_email:"creator@example.test"},owner:route}});
+ await userEvent.click(await screen.findByText("Delivery and administrator contacts"));
  const contacts=await screen.findByRole("region",{name:"Tenancy email contacts"});
- expect(contacts).toHaveTextContent("Original contact: creator@example.test");expect(contacts).toHaveTextContent("Test delivery: capture@example.test");expect(screen.getByText(/Activation delivery: capture@example.test/)).toHaveTextContent("Original administrator contact: creator@example.test");
+ expect(contacts).toHaveTextContent("Original contact: creator@example.test");expect(contacts).toHaveTextContent("Test delivery: capture@example.test");expect(screen.getByText("Activation delivery",{exact:true}).nextElementSibling).toHaveTextContent("capture@example.test");expect(screen.getByText("Original administrator contact",{exact:true}).nextElementSibling).toHaveTextContent("creator@example.test");
 });
 
 // Manual OCI setup must use the frozen effective bootstrap contact, not the administrator's original identity.
 it.each(["create","import"] as const)("guides %s bootstrap email to the recorded testing destination",async(origin)=>{
  const route={original_email:"creator@example.test",effective_email:"capture@example.test",environment:"staging" as const,policy_hash:"a".repeat(64),redirected:true};
  mount({...base,origin,administrator_email:"creator@example.test",email_contacts:{activation:route,owner:{...route,original_email:"owner@example.test"}}});
+ await userEvent.click(await screen.findByText("Delivery and administrator contacts"));
  const contacts=await screen.findByRole("region",{name:"Tenancy email contacts"});expect(within(contacts).getByText(origin==="create"?"Activation / bootstrap email":"Bootstrap contact email")).toBeVisible();
+ await userEvent.click(screen.getByText("OCI administrator checklist"));
  const instruction=screen.getByText(/use the recorded bootstrap contact/,{selector:"li"});expect(instruction).toHaveTextContent("capture@example.test");expect(instruction).not.toHaveTextContent("creator@example.test");
  if(origin==="import")expect(screen.queryByText(/Activation delivery:/)).toBeNull();
 });
@@ -393,4 +396,18 @@ it("continues polling while configuring waits on its password worker",async()=>{
   await screen.findByText(/worker is processing/);
   await screen.findByRole("heading",{name:"Local setup verified"},{timeout:4000});
   expect(c.read).toHaveBeenCalledTimes(2);
+});
+
+
+// Legacy in-flight create/import operations prepare a public key without dropping entered OCIDs.
+it.each(["create","import"] as const)("prepares %s bootstrap inputs without resetting the handoff",async origin=>{
+ const c=mount({...base,origin,available_actions:["verify_handoff","prepare_bootstrap_key"]});
+ await screen.findByRole("region",{name:"Enter in OCI"});
+ await userEvent.type(screen.getByLabelText("Bootstrap user OCID"),"ocid1.user.oc1..otmsimtyped");
+ c.read.mockResolvedValue({...base,origin,public_key:"public demonstration",available_actions:["verify_handoff"]});
+ await userEvent.click(screen.getByRole("button",{name:"Generate bootstrap key"}));
+ await screen.findByLabelText("Public API key (PEM)");
+ expect(c.write).toHaveBeenCalledWith(identifier,expect.objectContaining({action:"prepare_bootstrap_key",revision:2}),expect.any(AbortSignal));
+ expect(screen.getByLabelText("Bootstrap user OCID")).toHaveValue("ocid1.user.oc1..otmsimtyped");
+ expect((screen.getByText("OCI administrator checklist") as HTMLElement).closest("details")).not.toHaveAttribute("open");
 });

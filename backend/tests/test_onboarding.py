@@ -452,3 +452,45 @@ def test_presence_marker_preserves_legacy_intent(registry):
 
     with pytest.raises(ValueError, match="PRESENCE_CONNECTION_REQUIRES_FRESH_CAPTURE"):
         OrganizationIntent.model_validate(raw)
+
+
+# Explicit public-key preparation preserves handoff input and does not replay setup.
+def test_bootstrap_key_preparation_preserves_handoff_and_replay(registry):
+    app, frozen, row, data = case(registry)
+    app.bootstrap_keys = Mock()
+    app.bootstrap_keys.public.return_value = None
+    connection = MagicMock()
+    connection.execute.return_value.mappings.return_value.one_or_none.return_value = None
+    command = OnboardingCommand(
+        client_request_key=uuid4(), revision=1, action="prepare_bootstrap_key"
+    )
+    app._require_onboarding_context = Mock()
+    with (
+        patch.object(flow, "load_intent", return_value=data),
+        patch.object(flow, "step_rows", return_value={}),
+    ):
+        view = flow.progress(connection, row, app.facade, bootstrap_keys=app.bootstrap_keys)
+        assert "prepare_bootstrap_key" in view.available_actions
+        result = flow.submit(app, connection, registry, row, principal(), command, NOW)
+    assert result.state == "waiting" and row["revision"] == 1
+    app.bootstrap_keys.prepare.assert_called_once_with(registry.workspace, row["id"])
+    app.enqueuer.enqueue.assert_not_called()
+    app.bootstrap_keys.public.return_value = "public-metadata"
+    with (
+        patch.object(flow, "load_intent", return_value=data),
+        patch.object(flow, "step_rows", return_value={}),
+    ):
+        view = flow.progress(connection, row, app.facade, bootstrap_keys=app.bootstrap_keys)
+    assert (
+        view.public_key == "public-metadata"
+        and "prepare_bootstrap_key" in view.available_actions
+    )
+
+
+# Native handoff prepares custody only for the validated operation scope.
+def test_native_handoff_prepares_bootstrap_once_via_custody(registry):
+    app, frozen, row, _ = case(registry)
+    keys = Mock()
+    with patch.object(flow, "step_rows", return_value={}), patch.object(flow, "transition"):
+        assert not flow.advance(Mock(), row, frozen, app.facade, NOW, bootstrap_keys=keys)
+    keys.prepare.assert_called_once_with(registry.workspace, row["id"])
