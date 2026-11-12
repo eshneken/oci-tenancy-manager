@@ -91,3 +91,12 @@ contacts, source exports or secrets in commit messages or PR descriptions.
 
 These checks do not qualify live OCI integration, OKE deployment, restore objectives or scheduled
 configuration drift. Those remain separate implementation/staging milestones.
+
+## Installed container gate
+
+The Security and publication lane also runs the [container smoke and exact-image scan](container-development.md).
+It builds without cache, verifies private build-context exclusion, installed/native compatibility and
+restricted disposable PostgreSQL behavior, then blocks on HIGH/CRITICAL image findings or missing
+OS/Python scan coverage. This adds no optional result, vulnerability-ignore policy or sixth check.
+Private image archives/logs/test credentials are not uploaded. Local ARM64 execution does not stand
+in for the Ubuntu runner's AMD64 image execution; hosted results must be verified before merge.

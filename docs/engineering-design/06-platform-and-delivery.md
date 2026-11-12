@@ -410,3 +410,16 @@ Before production qualification, exercise two independent processes against the 
 per-tenancy exclusion, unrelated-child progress, duplicate delivery and worker death. Include
 recovery-password closure while signing-key work drains. Record real-OCI timings and bound the
 PostgreSQL connection budget for API and worker replicas; replica count alone is not a latency SLA.
+
+## Installed image packaging — 12 November 2026
+
+The first container checkpoint packages one installed nonroot image for existing explicit commands,
+with a built frontend and wheel migration assets. See the [container guide](../how-to/container-development.md)
+for exact smoke coverage and boundaries. It neither deploys to OKE nor changes the saved demo. Hosted
+composition and verified remote database/secret/worker behavior remain separately qualified work.
+
+Runtime selection uses a digest-pinned official Python3.12 Alpine3.24 base for both Python build and
+runtime stages. The Debian candidate's remaining OS findings are not blanket-exempted; the alternate
+base must pass native crypto/TLS/database/job compatibility and strict OS/Python image scanning.
+The existing security CI lane owns that image gate; base updates require a fresh uncached build
+and reviewed dependency changes. No arbitrary shared-library removal or hand-maintained distro.
