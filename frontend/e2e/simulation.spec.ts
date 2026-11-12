@@ -283,7 +283,18 @@ async function organizationFlows(page: Page) {
           panel.getByLabel("Tenancy OCID", { exact: true }),
         ).toBeEditable();
       }
-      const checklist=panel.locator("details.operator-instructions");
+      const entry=panel.getByRole("region",{name:"Enter in OCI",exact:true});
+      await expect(entry.getByLabel("Bootstrap username",{exact:true})).toHaveValue(/otm-bootstrap-/);
+      const publicKey=entry.getByLabel("Public API key (PEM)",{exact:true});
+      await expect(publicKey).toHaveValue(/-----BEGIN PUBLIC KEY-----/);
+      const retainedPublic=await publicKey.inputValue();
+      await expect(entry.getByRole("button",{name:"Copy username",exact:true})).toBeVisible();
+      await expect(entry.getByRole("button",{name:"Copy public key",exact:true})).toBeVisible();
+      await expect(panel.getByText(/This simulator provides no usable key/)).toHaveCount(0);
+      await page.reload();await expect(publicKey).toHaveValue(retainedPublic);
+      const contacts=panel.locator("details.onboarding-contacts");
+      await expect(contacts).not.toHaveAttribute("open");
+      const checklist=panel.locator("details.operator-instructions").filter({hasText:"OCI administrator checklist"});
       const checklistToggle=checklist.locator(":scope > summary");
       await expect(checklistToggle).toHaveText("OCI administrator checklist");
       await expect(checklist).not.toHaveAttribute("open");
@@ -292,6 +303,8 @@ async function organizationFlows(page: Page) {
       for(const width of [1280,390,320]) {
         await page.setViewportSize({width,height:900});
         expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+        await expect.poll(()=>publicKey.evaluate(field=>field.scrollHeight<=field.clientHeight&&field.scrollWidth<=field.clientWidth)).toBe(true);
+        await expect(publicKey).toHaveCSS("background-color",await entry.getByLabel("Bootstrap username",{exact:true}).evaluate(field=>getComputedStyle(field).backgroundColor));
         await panel.screenshot({path:`.local-dev/browser/instructions-${action==="Create tenancy"?"create":"import"}-closed-${width}.png`});
       }
       await checklistToggle.focus();

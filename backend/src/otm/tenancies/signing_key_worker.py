@@ -416,7 +416,8 @@ class SigningKeyWorker:
             # Native redelivery must neither resume human-held work nor steal in-flight I/O.
             if row["state"] not in {"queued", "waiting"} or (
                 row["state"] == "waiting"
-                and row["wait_reason"] not in {"signing_rotation_due", "signing_drain"}
+                and row["wait_reason"]
+                not in {"signing_rotation_due", "signing_drain", "signing_recovery"}
             ):
                 return None
             if (
@@ -458,6 +459,58 @@ class SigningKeyWorker:
                     )
                 )
                 return None
+            if intent.phase == "rotation" and child["operation_id"] != identifier:
+                window = connection.scalar(
+                    select(recovery_credential.c.id)
+                    .where(
+                        recovery_credential.c.workspace_id == self.workspace,
+                        recovery_credential.c.tenancy_id == child["id"],
+                        recovery_credential.c.active_window_grant_id.is_not(None),
+                        recovery_credential.c.state != "retired",
+                    )
+                    .limit(1)
+                )
+                if window is not None:
+                    # Earlier releases paused before the long wait. Reopen only an exact,
+                    # untouched original key; never release an effectful/resumed attempt.
+                    if (
+                        head["state"] == "rotating"
+                        and row["state"] == "waiting"
+                        and row["wait_reason"] == "signing_drain"
+                        and child["operation_id"] is None
+                        and current_key(head) == intent.old
+                        and connection.scalar(
+                            select(operation_step.c.operation_id)
+                            .where(
+                                operation_step.c.workspace_id == self.workspace,
+                                operation_step.c.operation_id == identifier,
+                            )
+                            .limit(1)
+                        )
+                        is None
+                        and self.current(connection, values)
+                    ):
+                        connection.execute(
+                            update(signing_credential)
+                            .where(signing_credential.c.id == head["id"])
+                            .values(state="usable", updated_at=at)
+                        )
+                    connection.execute(
+                        update(operation)
+                        .where(operation.c.id == identifier)
+                        .values(
+                            state="waiting",
+                            wait_reason="signing_recovery",
+                            stage="Waiting for recovery access to close before key rotation",
+                            updated_at=at,
+                        )
+                    )
+                    if self.notifier is not None and head["retire_at"] <= at:
+                        from otm.tenancies.signing_key_notices import stage_failure
+
+                        stage_failure(self.notifier, connection, row, head, at)
+                    self.enqueuer.enqueue(connection, identifier, delay_seconds=15)
+                    return None
             if intent.phase == "rotation" and child["operation_id"] != identifier:
                 # Stop new admissions while already accepted work and recovery access drain.
                 connection.execute(

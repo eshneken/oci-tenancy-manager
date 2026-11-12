@@ -1910,3 +1910,31 @@ dialog p {
     width: 100%;
   }
 }
+
+/* Keep the routine fleet action beside the heading and feedback across both columns. */
+.tenancy-heading:has(.fleet-refresh) { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 1rem; }
+.tenancy-heading:has(.fleet-refresh) > .page-actions, .fleet-refresh { display: contents; }
+.tenancy-heading:has(.fleet-refresh) > div:first-child { grid-column: 1; grid-row: 1; }
+.fleet-refresh > .button { grid-column: 2; grid-row: 1; justify-self: end; }
+.fleet-refresh > .alert, .fleet-refresh-progress { grid-column: 1 / -1; min-width: 0; margin: 0; }
+.fleet-refresh-progress { padding: 1rem; border: 1px solid var(--border, #cbd5e1); background: #fff; border-radius: 3px; }
+.fleet-refresh-progress dl { margin: .75rem 0; }
+.fleet-refresh-progress dl > div { display: grid; grid-template-columns: minmax(13rem, 1fr) minmax(0, 2fr); gap: .5rem 1rem; padding: .4rem 0; }
+.fleet-refresh-progress dt { font-weight: 600; }
+.fleet-refresh-progress dd { margin: 0; }
+.fleet-refresh-progress p { margin: .5rem 0 0; }
+@media (max-width: 700px) {
+ .tenancy-heading:has(.fleet-refresh) { grid-template-columns: minmax(0, 1fr); }
+ .fleet-refresh > .button { grid-column: 1; grid-row: auto; justify-self: stretch; width: 100%; }
+ .fleet-refresh-progress dl > div { grid-template-columns: minmax(0,1fr); }
+}
+
+/* Actionable handoff values stay outside the optional procedure/contact disclosures. */
+.bootstrap-handoff { margin: 1rem 0; padding: 1rem; background: #f7faff; border: 1px solid #b7c9ef; border-radius: 3px; min-width: 0; }
+.bootstrap-handoff h3 { margin: 0 0 .5rem; }
+.bootstrap-handoff > label { display: block; margin: 1rem 0 .4rem; font-weight: 600; }
+.bootstrap-copy-row { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: .75rem; }
+.bootstrap-copy-row input, .bootstrap-copy-row textarea { width: 100%; min-width: 0; font-family: var(--font-mono, monospace); }
+.bootstrap-public-row { align-items: start; }
+.bootstrap-public-row textarea { font-size: .85rem; line-height: 1.5; resize: none; overflow: hidden; overflow-wrap: anywhere; background: #f3f5f7; color: #5b6877; }
+@media (max-width: 700px) { .bootstrap-copy-row { grid-template-columns: minmax(0,1fr); } .bootstrap-copy-row .button { width: 100%; } }

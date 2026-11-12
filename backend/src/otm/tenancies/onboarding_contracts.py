@@ -25,7 +25,7 @@ class OnboardingHandoff(Contract):
 class OnboardingCommand(Contract):
     client_request_key: UUID
     revision: Annotated[int, Field(ge=1)]
-    action: Literal["verify_handoff", "start_setup"]
+    action: Literal["verify_handoff", "start_setup", "prepare_bootstrap_key"]
     handoff: OnboardingHandoff | None = None
     confirm_cleanup: bool = False
 
@@ -34,7 +34,7 @@ class OnboardingCommand(Contract):
     def action_fields(self):
         if (self.action == "verify_handoff") != (self.handoff is not None):
             raise ValueError("HANDOFF_REQUIRED")
-        if self.action == "verify_handoff" and self.confirm_cleanup:
+        if self.action != "start_setup" and self.confirm_cleanup:
             raise ValueError("CLEANUP_PREVIEW_REQUIRED")
         if self.action == "start_setup" and not self.confirm_cleanup:
             raise ValueError("CLEANUP_CONFIRMATION_REQUIRED")
@@ -89,7 +89,7 @@ class OnboardingView(Contract):
     public_key: str | None = None
     checks: tuple[OnboardingCheck, ...]
     issue_code: str | None = None
-    available_actions: tuple[Literal["verify_handoff", "start_setup"], ...]
+    available_actions: tuple[Literal["verify_handoff", "start_setup", "prepare_bootstrap_key"], ...]
 
 
 # Audit evidence is closed and contains no secrets, raw SDK responses or arbitrary error text.
@@ -97,6 +97,7 @@ class OnboardingEvidence(Contract):
     contract_version: Literal["onboarding-1"] = "onboarding-1"
     step: Literal[
         "handoff",
+        "prepare_bootstrap_key",
         "inspect_bootstrap",
         "establish_automation",
         "verify_automation",
@@ -112,6 +113,7 @@ class OnboardingEvidence(Contract):
     outcome: Literal["accepted", "verified", "blocked"]
     safe_code: Literal[
         "ONBOARDING_ACCEPTED",
+        "BOOTSTRAP_KEY_PREPARED",
         "ONBOARDING_VERIFIED",
         "TARGET_CHANGED",
         "BOOTSTRAP_UNVERIFIED",

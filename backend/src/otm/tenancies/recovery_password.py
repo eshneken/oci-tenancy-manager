@@ -127,6 +127,8 @@ def preview_digest(head, child, ready):
 class RecoveryPasswordAccess:
     # Explicit host composition supplies the guard for versioned signing credentials.
     signing_guard = None
+    # Restrict only new exposure windows while retaining grants in an existing fixed window.
+    new_window_guard = None
 
     # No default custody/transport/provider is invented when dependencies are not composed.
     def __init__(self, presence, vault, enqueuer, *, notifier=None):
@@ -186,6 +188,11 @@ class RecoveryPasswordAccess:
             and self.notifier is not None
             and disclosure_ready(self.presence, connection, workspace, child, head, at)
         )
+        if ready and head["first_disclosure_at"] is None and self.new_window_guard is not None:
+            try:
+                self.new_window_guard(connection, workspace, identifier, at)
+            except OrganizationConflict:
+                ready = False
         return RecoveryPasswordView(
             **dict(base, available=ready),
             state=state if ready or state not in {"ready", "exposed"} else "unavailable",
@@ -236,6 +243,12 @@ class RecoveryPasswordAccess:
             else:
                 if self.signing_guard is not None:
                     self.signing_guard(connection, workspace, identifier, at)
+                if (
+                    head
+                    and head["first_disclosure_at"] is None
+                    and self.new_window_guard is not None
+                ):
+                    self.new_window_guard(connection, workspace, identifier, at)
                 view = self.project(connection, workspace, identifier, at)
                 if not view.available:
                     raise OrganizationConflict("RECOVERY_PASSWORD_UNAVAILABLE")

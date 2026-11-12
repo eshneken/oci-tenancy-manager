@@ -2,6 +2,9 @@
 
 10 November 2026 · Implemented source subset; **targeted local qualification and saved installation PASS**.
 
+**Availability correction:** targeted source/unit/PG/native-browser checks PASS; saved republication
+PASS for recovery-window waiting. Prior passing receipts retain their original scope.
+
 [Execution accounting](../engineering-design/23-signing-key-rotation.md) ·
 [Editable ER source](../architecture/diagrams/signing-credentials-implemented.mmd) ·
 [Observed inventory](automation-signing-keys.md) ·
@@ -31,8 +34,10 @@ usable heads joined to `waiting/signing_rotation_due` operations due within one 
 ordered by `(retire_at,id)`, and requeues the same operations transactionally. No hourly OKE CronJob
 is deployed. See the execution chapter for complete query, lock and drain accounting.
 
-Rotation first blocks new child provider admissions/windows, drains accepted work and active recovery
-windows, then reserves the child. Short administrator/workspace/operation/child/head transactions
+Requested/due rotation first waits for any existing recovery-password window without pausing
+ordinary provider reads. New recovery windows are blocked; same-window redisclosures retain the
+original deadline. After closure it marks the head rotating, briefly drains active provider I/O and
+reserves the child for replacement. The original hard key-retirement deadline still gates reads. Short administrator/workspace/operation/child/head transactions
 end before provider/custody I/O. Every phase authenticates current source evidence, principal/domain,
 connection, policy, operation and attempt. Candidate stage/upload/reconcile/probe/activation/retirement
 checkpoints use existing operation-step and immutable audit records. Upload dispatch is durable before
@@ -96,7 +101,7 @@ These are typed existing-column payloads or transient projections, **not new SQL
 | `SigningKeyRequestEvidence` | `contract_version`, `operation_id`, `tenancy_id`, `client_request_key`, `request_digest`, `action`, `acknowledged`, `safe_code`; `signing_key_requested` audit, unique workspace/actor/request key |
 | `SigningKeyView` | `tenancy_id`, `tenancy_name`, `provider_mode=simulated`, `state`, `generation`, `available`, `preview_hash`, `operation_id`, `starts_at`, `retire_at`, `safe_code`, `last_rotation_operation_id`, `last_rotated_at`; derived metadata GET, no custody/provider read |
 
-Public states are `not_prepared`, `preparing`, `scheduled`, `rotating`, `attention`, `overdue`,
+Public states are `not_prepared`, `preparing`, `scheduled`, `waiting`, `rotating`, `attention`, `overdue`,
 `inactive`, `unavailable`. Availability also depends on active child/approved parent/current trusted
 policy and supported operation state. Preview hashes bind actor, child revision, credential generation,
 head state/current hash and operation ID/revision. Current and historical private version locators
@@ -189,3 +194,46 @@ worker guard-wiring tests. These supplement source unit gates; their final nativ
 belongs to the milestone PR, not the earlier targeted checkpoint receipts. A fully native overlapping
 password-window/signing-drain timing journey remains a pending qualification case; isolated helper
 and consumer tests do not establish live OCI/OKE timing.
+
+## Recovery window waiting
+
+Source correction approved 10 November 2026; targeted qualification PASS, saved republication PASS. Earlier
+receipts retain their original scope. `SigningKeyView.state=waiting` displays Waiting to rotate for
+queued work or a usable head waiting in `signing_recovery`; it is a derived DTO state, not a new
+SQL state/table/migration. The existing operation uses `waiting/signing_recovery` and a short native
+requeue while a recovery window remains open. Ordinary reads stay available only while the original
+signer remains otherwise usable and before its hard retirement deadline. New-window admission is a
+separate stricter gate; repeated disclosures in the existing window cannot extend its original due time.
+
+After that window closes, the worker marks rotating, drains short in-flight provider work and takes
+the child reservation. An uncertain resumed/effectful rotation is never reopened by this wait rule.
+For an older untouched `waiting/signing_drain` head only, the worker may normalize rotating to usable
+when the exact original key/current context still match, no logical step exists and the child has no
+reservation. Queued resume, running or attention work is excluded. This is guarded worker behavior,
+not an operator SQL repair or blanket permission to reopen provider work. Notices remain tied to
+the original unresolved operation/deadline through the new usable-head wait. Live OCI remains Pending.
+
+### Availability correction targeted evidence — 10 November 2026
+
+Targeted source/unit/PG/native-browser qualification PASS; **saved republication PASS**. Backend
+complete-source units: 2,356 passed at 95.1148%; frontend 640 passed at 97.10%. Source security and
+actual 1280/320 panel UX reviews PASS. No production source changed after those unit results.
+
+Batch `.local-dev/quality/backend-postgres-ij5zhueu` had 23 passing cases, including both native
+browser journeys, and two new PG test-only failures (serialized UUID and rejection expectation).
+After correcting those expectations, `.local-dev/quality/backend-postgres-tv1rjknb` passed all 3
+selected PG cases (both overlap variants plus opposite admission order), with 0 failures/skips.
+This is combined evidence across runs, **not** one clean combined/full-suite execution. Earlier
+nonpassing fixture/browser attempts are diagnostic history, not substitutes for these results.
+
+The overlap cases exercise actual persisted services with direct worker calls. Native browser
+journeys independently qualify the UI/runtime path; they do not prove a simultaneous native-queue
+four-hour closure overlap or live provider timing. OCI/OKE/full-suite qualification remains Pending.
+The preserved saved republication on sole `https://localhost:8443` PASS: matched frozen API,
+assets and worker; private custom backup catalog verified (not a restore drill); all 33 existing
+tables preserved exactly, no new tables/migration; `application.toml` and `pgadmin-connection.txt`
+byte-preserved. Read-only post-startup checks found the affected signer usable at generation 3,
+its original operation waiting in `signing_recovery`, and both original hard retirement deadline
+and existing four-hour recovery window unchanged. Ordinary admission passes. The normal worker
+performed the guarded untouched-wait normalization; no SQL repair, replay or saved-data reset.
+These local results do not qualify OCI/OKE or the complete integration suite.

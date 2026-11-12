@@ -209,7 +209,9 @@ rotation daemon, central controller or separate scheduler table is required.
 1. Recheck exact principal/domain/tenancy, current fingerprint, privileges, key capability, original
    deadline, restore fences and provider key-slot inventory. Serialize rotations per bound principal;
    never hold a database transaction open around network calls. Keep recovery-password rotation runnable
-   through a verified signer and prioritize urgent closure over routine key work.
+   through a verified signer and prioritize urgent closure over routine key work. Wait for an existing
+   recovery window before starting the short replacement pause: ordinary reads remain available
+   before the hard key deadline, NEW windows are blocked and same-window redisclosure never extends it.
 2. Generate a fresh key pair in bounded process memory. Persist the private PEM as an exact recoverable
    staged Vault version before uploading only the public key. Record only nonsecret fingerprint,
    key-resource ID, context, version and correlation evidence in the application database.
@@ -358,3 +360,5 @@ onboarding, native scheduling/query/deduplication, approved brief per-child prov
 window drain, staged/upload/probe/CAS/retire phases and recovery/overdue evidence. Its
 [dated receipt](../history/signing-key-rotation-checkpoint-2026-11-10.md) records targeted local
 qualification and saved installation. No installed OKE CronJob or live provider qualification is claimed.
+
+The [recovery-window wait correction](../reference/signing-key-rotation.md#availability-correction-targeted-evidence--10-november-2026) has targeted local source/unit/PG/native-browser qualification; saved republication PASS. Its direct-worker overlap and native-browser evidence are separate from live OCI/OKE timing and full-suite qualification.

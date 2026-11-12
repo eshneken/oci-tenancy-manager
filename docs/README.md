@@ -8,14 +8,20 @@ The [former8444 instance is retired](how-to/parallel-local-instance.md); no addi
 are requested. Interactive recovery-network repair testing is [deferred until real OCI](reference/recovery-network-repair.md#manual-local-checkpoint-runbook).
 Earlier dated preservation receipts remain historical evidence.
 
+- [Refresh all tenancy data: fleet scope, progress and replay limits](reference/fleet-refresh.md) — targeted local qualification PASS; saved publication PASS.
+
+
 | Need | Start here |
 | --- | --- |
 | Product scope and acceptance criteria | [Product specification](product/oci-tenancy-manager-spec.md) |
+| Present Atlas to stakeholders | [30-minute demo script, 12-minute route and synthetic CSV sequence](how-to/stakeholder-demo.md) |
 | Current architecture and approved future design | [Engineering design](engineering-design/README.md) |
 | Lifecycle action/failure email | [Responsible-only scope and parity](reference/lifecycle-email.md#lifecycle-notice-parity--6-november-2026), [source checkpoint](history/lifecycle-notice-parity-checkpoint-2026-11-06.md) |
 | Find recorded work by type | [Operations filters](reference/operations.md#operation-type-filtering--10-november-2026), [checkpoint receipt](history/operations-filter-checkpoint-2026-11-10.md) |
+| Recovery-window wait before key replacement | [Targeted correction qualified; saved republication PASS](reference/signing-key-rotation.md#recovery-window-waiting) |
 | Signer setup authority and rotation regression scope | [Current authority checks](reference/signing-key-rotation.md#setup-authority-and-ship-regression-checks--10-november-2026) |
 | Worker deployment sizing | [Staging/production targets and qualification](engineering-design/06-platform-and-delivery.md#accepted-initial-worker-sizing--10-november-2026) |
+| Create/import bootstrap handoff and copy fields | [Public bootstrap handoff](reference/tenancy-onboarding.md#public-bootstrap-handoff--12-november-2026), [complete action and field dictionary](reference/tenancy-onboarding.md#complete-contract-field-dictionary) |
 | Run the application | [Local HTTPS setup](reference/local-application.md) |
 | Manual required-user presence checks | [Current check fields, authority and ER](reference/user-presence-checks.md) |
 | Presence-only connection foundation | [Current fields, ER and qualification boundary](reference/user-presence-connections.md) |
@@ -185,3 +191,5 @@ The [recovery-network repair source subset](reference/recovery-network-repair.md
 - [Managed signing-key rotation](reference/signing-key-rotation.md): candidate 0028 head, field dictionary/ER, schedule, pause/drain and failure-email accounting; targeted local qualification/saved installation PASS; full-suite/PR/live Pending.
 
 - [Signing-key rotation targeted checkpoint](history/signing-key-rotation-checkpoint-2026-11-10.md): nine targeted PG/native/SMTP/browser cases and source-unit gates pass; preserved saved publication PASS; full-suite/PR and live OCI Pending. [Operator review after installation](how-to/signing-key-rotation-runbook.md).
+
+- [Create/import public bootstrap key and candidate-password refinement](reference/tenancy-onboarding.md#public-bootstrap-handoff--12-november-2026) — current bundle targeted qualification PASS; saved publication PASS.

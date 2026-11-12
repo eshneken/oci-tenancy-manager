@@ -473,7 +473,8 @@
       "items": {
         "enum": [
           "verify_handoff",
-          "start_setup"
+          "start_setup",
+          "prepare_bootstrap_key"
         ],
         "type": "string"
       },

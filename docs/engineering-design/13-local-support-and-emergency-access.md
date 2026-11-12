@@ -213,3 +213,8 @@ onboarding handoff, three-table custody/window subset, CURRENT retrieval and sys
 an implemented local subset; [qualification and saved-app status](../history/recovery-password-checkpoint-2026-11-09.md) are separate. Broader proposed fields/screens in this chapter
 are not proof of implementation. Existing accepted versions and legacy registrations remain unchanged;
 there is no automatic custody backfill, new local instance or live OCI/Vault capability.
+
+
+## Current candidate-generation refinement — 12 November 2026
+
+New local setup/rotation candidates use 32 randomized characters with lower/upper/digit/special coverage and username exclusion; existing staged/CURRENT values retain original bytes. [Generator boundary](../reference/recovery-password-access.md#generated-password-candidates--12-november-2026). Original four-hour disclosure/rotation rules are unchanged. Targeted local qualification for this source change PASS; saved publication PASS; effective OCI policy/history acceptance remains Pending.

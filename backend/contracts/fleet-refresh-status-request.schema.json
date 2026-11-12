@@ -1,0 +1,20 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "operation_ids": {
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "maxItems": 3000,
+      "minItems": 1,
+      "title": "Operation Ids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "operation_ids"
+  ],
+  "title": "FleetRefreshStatusRequest",
+  "type": "object"
+}

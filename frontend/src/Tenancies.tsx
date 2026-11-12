@@ -1,9 +1,10 @@
+import {FleetRefresh} from "./FleetRefresh";
 import {operationHref} from "./operationNavigation";
 import { CleanupResponsibilities } from "./CleanupResponsibilities";
 import { AddSharedMember } from "./AddSharedMember";
 import { RequiredUserSummary } from "./RequiredUserSummary";
 import { RequiredUsers } from "./RequiredUsers";
-import { CostCells, CostPanel, RefreshCosts } from "./FinancialCosts";
+import { CostCells, CostPanel } from "./FinancialCosts";
 import { configurationMessages, configurationMessageClass } from "./configurationStatus";
 import {TenancyOverride} from "./TenancyOverride";
 import { ConfigurationRollout } from "./ConfigurationRollout";
@@ -187,7 +188,7 @@ export function Tenancies({
           </p>
         </div>
         <div className="page-actions">
-          {!identifier && <RefreshCosts disabled={!data?.can_refresh_costs || !!data?.costs_pending_count} expired={expired}/>}
+          {!identifier && <FleetRefresh expired={expired}/>}
           {identifier &&
             tenant?.status === "active" &&
             detail.data &&
@@ -199,9 +200,9 @@ export function Tenancies({
                 Delete tenancy
               </button>
             )}
-          <button
+          {identifier && <button
             className="button secondary"
-            disabled={identifier ? detail.isFetching : list.isFetching}
+            disabled={detail.isFetching}
             onClick={() =>
               void (identifier ? Promise.all([
                 detail.refetch(),
@@ -210,7 +211,7 @@ export function Tenancies({
             }
           >
             Refresh
-          </button>
+          </button>}
         </div>
       </div>
       <p className="notice">
@@ -278,7 +279,7 @@ export function Tenancies({
               </p>
             ) : list.isError ? (
               <p className="table-feedback alert" role="alert">
-                Tenancies could not be loaded. Use Refresh to try again.
+                Tenancies could not be loaded. Use Refresh all data to try again.
               </p>
             ) : (
               data && (

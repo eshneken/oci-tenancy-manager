@@ -2,6 +2,9 @@
 
 10 November 2026 · Implemented candidate accounting; targeted local qualification and saved installation PASS
 
+**Availability correction:** targeted source/unit/PG/native-browser checks PASS; saved republication
+PASS for recovery-window waiting. Prior passing receipts retain their original scope.
+
 [Binding 30-day policy](22-credential-security-lifecycles.md#thirty-day-otm-api-key-policy) ·
 [Current read-only inventory](../reference/automation-signing-keys.md) ·
 [WIP source fields and ER](../reference/signing-key-rotation.md) ·
@@ -9,7 +12,8 @@
 
 ## Accepted scope and explicit limits
 
-The user approved a brief **per-tenancy provider-work pause** for rotation. Cached views and other
+The user approved a brief **per-tenancy provider-work pause** for replacement, after existing
+recovery access closes; ordinary reads continue during that earlier wait. Cached views and other
 children remain available. The intended implementation applies the existing 30-day maximum through exact managed
 credentials and the existing native executor, not a new daemon or identity model. Candidate source
 and migration 0028 now exist; targeted checks and preserved installation in sole saved main 8443 have passed.
@@ -79,8 +83,8 @@ The primary written schedule is a **pre-created successor operation and referenc
 Successful initial enrollment, and each fully verified rotation, transactionally create the next
 operation with immutable old key/generation and `due_at = retire_at - 1 day`, update the head's
 operation pointer and enqueue that operation for its future ETA. A scheduled successor is not an
-active provider pause: its head remains `usable` until maintenance starts or an administrator
-explicitly expedites the same operation. Browser polling does not create jobs.
+active provider pause: its head remains `usable` while waiting for existing recovery access, even after an administrator
+expedites the same operation. The short provider pause begins only after that window closes. Browser polling does not create jobs.
 
 The CLI `queue-signing-rotations` supplies a bounded rescue of already scheduled due work:
 
@@ -118,7 +122,7 @@ for a password deadline, provider response or the next rotation phase. Existing 
 admission and the partial unique active-head index prevent competing managed heads.
 
 `begin` accepts only `queued` or the recognized `waiting` reasons `signing_rotation_due` and
-`signing_drain`; a future due wait does not execute early. It refuses `running`, `needs_attention`,
+`signing_drain` or `signing_recovery`; a future due wait does not execute early. It refuses `running`, `needs_attention`,
 terminal states and other wait reasons. Native redelivery therefore neither steals in-flight I/O nor
 silently resumes a human-held operation. Each successful nonterminal phase commits its checkpoint,
 changes the operation back to `queued` and enqueues the same UUID together. This deliberate yield
@@ -137,16 +141,23 @@ Normal attention uses the explicit guarded Resume path; it never clears the uplo
 
 ## Current WIP: logical pause, drain and child reservation
 
-At an eligible start/manual expedite the head becomes `rotating`, blocking NEW child provider
-admissions and new recovery-password windows while already accepted work drains. Cached database
-views remain readable. The worker waits for existing child operation ownership, any open recovery
-window, `reading` cost/presence acquisitions and running configuration checks. It records
-`waiting/signing_drain` and requeues after 15 seconds when necessary, without holding a transaction.
-Only after draining does it reserve `tenancy.operation_id` for the signing operation.
-**Do not reserve the child in a way that prevents the due recovery-password worker from closing an
-existing four-hour window.** Let accepted operations and due password closure finish under their
-original authority/deadlines, then acquire the short provider exclusion for key writes. New windows
-cannot continuously postpone retirement. No wait holds a DB transaction.
+An eligible start/manual expedite first checks existing recovery access. An open recovery-password
+window records `waiting/signing_recovery` with a usable key head and no child reservation; ordinary
+provider reads remain available before the hard retirement deadline. Block NEW recovery windows
+while rotation is requested/due. Same-window redisclosures preserve the original first-attempt/due
+time and cannot postpone closure. Cached views and other children remain available.
+
+After the window closes, mark the head `rotating` to prevent new provider admissions, drain existing
+child ownership and short `reading` cost/presence/configuration work, then reserve
+`tenancy.operation_id`. Short I/O drain uses `waiting/signing_drain`; both waits requeue after
+15 seconds without holding a transaction. A wait is not an exemption from the original retirement
+deadline: ordinary dispatch through expired material still blocks, with scoped password closure/
+reconciliation preserving their separate required safety rules.
+
+The worker can normalize an OLD untouched rotating `waiting/signing_drain` head only when its
+original key/current context match, there is no logical step and no child reservation. It then waits
+under `signing_recovery`. This excludes queued resume, attention/running and effectful work; it is
+not timed takeover, a live SQL repair or a general pause-release action. Targeted qualification for this approved availability correction PASS; saved republication PASS; prior receipts are not rewritten.
 
 Already dispatched calls cannot be recalled by a generation change. Drain/reconcile their original
 attempts before retiring old material; do not reissue ambiguous destructive calls using a new key.
@@ -173,7 +184,7 @@ covered by targeted candidate checks, not a new independent termination monitor 
 
 | Phase | Durable evidence before/after I/O and completion boundary |
 | --- | --- |
-| Admitted/draining | Frozen old key/generation/original deadline, exact target/context, accepted requester/service identity and active-operation FK; drain progress from existing jobs/steps |
+| Admitted/recovery wait/short drain | Frozen original key/generation/deadline and operation FK; usable-head `signing_recovery` permits reads until recovery closure, then rotating-head short I/O drain precedes child reservation. New recovery windows cannot extend the wait. |
 | Stage | Same stable operation UUID+old generation resolves the same recoverable candidate; persist exact nonsecret version/fingerprint/material clock before upload. Attempt IDs are not a new candidate identity. |
 | Capacity/authority read | Independently complete exact-user inventory and qualified old authority; never delete the sole working or unowned key to make space. Full/unknown slots require attention. |
 | Upload dispatch | Persist `upload_dispatched`/candidate/context and possible-effect state BEFORE provider upload; send public half only. A crash/lost response first reconciles that SAME fingerprint. |
@@ -291,3 +302,5 @@ friendly display labels on refresh without history rewrite; no SQL field/migrati
 uses this heading and suppresses only redundant `SIGNING_KEY_PROGRESS`, preserving failure/final codes.
 Combined clarity targeted gates, final history-visual UX and preserved saved republication PASS; earlier two-case schedule
 receipts remain separate and do not qualify these later labels.
+
+Current public state adds derived `waiting` (Waiting to rotate); the operation wait reason is `signing_recovery`, with no SQL migration. The [current field reference](../reference/signing-key-rotation.md#recovery-window-waiting) records the guarded normalization, targeted qualification and preserved saved republication PASS.

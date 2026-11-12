@@ -127,6 +127,12 @@ def delivery_issue(worker, connection, row, op, intent):
         and op["state"] == "needs_attention"
         or head["state"] == "rotating"
         and op["state"] in {"waiting", "running", "queued"}
+        or head["state"] == "usable"
+        and (
+            op["state"] == "queued"
+            or op["state"] == "waiting"
+            and op["wait_reason"] == "signing_recovery"
+        )
     )
     if (
         not unresolved

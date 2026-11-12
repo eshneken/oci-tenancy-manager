@@ -1,6 +1,7 @@
 """Read-only signing-key progress and explicit preview-bound maintenance requests."""
 
 import json
+from datetime import timedelta
 from uuid import uuid4
 
 from sqlalchemy import select, update
@@ -37,6 +38,34 @@ def require_signing_admission(connection, workspace, identifier, at):
         current_key(row)
     if row is not None and (
         row["state"] != "usable" or row["retire_at"] is None or at >= row["retire_at"]
+    ):
+        raise OrganizationConflict("SIGNING_KEY_MAINTENANCE_REQUIRED")
+
+
+# Pending/due rotation cannot acquire another four-hour window; ordinary reads use the lighter gate.
+def require_signing_window_admission(connection, workspace, identifier, at):
+    require_signing_admission(connection, workspace, identifier, at)
+    pending = (
+        connection.execute(
+            select(operation.c.state, operation.c.wait_reason, signing_credential.c.retire_at)
+            .join(
+                signing_credential,
+                (signing_credential.c.workspace_id == operation.c.workspace_id)
+                & (signing_credential.c.rotation_operation_id == operation.c.id),
+            )
+            .where(
+                signing_credential.c.workspace_id == workspace,
+                signing_credential.c.tenancy_id == identifier,
+                signing_credential.c.state != "retired",
+            )
+        )
+        .mappings()
+        .one_or_none()
+    )
+    if pending is not None and not (
+        pending["state"] == "waiting"
+        and pending["wait_reason"] == "signing_rotation_due"
+        and at < pending["retire_at"] - timedelta(days=1)
     ):
         raise OrganizationConflict("SIGNING_KEY_MAINTENANCE_REQUIRED")
 
@@ -105,10 +134,16 @@ class SigningKeys:
             if head["state"] == "attention"
             else "rotating"
             if head["state"] == "rotating"
+            else "waiting"
+            if row["state"] == "queued"
+            or (
+                row["state"] == "waiting"
+                and row["wait_reason"] in {"signing_drain", "signing_recovery"}
+            )
             else "scheduled"
         )
         if (
-            state in {"scheduled", "rotating"}
+            state in {"scheduled", "waiting", "rotating"}
             and head["retire_at"] is not None
             and self.store.clock() >= head["retire_at"]
         ):
@@ -123,6 +158,11 @@ class SigningKeys:
             and (child["operation_id"] is None or child["operation_id"] == row["id"])
             and head["state"] in {"usable", "attention"}
             and state in {"scheduled", "attention", "overdue"}
+            and (
+                row["state"] == "needs_attention"
+                if head["state"] == "attention"
+                else row["state"] == "waiting" and row["wait_reason"] == "signing_rotation_due"
+            )
         )
         preview = canonical_hash(
             {
@@ -252,7 +292,9 @@ class SigningKeys:
                     signing_credential.c.workspace_id == workspace,
                     signing_credential.c.id == head["id"],
                 )
-                .values(state="rotating", updated_at=at)
+                .values(
+                    state="rotating" if command.action == "resume" else head["state"], updated_at=at
+                )
             )
             proof = SigningKeyRequestEvidence(
                 operation_id=row["id"],

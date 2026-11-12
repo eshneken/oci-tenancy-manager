@@ -73,6 +73,7 @@ class OrganizationWorkflows:
         recovery_password_setup=None,
         automation_key_inventory_enabled=False,
         signing_key_setup_enabled=False,
+        bootstrap_keys=None,
     ):
         self.store, self.enqueuer, self.policy, self.facade = store, enqueuer, policy, facade
         self.mail_policy, self.notifications = mail_policy, notifications
@@ -80,6 +81,7 @@ class OrganizationWorkflows:
         self.recovery_password_setup = recovery_password_setup
         self.automation_key_inventory_enabled = automation_key_inventory_enabled
         self.signing_key_setup_enabled = signing_key_setup_enabled
+        self.bootstrap_keys = bootstrap_keys
         self.signing_key_rotations = None
         self.signing_guard = None
         self.recovery_passwords = None
@@ -359,7 +361,7 @@ class OrganizationWorkflows:
             )
             if row is None or not self.facade:
                 raise OrganizationConflict("ONBOARDING_NOT_AVAILABLE")
-            view = progress(connection, row, self.facade)
+            view = progress(connection, row, self.facade, bootstrap_keys=self.bootstrap_keys)
             return (
                 view
                 if row["responsible_actor_subject"] == principal.actor.key

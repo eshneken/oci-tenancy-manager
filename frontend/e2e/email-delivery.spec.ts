@@ -44,7 +44,15 @@ test("inspect redirected lifecycle delivery and immutable identities through rea
  await page.goto("/operations/"+operation);
  const notifications=page.getByRole("region",{name:"Email notifications"});await expect(notifications.getByText("Accepted by mail server",{exact:true})).toBeVisible({timeout:25000});await expect(notifications.locator("dd").filter({hasText:email})).toContainText(email);await expect(notifications.getByRole("button")).toHaveCount(0);await expect(notifications.getByRole("link")).toHaveCount(0);
  await expect(page.getByText("Responsibility change recorded.")).toHaveCount(0);
- const contacts=page.getByRole("region",{name:"Tenancy email contacts"});await expect(contacts.getByText("Activation / bootstrap email",{exact:true})).toBeVisible();await expect(contacts).toContainText(email);await expect(page.getByText(/Activation delivery:/)).toContainText(email);await expect(page.getByText(/No OCI activation email is sent/)).toBeVisible();
+ // Contact metadata is intentionally collapsed; open the actual disclosure before inspecting it.
+ const delivery=page.locator(".onboarding-contacts");
+ await expect(delivery).not.toHaveAttribute("open");
+ await delivery.getByText("Delivery and administrator contacts",{exact:true}).click();
+ const contacts=page.getByRole("region",{name:"Tenancy email contacts"});
+ await expect(contacts.getByText("Activation / bootstrap email",{exact:true})).toBeVisible();
+ await expect(contacts).toContainText(email);
+ await expect(delivery.locator(".operation-facts > div").filter({has:page.getByText("Activation delivery",{exact:true})}).locator("dd")).toHaveText(email);
+ await expect(page.locator(".notice").filter({hasText:"Local simulation."})).toContainText("OCI activation, accounts and configuration changes are simulated.");
  await capture(page,contacts,"email-onboarding-contacts");await capture(page,notifications,"email-delivery");
 
  // The same delivery panel supports deletion failures without onboarding-only contacts or controls.

@@ -1,3 +1,4 @@
+import {BootstrapHandoff} from "./BootstrapHandoff";
 import { EmailContactSummary } from "./EmailContacts";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -107,7 +108,7 @@ export function Onboarding({
             ? { handoff: data.origin === "import"
                 ? { ...handoff, tenancy_ocid: data.suggested_handoff.tenancy_ocid, activation_user_ocid: null }
                 : handoff }
-            : { confirm_cleanup: confirmed }),
+            : action === "start_setup" ? { confirm_cleanup: confirmed } : {}),
         },
         signal,
       );
@@ -170,11 +171,19 @@ export function Onboarding({
       </div>
       <p className="notice">{data.baseline ? <>Selected baseline: <a href={baselineHref(data.baseline.id,location.pathname+(location.pathname.startsWith("/operations/")?location.search:""))} onClick={event=>followLink(event,baselineHref(data.baseline!.id,location.pathname+(location.pathname.startsWith("/operations/")?location.search:"")),navigate)}>Version {data.baseline.version_number}</a> · simulated. Retained through activation and retries.</> : "This older operation has no selected baseline. No version has been attached retroactively."}</p>
       <p className="notice">
-        <strong>Local simulation.</strong> No OCI activation email is sent, no key is issued
-        and no OCI accounts are changed. The selected baseline is recorded;
-        this simulator does not apply OCI configuration. Use simulated handoff below; do not create real OCI users or keys.
+        <strong>Local simulation.</strong> Bootstrap keys are prepared locally. OCI activation,
+        accounts and configuration changes are simulated. Use simulated handoff for this local review.
       </p>
-      <EmailContactSummary contacts={data.email_contacts} activation={data.origin==="create"}/>
+      <details className="operator-instructions onboarding-contacts">
+        <summary>Delivery and administrator contacts</summary>
+        <div className="operator-instructions-body">
+          <dl className="operation-facts">
+            <div><dt>{data.origin === "create" ? "Activation delivery" : "Bootstrap contact"}</dt><dd>{data.email_contacts?.activation.effective_email ?? data.administrator_email ?? "Not configured"}</dd></div>
+            <div><dt>Original administrator contact</dt><dd>{data.administrator_email ?? "Not configured"}</dd></div>
+          </dl>
+          <EmailContactSummary contacts={data.email_contacts} activation={data.origin==="create"}/>
+        </div>
+      </details>
       {data.can_act === false && (
         <p className="notice">
           The responsible administrator must complete the next setup action.
@@ -207,12 +216,15 @@ export function Onboarding({
               </div>
             </dl>
           )}
+          <BootstrapHandoff username={data.bootstrap_username} publicKey={data.public_key ?? null}
+            canGenerate={data.can_act !== false && data.available_actions.includes("prepare_bootstrap_key")}
+            busy={busy} generate={() => void submit("prepare_bootstrap_key")}/>
           <details className="operator-instructions">
             <summary>OCI administrator checklist</summary>
             <div className="operator-instructions-body">
               <p className="muted">
-                For this local simulation, select “Use simulated handoff” below; do not
-                create real OCI users or keys. The checklist describes the OCI
+                For this local simulation, select “Use simulated handoff” below.
+                The checklist describes the OCI
                 handoff for the live integration.
               </p>
               <ol className="onboarding-instructions">
@@ -220,7 +232,7 @@ export function Onboarding({
                   {data.origin === "create" ? (
                     <>
                       <strong>Activate the requested child.</strong> Open the OCI
-                      email sent to the {data.email_contacts?"activation delivery address":"activation mailbox"} below. Follow its
+                      email sent to the {data.email_contacts?"activation delivery address":"activation mailbox"} in Delivery and administrator contacts. Follow its
                       activation link, set your password and enroll MFA, then sign
                       in to the child tenancy. The name and home region were
                       supplied with this request; do not create another tenancy.{" "}
@@ -261,7 +273,7 @@ export function Onboarding({
                   <strong>Create the temporary bootstrap user in the child.</strong>{" "}
                   Open Identity &amp; Security → Domains → Default → Users → Create
                   user. Turn off Use the email address as the username, enter the
-                  bootstrap username below, {data.email_contacts?.activation.effective_email ? <>complete the required name fields using your administrator details and use the recorded bootstrap contact <strong className="email-address">{data.email_contacts.activation.effective_email}</strong> for the email field</> : <>complete the required name/email fields using your administrator contact details</>}, and assign the
+                  bootstrap username shown in Enter in OCI, {data.email_contacts?.activation.effective_email ? <>complete the required name fields using your administrator details and use the recorded bootstrap contact <strong className="email-address">{data.email_contacts.activation.effective_email}</strong> for the email field</> : <>complete the required name/email fields using your administrator contact details</>}, and assign the
                   Administrators group. Copy the new user's OCID from its details.{" "}
                   <a href="https://docs.oracle.com/en-us/iaas/Content/GSG/Tasks/addingusers.htm" target="_blank" rel="noopener noreferrer">Create an administrator user</a>.
                 </li>
@@ -278,7 +290,7 @@ export function Onboarding({
                   a public key, paste the public PEM supplied by the app, and add
                   it. Do not generate a different key pair or upload a private key.{" "}
                   <a href="https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm" target="_blank" rel="noopener noreferrer">Upload an API public key</a>.{" "}
-                  <strong>This simulator provides no usable key.</strong>
+
                 </li>
                 <li>
                   <strong>Return here and verify.</strong> Paste the matching OCIDs
@@ -291,14 +303,6 @@ export function Onboarding({
               </ol>
             </div>
           </details>
-          <p className="muted">
-            {data.origin === "create" && (
-              <>
-                {data.email_contacts ? <>Activation delivery: {data.email_contacts.activation.effective_email??"Not configured"} · Original administrator contact: {data.administrator_email??"Not configured"}</> : <>Activation mailbox: {data.administrator_email??"Not configured for this local administrator"}</>}{" "}·{" "}
-              </>
-            )}
-            Bootstrap username: <code>{data.bootstrap_username}</code>
-          </p>
           <button
             className="button secondary"
             disabled={busy}

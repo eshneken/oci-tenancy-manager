@@ -327,3 +327,8 @@ visible. Native summary keyboard behavior and shared help styling follow the
 [UI policy](../ui-ux-review-policy.md#optional-operator-instructions--7-november-2026);
 [the implemented guide](../reference/tenancy-onboarding.md#collapsed-oci-operator-checklist)
 defines the field-preservation and transient-state boundary. No persisted model changes.
+
+
+## Current local public-key handoff — 12 November 2026
+
+Both create/import now expose the operation-bound public PEM and bootstrap username in visible Enter in OCI controls. Explicit local RSA preparation and legacy preparation action, public-only GET and transaction/live boundaries are mapped in the [implemented onboarding reference](../reference/tenancy-onboarding.md#public-bootstrap-handoff--12-november-2026). Current bundle targeted qualification PASS; saved publication PASS; no installed OCI key or Vault proof.

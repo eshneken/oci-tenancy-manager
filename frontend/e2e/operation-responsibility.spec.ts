@@ -56,7 +56,11 @@ test("take responsibility and continue guided work through the native worker", a
   await expect(panel.getByText("Creator",{exact:true})).toBeVisible();
   await expect(panel.getByRole("button",{name:"Take responsibility",exact:true})).toHaveCount(0);
   await expect(page.getByText("Owner: Engineer · Initiated by: Creator",{exact:true})).toBeVisible();
-  await expect(page.getByText(/Activation mailbox:/)).toContainText("creator@example.test");
+  // Taking responsibility must retain the original activation destination inside its disclosure.
+  const delivery=page.locator(".onboarding-contacts");
+  await expect(delivery).not.toHaveAttribute("open");
+  await delivery.getByText("Delivery and administrator contacts",{exact:true}).click();
+  await expect(delivery.locator(".operation-facts > div").filter({has:page.getByText("Activation delivery",{exact:true})}).locator("dd")).toHaveText("creator@example.test");
   for(const width of [1280,390,320]) {
     await page.setViewportSize({width,height:900});
     await panel.scrollIntoViewIfNeeded();

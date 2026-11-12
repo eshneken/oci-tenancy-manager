@@ -261,7 +261,7 @@ children/test mailboxes and exact scoped credentials; do not create another loca
 | Candidate permissions | Fresh current OCI identity, identity-domain admin/group and root-configuration capability; removed grants/denied/incomplete reads cannot reuse retained onboarding proof | Pending |
 | Activation and retirement | Exact-generation CAS, original old deadline across activation, exact old ID/fingerprint deletion/response loss, continuing replacement proof and full old absence | Pending |
 | Native OKE execution | Day29 original ETA/day30 guard, scheduled/manual priority and same-operation locks, hourly bounded rescue deployment, no competing rotation, restart/crash manual recovery | Pending |
-| Recovery-password overlap | Active original four-hour window drains before child reservation; due closure runs between key phases, no deadline extension/deadlock or unsafe old-key fallback | Pending |
+| Recovery-password overlap | Requested/due signing rotation waits with ordinary reads available before hard key retirement, blocks NEW windows, preserves same-window redisclosure deadline; only after closure does short I/O drain/reservation/replacement begin. No deadline extension, closure deadlock or unsafe signer fallback. | Pending |
 | Isolation and notices | Cached views/other children continue; no raw key material; one original-operation/admin incident across holds/resume/activation with frozen routing and no uncertain resend | Pending |
 | Lifecycle/restore | Confirmed termination tombstones only that child; pending termination defers; D54 paused restore reconciles actual key custody/provider effects before continuation, no resurrection | Pending |
 
@@ -288,3 +288,25 @@ after the requester loses access. Exercise a real open password window while sig
 the closure must finish without losing its original deadline before key activation/old-key retirement.
 Local setup/privilege/consumer and isolated drain tests do not qualify provider propagation or OKE
 queue latency. Keep the existing fixed window and retirement deadlines during this exercise.
+
+The [availability correction evidence](../reference/signing-key-rotation.md#availability-correction-targeted-evidence--10-november-2026) records passing local direct-worker PG overlap cases and separate native-browser journeys. These do not close any live OCI/OKE row above or prove simultaneous native-queue closure timing; saved republication PASS.
+
+
+## Combined fleet refresh qualification
+
+[Refresh all data](../reference/fleet-refresh.md) currently uses local simulated provider workflows.
+The combined live-provider qualification below remains Pending; unit/source checks do not close it.
+
+| Case | Required live evidence | Status |
+| --- | --- | --- |
+| Registered fleet read boundary | Include all eligible active registered children, including filtered-out and off-page rows; acquire costs, required-user presence/privileges/recovery controls/key inventory, and configuration against each assigned baseline/overrides. Verify independent partial failures, current-signer/busy/rotation guards, workspace-scoped status/cache/readback and dated results. No repair, key rotation, baseline application or organization synchronization may be triggered. | Pending |
+
+
+## Bootstrap key and generated-password policy qualification
+
+Local source implementation does not establish either live result below.
+
+| Case | Required live evidence | Status |
+| --- | --- | --- |
+| Create/import bootstrap custody and installation | Qualify Vault-backed exact operation-scoped preparation/replay and loss recovery outside SQL transactions; expose public PEM only, install it on the exact temporary child identity, independently verify signer privileges/authentication, and retire only after replacement access is verified. No private material in API/log/audit. | Pending |
+| Effective recovery-password policy | Resolve the exact child's effective identity-domain/custom/group password policy and user/history restrictions; verify newly randomized 32-character four-class candidates are accepted for setup/rotation. Preserve original CURRENT/candidate bytes on replay and original four-hour window/unknown-effect fences; no reset/backfill shortcut. | Pending |

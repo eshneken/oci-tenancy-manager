@@ -12,7 +12,7 @@ There is no OCI connection, daily scheduler, simulator-control screen or histori
 
 1. Create/import a tenancy and finish its simulated onboarding, including the managed baseline.
    An active registered child needs its retained managed Budget OCID before a read is eligible.
-2. On **Tenancies**, choose **Refresh costs** for the eligible fleet, or open a tenancy and choose
+2. On **Tenancies**, choose [Refresh all data](fleet-refresh.md), which includes eligible fleet costs, or open a tenancy and choose
    **Refresh costs** in **Current month costs**. Refreshing the view alone never calls the provider.
 3. Admission returns promptly. Compatible pending work is joined. Polling shows stored results
    without a page reload; the acceptance message clears once its operations finish.

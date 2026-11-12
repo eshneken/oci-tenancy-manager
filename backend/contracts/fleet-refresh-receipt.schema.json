@@ -1,0 +1,65 @@
+{
+  "$defs": {
+    "RefreshCategory": {
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "enum": [
+            "costs",
+            "users",
+            "configuration"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "failed_count": {
+          "minimum": 0,
+          "title": "Failed Count",
+          "type": "integer"
+        },
+        "operation_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Operation Ids",
+          "type": "array"
+        },
+        "skipped_count": {
+          "minimum": 0,
+          "title": "Skipped Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "category",
+        "operation_ids",
+        "skipped_count",
+        "failed_count"
+      ],
+      "title": "RefreshCategory",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "categories": {
+      "items": {
+        "$ref": "#/$defs/RefreshCategory"
+      },
+      "title": "Categories",
+      "type": "array"
+    },
+    "tenancy_count": {
+      "minimum": 0,
+      "title": "Tenancy Count",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "tenancy_count",
+    "categories"
+  ],
+  "title": "FleetRefreshReceipt",
+  "type": "object"
+}

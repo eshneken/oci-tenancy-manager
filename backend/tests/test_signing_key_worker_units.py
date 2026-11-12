@@ -73,6 +73,7 @@ def worker_case():
         rotation_operation_id=c.identifier,
     )
     c.connection = MagicMock()
+    c.connection.scalar.return_value = None
     c.engine = MagicMock()
     c.engine.begin.return_value = nullcontext(c.connection)
     c.engine.connect.return_value = nullcontext(c.connection)
@@ -629,3 +630,35 @@ def test_setup_parent_authority_boundary(mode):
         authority.assert_not_called()
     else:
         authority.assert_called_once_with(c.connection, dict(id=c.source_id), loaded.return_value)
+
+
+# An open recovery window postpones the pause; an old untouched drain can recover safely.
+@pytest.mark.parametrize("mode", ["usable", "legacy", "attempted", "resume", "changed", "reserved"])
+def test_recovery_wait_keeps_only_untouched_keys_usable(mode):
+    c = worker_case()
+    if mode != "usable":
+        c.head["state"] = "rotating"
+        c.row.update(state="waiting", wait_reason="signing_drain")
+    if mode == "resume":
+        c.row.update(state="queued", wait_reason=None)
+    if mode == "reserved":
+        c.child["operation_id"] = c.identifier
+    c.worker.locked = Mock(return_value=c.values)
+    c.worker.current = Mock(return_value=mode != "changed")
+    c.worker.draining = Mock(return_value=True)
+    c.connection.execute.return_value = result(None)
+    c.connection.scalar.side_effect = [uuid4(), uuid4() if mode == "attempted" else None]
+    ticket = c.worker.begin(c.identifier)
+    assert (ticket is not None) == (mode == "reserved")
+    updates = [call.args[0].compile().params for call in c.connection.execute.call_args_list]
+    reopened = any(item.get("state") == "usable" for item in updates)
+    assert reopened == (mode == "legacy")
+    if mode != "reserved":
+        assert any(item.get("wait_reason") == "signing_recovery" for item in updates)
+        c.worker.draining.assert_not_called()
+    if mode == "reserved":
+        c.worker.enqueuer.enqueue.assert_not_called()
+    else:
+        c.worker.enqueuer.enqueue.assert_called_once_with(
+            c.connection, c.identifier, delay_seconds=15
+        )

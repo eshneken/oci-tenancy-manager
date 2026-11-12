@@ -192,7 +192,7 @@ def transition(connection, row, at, state, stage, wait_reason=None):
 
 
 # Derive every action from stored progress; a GET never submits work or reads private keys.
-def progress(connection, row, facade):
+def progress(connection, row, facade, *, bootstrap_keys=None):
     frozen = load_intent(connection, row)
     intent = frozen.intent
     steps = step_rows(connection, row)
@@ -228,6 +228,10 @@ def progress(connection, row, facade):
         (s["last_outcome"]["safe_code"] for s in steps.values() if s["state"] == "needs_attention"),
         None,
     )
+    public_key = bootstrap_keys.public(row["workspace_id"], row["id"]) if bootstrap_keys else None
+    # Preparation remains idempotently admissible if custody committed before its audit transaction.
+    if bootstrap_keys is not None and phase == "handoff":
+        actions = (*actions, "prepare_bootstrap_key")
     return OnboardingView(
         operation_id=row["id"],
         baseline=intent.baseline,
@@ -253,6 +257,7 @@ def progress(connection, row, facade):
         if inspection and inspection["state"] == "verified"
         else None,
         bootstrap_username="otm-bootstrap-" + row["id"].hex[:12],
+        public_key=public_key,
         checks=tuple(
             OnboardingCheck(
                 key=k,
@@ -294,10 +299,30 @@ def submit(service, connection, state, row, principal, command, at):
         return ActionReceipt(
             operation_id=row["id"], state=row["state"], provider_mode="simulated", accepted_at=at
         )
-    view = progress(connection, row, service.facade)
+    view = progress(connection, row, service.facade, bootstrap_keys=service.bootstrap_keys)
     if command.revision != row["revision"] or command.action not in view.available_actions:
         raise OrganizationConflict("ONBOARDING_PREVIEW_CHANGED")
     service._require_onboarding_context(state, frozen.intent)
+    if command.action == "prepare_bootstrap_key":
+        # Local-only bounded custody allocation follows all responsible-admin/context/replay guards.
+        # Future Vault I/O must use the real provider's external-effect boundary.
+        service.bootstrap_keys.prepare(state.workspace, row["id"])
+        evidence(
+            connection,
+            row,
+            at,
+            OnboardingEvidence(
+                step="prepare_bootstrap_key",
+                outcome="accepted",
+                safe_code="BOOTSTRAP_KEY_PREPARED",
+                client_request_key=command.client_request_key,
+                request_hash=digest,
+            ),
+            actor=principal.actor,
+        )
+        return ActionReceipt(
+            operation_id=row["id"], state=row["state"], provider_mode="simulated", accepted_at=at
+        )
     if command.action == "verify_handoff":
         supplied = command.handoff
         expected = view.suggested_handoff
@@ -332,10 +357,23 @@ def submit(service, connection, state, row, principal, command, at):
 
 
 # Execute deterministic facade capabilities in order; never retire access before replacement checks.
-def advance(connection, row, intent, facade, at, *, recovery_setup=None, signing_setup=None):
+def advance(
+    connection,
+    row,
+    intent,
+    facade,
+    at,
+    *,
+    recovery_setup=None,
+    signing_setup=None,
+    bootstrap_keys=None,
+):
     steps = step_rows(connection, row)
     handoff = steps.get("handoff")
     if handoff is None:
+        if bootstrap_keys is not None:
+            # Explicit laptop simulation only; public reads never allocate or load private keys.
+            bootstrap_keys.prepare(row["workspace_id"], row["id"])
         transition(
             connection,
             row,

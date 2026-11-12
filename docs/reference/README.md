@@ -4,6 +4,9 @@ These guides describe the current local application, its public fields and durab
 OCI/provider effects are simulated unless a guide explicitly records otherwise; production design
 is in [the engineering chapters](../engineering-design/README.md).
 
+- [Refresh all tenancy data: fleet scope, progress and replay limits](fleet-refresh.md) — targeted local qualification PASS; saved publication PASS.
+
+
 - [Application administrator grants and revocation](administrators.md)
 - [Internal operation admission](admission.md)
 - [Application settings and session cleanup](application-settings.md)
@@ -84,3 +87,5 @@ Current source [Operations check-section mapping](operations.md#recorded-require
 - [Signing rotation targeted qualification/install status](../history/signing-key-rotation-checkpoint-2026-11-10.md): targeted local qualification and preserved installation PASS; full-suite/PR/live remain separate.
 
 Operations now supports [type/state/search filtering](operations.md#operation-type-filtering--10-november-2026) without changing workspace-wide action counts.
+
+- [Create/import public bootstrap key and candidate-password refinement](tenancy-onboarding.md#public-bootstrap-handoff--12-november-2026) — current bundle targeted qualification PASS; saved publication PASS.

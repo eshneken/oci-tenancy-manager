@@ -3,6 +3,8 @@
 Use a deliberate local installation and preserve saved user data. Tests that mutate state use
 isolated synthetic fixtures; private enrollment factors do not belong in reports or chat.
 
+- [Stakeholder demo script](stakeholder-demo.md) — natural 30-minute flow, 12-minute route, presenter cues and three synthetic CSVs; preserve saved data and rehearse installed capabilities
+
 - [Real OCI manual test manifest](real-oci-test-manifest.md) — maintain pending live-only cases for every slice
 - [Pending credential-security qualification](real-oci-test-manifest.md#credential-security-lifecycles) — recovery-console CIDR boundary and 30-day automation-key retirement
 - [Local review: Required users and manual Check now](required-users-runbook.md) — fresh simulated create/import, result provenance and historical unqualified records; [inventory summary follow-up](required-users-runbook.md#inventory-summary-source-checkpoint) is ready in the upgraded main preview

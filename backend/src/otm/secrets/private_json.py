@@ -34,7 +34,8 @@ class PrivateJsonRecords:
         ):
             raise ValueError("PRIVATE_RECORD_FILE_INVALID")
 
-    # Hold one record lock without a database transaction or another secret lock.
+    # Hold one record lock without another secret lock. Live custody paths stay outside DB
+    # transactions; the explicit laptop bootstrap simulation permits bounded local preparation.
     @contextmanager
     def locked(self, name):
         directory = self.guard._directory()
