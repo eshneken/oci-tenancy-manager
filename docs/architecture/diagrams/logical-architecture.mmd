@@ -1,0 +1,22 @@
+---
+title: Application components and data flows
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#eef3ff'
+    primaryTextColor: '#17263c'
+    primaryBorderColor: '#496baf'
+    lineColor: '#64748b'
+---
+flowchart TB
+  UI[React + TypeScript\nTanStack Query / Table] -->|Same-origin JSON / secure session| API[FastAPI + Pydantic\nAuthentication / admin authorization]
+  API --> Domain[Domain services\nOrganization reconciliation / reviews\nTenancy lifecycle / membership\nBaselines / overrides / drift\nCost and user observations\nRecovery access / key rotation]
+  Domain --> Repo[Transactional repositories\nSQLAlchemy + Psycopg]
+  Repo --> DB[(PostgreSQL\nApplication state / observations\nAudit evidence / notification outbox\nProcrastinate job queue)]
+  DB -->|Claim eligible queued work| Worker[Python workers\nExecute / resume domain workflows]
+  Worker -->|Progress / results / audit| Repo
+  Worker --> Provider[Typed provider contracts\nTarget / credential guards]
+  Provider --> Sim[Simulated adapters]
+  Provider --> OCI[OCI adapters]
+  Provider --> Custody[Secret-store boundary\nPrivate local custody / OCI Vault]
+  Worker -->|Outbox delivery| Mail[Configured SMTP transport]

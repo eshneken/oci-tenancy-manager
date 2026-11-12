@@ -1,42 +1,126 @@
 # OCI Tenancy Manager
 
-An administrator-operated application for OCI child-tenancy lifecycle, organizational accountability
-and managed configuration. The current Python/React application runs locally with real authentication,
-PostgreSQL persistence and durable workers; OCI lifecycle and configuration adapters are simulated.
+**Independent tenancies. Central accountability. Automated operations.**
 
-Start with the [documentation home](docs/README.md), [local application setup](docs/reference/local-application.md)
-and [engineering design](docs/engineering-design/README.md).
+OCI Tenancy Manager helps administrators run a fleet of OCI child tenancies without losing track
+of who owns them, where they sit in the organization, or which configuration they should have.
+**Atlas** is the display branding of this instance; the application name and artwork are configurable.
 
-The implemented local application includes Organization intake/mapping/reviews, individual/shared
-Tenancies, guided onboarding and deletion, immutable administrative Audit History and CSV export,
-Operations, administrator responsibility takeover, baseline publication/overrides/updates, read-only
-configuration-drift checks, and lifecycle email with safe nonproduction routing and local capture.
-The recovery/access milestone adds [conditional recovery-network repair](docs/reference/recovery-network-repair.md),
-[audited recovery-password access and original-window rotation](docs/reference/recovery-password-access.md),
-and [managed signing-key rotation](docs/reference/signing-key-rotation.md) with observed key inventory;
-all provider effects remain explicitly simulated. [Operations type filters](docs/reference/operations.md#operation-type-filtering--10-november-2026)
-help find the recorded work. Dated checkpoint receipts keep their original test/publication scope.
-[Manual required-user presence checks](docs/reference/user-presence-checks.md) are locally qualified; the main preview is upgraded with existing data preserved. The [dated receipt](docs/history/manual-presence-checkpoint-2026-11-06.md) distinguishes simulation and its original test lanes. The parallel preview was later retired;
-8443 is now the sole saved review instance.
-Real OCI integration, corporate SSO and managed-service deployment remain separately unqualified.
-Daily drift scheduling is deferred until staging/Kubernetes deployment. All five hosted CI jobs and
-administrator-enforced protected `master` are verified at baseline `db08b3b`; development uses
-[one PR per completed milestone](docs/how-to/github-checkpoints.md), grouping its related slices.
+[Documentation](docs/README.md) · [Local setup](docs/reference/local-application.md) ·
+[Architecture](docs/architecture/README.md) · [Engineering design](docs/engineering-design/README.md)
 
-| Location | Authority |
+## What it does
+
+- **Connect people to tenancies.** Import organization CSVs, derive reporting/accountability chains,
+  review arrivals and departures, and manage individual/shared tenancy ownership and membership.
+- **Guide the lifecycle.** Create/import tenancies through durable, resumable operations with an
+  explicit administrator handoff for OCI activation, then verify setup and remove temporary access.
+- **Manage one configuration recipe.** Publish immutable baselines for root policy statements,
+  quotas, monthly budgets and tag defaults; apply reviewed updates individually or in bulk, with
+  explicit per-tenancy overrides and drift checks.
+- **Bring visibility together.** Show inventory, ownership, baseline status and cached current-month
+  budget/actual/forecast information; collect fresh provider observations on request.
+- **Keep access accountable.** Record required-user checks, audited recovery-password access and
+  managed signing-key rotation, with durable operation and administrative audit history.
+
+## Application preview
+
+These are captures of the actual application using a fresh, disposable database and entirely
+fictional people with reserved `example.test` addresses. No private organization data was used.
+
+### Organization and accountability
+
+![Atlas organization dashboard with fictional employees](docs/screenshots/atlas-organization.png)
+
+### Tenancy inventory
+
+![Atlas tenancy dashboard with fictional owners](docs/screenshots/atlas-tenancies.png)
+
+[Capture provenance and image notes](docs/screenshots/README.md)
+
+## OCI deployment architecture
+
+The target deployment places API and worker pods on **OKE**, with **OCI Database with PostgreSQL**
+for application state and the durable queue, and **OCI Vault** for tenancy credentials. The hosting
+compartment can be in a different tenancy from the managed parent: OTM accesses the parent and
+children through explicitly configured credentials and typed provider boundaries.
+
+![OCI deployment architecture](docs/architecture/diagrams/oci-deployment.png)
+
+This view shows the OCI hosting architecture. Infrastructure provisioning belongs to Terraform;
+API, worker and maintenance commands share the runtime image but run as distinct
+workloads. CronJobs enqueue due work or perform bounded maintenance; Python workers execute the
+durable workflows. Email transport is configured separately.
+
+[Full-size SVG](docs/architecture/diagrams/oci-deployment.svg) ·
+[Mermaid](docs/architecture/diagrams/oci-deployment.mmd) ·
+[Excalidraw](docs/architecture/diagrams/oci-deployment.excalidraw) ·
+[Platform and delivery design](docs/engineering-design/06-platform-and-delivery.md)
+
+## Logical application architecture
+
+The frontend calls the authenticated API. Domain services validate requests and commit state,
+operation intent and queued work transactionally. Python workers claim work from PostgreSQL,
+execute the domain workflows through provider contracts and persist results. Screens read stored
+observations; navigating between screens does not require another provider call.
+
+![Application software components and data flows](docs/architecture/diagrams/logical-architecture.png)
+
+The provider boundary keeps simulated implementations separate from OCI adapters.
+There is no automatic fallback from a failed real connection to simulation or recovery credentials.
+The secret-store boundary covers private local custody and OCI Vault.
+
+[Full-size SVG](docs/architecture/diagrams/logical-architecture.svg) ·
+[Mermaid](docs/architecture/diagrams/logical-architecture.mmd) ·
+[Excalidraw](docs/architecture/diagrams/logical-architecture.excalidraw) ·
+[Operations/provider design](docs/engineering-design/02-operations-and-provider.md)
+
+## Complete entity-relationship diagram
+
+The complete implemented schema has **34 tables, 438 columns and 89 declared foreign keys**:
+29 application tables, four Procrastinate tables and Alembic’s migration marker. This was reflected
+from a freshly migrated disposable PostgreSQL database, not inferred from screenshots or the older
+prototype. The separate production design dictionary also describes future tables.
+
+[**Open the full-size ER diagram (SVG)**](docs/architecture/diagrams/implemented-full-er.svg) ·
+[Table descriptions and complete column directory](docs/architecture/implemented-database.md) ·
+[Mermaid source](docs/architecture/diagrams/implemented-full-er.mmd)
+
+<details>
+<summary>Show the complete ER diagram</summary>
+
+![Every implemented table, column and declared foreign key](docs/architecture/diagrams/implemented-full-er.png)
+
+</details>
+
+For a readable feature-by-feature view, use the [focused data-model diagrams](docs/architecture/diagrams/README.md).
+The complete SVG supports zooming; entities and relationships remain editable in Mermaid.
+
+## Start exploring
+
+| I want to… | Start here |
 | --- | --- |
-| [docs/](docs/README.md) | Product scope, current design, developer references and operating procedures |
-| [backend/](backend/README.md) | Python application and frozen database migrations |
+| Run the local application | [Local setup and enrollment](docs/reference/local-application.md) |
+| Understand the product and design | [Documentation home](docs/README.md) and [engineering chapters](docs/engineering-design/README.md) |
+| See tables and relationships | [Implemented database directory](docs/architecture/implemented-database.md) |
+| Rehearse a synthetic demonstration | [Stakeholder demo guide](docs/how-to/stakeholder-demo.md) |
+| Build and qualify the runtime image | [Container development](docs/how-to/container-development.md) |
+| Contribute and checkpoint work | [GitHub checkpoint workflow](docs/how-to/github-checkpoints.md) |
+| Understand remaining cloud validation | [Real-OCI qualification manifest](docs/how-to/real-oci-test-manifest.md) |
+
+No default administrator is created. Enrollment uses an explicit private operator procedure.
+Local state, feeds, credentials and unsanitized evidence stay outside version control. Changes use
+feature branches and protected-master pull requests, with required tests and independent reviews.
+
+| Location | Purpose |
+| --- | --- |
+| [backend/](backend/README.md) | Python application, contracts and frozen migrations |
 | [frontend/](frontend/README.md) | React application and generated TypeScript contracts |
-| backend/contracts/ | Generated schema snapshots; Python validation remains authoritative |
-| [prototype/](prototype/README.md) | Retained local organization lab; not current application authority |
+| [docs/](docs/README.md) | Current design, implemented references, procedures and historical checkpoints |
+| [prototype/](prototype/README.md) | Retained organization lab; separate from the current runtime |
 
-Follow [the test/merge policy](docs/engineering-test-plan.md), [security review policy](docs/security-review-policy.md),
-[documentation convention](docs/code-documentation-policy.md) and [UI baseline](DESIGN.md).
-Runtime state, original feeds, credentials and unsanitized evidence remain private and ignored.
-No default administrator account is created; enrollment happens privately through an explicit
-operator procedure. Repository cleanup does not qualify a production deployment.
-
+Follow the [test/merge policy](docs/engineering-test-plan.md), [security review policy](docs/security-review-policy.md),
+[code documentation convention](docs/code-documentation-policy.md) and [UI baseline](DESIGN.md).
 
 ## Technology catalog
 
@@ -97,8 +181,8 @@ separate CSS component framework. HTML/CSS are web standards rather than additio
 | Technology | How we use it |
 | --- | --- |
 | [pytest](https://docs.pytest.org/) | Backend unit and disposable PostgreSQL integration tests. |
-| [Coverage.py](https://coverage.readthedocs.io/) and [pytest-cov](https://pytest-cov.readthedocs.io/) | Measure complete-source, unit-only backend line coverage and enforce the95% gate. |
-| [Vitest](https://vitest.dev/) and [V8 coverage](https://vitest.dev/guide/coverage.html) | Frontend unit tests and the separate complete-source95% line-coverage gate. |
+| [Coverage.py](https://coverage.readthedocs.io/) and [pytest-cov](https://pytest-cov.readthedocs.io/) | Measure complete-source, unit-only backend line coverage and enforce the 95% gate. |
+| [Vitest](https://vitest.dev/) and [V8 coverage](https://vitest.dev/guide/coverage.html) | Frontend unit tests and the separate complete-source 95% line-coverage gate. |
 | [Testing Library](https://testing-library.com/), [user-event](https://testing-library.com/docs/user-event/intro/) and [jest-dom](https://github.com/testing-library/jest-dom) | Test React behavior through user interactions and accessible DOM assertions. |
 | [jsdom](https://github.com/jsdom/jsdom) | Provides a browser-like DOM for frontend unit tests. |
 | [Playwright](https://playwright.dev/) / [Chromium](https://www.chromium.org/) | Exercise real browser journeys against disposable application/database environments. |
@@ -126,7 +210,7 @@ separate CSS component framework. HTML/CSS are web standards rather than additio
 | [Bandit](https://bandit.readthedocs.io/) | Static security analysis of Python application source. |
 | [pip-audit](https://pypi.org/project/pip-audit/) / [npm audit](https://docs.npmjs.com/cli/commands/npm-audit/) | Check locked Python/JavaScript dependency sets for known advisories. |
 | [Git](https://git-scm.com/) | Source history, feature branches and reviewable checkpoints. |
-| [Dependabot](https://github.com/dependabot/dependabot-core) | Configuration in this checkpoint proposes grouped image/scanner and CI-action update PRs after merge; updates still require tests and human review. |
+| [Dependabot](https://github.com/dependabot/dependabot-core) | Proposes grouped image/scanner and CI-action update PRs; updates require tests and human review. |
 | [gstack](https://github.com/garrytan/gstack) | Development/review/QA/documentation/shipping workflow used by the coding agent; not shipped in the application image. |
 
 Project-owned publication, secret, contract, documentation and code-comment checks supplement these

@@ -1,0 +1,605 @@
+---
+title: Implemented database — all 34 public tables
+config:
+  layout: elk
+  er:
+    minEntityWidth: 220
+    fontSize: 14
+---
+erDiagram
+  direction LR
+  alembic_version {
+    varchar_32 version_num PK "required"
+  }
+  audit_event {
+    uuid id PK "required"
+    varchar_256 workspace_id FK "required"
+    uuid operation_id FK "nullable"
+    integer intent_revision "nullable"
+    varchar_256 actor "required"
+    varchar_256 actor_subject "required"
+    jsonb actor_snapshot "required"
+    varchar_64 kind "required"
+    timestamp_with_time_zone at "required"
+    varchar_64 contract_version "required"
+    jsonb data "required"
+    varchar_64 data_hash "required"
+    uuid administrator_id FK "nullable"
+  }
+  otm_administrator |o..o{ audit_event : fk_audit_administrator
+  otm_operation |o..o{ audit_event : fk_audit_operation
+  org_feed {
+    uuid id PK "required"
+    varchar_256 workspace_id FK "required"
+    varchar_256 source_id "required"
+    varchar_256 population_id "required"
+    varchar_512 external_id "required"
+    timestamp_with_time_zone received_at "required"
+    timestamp_with_time_zone captured_at "nullable"
+    varchar_64 digest "required"
+    varchar_64 raw_digest "nullable"
+    jsonb data "required"
+    varchar_16 state "required"
+    jsonb diagnostics "required"
+    uuid proposed_version_id FK "nullable"
+    uuid applied_version_id FK "nullable"
+  }
+  org_version |o..o{ org_feed : fk_org_feed_applied_version_id
+  org_version |o..o{ org_feed : fk_org_feed_proposed_version_id
+  org_workspace ||..o{ org_feed : fk_org_feed_workspace
+  org_member {
+    varchar_256 workspace_id PK,FK "required"
+    uuid version_id PK,FK "required"
+    uuid person_id PK,FK "required"
+    varchar_320 email "required"
+    varchar full_name "nullable"
+    uuid manager_person_id FK "nullable"
+    varchar_320 manager_email "nullable"
+    varchar_16 profile "required"
+    varchar_16 evidence "required"
+    varchar lob_id "nullable"
+    varchar_320 accountable_leader_email "nullable"
+    jsonb designee_emails "required"
+    varchar_16 ancestry "required"
+    boolean absence_review "required"
+    jsonb data "required"
+  }
+  org_member |o..o{ org_member : fk_org_member_manager
+  org_person ||..o{ org_member : fk_org_member_person
+  org_version ||..o{ org_member : fk_org_member_version
+  org_person {
+    uuid id PK "required"
+    varchar_256 workspace_id FK "required"
+    varchar_320 email "required"
+    varchar_16 directory_status "required"
+    boolean setup_required "required"
+    uuid setup_episode_id "nullable"
+    timestamp_with_time_zone removed_capture_at "nullable"
+    uuid pending_operation_id FK "nullable"
+  }
+  otm_operation |o..o{ org_person : fk_org_person_pending_operation
+  org_workspace ||..o{ org_person : fk_org_person_workspace
+  org_recommendation {
+    uuid id PK "required"
+    varchar_256 workspace_id FK "required"
+    uuid person_id FK "nullable"
+    varchar_64 kind "required"
+    varchar_24 category "required"
+    varchar_512 target "required"
+    varchar_256 basis "required"
+    varchar_16 status "required"
+    timestamp_with_time_zone first_seen_at "required"
+    timestamp_with_time_zone last_seen_at "required"
+    timestamp_with_time_zone resolved_at "nullable"
+    uuid version_id FK "required"
+    varchar_64 resolution "nullable"
+    uuid operation_id FK "nullable"
+    jsonb data "required"
+  }
+  org_workspace ||..o{ org_recommendation : org_recommendation_workspace_id_fkey
+  otm_operation |o..o{ org_recommendation : org_recommendation_workspace_id_operation_id_fkey
+  org_person |o..o{ org_recommendation : org_recommendation_workspace_id_person_id_fkey
+  org_version ||..o{ org_recommendation : org_recommendation_workspace_id_version_id_fkey
+  org_version {
+    uuid id PK "required"
+    varchar_256 workspace_id FK "required"
+    varchar_16 kind "required"
+    uuid base_version_id FK "nullable"
+    uuid feed_id FK "required"
+    uuid configuration_id "required"
+    jsonb configuration "required"
+    integer member_count "required"
+    boolean sealed "required"
+    jsonb data "required"
+  }
+  org_version |o..o{ org_version : fk_org_version_base
+  org_feed ||..o{ org_version : fk_org_version_feed
+  org_workspace ||..o{ org_version : fk_org_version_workspace
+  org_workspace {
+    varchar_256 id PK,FK "required"
+    uuid configuration_id "required"
+    jsonb configuration "required"
+    uuid applied_version_id FK "nullable"
+    uuid proposed_version_id FK "nullable"
+    varchar_16 applied_kind FK "required"
+    varchar_16 proposed_kind FK "required"
+    integer registry_revision "required"
+    uuid current_baseline_id FK "nullable"
+  }
+  org_version |o..o| org_workspace : fk_org_workspace_applied_kind
+  org_version |o..o| org_workspace : fk_org_workspace_proposed_kind
+  otm_baseline_version |o..o| org_workspace : fk_workspace_baseline
+  otm_admin_session {
+    uuid id PK "required"
+    varchar_256 workspace_id FK "required"
+    varchar_64 session_token_hash "required"
+    varchar_256 issuer FK "required"
+    varchar_256 subject FK "required"
+    jsonb display_snapshot "required"
+    varchar_256 entitlement_reference "required"
+    uuid entitlement_revision "required"
+    timestamp_with_time_zone entitlement_checked_at "required"
+    timestamp_with_time_zone auth_time "required"
+    timestamp_with_time_zone created_at "required"
+    timestamp_with_time_zone expires_at "required"
+    timestamp_with_time_zone last_seen_at "required"
+    timestamp_with_time_zone revoked_at "nullable"
+    varchar_64 provider_session_reference_hash "nullable"
+    integer idle_timeout_seconds "required"
+  }
+  otm_administrator ||..o{ otm_admin_session : fk_session_administrator_identity
+  otm_administrator {
+    uuid id PK "required"
+    varchar_256 workspace_id "required"
+    varchar_32 identity_kind "required"
+    varchar_256 issuer "required"
+    varchar_256 subject "required"
+    varchar_256 display_name "required"
+    varchar_256 email "nullable"
+    varchar_16 status "required"
+    uuid authorization_revision "required"
+    timestamp_with_time_zone created_at "required"
+    timestamp_with_time_zone updated_at "required"
+    timestamp_with_time_zone revoked_at "nullable"
+  }
+  otm_baseline_version {
+    uuid id PK "required"
+    varchar_256 workspace_id FK "required"
+    integer version_number "required"
+    uuid based_on_id FK "nullable"
+    varchar_32 schema_version "required"
+    jsonb policy_statements "required"
+    jsonb quota_statements "required"
+    numeric_20__4 monthly_budget_amount "required"
+    varchar_3 budget_currency "required"
+    varchar_16 budget_period "required"
+    varchar_16 tag_namespace "required"
+    jsonb tag_defaults "required"
+    varchar_64 content_hash "required"
+    integer edit_revision "required"
+    varchar_256 created_by "required"
+    timestamp_with_time_zone created_at "required"
+    varchar_256 published_by "nullable"
+    timestamp_with_time_zone published_at "nullable"
+    varchar_256 published_by_name "nullable"
+    varchar_16 publication_mode "nullable"
+  }
+  otm_baseline_version |o..o{ otm_baseline_version : fk_baseline_parent
+  org_workspace ||..o{ otm_baseline_version : fk_baseline_workspace
+  otm_configuration_check {
+    uuid id PK "required"
+    varchar_256 workspace_id FK "required"
+    uuid tenancy_id FK "required"
+    uuid operation_id FK "required"
+    bigint acquisition_sequence "required"
+    varchar_32 contract_version "required"
+    timestamp_with_time_zone started_at "required"
+    timestamp_with_time_zone checked_at "required"
+    jsonb context "required"
+    varchar_64 context_hash "required"
+    varchar_32 state "required"
+    jsonb results "required"
+    uuid evidence_event_id FK "required"
+  }
+  otm_tenancy ||..o{ otm_configuration_check : fk_check_child
+  audit_event ||..o{ otm_configuration_check : fk_check_evidence
+  otm_configuration_plan {
+    uuid id PK "required"
+    varchar_256 workspace_id FK "required"
+    uuid scope_tenancy_id FK "nullable"
+    uuid target_baseline_version_id FK "nullable"
+    varchar_64 candidate_set_hash "required"
+    uuid client_request_key "required"
+    integer revision "required"
+    varchar_256 created_by "required"
+    timestamp_with_time_zone created_at "required"
+    timestamp_with_time_zone updated_at "required"
+    uuid operation_id FK "nullable"
+  }
+  otm_baseline_version |o..o{ otm_configuration_plan : fk_plan_baseline
+  otm_operation |o..o{ otm_configuration_plan : fk_plan_operation
+  otm_tenancy |o..o{ otm_configuration_plan : fk_plan_scope_tenancy
+  org_workspace ||..o{ otm_configuration_plan : fk_plan_workspace
+  otm_configuration_plan_target {
+    varchar_256 workspace_id PK,FK "required"
+    uuid plan_id PK,FK "required"
+    uuid tenancy_id PK,FK "required"
+    jsonb proposal "required"
+    varchar_64 proposal_hash "required"
+    varchar_32 policy_choice "nullable"
+    varchar_32 quota_choice "nullable"
+    varchar_256 reviewed_by "nullable"
+    timestamp_with_time_zone reviewed_at "nullable"
+    uuid accepted_configuration_id FK "nullable"
+  }
+  otm_tenancy_configuration |o..o{ otm_configuration_plan_target : fk_plan_target_configuration
+  otm_configuration_plan ||..o{ otm_configuration_plan_target : fk_plan_target_plan
+  otm_tenancy ||..o{ otm_configuration_plan_target : fk_plan_target_tenancy
+  otm_credential {
+    uuid id PK,FK "required"
+    varchar_256 workspace_id FK "required"
+    uuid tenancy_id FK "required"
+    uuid principal_binding_id FK "required"
+    uuid source_operation_id FK "required"
+    jsonb location "required"
+    varchar_64 location_hash "required"
+    varchar_16 state "required"
+    integer generation "required"
+    uuid current_version_id FK "nullable"
+    uuid staged_version_id FK "nullable"
+    integer exposure_generation "required"
+    timestamp_with_time_zone first_disclosure_at "nullable"
+    timestamp_with_time_zone rotation_due_at "nullable"
+    uuid active_window_grant_id FK "nullable"
+    uuid rotation_operation_id FK "required"
+    timestamp_with_time_zone created_at "required"
+    timestamp_with_time_zone updated_at "required"
+  }
+  otm_credential_version |o..o| otm_credential : fk_credential_current
+  otm_credential_version |o..o| otm_credential : fk_credential_staged
+  otm_human_access_grant |o..o| otm_credential : fk_credential_window
+  otm_operation ||..o{ otm_credential : otm_credential_workspace_id_rotation_operation_id_fkey
+  otm_operation ||..o{ otm_credential : otm_credential_workspace_id_source_operation_id_fkey
+  otm_tenancy ||..o{ otm_credential : otm_credential_workspace_id_tenancy_id_fkey
+  otm_managed_object_binding ||..o| otm_credential : otm_credential_workspace_id_tenancy_id_principal_binding_i_fkey
+  otm_credential_version {
+    uuid id PK "required"
+    varchar_256 workspace_id FK "required"
+    uuid credential_id FK "required"
+    integer version_number "required"
+    jsonb reference "required"
+    varchar_64 reference_hash "required"
+    uuid created_operation_id FK "required"
+    timestamp_with_time_zone created_at "required"
+  }
+  otm_operation ||..o{ otm_credential_version : otm_credential_version_workspace_id_created_operation_id_fkey
+  otm_credential ||..o{ otm_credential_version : otm_credential_version_workspace_id_credential_id_fkey
+  otm_financial_collection {
+    uuid id PK "required"
+    varchar_256 workspace_id FK "required"
+    uuid tenancy_id FK "required"
+    uuid operation_id FK "required"
+    jsonb context "required"
+    varchar_64 context_hash "required"
+    varchar_64 source_hash "required"
+    varchar_64 failure_scope_hash "required"
+    varchar_16 state "required"
+    integer attempts "required"
+    uuid attempt_id "nullable"
+    timestamp_with_time_zone next_attempt_at "nullable"
+    varchar_64 safe_code "nullable"
+    timestamp_with_time_zone created_at "required"
+    timestamp_with_time_zone updated_at "required"
+  }
+  otm_tenancy ||..o{ otm_financial_collection : fk_financial_collection_child
+  otm_operation ||..o{ otm_financial_collection : fk_financial_collection_operation
+  otm_financial_observation {
+    uuid id PK "required"
+    varchar_256 workspace_id FK "required"
+    uuid tenancy_id FK "required"
+    uuid collection_id FK "required"
+    varchar_64 context_hash FK "required"
+    varchar_64 source_hash FK "required"
+    varchar_256 budget_ocid "required"
+    numeric_20__4 observed_budget_amount "nullable"
+    numeric_20__4 actual_spend "nullable"
+    numeric_20__4 forecasted_spend "nullable"
+    varchar_3 currency "nullable"
+    timestamp_with_time_zone time_spend_computed "nullable"
+    timestamp_with_time_zone captured_at "required"
+    timestamp_with_time_zone period_start "nullable"
+    timestamp_with_time_zone period_end "nullable"
+    jsonb snapshot "required"
+    varchar_64 snapshot_hash "required"
+  }
+  otm_tenancy ||..o{ otm_financial_observation : fk_financial_observation_child
+  otm_financial_collection ||..o| otm_financial_observation : fk_financial_observation_collection
+  otm_human_access_grant {
+    uuid id PK "required"
+    varchar_256 workspace_id FK "required"
+    uuid tenancy_id FK "required"
+    uuid credential_id FK "required"
+    uuid disclosed_version_id FK "required"
+    varchar_256 requesting_subject "required"
+    jsonb requester_snapshot "required"
+    uuid request_key "required"
+    varchar_64 payload_digest "required"
+    uuid accepted_operation_id FK "required"
+    uuid window_root_grant_id FK "required"
+    integer exposure_generation "required"
+    timestamp_with_time_zone accepted_at "required"
+    timestamp_with_time_zone first_disclosure_attempt_at "required"
+    timestamp_with_time_zone due_at "required"
+  }
+  otm_operation ||..o{ otm_human_access_grant : otm_human_access_grant_workspace_id_accepted_operation_id_fkey
+  otm_credential_version ||..o{ otm_human_access_grant : otm_human_access_grant_workspace_id_credential_id_disclose_fkey
+  otm_human_access_grant ||..o{ otm_human_access_grant : otm_human_access_grant_workspace_id_credential_id_window_r_fkey
+  otm_credential ||..o{ otm_human_access_grant : otm_human_access_grant_workspace_id_tenancy_id_credential__fkey
+  otm_local_credential {
+    varchar_256 workspace_id PK,FK "required"
+    uuid administrator_id PK,FK "required"
+    varchar_2048 password_hash "required"
+    varchar_1024 totp_secret_reference "required"
+    bigint last_totp_step "required"
+    timestamp_with_time_zone mfa_enrolled_at "required"
+    timestamp_with_time_zone password_changed_at "required"
+    integer failed_attempts "required"
+    timestamp_with_time_zone failure_window_started_at "nullable"
+    timestamp_with_time_zone retry_after "nullable"
+  }
+  otm_administrator ||..o| otm_local_credential : fk_local_credential_administrator
+  otm_managed_object_binding {
+    uuid id PK "required"
+    varchar_256 workspace_id FK "required"
+    uuid tenancy_id FK "required"
+    varchar_64 logical_key "required"
+    varchar_32 kind "required"
+    varchar_64 handler_contract_version "required"
+    integer generation "required"
+    uuid identity_domain_binding_id FK "nullable"
+    varchar_256 provider_ocid "required"
+    varchar_256 scim_resource_id "nullable"
+    varchar_256 user_name "nullable"
+    varchar_32 ownership_mode "required"
+    varchar_16 state "required"
+    uuid created_operation_id FK "required"
+    uuid source_evidence_event_id FK "required"
+    uuid retired_operation_id FK "nullable"
+    timestamp_with_time_zone created_at "required"
+    timestamp_with_time_zone updated_at "required"
+  }
+  audit_event ||..o{ otm_managed_object_binding : fk_managed_binding_capture
+  otm_managed_object_binding |o..o{ otm_managed_object_binding : fk_managed_binding_domain
+  otm_operation |o..o{ otm_managed_object_binding : fk_managed_binding_retirement
+  otm_tenancy ||..o{ otm_managed_object_binding : fk_managed_binding_tenancy
+  otm_notification_outbox {
+    uuid id PK "required"
+    varchar_256 workspace_id FK "required"
+    uuid operation_id FK "required"
+    varchar_64 transition_key "required"
+    jsonb intent "required"
+    varchar_64 intent_hash "required"
+    varchar_16 state "required"
+    integer attempts "required"
+    uuid attempt_id "nullable"
+    timestamp_with_time_zone last_attempt_at "nullable"
+    timestamp_with_time_zone next_attempt_at "nullable"
+    timestamp_with_time_zone sent_at "nullable"
+    varchar_64 safe_code "nullable"
+    timestamp_with_time_zone created_at "required"
+    timestamp_with_time_zone updated_at "required"
+  }
+  otm_operation ||..o{ otm_notification_outbox : fk_notification_operation
+  otm_operation {
+    uuid id PK,FK "required"
+    varchar_256 workspace_id FK "required"
+    varchar_64 kind "required"
+    varchar_256 initiating_actor_subject "required"
+    jsonb initiating_actor_snapshot "required"
+    varchar_256 responsible_actor_subject "required"
+    uuid client_request_key "required"
+    varchar_64 request_digest "required"
+    integer current_intent_revision FK "required"
+    uuid current_intent_event_id FK "required"
+    varchar_32 state "required"
+    varchar_256 stage "required"
+    varchar_32 wait_reason "nullable"
+    varchar_16 effect_knowledge "required"
+    integer revision "required"
+    timestamp_with_time_zone accepted_at "required"
+    timestamp_with_time_zone created_at "required"
+    timestamp_with_time_zone updated_at "required"
+    timestamp_with_time_zone completed_at "nullable"
+  }
+  audit_event ||..o| otm_operation : fk_operation_exact_intent
+  otm_operation_step {
+    varchar_256 workspace_id PK,FK "required"
+    uuid operation_id PK,FK "required"
+    integer intent_revision PK,FK "required"
+    varchar_256 step_key PK "required"
+    uuid intent_event_id FK "required"
+    varchar_64 command_kind "required"
+    varchar_64 contract_version "required"
+    jsonb inputs "required"
+    varchar_32 state "required"
+    integer execution_generation "required"
+    integer attempt_number "required"
+    uuid current_attempt_id "required"
+    varchar_16 effect_knowledge "required"
+    jsonb last_outcome "nullable"
+    timestamp_with_time_zone verified_at "nullable"
+    uuid evidence_event_id FK "nullable"
+  }
+  audit_event |o..o{ otm_operation_step : fk_step_evidence
+  audit_event ||..o{ otm_operation_step : fk_step_exact_intent
+  otm_operation ||..o{ otm_operation_step : fk_step_operation
+  otm_signing_credential {
+    uuid id PK "required"
+    varchar_256 workspace_id FK "required"
+    uuid tenancy_id FK "required"
+    uuid principal_binding_id FK "required"
+    uuid connection_id FK "required"
+    uuid source_operation_id FK "required"
+    uuid source_evidence_event_id FK "required"
+    jsonb target "required"
+    varchar_64 target_hash "required"
+    jsonb current_key "nullable"
+    varchar_64 current_hash "nullable"
+    integer generation "required"
+    varchar_16 state "required"
+    timestamp_with_time_zone retire_at "nullable"
+    uuid rotation_operation_id FK "required"
+    timestamp_with_time_zone created_at "required"
+    timestamp_with_time_zone updated_at "required"
+  }
+  otm_operation ||..o{ otm_signing_credential : otm_signing_credential_workspace_id_rotation_operation_id_fkey
+  audit_event ||..o{ otm_signing_credential : otm_signing_credential_workspace_id_source_operation_id_so_fkey
+  otm_user_presence_connection ||..o{ otm_signing_credential : otm_signing_credential_workspace_id_tenancy_id_connection__fkey
+  otm_tenancy ||..o{ otm_signing_credential : otm_signing_credential_workspace_id_tenancy_id_fkey
+  otm_managed_object_binding ||..o| otm_signing_credential : otm_signing_credential_workspace_id_tenancy_id_principal_b_fkey
+  otm_tenancy {
+    uuid id PK,FK "required"
+    varchar_256 workspace_id FK "required"
+    varchar_200 name "required"
+    varchar_256 tenancy_ocid "required"
+    varchar_256 parent_tenancy_ocid "required"
+    varchar_256 organization_id "required"
+    varchar_64 home_region "required"
+    varchar_16 kind "required"
+    varchar_24 status "required"
+    varchar_16 provider_mode "required"
+    varchar_16 origin "required"
+    integer revision "required"
+    uuid operation_id FK "nullable"
+    uuid last_operation_id FK "nullable"
+    timestamp_with_time_zone created_at "required"
+    timestamp_with_time_zone updated_at "required"
+    timestamp_with_time_zone verified_at "nullable"
+    uuid baseline_version_id FK "nullable"
+    uuid verified_baseline_version_id FK "nullable"
+    timestamp_with_time_zone configuration_verified_at "nullable"
+    jsonb configuration_observation "nullable"
+    uuid desired_configuration_id FK "nullable"
+    uuid last_verified_configuration_id FK "nullable"
+  }
+  otm_baseline_version |o..o{ otm_tenancy : fk_tenancy_baseline
+  otm_tenancy_configuration |o..o| otm_tenancy : fk_tenancy_desired_configuration_id
+  otm_tenancy_configuration |o..o| otm_tenancy : fk_tenancy_last_verified_configuration_id
+  otm_baseline_version |o..o{ otm_tenancy : fk_tenancy_verified_baseline
+  org_workspace ||..o{ otm_tenancy : otm_tenancy_workspace_id_fkey
+  otm_operation |o..o{ otm_tenancy : otm_tenancy_workspace_id_last_operation_id_fkey
+  otm_operation |o..o{ otm_tenancy : otm_tenancy_workspace_id_operation_id_fkey
+  otm_tenancy_configuration {
+    uuid id PK "required"
+    varchar_256 workspace_id FK "required"
+    uuid tenancy_id FK "required"
+    integer revision_number "required"
+    uuid previous_id FK "nullable"
+    uuid baseline_version_id FK "required"
+    jsonb policy_override_statements "nullable"
+    jsonb quota_override_statements "nullable"
+    numeric_20__4 monthly_budget_override_amount "nullable"
+    varchar_32 resolution_contract_version "required"
+    varchar_64 effective_hash "required"
+    uuid operation_id FK "required"
+    varchar_256 created_by "required"
+    timestamp_with_time_zone created_at "required"
+  }
+  otm_baseline_version ||..o{ otm_tenancy_configuration : fk_configuration_baseline
+  otm_operation ||..o{ otm_tenancy_configuration : fk_configuration_operation
+  otm_tenancy_configuration |o..o{ otm_tenancy_configuration : fk_configuration_previous
+  otm_tenancy ||..o{ otm_tenancy_configuration : fk_configuration_tenancy
+  otm_tenancy_membership {
+    uuid id PK "required"
+    varchar_256 workspace_id FK "required"
+    uuid tenancy_id FK "required"
+    uuid person_id FK "required"
+    varchar_16 role "required"
+    varchar_16 status "required"
+    varchar_256 user_ocid "nullable"
+    varchar_256 compartment_ocid "nullable"
+    varchar_100 compartment_name "nullable"
+    varchar_256 parent_compartment_ocid "nullable"
+    boolean cleanup_required "required"
+    uuid operation_id FK "nullable"
+    integer revision "required"
+    timestamp_with_time_zone created_at "required"
+    timestamp_with_time_zone updated_at "required"
+  }
+  otm_operation |o..o{ otm_tenancy_membership : otm_tenancy_membership_workspace_id_operation_id_fkey
+  org_person ||..o{ otm_tenancy_membership : otm_tenancy_membership_workspace_id_person_id_fkey
+  otm_tenancy ||..o{ otm_tenancy_membership : otm_tenancy_membership_workspace_id_tenancy_id_fkey
+  otm_user_presence_check {
+    uuid operation_id PK,FK "required"
+    varchar_256 workspace_id FK "required"
+    uuid tenancy_id FK "required"
+    bigint acquisition_sequence "required"
+    jsonb context "required"
+    varchar_64 context_hash "required"
+    varchar_16 state "required"
+    uuid attempt_id "nullable"
+    integer attempt_number "required"
+    timestamp_with_time_zone started_at "nullable"
+    timestamp_with_time_zone checked_at "nullable"
+    jsonb results "nullable"
+    uuid evidence_event_id FK "nullable"
+    timestamp_with_time_zone created_at "required"
+  }
+  audit_event |o..o| otm_user_presence_check : fk_presence_check_evidence
+  otm_operation ||..o| otm_user_presence_check : fk_presence_check_operation
+  otm_tenancy ||..o{ otm_user_presence_check : fk_presence_check_tenancy
+  otm_user_presence_connection {
+    uuid id PK "required"
+    varchar_256 workspace_id FK "required"
+    uuid tenancy_id FK "required"
+    uuid automation_binding_id FK "required"
+    uuid domain_binding_id FK "required"
+    integer revision "required"
+    varchar_16 provider_mode "required"
+    varchar_64 contract_version "required"
+    varchar_16 state "required"
+    uuid created_operation_id FK "required"
+    uuid source_evidence_event_id FK "required"
+    uuid retired_operation_id FK "nullable"
+    timestamp_with_time_zone created_at "required"
+    timestamp_with_time_zone updated_at "required"
+  }
+  otm_tenancy ||..o{ otm_user_presence_connection : fk_presence_connection_child
+  otm_managed_object_binding ||..o{ otm_user_presence_connection : fk_presence_connection_domain
+  otm_operation |o..o{ otm_user_presence_connection : fk_presence_connection_retirement
+  otm_managed_object_binding ||..o{ otm_user_presence_connection : fk_presence_connection_signer
+  audit_event ||..o{ otm_user_presence_connection : fk_presence_connection_source
+  procrastinate_events {
+    bigint id PK "required"
+    bigint job_id FK "required"
+    procrastinate_job_event_type type "nullable"
+    timestamp_with_time_zone at "nullable"
+  }
+  procrastinate_jobs ||..o{ procrastinate_events : procrastinate_events_job_id_fkey
+  procrastinate_jobs {
+    bigint id PK "required"
+    varchar_128 queue_name "required"
+    varchar_128 task_name "required"
+    integer priority "required"
+    text lock "nullable"
+    text queueing_lock "nullable"
+    jsonb args "required"
+    procrastinate_job_status status "required"
+    timestamp_with_time_zone scheduled_at "nullable"
+    integer attempts "required"
+    boolean abort_requested "required"
+    bigint worker_id FK "nullable"
+  }
+  procrastinate_workers |o..o{ procrastinate_jobs : procrastinate_jobs_worker_id_fkey
+  procrastinate_periodic_defers {
+    bigint id PK "required"
+    varchar_128 task_name "required"
+    bigint defer_timestamp "nullable"
+    bigint job_id FK "nullable"
+    varchar_128 periodic_id "required"
+  }
+  procrastinate_jobs |o..o{ procrastinate_periodic_defers : procrastinate_periodic_defers_job_id_fkey
+  procrastinate_workers {
+    bigint id PK "required"
+    timestamp_with_time_zone last_heartbeat "required"
+  }
