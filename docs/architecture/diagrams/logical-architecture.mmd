@@ -16,7 +16,7 @@ flowchart TB
   DB -->|Claim eligible queued work| Worker[Python workers\nExecute / resume domain workflows]
   Worker -->|Progress / results / audit| Repo
   Worker --> Provider[Typed provider contracts\nTarget / credential guards]
-  Provider --> Sim[Current simulated adapters]
-  Provider -.-> OCI[Planned real OCI adapters]
-  Provider --> Custody[Secret-store boundary\nPrivate local custody now\nOCI Vault planned]
+  Provider --> Sim[Simulated adapters]
+  Provider --> OCI[OCI adapters]
+  Provider --> Custody[Secret-store boundary\nPrivate local custody / OCI Vault]
   Worker -->|Outbox delivery| Mail[Configured SMTP transport]

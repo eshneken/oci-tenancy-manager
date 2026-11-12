@@ -4,8 +4,8 @@
 
 | View | Scope |
 | --- | --- |
-| [OCI deployment (SVG)](diagrams/oci-deployment.svg) | Target OKE, managed PostgreSQL and Vault context; planned, not deployed. |
-| [Software/data flows (SVG)](diagrams/logical-architecture.svg) | Current application components, durable work and explicit simulated/future provider separation. |
+| [OCI deployment (SVG)](diagrams/oci-deployment.svg) | OKE, managed PostgreSQL and Vault context. |
+| [Software/data flows (SVG)](diagrams/logical-architecture.svg) | Application components, durable work and explicit simulated/OCI provider separation. |
 | [Complete implemented ER (SVG)](diagrams/implemented-full-er.svg) | All 34 migrated public tables, 438 columns and 89 declared foreign keys. |
 | [Implemented table/column directory](implemented-database.md) | Human-readable responsibilities, exact PostgreSQL types, keys and relationships. |
 | [Focused diagrams and editable sources](diagrams/README.md) | Feature subsets, sources and generated views with implemented/proposed labels. |

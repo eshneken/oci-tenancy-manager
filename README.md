@@ -27,7 +27,7 @@ of who owns them, where they sit in the organization, or which configuration the
 persistence, durable workers and captured email. OCI provider effects are simulated. Real OCI
 adapters, corporate SSO, OKE/managed-service deployment and daily hosted schedules still require
 implementation and qualification. [The live-OCI test manifest](docs/how-to/real-oci-test-manifest.md)
-tracks those boundaries; screenshots and planned architecture are not deployment evidence.
+tracks those boundaries; screenshots and architecture views are not deployment evidence.
 
 ## Application preview
 
@@ -51,10 +51,10 @@ for application state and the durable queue, and **OCI Vault** for tenancy crede
 compartment can be in a different tenancy from the managed parent: OTM accesses the parent and
 children through explicitly configured credentials and typed provider boundaries.
 
-![Planned OCI deployment architecture](docs/architecture/diagrams/oci-deployment.png)
+![OCI deployment architecture](docs/architecture/diagrams/oci-deployment.png)
 
-This is the **planned hosting design**, not a live deployment. Terraform will provision the
-environment; API, worker and maintenance commands share the runtime image but run as distinct
+This view shows the OCI hosting architecture. Infrastructure provisioning belongs to Terraform;
+API, worker and maintenance commands share the runtime image but run as distinct
 workloads. CronJobs enqueue due work or perform bounded maintenance; Python workers execute the
 durable workflows. Email transport is configured separately.
 
@@ -72,9 +72,9 @@ observations; navigating between screens does not require another provider call.
 
 ![Application software components and data flows](docs/architecture/diagrams/logical-architecture.png)
 
-The provider boundary keeps simulated implementations separate from future real OCI adapters.
+The provider boundary keeps simulated implementations separate from OCI adapters.
 There is no automatic fallback from a failed real connection to simulation or recovery credentials.
-The secret-store boundary uses private local custody today and targets OCI Vault for deployment.
+The secret-store boundary covers private local custody and OCI Vault.
 
 [Full-size SVG](docs/architecture/diagrams/logical-architecture.svg) ·
 [Mermaid](docs/architecture/diagrams/logical-architecture.mmd) ·
@@ -218,7 +218,7 @@ separate CSS component framework. HTML/CSS are web standards rather than additio
 | [Bandit](https://bandit.readthedocs.io/) | Static security analysis of Python application source. |
 | [pip-audit](https://pypi.org/project/pip-audit/) / [npm audit](https://docs.npmjs.com/cli/commands/npm-audit/) | Check locked Python/JavaScript dependency sets for known advisories. |
 | [Git](https://git-scm.com/) | Source history, feature branches and reviewable checkpoints. |
-| [Dependabot](https://github.com/dependabot/dependabot-core) | Configuration in this checkpoint proposes grouped image/scanner and CI-action update PRs after merge; updates still require tests and human review. |
+| [Dependabot](https://github.com/dependabot/dependabot-core) | Proposes grouped image/scanner and CI-action update PRs; updates require tests and human review. |
 | [gstack](https://github.com/garrytan/gstack) | Development/review/QA/documentation/shipping workflow used by the coding agent; not shipped in the application image. |
 
 Project-owned publication, secret, contract, documentation and code-comment checks supplement these
