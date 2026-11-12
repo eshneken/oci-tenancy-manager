@@ -13,6 +13,7 @@ Earlier dated preservation receipts remain historical evidence.
 
 | Need | Start here |
 | --- | --- |
+| Technology catalog and how each tool is used | [Grouped project technology catalog](../README.md#technology-catalog) |
 | Product scope and acceptance criteria | [Product specification](product/oci-tenancy-manager-spec.md) |
 | Present Atlas to stakeholders | [30-minute demo script, 12-minute route and synthetic CSV sequence](how-to/stakeholder-demo.md) |
 | Current architecture and approved future design | [Engineering design](engineering-design/README.md) |
@@ -89,7 +90,8 @@ is retained for reproducible contract checking, not as production/provider certi
 
 | Subdirectory | Contents |
 | --- | --- |
-| [product/](product/) | Product scope and acceptance criteria |
+| [product/](product/) | Technology catalog and how each tool is used | [Grouped project technology catalog](../README.md#technology-catalog) |
+| Product scope and acceptance criteria |
 | [engineering-design/](engineering-design/README.md) | Approved architecture, journeys and future qualification boundaries |
 | [reference/](reference/README.md) | Implemented API/model/settings reference |
 | [how-to/](how-to/README.md) | Setup, development and manual/operator review procedures |

@@ -3,6 +3,7 @@
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -18,9 +19,26 @@ from otm.local_development import database_url, docker, read_state, setup
 from otm.maintenance import maintenance_engine
 
 ROOT = Path(__file__).resolve().parents[1]
-SCANNER = (
-    "aquasec/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb"
-)
+
+
+# Read the one digest-pinned upstream scanner dependency that Dependabot can update natively.
+def scanner_image(manifest):
+    lines = [
+        line.strip()
+        for line in manifest.read_text().splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+    if len(lines) != 1:
+        raise ValueError("INVALID_SCANNER_MANIFEST")
+    match = re.fullmatch(
+        r"FROM (aquasec/trivy:[0-9]+[.][0-9]+[.][0-9]+@sha256:[0-9a-f]{64})", lines[0]
+    )
+    if match is None:
+        raise ValueError("INVALID_SCANNER_MANIFEST")
+    return match.group(1)
+
+
+SCANNER = scanner_image(ROOT / "tools/trivy/Dockerfile")
 
 
 # Reject asset paths outside their declared source/package trees before reading checkout content.

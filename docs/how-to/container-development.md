@@ -92,8 +92,20 @@ Alpine uses musl rather than glibc, so locked native wheel availability alone is
 the installed native-compatibility probes above are required. New OCI SDK dependencies must be
 qualified on this base when introduced; the current image does not claim SDK or real OCI coverage.
 
-Keep all base/tool image digests explicit. Review upstream supported releases and security notices
-at least monthly and promptly after relevant advisories; update digests through reviewed PRs. Rebuild
+Keep all base/tool image digests explicit. [Dependabot configuration](../../.github/dependabot.yml)
+proposes one grouped weekly container-image/scanner update PR and one grouped CI-action update PR,
+with at most one open PR per group. These activate after the configuration merges to the default
+branch; no hosted update result is claimed before then. The scanner pin has one authority:
+[tools/trivy/Dockerfile](../../tools/trivy/Dockerfile). The smoke runner reads that exact upstream
+version/digest and rejects unpinned images or extra instructions; it does not build a wrapper image.
+Python3.12 and the Node major remain deliberate compatibility choices rather than automatic release-line
+upgrades. Digest changes for existing tags and scanner releases still require normal CI and human
+review; no automerge or deployment is enabled. Review security notices promptly between scheduled PRs.
+
+Trivy's advisory database is fetched into each run's new cache, independently of the engine pin;
+new CVEs can therefore be detected without changing the engine. Engine updates also deliver parser,
+platform and detection changes and fixes to the scanner. [Trivy database documentation](https://trivy.dev/docs/latest/configuration/db/)
+explains that distinction. Registry/metadata failures still fail qualification. Rebuild
 without cache so supported OS updates are fetched, scan the resulting exact image with current
 metadata and rerun compatibility checks. A clean scan is dated evidence, not a guarantee that no
 unknown vulnerabilities exist. Move off the distribution before its supported lifetime ends.
@@ -108,9 +120,12 @@ scanning, with both OS and Python-package inventories detected and zero findings
 No exclusions were added. The scanned runtime is Alpine3.24.4, image
 `sha256:91d3bfdd657c4a1b73357349ec30ea0e583534692d7ff8a997cffc6bdb0ef1d3`.
 Independent source/security and documentation reviews found no remaining material candidate issues.
-Backend units:2394 passed, no failures/errors/skips,95.12% complete-source unit-only line coverage.
-Frontend units:650 passed,96.99% complete-source unit-only line coverage. Purpose, source-style,
-documentation, publication, secret and backend static-security checks pass.
+Backend and frontend complete-source unit-only gates independently require at least95% line
+coverage. The checkpoint PR records final suite counts and coverage; targeted image checks do not
+replace those gates. Purpose, style, documentation, publication, secret and dependency checks remain
+required. Negative runner regressions exercise scanner failures, absent/malformed scan reports,
+missing inventories, failed probes, expired budgets and cleanup/ownership failures using synthetic
+external-tool boundaries; they do not substitute for actual installed-image or advisory scanning.
 
 The full application integration suite remains independently required before a milestone PR;
 targeted image compatibility is not application milestone/PR

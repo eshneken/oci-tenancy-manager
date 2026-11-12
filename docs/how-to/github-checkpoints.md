@@ -100,3 +100,8 @@ restricted disposable PostgreSQL behavior, then blocks on HIGH/CRITICAL image fi
 OS/Python scan coverage. This adds no optional result, vulnerability-ignore policy or sixth check.
 Private image archives/logs/test credentials are not uploaded. Local ARM64 execution does not stand
 in for the Ubuntu runner's AMD64 image execution; hosted results must be verified before merge.
+
+Dependabot [weekly grouped updates](../../.github/dependabot.yml) cover application/scanner image
+pins and CI actions after merge to the default branch. The scanner dependency manifest is
+[tools/trivy/Dockerfile](../../tools/trivy/Dockerfile), also consumed by the runner, so update PRs
+change the version actually executed. No automatic merge or deployment is configured.
