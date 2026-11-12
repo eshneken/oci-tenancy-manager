@@ -1,0 +1,30 @@
+---
+title: Target OCI deployment (planned)
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#eef3ff'
+    primaryTextColor: '#17263c'
+    primaryBorderColor: '#496baf'
+    lineColor: '#64748b'
+---
+flowchart LR
+  Admin[Administrator browser] -->|HTTPS| LB[OCI load balancer / ingress]
+  subgraph Host[Hosting tenancy - dedicated compartment]
+    subgraph OKE[OKE cluster]
+      API[API pods\nFastAPI + built React frontend]
+      Worker[Worker pods\nPython + Procrastinate]
+      Cron[Maintenance CronJobs]
+    end
+    PG[(OCI Database with PostgreSQL)]
+    Vault[OCI Vault\nPer-tenancy keys and passwords]
+    LB --> API
+    API -->|Transactional reads / writes| PG
+    Worker <-->|Claim work / persist results| PG
+    Cron -->|Enqueue due work / cleanup| PG
+    Worker -->|Read / rotate secrets| Vault
+  end
+  Worker -->|Organizations API| Parent[Managed parent tenancy]
+  Worker -->|Typed OCI facade| Child[1..N child tenancies\nIdentity Domains / IAM\nPolicies / quotas / tags / budgets]
+  Parent ---|Organization membership| Child
+  Worker -->|Lifecycle and operational notices| Email[Configured email transport]

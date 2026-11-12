@@ -13,6 +13,9 @@ Earlier dated preservation receipts remain historical evidence.
 
 | Need | Start here |
 | --- | --- |
+| Application screenshots and overview | [Main README](../README.md) and [synthetic screenshot provenance](screenshots/README.md) |
+| Complete implemented ER and every table/column | [Full-size diagram](architecture/diagrams/implemented-full-er.svg) and [table directory](architecture/implemented-database.md) |
+| OCI deployment context and logical software architecture | [Architecture overview](architecture/README.md) — current vs planned boundaries |
 | Technology catalog and how each tool is used | [Grouped project technology catalog](../README.md#technology-catalog) |
 | Product scope and acceptance criteria | [Product specification](product/oci-tenancy-manager-spec.md) |
 | Present Atlas to stakeholders | [30-minute demo script, 12-minute route and synthetic CSV sequence](how-to/stakeholder-demo.md) |
@@ -94,6 +97,7 @@ is retained for reproducible contract checking, not as production/provider certi
 | [engineering-design/](engineering-design/README.md) | Approved architecture, journeys and future qualification boundaries |
 | [reference/](reference/README.md) | Implemented API/model/settings reference |
 | [how-to/](how-to/README.md) | Setup, development and manual/operator review procedures |
+| [screenshots/](screenshots/README.md) | Reviewed synthetic application screenshots and capture provenance |
 | [architecture/](architecture/README.md) | Architecture [diagram sources and generated views](architecture/diagrams/README.md) |
 | [decisions/](decisions/README.md) | Accepted engineering decisions and supersessions |
 | [contracts/](contracts/README.md) | Proposed design contracts, [examples](contracts/configuration-examples/) and [reviewed receipts](contracts/receipts/) |
