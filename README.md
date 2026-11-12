@@ -23,12 +23,6 @@ of who owns them, where they sit in the organization, or which configuration the
 - **Keep access accountable.** Record required-user checks, audited recovery-password access and
   managed signing-key rotation, with durable operation and administrative audit history.
 
-**Current status:** the Python/React application runs locally with real authentication, PostgreSQL
-persistence, durable workers and captured email. OCI provider effects are simulated. Real OCI
-adapters, corporate SSO, OKE/managed-service deployment and daily hosted schedules still require
-implementation and qualification. [The live-OCI test manifest](docs/how-to/real-oci-test-manifest.md)
-tracks those boundaries; screenshots and architecture views are not deployment evidence.
-
 ## Application preview
 
 These are captures of the actual application using a fresh, disposable database and entirely
@@ -38,9 +32,9 @@ fictional people with reserved `example.test` addresses. No private organization
 
 ![Atlas organization dashboard with fictional employees](docs/screenshots/atlas-organization.png)
 
-### Versioned configuration
+### Tenancy inventory
 
-![Atlas configuration baseline dashboard in simulation](docs/screenshots/atlas-configuration.png)
+![Atlas tenancy dashboard with fictional owners](docs/screenshots/atlas-tenancies.png)
 
 [Capture provenance and image notes](docs/screenshots/README.md)
 

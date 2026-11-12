@@ -2,8 +2,9 @@
 
 [Main README](../../README.md) · [Documentation home](../README.md)
 
-These PNGs capture the actual application at source checkpoint `786f83b` using an owned temporary
-HTTPS application and freshly migrated disposable PostgreSQL database. The saved demonstration
+These PNGs capture the actual application: Organization and Configuration at source checkpoint
+`786f83b`, and Tenancies at `513adc3`. Each capture uses an owned temporary HTTPS application
+and freshly migrated disposable PostgreSQL database. The saved demonstration
 instance was neither read nor changed. Temporary API/worker processes and their label-verified
 database container were removed after capture.
 
@@ -11,6 +12,9 @@ database container were removed after capture.
   [stakeholder baseline](../how-to/stakeholder-demo-01-baseline.csv), with Engineering/Research mappings.
 - `atlas-configuration.png`: one baseline published through normal UI interactions, explicitly
   marked as simulated validation. No tenancy configuration or real OCI resource was changed.
+- `atlas-tenancies.png`: individual and shared tenancies for fictional owners, created through
+  the normal simulated onboarding flow with baseline v1 and refreshed persisted dashboard data.
+  The README pairs this inventory view with the Organization dashboard.
 
 Captured at a 1440px desktop viewport. Names are invented; all employee addresses use reserved
 `example.test`. No private HR export, real account/contact, password, MFA value, key or connection
