@@ -8,7 +8,7 @@ PostgreSQL 16 database at source checkpoint `786f83b`. No saved database or empl
 tables, four Procrastinate-owned tables and Alembic’s migration marker.
 
 [Full-size SVG](diagrams/implemented-full-er.svg) · [PNG](diagrams/implemented-full-er.png) ·
-[Editable Mermaid source](diagrams/implemented-full-er.mmd) · [Excalidraw annotation scene](diagrams/implemented-full-er.excalidraw)
+[Editable Mermaid source](diagrams/implemented-full-er.mmd)
 
 ![Complete implemented ER diagram](diagrams/implemented-full-er.png)
 
@@ -23,8 +23,7 @@ expressible in an ER diagram. The links below list exact FK columns.
 JSON payloads and OCID/subject strings can contain application-level relationships that are not SQL
 foreign keys; no inferred relationships are drawn. JSONB fields are structured application contracts,
 not omitted relational tables. The full schema is large: open the SVG to zoom, or use the focused
-[feature diagrams](diagrams/README.md). The ER Excalidraw export is one image for annotation;
-edit entities and relationships in Mermaid source.
+[feature diagrams](diagrams/README.md). Edit ER entities and relationships in Mermaid source.
 
 ## Table directory
 

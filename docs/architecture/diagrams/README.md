@@ -4,7 +4,7 @@
 
 - **[OCI deployment](oci-deployment.svg)** ([PNG](oci-deployment.png), [Mermaid](oci-deployment.mmd), [Excalidraw](oci-deployment.excalidraw)): OKE, OCI Database with PostgreSQL and Vault context. Nested export is one SVG for annotation.
 - **[Logical software architecture](logical-architecture.svg)** ([PNG](logical-architecture.png), [Mermaid](logical-architecture.mmd), [Excalidraw](logical-architecture.excalidraw)): components/data flows with simulated and OCI adapters explicitly separated. Scene is element-editable.
-- **[Complete implemented ER](implemented-full-er.svg)** ([PNG](implemented-full-er.png), [Mermaid](implemented-full-er.mmd), [Excalidraw](implemented-full-er.excalidraw)): all 34 migrated tables/438 columns/89 foreign keys, including native queue and migration tables. ER scene is one SVG for annotation. [Table responsibilities and every column](../implemented-database.md).
+- **[Complete implemented ER](implemented-full-er.svg)** ([PNG](implemented-full-er.png), [Mermaid](implemented-full-er.mmd)): all 34 migrated tables/438 columns/89 foreign keys, including native queue and migration tables. [Table responsibilities and every column](../implemented-database.md).
 
 The ER is schema-only reflection from a fresh disposable database at source checkpoint `786f83b`;
 no saved organization data was inspected. It does not fold proposed production entities or prototype

@@ -90,8 +90,7 @@ prototype. The separate production design dictionary also describes future table
 
 [**Open the full-size ER diagram (SVG)**](docs/architecture/diagrams/implemented-full-er.svg) ·
 [Table descriptions and complete column directory](docs/architecture/implemented-database.md) ·
-[Mermaid source](docs/architecture/diagrams/implemented-full-er.mmd) ·
-[Excalidraw annotation scene](docs/architecture/diagrams/implemented-full-er.excalidraw)
+[Mermaid source](docs/architecture/diagrams/implemented-full-er.mmd)
 
 <details>
 <summary>Show the complete ER diagram</summary>
@@ -101,8 +100,7 @@ prototype. The separate production design dictionary also describes future table
 </details>
 
 For a readable feature-by-feature view, use the [focused data-model diagrams](docs/architecture/diagrams/README.md).
-The complete SVG supports zooming; the ER Excalidraw scene supports annotation, while entities and
-relationships remain editable in Mermaid.
+The complete SVG supports zooming; entities and relationships remain editable in Mermaid.
 
 ## Start exploring
 

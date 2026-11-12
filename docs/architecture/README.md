@@ -22,6 +22,6 @@ determine actual runtime storage. [Engineering chapters](../engineering-design/R
 current and planned behavior; proposed future entities are not implied to exist in the database.
 
 Architecture flowcharts have Mermaid sources and Excalidraw exports. The logical component scene
-is element-editable; the nested OCI and ER exports contain a single SVG for annotation. Edit their
+is element-editable; the nested OCI export contains a single SVG for annotation. Edit diagram
 Mermaid sources to change structure, then re-render. Screenshots use public synthetic fixtures and
 are documented in [screenshot provenance](../screenshots/README.md).
