@@ -1344,3 +1344,20 @@ effectful work must not be reopened. Preserve hard deadlines, unknown-effect fen
 assertions. Exact passing/failed-attempt scope is recorded in the current signing reference; no complete-suite or live timing claim follows.
 
 For this correction, unit gates pass at 2,356 backend/95.1148% and 640 frontend/97.10%. Batch ij5zhueu has 23 passing cases including both native browser journeys but also two test-only PG failures; corrected follow-up tv1rjknb passes 3 PG overlap/reverse-order cases. This combined targeted evidence is not a clean combined/full-suite run. [Exact scope and preserved publication](reference/signing-key-rotation.md#availability-correction-targeted-evidence--10-november-2026).
+
+## Container packaging qualification
+
+The [container smoke](how-to/container-development.md) verifies real Docker context filtering with
+private-path canaries, installed wheel asset hashes, nonroot read-only HTTP liveness, fail-closed
+unconfigured startup and installed maintenance against owned disposable PostgreSQL. Unit regressions
+protect traversal and foreign-container cleanup boundaries. HIGH/CRITICAL image findings or unavailable
+scanning block qualification; no blanket unfixed exclusion. Existing full application gates remain
+required at milestone/PR checkpoints. Hosted image/worker/browser qualification remains Pending in
+the [live manifest](how-to/real-oci-test-manifest.md#container-hosting-qualification--pending).
+
+Installed-image native checks additionally cover Argon2 positive/negative verification, RSA key
+preparation/retry with real custody, configured API/frontend over HTTPS, missing authentication,
+untrusted certificates/wrong hostnames, actual worker composition/drain and a separate real queued
+Procrastinate task. These checks do not replace OTM lifecycle/browser tests or remote database TLS
+qualification. The same existing Security and publication CI job runs fresh image build/scan checks;
+all five hosted check names, coverage thresholds and existing application-suite budgets remain intact.

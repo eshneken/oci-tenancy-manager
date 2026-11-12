@@ -107,6 +107,8 @@ jobs:
       - run: uv run --project backend pip-audit -r .local-dev/runtime-requirements.txt
       - run: npm ci --ignore-scripts && npm audit --audit-level=low
         working-directory: frontend
+      # Build and scan the installed image; use only uniquely owned disposable resources.
+      - run: uv run --project backend python scripts/run_container_smoke.py
       # No logs, DB dumps, browser captures, private inputs or secrets are uploaded as artifacts.
 
   documentation:

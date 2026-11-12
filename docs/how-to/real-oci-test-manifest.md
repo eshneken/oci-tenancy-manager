@@ -310,3 +310,18 @@ Local source implementation does not establish either live result below.
 | --- | --- | --- |
 | Create/import bootstrap custody and installation | Qualify Vault-backed exact operation-scoped preparation/replay and loss recovery outside SQL transactions; expose public PEM only, install it on the exact temporary child identity, independently verify signer privileges/authentication, and retire only after replacement access is verified. No private material in API/log/audit. | Pending |
 | Effective recovery-password policy | Resolve the exact child's effective identity-domain/custom/group password policy and user/history restrictions; verify newly randomized 32-character four-class candidates are accepted for setup/rotation. Preserve original CURRENT/candidate bytes on replay and original four-hour window/unknown-effect fences; no reset/backfill shortcut. | Pending |
+
+## Container hosting qualification — Pending
+
+- Deploy the installed image through the approved hosted composition; verify OKE nonroot/read-only
+  execution, resource limits, ingress/TLS and authenticated readiness. Packaging smoke is not this test.
+- Verify managed PostgreSQL with certificate/hostname validation, external secrets and distinct
+  API/worker/maintenance roles. No local-loopback relaxation or implicit simulator fallback.
+- Exercise API browser journeys, actual Procrastinate work, SIGTERM/drain/restart and due maintenance
+  using the hosted image; confirm schedules, backup/restore and Vault behavior.
+- Verify both supported target architectures before publishing a multiarchitecture release; local
+  host image checks alone do not qualify another architecture.
+
+- On the selected musl-based image, qualify the actual OCI SDK and any introduced native libraries,
+  remote PostgreSQL verify-full/CA behavior and authenticated lifecycle worker operations. Current
+  image probes cover generic native jobs and local simulator composition, not those provider calls.
