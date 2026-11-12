@@ -90,8 +90,7 @@ is retained for reproducible contract checking, not as production/provider certi
 
 | Subdirectory | Contents |
 | --- | --- |
-| [product/](product/) | Technology catalog and how each tool is used | [Grouped project technology catalog](../README.md#technology-catalog) |
-| Product scope and acceptance criteria |
+| [product/](product/) | Product scope and acceptance criteria |
 | [engineering-design/](engineering-design/README.md) | Approved architecture, journeys and future qualification boundaries |
 | [reference/](reference/README.md) | Implemented API/model/settings reference |
 | [how-to/](how-to/README.md) | Setup, development and manual/operator review procedures |
