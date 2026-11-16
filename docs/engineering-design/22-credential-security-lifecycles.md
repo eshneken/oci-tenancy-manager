@@ -109,14 +109,16 @@ allowed_cidrs = ["198.51.100.0/24", "203.0.113.0/24"]
 
 ```
 
-Define `OTM_ALLOWED_SOURCE_CIDRS` as a configuration variable in each protected GitHub
-Environment. Map it into the release job environment; do not hardcode operational ranges in YAML:
+Store the configuration input `OTM_ALLOWED_SOURCE_CIDRS` in each protected GitHub Environment
+as a Secret. It is not an authentication credential; secret-backed custody prevents the public
+step header from printing operational ranges before code can mask them. Map it into the release
+job environment; do not hardcode operational ranges in YAML:
 
 ```yaml
 # Release-job fragment; the existing job selects the trusted protected deployment environment.
 env:
   # Shared app-ingress/recovery-console source CIDRs; validated before deployment credentials.
-  OTM_ALLOWED_SOURCE_CIDRS: ${{ vars.OTM_ALLOWED_SOURCE_CIDRS }}
+  OTM_ALLOWED_SOURCE_CIDRS: ${{ secrets.OTM_ALLOWED_SOURCE_CIDRS }}
 
 ```
 

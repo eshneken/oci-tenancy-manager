@@ -1,0 +1,70 @@
+name: Plan staging infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      component:
+        description: Existing staging Terraform root to plan; state bootstrap remains an operator task.
+        required: true
+        type: choice
+        options: [security, platform]
+
+permissions:
+  contents: read
+
+# Use this same fixed group for later mutating environment workflows; never cancel an active apply.
+concurrency:
+  group: otm-environment-staging
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    if: github.ref == 'refs/heads/master'
+    environment: staging
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.13.5'
+          enable-cache: false
+      - run: uv sync --project backend --locked
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4
+        with:
+          terraform_version: '1.15.5'
+          terraform_wrapper: false
+      - name: Generate and privately retain a staging plan
+        env:
+          # Must be deliberately enabled after environment protection, trust and IAM qualification.
+          OTM_INFRASTRUCTURE_ENABLED: ${{ vars.OTM_INFRASTRUCTURE_ENABLED || 'false' }}
+          # Choice values are data; Python independently allowlists the fixed root.
+          OTM_COMPONENT: ${{ inputs.component }}
+          # JSON references/settings only; private plan/source values never enter a GitHub artifact.
+          OTM_INFRASTRUCTURE_INPUTS_JSON: ${{ inputs.component == 'security' && secrets.OTM_SECURITY_INPUTS_JSON || secrets.OTM_PLATFORM_INPUTS_JSON }}
+          # Environment-specific confidential client without identity-domain administrator roles.
+          OTM_INFRA_IDENTITY_DOMAIN_URL: ${{ secrets.OTM_INFRA_IDENTITY_DOMAIN_URL }}
+          # Restricted exchange client ID: 1-8192 characters, no CR/LF; never an administrator client.
+          OTM_INFRA_CLIENT_ID: ${{ secrets.OTM_INFRA_CLIENT_ID }}
+          # Matching protected environment credential: 1-8192 characters without CR/LF; never logged.
+          OTM_INFRA_CLIENT_SECRET: ${{ secrets.OTM_INFRA_CLIENT_SECRET }}
+          # Existing single hosting compartment shared by this environment's separate roots.
+          OTM_HOSTING_COMPARTMENT_OCID: ${{ secrets.OTM_HOSTING_COMPARTMENT_OCID }}
+          # Reuse the protected shared application/recovery-console CIDR input; platform root only.
+          OTM_ALLOWED_SOURCE_CIDRS: ${{ secrets.OTM_ALLOWED_SOURCE_CIDRS }}
+          # Exact reviewed platform versions; no floating or implicit latest selection.
+          OTM_OKE_KUBERNETES_VERSION: ${{ vars.OTM_OKE_KUBERNETES_VERSION }}
+          # Reviewed two-digit managed PostgreSQL major; platform only, not an automatic upgrade.
+          OTM_POSTGRESQL_VERSION: ${{ vars.OTM_POSTGRESQL_VERSION }}
+          # Private node bootstrap script, parsed but never executed by this workflow.
+          OTM_WORKER_CLOUD_INIT: ${{ secrets.OTM_WORKER_CLOUD_INIT }}
+        run: uv run --project backend python -m otm.infrastructure_plan --environment staging --component "$OTM_COMPONENT"

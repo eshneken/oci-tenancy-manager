@@ -56,10 +56,11 @@ Do not repeatedly click Run to resolve an uncertain operation. Inspect its actua
 ## Application update — the normal release path
 
 1. Select an approved protected-master source revision with passing required checks. The
-   [implemented build source](application-releases.md) follows the exact successful master-push
-   Checkpoint automatically once published/enabled; hosted qualification is still pending. Select
-   only its completed trusted candidate and verified provenance. Record the release ID and immutable
-   image/public-source identities. Do not use `latest`. The deployment steps below remain proposed.
+   [qualified publisher](application-releases.md) follows the exact successful master-push Checkpoint
+   automatically. Select only its completed trusted candidate and manually run the read-only hosted
+   verifier; its integrity result does not establish staging acceptance or deployment.
+   Record the release ID and immutable image/public-source identities. Do not use `latest`.
+   The deployment steps below remain proposed; OCI and durable-custody qualification remain Pending.
 2. Run `deploy-staging.yml` for that release ID. Check that the selected target is staging and that
    email goes only to its approved test destination. The workflow validates compatibility, applies
    any reviewed migrations once, drains old workers safely and deploys the candidate.

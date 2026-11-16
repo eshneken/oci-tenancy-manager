@@ -1,6 +1,7 @@
 """Apply exact Caddy availability-risk exceptions; keep all other image findings blocking."""
 
 import json
+import os
 import re
 import ssl
 import urllib.request
@@ -10,6 +11,13 @@ import certifi
 
 ROOT = Path(__file__).resolve().parents[1]
 LATEST = "https://api.github.com/repos/caddyserver/caddy/releases/latest"
+
+
+# A job token is scoped to GitHub's fixed API endpoint and must never follow a redirect.
+class NoCredentialRedirect(urllib.request.HTTPRedirectHandler):
+    # Returning None makes urllib reject redirects instead of forwarding authorization headers.
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
 
 
 # The exception belongs to one reviewed official release, not arbitrary images or future versions.
@@ -35,7 +43,13 @@ def check_latest():
         },
     )
     context = ssl.create_default_context(cafile=certifi.where())
-    with urllib.request.urlopen(request, context=context, timeout=25) as response:
+    token = os.environ.get("GH_TOKEN")
+    if token:
+        request.add_header("Authorization", "Bearer " + token)
+    opener = urllib.request.build_opener(
+        urllib.request.HTTPSHandler(context=context), NoCredentialRedirect()
+    )
+    with opener.open(request, timeout=25) as response:
         release = json.loads(response.read(1048576))
     if (
         release.get("tag_name") != "v" + caddy_version()

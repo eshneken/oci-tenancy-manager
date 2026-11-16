@@ -136,8 +136,14 @@ jobs:
       # Synthetic held manifests only; no kubeconfig, OCI credentials or apply.
       - run: uv run --project backend python scripts/check_kubernetes_bundle.py
       - run: uv run --project backend python scripts/caddy_image_policy.py
+        # Avoid the shared runner's anonymous API quota; this token is read-only and step-scoped.
+        env:
+          GH_TOKEN: ${{ github.token }}
       # Real isolated Caddy/ACME protocol tests and ingress image scan; no real CA or saved instance.
       - run: uv run --project backend python scripts/check_caddy_ingress.py
+        # The native ingress check also verifies the official upstream release.
+        env:
+          GH_TOKEN: ${{ github.token }}
       - run: uv run --project backend python scripts/export_backend_contracts.py --check
       - run: uv run --project backend python scripts/check_design_docs.py
       - run: uv run --no-project scripts/check_c5_contracts.py

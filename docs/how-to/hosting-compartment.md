@@ -4,7 +4,7 @@ Each environment installs all Atlas infrastructure in **one existing OCI compart
 compartments are created. Staging and production remain in separate tenancies and use their own
 hosting compartment, state, credentials and deployments.
 
-Configure **`OTM_HOSTING_COMPARTMENT_OCID`** as a nonsecret GitHub Actions **environment variable**
+Configure **`OTM_HOSTING_COMPARTMENT_OCID`** as a private reference in a GitHub Actions **Environment Secret**
 in both `staging` and `production`. Use each tenancy's approved existing compartment OCID. There is
 no default and no synthetic value is configured for live deployment. The actual tenancy/compartment
 values remain pending until access is available. The deployment workflow must use the selected
@@ -37,13 +37,14 @@ namespace, environment and region remain in `target`. A single flat input avoids
 whole-object tfvars replacement semantics and conflicting handwritten compartment selections.
 Do not use another var-file or `-var` to override the selected hosting value.
 
-The protected infrastructure workflow is still pending implementation. Its environment binding will
-pass the variable as data, without shell interpolation or command evaluation:
+The held [plan-only infrastructure workflows](infrastructure-plans.md) pass the reference as data,
+without shell interpolation or command evaluation. Secret-backed custody prevents GitHub from
+printing the private OCID in a step header before the renderer runs:
 
 ```yaml
-# Trusted infrastructure-job fragment, not an implemented deployment workflow.
+# Trusted environment input; the implemented workflows remain held pending live qualification.
 env:
-  OTM_HOSTING_COMPARTMENT_OCID: ${{ vars.OTM_HOSTING_COMPARTMENT_OCID }}
+  OTM_HOSTING_COMPARTMENT_OCID: ${{ secrets.OTM_HOSTING_COMPARTMENT_OCID }}
 ```
 
 Existing short-lived operator authentication remains separate from backend authentication and from

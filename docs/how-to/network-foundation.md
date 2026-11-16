@@ -69,7 +69,7 @@ authenticate to OCI and never open a live state backend. Provider downloads stil
 access. Tests inspect rendered resources/routing/NSG bindings and reject invalid union/scope inputs;
 they do not emulate OCI authorization or service behavior.
 
-The protected environment variable **`OTM_ALLOWED_SOURCE_CIDRS`** is the sole release input for
+The protected Environment Secret **`OTM_ALLOWED_SOURCE_CIDRS`** is the sole release input for
 both app ingress and recovery-console configuration. The network renderer reuses the existing
 strict parser, then rejects IPv6 because the first network topology has no IPv6 support. It rejects
 the entire candidate rather than dropping unsupported entries. Multiple ranges and individual

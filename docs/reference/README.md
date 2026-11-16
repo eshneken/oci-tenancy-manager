@@ -106,4 +106,7 @@ Operations now supports [type/state/search filtering](operations.md#operation-ty
 
 - [Caddy image-risk acceptance](caddy-security-exceptions.md) — two exact owner-approved DoS exceptions, retained findings and daily/weekly update checks; policy validation/hosted activation status kept separate.
 
-- [Immutable ARM64 release candidates](artifact-releases.md) — 16 model fields, exact-run download, read-only verification workflow, nine report fields, genuine signed evidence and remaining acceptance/custody limits.
+- [Immutable ARM64 release candidates](artifact-releases.md) — 16 model fields, exact-run download, qualified read-only hosted verification, nine report fields, genuine signed evidence, wrong-Checkpoint rejection and remaining acceptance/custody limits.
+
+- [Private infrastructure plans](infrastructure-plans.md) — fixed roots, protected inputs,
+  common provider/backend federation, private binary-plan custody and plan-only public receipts.

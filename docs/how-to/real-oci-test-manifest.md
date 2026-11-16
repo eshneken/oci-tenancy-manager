@@ -607,6 +607,10 @@ Status: **Partially qualified — OCI and remaining cases Pending**.
 passed protected Checkpoint, native ARM build/scan/publication and all five attestation steps.
 The laptop consumer verified all six genuine signed subjects with ephemeral authenticated registry
 access; real tampered-descriptor signature rejection and non-publishing-run rejection also passed.
+Hosted manual verification also passed, including job-token registry access and cleanup; the
+intentional wrong-Checkpoint case failed as expected. The [post-update native publisher](https://github.com/eshneken/oci-tenancy-manager/actions/runs/43928708074)
+and [matching hosted verifier](https://github.com/eshneken/oci-tenancy-manager/actions/runs/43929086428) passed for protected source
+`d0aa007fddd23d39338491053a6d0bc69c66a2d0`; the report remains integrity-only.
 No OCI deployment or staging acceptance is implied. [Reference](../reference/artifact-releases.md) ·
 [Procedure](application-releases.md). The checklist below retains its original scope. Only the cases explicitly recorded above have
 passed; unexercised variants and the remaining hosted/OCI boundaries are Pending:
@@ -632,7 +636,24 @@ passed; unexercised variants and the remaining hosted/OCI boundaries are Pending
   without rebuild and rejects fingerprint/source/platform/artifact substitution. These deployment and
   authenticated acceptance workflows are not implemented by the current content-matching helper.
 
-- **Pending:** exercise master-only Verify application release manual dispatch after its source
-  merges; verify job-token package/attestation access, successful integrity-only output, rejected
-  invalid build IDs and no publication/OCI/environment grant. Laptop success does not qualify this
-  hosted credential path. Preserve all remaining failure, custody and OCI acceptance cases above.
+- **Passed for recorded cases:** master-only hosted verification succeeded after merge in the
+  [first hosted check](https://github.com/eshneken/oci-tenancy-manager/actions/runs/43922343367) and the post-update check linked above. The
+  [intentional wrong-Checkpoint check](https://github.com/eshneken/oci-tenancy-manager/actions/runs/43922642231) failed as expected, with registry
+  cleanup succeeding. Successful output has nine integrity-only fields; no publication/OCI/environment
+  authority or staging acceptance is granted. Other invalid-input/failure variants, remaining
+  access/custody and OCI acceptance cases above remain Pending.
+
+## Plan-only infrastructure delivery qualification
+
+Status: **Pending**. The [implemented plan-only source](../reference/infrastructure-plans.md)
+is tested with synthetic credentials/responses and disposable files. No environment is enabled,
+no OCI resources were created and no controlled apply consumer exists in this checkpoint.
+
+| Case | Required hosted/OCI qualification | Status |
+| --- | --- | --- |
+| Environment protection and fixed source | Configure separate staging/production approvals and protected master restrictions. Reject non-master/manual spoof/fork contexts; confirm disabled/missing enablement makes no token request or cloud call. Verify exact checkout and no unintended privilege grant from an auto-created empty Environment. | Pending |
+| GitHub-to-OCI trust | With separate restricted confidential clients, qualify the actual issuer/JWKS/audience and five exact repository/owner/environment/ref/workflow claims. Reject each mismatch, wrong OAuth client and wrong environment. Qualify trust-issuer uniqueness before adding later delivery workflows; do not weaken claims or invent domains/policies. | Pending |
+| Common backend/provider signer | Verify RPST `res_tenant`, matching ephemeral key, file-backed ResourcePrincipal v2.2 and explicit region for both provider and native backend. Deny API-key/default-profile/node fallback. Rehearse representative planning within the 30-minute job and 60-minute issued session; expiry/errors fail closed. | Pending |
+| State and private plan custody | Verify native state locking/conflicting plan rejection, separate fixed state keys and expected namespace. Inspect the private versioned bucket, environment compartment and effective IAM. Confirm two-file conditional plan upload, wrong-bucket/public/unversioned denial and no overwrite; inspect uncertain upload before any retry. | Pending |
+| Least privilege and disclosure | Deny cross-environment state/plans, unrelated application secrets, trust administration and resource changes. Confirm no token, PEM, cloud-init, raw plan/resource attributes or provider errors in public logs/artifacts. Check actual runner cancellation/loss cleanup separately from normal Python cleanup. | Pending |
+| Review without apply | Privately retrieve the exact run/attempt bundle, check archive members/digest and inspect with the pinned source/toolchain. Public counts alone do not authorize apply. Verify future apply is still unavailable; no staging plan is accepted as a production plan and no accepted-source/approval claim is inferred from this planner. | Pending |

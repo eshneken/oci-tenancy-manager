@@ -1,7 +1,7 @@
 # Terraform infrastructure
 
 The implementation supplies the **state-bucket bootstrap, network, Enhanced OKE, managed PostgreSQL and Vault custody source**. Staging
-and production use separate roots and separate tenancies. Optional [held Caddy/NLB source](../docs/how-to/caddy-ingress.md) and scoped workload Vault-read IAM are implemented. Federation, deployment/promotion workflows, activation and live qualification follow separately. A live platform apply now creates managed ARM nodes; their launch metadata explicitly disables IMDSv1. No cloud resources were created during development.
+and production use separate roots and separate tenancies. Optional [held Caddy/NLB source](../docs/how-to/caddy-ingress.md) and scoped workload Vault-read IAM are implemented. Held [plan-only workflow/federation source](../docs/how-to/infrastructure-plans.md) is implemented; apply/deployment/promotion workflows, activation and live qualification follow separately. A live platform apply now creates managed ARM nodes; their launch metadata explicitly disables IMDSv1. No cloud resources were created during development.
 
 | Directory | Responsibility |
 | --- | --- |
@@ -148,3 +148,18 @@ Application workload source is separate from Terraform ownership: see the [disab
 ## V1 NSG-only network boundary
 
 The owner approved [NSGs only](../docs/how-to/nsg-only-networking.md), without Calico or Kubernetes NetworkPolicy objects. Optional platform `smtp_egress={cidrs=[...],port=587}` adds bounded relay-specific pod-NSG rules; null adds none. Existing CNI/Oracle service allowances remain additive. Live network unions, metadata/IAM and ingress/SMTP qualification remain pending.
+
+## Held environment plan workflows
+
+`infra-staging.yml` and `infra-production.yml` are manual master-only entry points for their fixed
+`security` or `platform` root. Both remain held unless deliberately enabled after live qualification.
+They use separate protected-environment OAuth client secrets to exchange a GitHub JWT for an
+ephemeral signing session. Provider and backend explicitly use file-backed `ResourcePrincipal`;
+operator defaults remain unchanged. The jobs cannot apply or destroy resources.
+
+Secret-bearing plans are stored only under `infrastructure-plans/` in that environment's existing
+private versioned state bucket; no public GitHub plan artifact or raw plan output is produced.
+See the [reference](../docs/reference/infrastructure-plans.md) and
+[operator procedure](../docs/how-to/infrastructure-plans.md). Backend locking, actual trust/IAM,
+private storage and job cleanup remain live qualification; the reviewed-plan apply consumer is
+the following slice, not an implemented gate here.

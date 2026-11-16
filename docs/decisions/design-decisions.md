@@ -1152,3 +1152,23 @@ approved staging email override. Promotion must verify this parity, not certify 
 installation. Owner selected exact OKE v1.37.0 after confirming1.37.1 was unavailable; Oracle's
 published table identifies1.37.0 as preview. Regional availability, ARM image/add-on/sensor behavior
 and deployment approval remain required; no live deployment or implicit patch upgrade is authorized.
+
+## 16 November 2026 — Infrastructure federation and private CI input custody
+
+The owner selected GitHub-hosted infrastructure runners with restricted per-environment OAuth
+client secrets. Generate a fresh signing pair and short-lived OCI RPST per approved job; no persistent
+OCI user signing key or implicit instance/profile fallback. Provider and backend use the common
+file-backed ResourcePrincipal boundary because provider-only federation support is insufficient
+for the pinned native Terraform backend. The first held workflows generate private plans only;
+controlled apply, effective trust/IAM and live state/storage qualification remain separate work.
+
+Independent review caught GitHub's public step-header exposure of ordinary variables. Keep the
+same single-source configuration names, but store private CIDRs, hosting compartment, domain URL
+and client ID in protected Environment Secrets. These references/settings are not necessarily
+authentication credentials; this custody prevents disclosure before application code can mask it.
+This transport classification supersedes earlier entries that called CIDR/compartment inputs
+ordinary GitHub variables. Enablement and version pins remain variables. No actual GitHub
+settings, live values, OCI resources, application tables or saved local data changed.
+
+[Implemented contract](../reference/infrastructure-plans.md) ·
+[Operator runbook](../how-to/infrastructure-plans.md).

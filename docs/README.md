@@ -237,4 +237,9 @@ The [recovery-network repair source subset](reference/recovery-network-repair.md
 
 - [Caddy image-risk acceptance](reference/caddy-security-exceptions.md) — 15-November exact official-build exceptions; retained availability risks, latest-release checks and continuous update requirements.
 
-- [Immutable ARM64 release artifacts](reference/artifact-releases.md) and [operator review](how-to/application-releases.md) — candidate/publisher plus read-only authenticated integrity verifier, exact public files and signed source/run/image/SBOM identity; genuine ARM publication/six signed-subject checks passed; master-only repeatable verification workflow added; hosted dispatch, staging acceptance and OCI deployment remain separate qualification.
+- [Immutable ARM64 release artifacts](reference/artifact-releases.md) and [operator review](how-to/application-releases.md) — candidate/publisher plus read-only authenticated integrity verifier, exact public files and signed source/run/image/SBOM identity; genuine ARM publication/six signed-subject checks and hosted verification passed, including intentional wrong-Checkpoint rejection and registry cleanup; remaining custody, staging acceptance and OCI deployment stay Pending.
+
+- [Private infrastructure plan contract](reference/infrastructure-plans.md) and
+  [operator procedure](how-to/infrastructure-plans.md) — held, fixed-environment staging/production
+  plan workflows, short-lived federation and private state-bucket plan custody. No apply consumer;
+  live trust/IAM/state/storage qualification remains Pending.

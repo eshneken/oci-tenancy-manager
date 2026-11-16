@@ -1,0 +1,70 @@
+name: Plan production infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      component:
+        description: Existing production Terraform root to plan; this workflow never applies a plan.
+        required: true
+        type: choice
+        options: [security, platform]
+
+permissions:
+  contents: read
+
+# Share this exact environment group with future apply/app/settings workflows; no active cancellation.
+concurrency:
+  group: otm-environment-production
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    if: github.ref == 'refs/heads/master'
+    environment: production
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.13.5'
+          enable-cache: false
+      - run: uv sync --project backend --locked
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4
+        with:
+          terraform_version: '1.15.5'
+          terraform_wrapper: false
+      - name: Generate and privately retain a production plan
+        env:
+          # Enable only after production-specific protection, trust and IAM are qualified.
+          OTM_INFRASTRUCTURE_ENABLED: ${{ vars.OTM_INFRASTRUCTURE_ENABLED || 'false' }}
+          # Fixed-root choice, never interpolated into executable shell code or file paths.
+          OTM_COMPONENT: ${{ inputs.component }}
+          # Production's own private inputs/state; never copy staging settings or plan bytes.
+          OTM_INFRASTRUCTURE_INPUTS_JSON: ${{ inputs.component == 'security' && secrets.OTM_SECURITY_INPUTS_JSON || secrets.OTM_PLATFORM_INPUTS_JSON }}
+          # Restricted production OAuth client; no identity-domain administrator role at runtime.
+          OTM_INFRA_IDENTITY_DOMAIN_URL: ${{ secrets.OTM_INFRA_IDENTITY_DOMAIN_URL }}
+          # Production exchange client ID: 1-8192 characters without CR/LF, not a bootstrap client.
+          OTM_INFRA_CLIENT_ID: ${{ secrets.OTM_INFRA_CLIENT_ID }}
+          # Production's matching OAuth credential: 1-8192 characters without CR/LF; never logged.
+          OTM_INFRA_CLIENT_SECRET: ${{ secrets.OTM_INFRA_CLIENT_SECRET }}
+          # Existing production hosting compartment; this workflow never creates child compartments.
+          OTM_HOSTING_COMPARTMENT_OCID: ${{ secrets.OTM_HOSTING_COMPARTMENT_OCID }}
+          # Same protected allowlist input feeds application and recovery restrictions.
+          OTM_ALLOWED_SOURCE_CIDRS: ${{ secrets.OTM_ALLOWED_SOURCE_CIDRS }}
+          # Production uses the reviewed versions and explicit staging-qualified ARM image record.
+          OTM_OKE_KUBERNETES_VERSION: ${{ vars.OTM_OKE_KUBERNETES_VERSION }}
+          # Same staged/reviewed two-digit PostgreSQL major; platform only, no floating version.
+          OTM_POSTGRESQL_VERSION: ${{ vars.OTM_POSTGRESQL_VERSION }}
+          # Per-environment private node bootstrap script; never published in logs/artifacts.
+          OTM_WORKER_CLOUD_INIT: ${{ secrets.OTM_WORKER_CLOUD_INIT }}
+        run: uv run --project backend python -m otm.infrastructure_plan --environment production --component "$OTM_COMPONENT"

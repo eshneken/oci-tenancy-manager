@@ -100,7 +100,7 @@ attempt and current Checkpoint checks still apply.
 
 ## Run the read-only GitHub Actions workflow
 
-After this source is merged, open **Actions → Verify application release → Run workflow**, select
+Open **Actions → Verify application release → Run workflow**, select
 `master`, and enter the successful **build run ID**, not the Checkpoint run ID. Alternatively:
 
 ```sh
@@ -113,7 +113,7 @@ are limited to reading contents, Actions, packages and attestations. Its ephemer
 uses the job's read-only GitHub token and logs out during cleanup; no long-lived registry secret is
 introduced. It has no publishing, OIDC, OCI, Kubernetes or deployment authority and uploads no files.
 A successful log contains the same integrity-only JSON report. Do not treat its green check as a
-staging acceptance or production approval. Hosted dispatch itself remains to be exercised after merge.
+staging acceptance or production approval. Hosted success and one intentional rejection are recorded below.
 
 ## Genuine hosted qualification — 16 November 2026
 
@@ -127,8 +127,19 @@ that GitHub API authentication alone was insufficient for that registry client.
 
 A modified descriptor was rejected by a real signature verification call. A Checkpoint run supplied
 where a publishing run was expected was also rejected. These read-only checks changed no OCI resource,
-application data or saved Atlas instance. They qualify that build and the laptop consumer path, not
-the new hosted dispatch, all failure permutations, long-term artifact custody or OCI deployment.
+application data or saved Atlas instance. They qualify that build and the laptop consumer path;
+subsequent hosted evidence is recorded separately below.
+
+After the verifier merged in PR #11 at `a3883ed`, the [first hosted verification](https://github.com/eshneken/oci-tenancy-manager/actions/runs/43922343367)
+succeeded. The [intentional wrong-Checkpoint rejection](https://github.com/eshneken/oci-tenancy-manager/actions/runs/43922642231) failed as expected;
+registry logout succeeded on that rejection path. After the dependency updates, protected source
+`d0aa007fddd23d39338491053a6d0bc69c66a2d0` passed [all five Checkpoint jobs](https://github.com/eshneken/oci-tenancy-manager/actions/runs/43927027728).
+Its [native ARM publisher](https://github.com/eshneken/oci-tenancy-manager/actions/runs/43928708074) completed every step, including the upgraded
+artifact upload action and all five attestation steps. The [matching hosted verification](https://github.com/eshneken/oci-tenancy-manager/actions/runs/43929086428)
+then succeeded with the nine-field integrity-only report, bound to that exact source and build run;
+registry logout succeeded. The report retains `staging_acceptance: not_evaluated` and
+`deployment: not_performed`. These checks do not qualify every negative path, durable custody,
+OCI pulls/deployment or authenticated staging acceptance; those remain Pending.
 
 ## Before staging or production
 

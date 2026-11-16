@@ -4,6 +4,7 @@ import copy
 import importlib.util
 import io
 import json
+import urllib.error
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -79,21 +80,88 @@ def test_incomplete_scan_and_new_version_fail(monkeypatch):
 # Verify upstream TLS with bounded time; newer, draft and prerelease tags cannot count as current.
 @pytest.mark.parametrize("fault", [None, "newer", "draft", "prerelease"])
 def test_latest_official_release(monkeypatch, fault):
+    monkeypatch.delenv("GH_TOKEN", raising=False)
     release = {"tag_name": "v" + MODULE.caddy_version(), "draft": False, "prerelease": False}
     if fault == "newer":
         release["tag_name"] = "v99.0.0"
     elif fault:
         release[fault] = True
-    opener = Mock(return_value=io.BytesIO(json.dumps(release).encode()))
-    monkeypatch.setattr(MODULE.urllib.request, "urlopen", opener)
+    opener = Mock()
+    opener.open.return_value = io.BytesIO(json.dumps(release).encode())
+    builder = Mock(return_value=opener)
+    monkeypatch.setattr(MODULE.urllib.request, "build_opener", builder)
     if fault:
         with pytest.raises(ValueError, match="CADDY_LATEST_STABLE_REQUIRED"):
             MODULE.check_latest()
     else:
         assert MODULE.check_latest() == release["tag_name"]
-    kwargs = opener.call_args.kwargs
+    kwargs = opener.open.call_args.kwargs
     assert kwargs["timeout"] == 25
-    assert kwargs["context"].check_hostname is True
+    assert builder.call_args.args[0]._context.check_hostname is True
+    assert opener.open.call_args.args[0].get_header("Authorization") is None
+
+
+# Hosted lookup uses the read-only job token only for the fixed API and keeps TLS verification.
+def test_authenticated_release_lookup(monkeypatch):
+    token = "synthetic" + "-job-token"
+    monkeypatch.setenv("GH_TOKEN", token)
+    release = {"tag_name": "v" + MODULE.caddy_version(), "draft": False, "prerelease": False}
+    opener = Mock()
+    opener.open.return_value = io.BytesIO(json.dumps(release).encode())
+    builder = Mock(return_value=opener)
+    monkeypatch.setattr(MODULE.urllib.request, "build_opener", builder)
+    anonymous = Mock(side_effect=AssertionError("anonymous fallback forbidden"))
+    monkeypatch.setattr(MODULE.urllib.request, "urlopen", anonymous)
+    assert MODULE.check_latest() == release["tag_name"]
+    request = opener.open.call_args.args[0]
+    assert request.full_url == MODULE.LATEST
+    assert request.get_header("Authorization") == "Bearer " + token
+    assert opener.open.call_args.kwargs == {"timeout": 25}
+    https, redirect = builder.call_args.args
+    assert https._context.check_hostname is True
+    assert https._context.verify_mode == MODULE.ssl.CERT_REQUIRED
+    assert isinstance(redirect, MODULE.NoCredentialRedirect)
+    assert (
+        redirect.redirect_request(request, None, 302, "redirect", {}, "https://example.test")
+        is None
+    )
+    anonymous.assert_not_called()
+
+
+# Authentication or rate-limit failures stay visible; no unauthenticated retry can hide a failure.
+@pytest.mark.parametrize("status", [401, 403, 429, 503])
+def test_authenticated_lookup_fails_closed(monkeypatch, status):
+    monkeypatch.setenv("GH_TOKEN", "synthetic" + "-job-token")
+    opener = Mock()
+    opener.open.side_effect = urllib.error.HTTPError(MODULE.LATEST, status, "rejected", {}, None)
+    monkeypatch.setattr(MODULE.urllib.request, "build_opener", Mock(return_value=opener))
+    anonymous = Mock(side_effect=AssertionError("anonymous fallback forbidden"))
+    monkeypatch.setattr(MODULE.urllib.request, "urlopen", anonymous)
+    with pytest.raises(urllib.error.HTTPError) as error:
+        MODULE.check_latest()
+    assert error.value.code == status
+    assert opener.open.call_count == 1
+    anonymous.assert_not_called()
+
+
+# Every CI caller supplies an ephemeral token only to its official-release checking commands.
+def test_hosted_lookup_has_step_scoped_token():
+    for name, job in (
+        ("checkpoint.yml", "documentation"),
+        ("caddy-security.yml", "caddy-security"),
+    ):
+        workflow = yaml.safe_load((ROOT / ".github/workflows" / name).read_text())
+        assert workflow["permissions"] == {"contents": "read"}
+        checks = [
+            step
+            for step in workflow["jobs"][job]["steps"]
+            if any(
+                command in step.get("run", "")
+                for command in ("caddy_image_policy.py", "check_caddy_ingress.py")
+            )
+        ]
+        assert len(checks) == 2
+        assert all(step["env"] == {"GH_TOKEN": "${{ github.token }}"} for step in checks)
 
 
 # Daily detection never deploys; reviewed Dependabot proposals and checkpoint scans remain active.

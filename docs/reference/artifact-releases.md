@@ -8,7 +8,7 @@ A candidate binds one protected source commit, successful Checkpoint run, publis
 two immutable image references, their SBOMs, public deployment source and installed schema contract.
 It is **not staging acceptance**. The pure models/helper add no HTTP endpoint, database table,
 application workflow or deployment authority. Native publication and genuine laptop signature checks
-are qualified below; hosted dispatch, remaining custody cases and OCI qualification stay pending.
+and hosted verification dispatch are qualified below; remaining custody cases and OCI qualification stay pending.
 
 ## Contract and field dictionary
 
@@ -265,5 +265,16 @@ consumer verified all six genuine provenance/SBOM subjects with exact source/run
 An authenticated temporary registry configuration fixed the expected failure of unauthenticated
 image reads; credentials were removed afterward. Genuine cryptographic rejection of a modified
 descriptor and metadata rejection of a Checkpoint run also passed. This does not qualify every
-negative path, retention/restore, hosted manual dispatch, OCI pulls/deployment or staging acceptance.
+negative path, retention/restore, OCI pulls/deployment or staging acceptance.
 Earlier source-only checkpoint statements above are historical and do not supersede this evidence.
+
+After the verifier merged in PR #11 at `a3883ed`, the [first hosted verification](https://github.com/eshneken/oci-tenancy-manager/actions/runs/43922343367)
+succeeded. The [intentional wrong-Checkpoint rejection](https://github.com/eshneken/oci-tenancy-manager/actions/runs/43922642231) failed as expected;
+registry logout succeeded on that rejection path. After the dependency updates, protected source
+`d0aa007fddd23d39338491053a6d0bc69c66a2d0` passed [all five Checkpoint jobs](https://github.com/eshneken/oci-tenancy-manager/actions/runs/43927027728).
+Its [native ARM publisher](https://github.com/eshneken/oci-tenancy-manager/actions/runs/43928708074) completed every step, including the upgraded
+artifact upload action and all five attestation steps. The [matching hosted verification](https://github.com/eshneken/oci-tenancy-manager/actions/runs/43929086428)
+then succeeded with the nine-field integrity-only report, bound to that exact source and build run;
+registry logout succeeded. The report retains `staging_acceptance: not_evaluated` and
+`deployment: not_performed`. These checks do not qualify every negative path, durable custody,
+OCI pulls/deployment or authenticated staging acceptance; those remain Pending.
