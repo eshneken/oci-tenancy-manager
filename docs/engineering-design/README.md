@@ -90,4 +90,4 @@ Hosting region: `us-ashburn-1`; no second-region DR site in V1. [Backup policy a
 
 - [25: external DNS, Caddy HTTP-01 ingress and automatic certificates](25-https-ingress-and-certificates.md) — implemented held source; two exact image-risk exceptions approved with continuous updates; targeted policy/native validation passes; live issuance remains pending.
 
-- [Immutable ARM64 build source](24-environments-and-promotion.md#immutable-arm64-build-source--16-november-2026) — [candidate field contract](../reference/artifact-releases.md), passing targeted source checks and installed-image probe; hosted publication, authenticated staging acceptance and deployment remain pending.
+- [Repeatable release verification](24-environments-and-promotion.md#repeatable-release-verification--16-november-2026) — [candidate and workflow contract](../reference/artifact-releases.md); genuine native ARM publication and six signed subjects verified, with hosted manual dispatch, custody and OCI acceptance/deployment still separately qualified.

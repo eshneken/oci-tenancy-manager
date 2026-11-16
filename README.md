@@ -212,6 +212,7 @@ separate CSS component framework. HTML/CSS are web standards rather than additio
 | [Gitleaks](https://github.com/gitleaks/gitleaks) | Scans the publication candidate for exposed credentials. |
 | [Bandit](https://bandit.readthedocs.io/) | Static security analysis of Python application source. |
 | [pip-audit](https://pypi.org/project/pip-audit/) / [npm audit](https://docs.npmjs.com/cli/commands/npm-audit/) | Check locked Python/JavaScript dependency sets for known advisories. |
+| [GitHub CLI](https://cli.github.com/) | Operator/CI tooling for read-only release provenance and SBOM verification against exact GitHub source/run identities; not installed in the app image. |
 | [Git](https://git-scm.com/) | Source history, feature branches and reviewable checkpoints. |
 | [Dependabot](https://github.com/dependabot/dependabot-core) | Proposes grouped image/scanner and CI-action update PRs; updates require tests and human review. |
 | [gstack](https://github.com/garrytan/gstack) | Development/review/QA/documentation/shipping workflow used by the coding agent; not shipped in the application image. |
