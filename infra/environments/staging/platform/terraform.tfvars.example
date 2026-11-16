@@ -1,0 +1,68 @@
+# Synthetic shape only; actual inputs belong in a private ignored operator file.
+target = {
+  # Fixed staging label; this is not an IAM authorization check.
+  environment = "staging"
+  # Intended tenancy OCID; syntax checks do not replace verifying the live principal's scope.
+  tenancy_ocid = "ocid1.tenancy.oc1..syntheticstaging"
+  # Exact expected namespace, compared with the selected tenancy's namespace read.
+  object_storage_namespace = "syntheticstaging"
+  # Explicit deployment region; the initial approved regional target is Ashburn.
+  region = "us-ashburn-1"
+}
+# SecurityToken, ResourcePrincipal or InstancePrincipal only; no API-key fallback.
+oci_auth = "SecurityToken"
+# Private authenticated profile name, nonempty and <=128 characters; SecurityToken only.
+# Authenticate it separately; never paste key/token material into variables.
+oci_profile = "DEFAULT"
+
+# Synthetic private VCN only; verify actual target routes before deployment.
+vcn_cidr = "10.80.0.0/16"
+# The shared protected variable supplies the required allowlist through private JSON.
+# No allowlist default: supply the separately rendered private network.tfvars.json.
+
+# Qualification-only examples: replace AD names after live regional discovery and GA review.
+oke = {
+  # Explicit OS major prevents a silent family change during version/architecture image resolution.
+  node_os_major = "8"
+  # Synthetic tenancy-specific names; use all approved ADs and validate capacity/distribution.
+  availability_domains = ["synthetic:US-ASHBURN-AD-1", "synthetic:US-ASHBURN-AD-2", "synthetic:US-ASHBURN-AD-3"]
+}
+
+# Required worker_cloud_init comes from the environment secret via private worker.tfvars.json.
+# Never put the actual script, pre-authenticated URLs or credentials in this file.
+
+# OKE/PostgreSQL versions come from protected Actions variables via private versions.tfvars.json.
+# Production also requires the whole trusted staging image record in private qualification.tfvars.json.
+
+# Synthetic references only: provision the real strong secret separately in this environment's Vault.
+database_administrator = {
+  # Initial provisioning administrator; never use this account as the pod runtime login.
+  username = "otm_provisioner"
+  # Existing environment-owned Vault secret reference, not a password value.
+  secret_ocid = "ocid1.vaultsecret.oc1.iad.synthetic"
+  # Explicit positive integer version pins the reviewed provisioning secret.
+  secret_version = "1"
+}
+# Explicit UTC maintenance windows; defaults are2 nodes,1OCPU/16GB each. No plaintext password.
+database = {
+  # Required daily UTC HH:MM; module converts it to the service RFC3339 time form.
+  backup_start_utc = "02:00"
+  # Required maintenance DAY HH:MM in UTC; qualify the chosen window in staging.
+  maintenance_start_utc = "SUN 04:00"
+  # Keep false outside explicitly reviewed, backed-up and staging-qualified major maintenance.
+  allow_major_version_upgrade = false
+}
+
+# Required hosting_compartment_ocid comes from OTM_HOSTING_COMPARTMENT_OCID via private hosting.tfvars.json.
+# Use the same existing compartment for bootstrap, security and platform; no child compartments.
+
+# Exact application-secrets Vault from this environment's security-root custody output.
+# Never select the database-provisioning or another environment's Vault.
+application_vault_ocid = "ocid1.vault.oc1.iad.syntheticapplication"
+
+# Optional: match the actual approved relay and application SMTP port. These are documentation IPs.
+# Leave null/omitted until a real service destination is approved; never use an Internet-wide CIDR.
+# smtp_egress = { cidrs = ["192.0.2.80/32"], port = 587 }
+
+# Reviewed ingress enablement creates a retained reserved IPv4 and exact NSG rules, never DNS.
+caddy_ingress_enabled = false

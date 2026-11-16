@@ -324,3 +324,23 @@ original deadlines; sign out and back in after a local settings update to receiv
 Existing private local profiles require an explicit backed-up settings update and restart; changing
 the tracked sample alone does not rewrite them. The main laptop preview receives this update with
 the qualified UI checkpoint; the separately preserved parallel preview is unchanged.
+
+
+## Hosted startup settings
+
+The optional `[hosted]` section is required by hosted startup. See the [complete field and dependency contract](../how-to/hosted-startup.md#explicit-settings-and-dependencies) for origin, proxy CIDRs, database pool and shutdown bounds. Local profiles do not use this section.
+
+
+## Platform provider and authentication selection
+
+`provider_mode` is `simulated` (default) or `oci`. Optional `[oci]` fields are documented in the [development authentication contract](../how-to/laptop-oci-development.md#explicit-application-settings); OCI requires these settings, simulated mode forbids them. `auth_method` selects `api_key_profile` only for local execution or `oke_workload_identity` only for staging/production. `region` is a full 3–63 character SDK region, `tenancy_ocid` the expected platform credential tenancy, `config_file` an absolute/~/ private file path of at most4096 characters and `profile` an explicit non-DEFAULT 1–64 character name. Hosted auth forbids the two local-file fields. Local OCI requires a testing email override. Parsing configuration performs no SDK calls. No secrets belong in TOML.
+
+## Optional Caddy ingress settings — source checkpoint
+
+`hosted.ingress` is optional and absent by default. Its sole `acme_email` field is a validated operator
+mailbox of 1–254 characters, rejects Caddy placeholder characters `{`, `}` and `$`, and is omitted from
+model representations. Actual contact data still appears in the private generated Caddyfile; keep
+it private. Ingress also validates the existing public origin as a DNS-only HTTPS hostname without
+port/wildcard/IP. The [complete source contract](../how-to/caddy-ingress.md#settings-and-private-network-handoff)
+documents the separate six-field Terraform handoff, CLI inputs and approved exact image-risk policy. Changing this
+section requires a new reviewed bundle; parsing settings performs no DNS, ACME, cloud or app activation.

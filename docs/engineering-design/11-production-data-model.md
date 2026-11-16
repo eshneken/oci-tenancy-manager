@@ -2296,3 +2296,13 @@ Candidate migration 0028 adds one `otm_signing_credential` (17 columns), reusing
 ## Bootstrap material and password candidate generation — 12 November 2026
 
 No new SQL table, column or ER relationship. Existing OnboardingView.public_key is a public-only nullable projection of separate local workspace/operation public JSON; private PEM remains owner-only file custody. The existing OnboardingCommand action enum admits prepare_bootstrap_key, with evidence in existing operation/audit records. [Exact fields and guards](../reference/tenancy-onboarding.md#public-bootstrap-handoff--12-november-2026). New recovery-password candidates use the [32-character generator](../reference/recovery-password-access.md#generated-password-candidates--12-november-2026); old custody versions and CURRENT/candidate bytes remain unchanged. This bundle is source implemented and targeted locally qualified; saved publication PASS, live OCI/Vault Pending.
+
+### Simple secret version retention — 13 November 2026
+
+The [keep-five policy](../reference/secret-lifecycle.md) needs no new table, migration, ER entity or
+SQL historical-proof projection. Use existing credential/operation state to skip unresolved rotations
+and preserve exact in-use versions; OCI inventory supplies version numbers/stages. Retain the newest
+five unscheduled versions plus protected exceptions. Store cleanup scheduling/failure metadata in
+existing operation/audit records when runtime integration is implemented. The experimental SQL
+protection and retirement-proof modules were removed. Local version counters never become Vault
+version IDs; historical credential/audit records and saved custody remain unchanged.

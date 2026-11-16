@@ -5,12 +5,14 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Annotated, Literal
 
-from pydantic import Field, TypeAdapter, model_validator
+from pydantic import Field, TypeAdapter, field_validator, model_validator
 
 from otm.contracts import Contract, HttpsOrigin, Text, UtcInstant
 from otm.email_policy import Environment, MailPolicy, mailbox
 from otm.financial.contracts import CostPolicy
-from otm.recovery_console import RecoveryConsoleSettings
+from otm.ingress_settings import CaddyIngressSettings, ingress_hostname
+from otm.oci_settings import OciSettings
+from otm.recovery_console import RecoveryConsoleSettings, canonical_cidrs
 
 PositiveSeconds = Annotated[int, Field(ge=1, le=2_147_483_647)]
 
@@ -71,6 +73,27 @@ class LocalServerSettings(Contract):
     public_origin: HttpsOrigin
     # False by default; laptop-only operator reset and UI instructions, never a reset API.
     organization_reset_enabled: bool = False
+
+
+# Explicit hosted serving/connection budgets; this never selects an OCI provider or creates pods.
+class HostedSettings(Contract):
+    # Exact public HTTPS origin, up to256 characters; shared with host/origin and email-link guards.
+    public_origin: HttpsOrigin
+    # Trusted proxy networks:1-64 bounded non-universal CIDRs; never implicitly trust headers.
+    trusted_proxy_cidrs: tuple[str, ...]
+    # Pool size per API/worker process:1-16, no overflow; native worker adds at most2.
+    database_pool_size: Annotated[int, Field(ge=1, le=16)] = 2
+    # Worker graceful-drain seconds:1-240, below the pod worker grace of300 seconds.
+    worker_shutdown_seconds: Annotated[int, Field(ge=1, le=240)] = 120
+
+    # Optional HTTP-01 edge; no ingress resources are emitted when absent.
+    ingress: CaddyIngressSettings | None = None
+
+    # Use the existing strict CIDR-union validator rather than permitting trust-all proxy headers.
+    @field_validator("trusted_proxy_cidrs", mode="before")
+    @classmethod
+    def explicit_proxy_boundary(cls, value):
+        return canonical_cidrs(value)
 
 
 # Public raster paths stay under a packaged same-origin directory, never remote URLs or traversal.
@@ -157,6 +180,12 @@ class ApplicationSettings(Contract):
     local_auth: LocalAuthSettings | None = None
     # Optional local HTTPS serving policy; absent does not expose a frontend or start a process.
     local_server: LocalServerSettings | None = None
+    # Explicit provider effects; default preserves existing simulator installations.
+    provider_mode: Literal["simulated", "oci"] = "simulated"
+    # Nonsecret platform identity selector; required only for OCI and never an automatic fallback.
+    oci: OciSettings | None = None
+    # Optional hosted policy; only explicit staging/production composition can consume it.
+    hosted: HostedSettings | None = None
 
     # Cross-field release validation precedes all API/worker construction, including disabled email.
     @model_validator(mode="after")
@@ -164,6 +193,28 @@ class ApplicationSettings(Contract):
         if self.environment == "production" and self.testing is not None:
             raise ValueError("PRODUCTION_TESTING_SETTINGS_FORBIDDEN")
         self.mail_policy()
+        if (self.provider_mode == "oci") != (self.oci is not None):
+            raise ValueError("OCI_CONFIGURATION_MODE_MISMATCH")
+        if self.oci is not None:
+            expected = "api_key_profile" if self.environment == "local" else "oke_workload_identity"
+            if self.oci.auth_method != expected:
+                raise ValueError("OCI_AUTHENTICATION_ENVIRONMENT_MISMATCH")
+            if self.environment == "local" and (
+                self.testing is None or self.testing.email_override is None
+            ):
+                raise ValueError("DEVELOPMENT_OCI_EMAIL_OVERRIDE_REQUIRED")
+        if self.hosted is not None and (
+            self.environment == "local"
+            or self.local_server is not None
+            or self.notifications.application_origin not in {None, self.hosted.public_origin}
+        ):
+            raise ValueError("HOSTED_SERVING_SETTINGS_MISMATCH")
+        if self.hosted is not None and self.hosted.ingress is not None:
+            ingress_hostname(self.hosted.public_origin)
+            if self.recovery_console is None or any(
+                ":" in cidr for cidr in self.recovery_console.allowed_cidrs
+            ):
+                raise ValueError("INGRESS_IPV4_ALLOWLIST_REQUIRED")
         if (
             self.notifications.enabled
             and self.local_server is None

@@ -40,6 +40,22 @@
       "title": "BrandingSettings",
       "type": "object"
     },
+    "CaddyIngressSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "acme_email": {
+          "maxLength": 254,
+          "minLength": 1,
+          "title": "Acme Email",
+          "type": "string"
+        }
+      },
+      "required": [
+        "acme_email"
+      ],
+      "title": "CaddyIngressSettings",
+      "type": "object"
+    },
     "CostPolicy": {
       "additionalProperties": false,
       "properties": {
@@ -80,6 +96,55 @@
         }
       },
       "title": "CostPolicy",
+      "type": "object"
+    },
+    "HostedSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "database_pool_size": {
+          "default": 2,
+          "maximum": 16,
+          "minimum": 1,
+          "title": "Database Pool Size",
+          "type": "integer"
+        },
+        "ingress": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CaddyIngressSettings"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "public_origin": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Public Origin",
+          "type": "string"
+        },
+        "trusted_proxy_cidrs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Trusted Proxy Cidrs",
+          "type": "array"
+        },
+        "worker_shutdown_seconds": {
+          "default": 120,
+          "maximum": 240,
+          "minimum": 1,
+          "title": "Worker Shutdown Seconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "public_origin",
+        "trusted_proxy_cidrs"
+      ],
+      "title": "HostedSettings",
       "type": "object"
     },
     "LocalAuthSettings": {
@@ -237,6 +302,63 @@
       "title": "NotificationSettings",
       "type": "object"
     },
+    "OciSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "auth_method": {
+          "enum": [
+            "api_key_profile",
+            "oke_workload_identity"
+          ],
+          "title": "Auth Method",
+          "type": "string"
+        },
+        "config_file": {
+          "anyOf": [
+            {
+              "maxLength": 4096,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Config File"
+        },
+        "profile": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Profile"
+        },
+        "region": {
+          "pattern": "^[a-z][a-z0-9-]{1,61}[0-9]$",
+          "title": "Region",
+          "type": "string"
+        },
+        "tenancy_ocid": {
+          "pattern": "^ocid1\\.tenancy\\.oc[0-9]+\\.[a-z0-9.-]{1,220}$",
+          "title": "Tenancy Ocid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "auth_method",
+        "region",
+        "tenancy_ocid"
+      ],
+      "title": "OciSettings",
+      "type": "object"
+    },
     "RecoveryConsoleSettings": {
       "additionalProperties": false,
       "properties": {
@@ -372,6 +494,17 @@
       "title": "Environment",
       "type": "string"
     },
+    "hosted": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/HostedSettings"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
     "local_auth": {
       "anyOf": [
         {
@@ -406,6 +539,26 @@
         "tls_mode": "local",
         "username": null
       }
+    },
+    "oci": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OciSettings"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "provider_mode": {
+      "default": "simulated",
+      "enum": [
+        "simulated",
+        "oci"
+      ],
+      "title": "Provider Mode",
+      "type": "string"
     },
     "recovery_console": {
       "anyOf": [

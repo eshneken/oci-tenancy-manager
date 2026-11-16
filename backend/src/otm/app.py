@@ -75,6 +75,7 @@ def create_app(
     configuration_checks=None,
     cost_collections=None,
     email_policy: MailPolicy | None = None,
+    readiness=None,
 ) -> FastAPI:
     if (
         configuration_rollouts is not None
@@ -114,6 +115,19 @@ def create_app(
     @app.get("/health/live", response_model=Liveness, include_in_schema=False)
     def live() -> Liveness:
         return Liveness()
+
+    # Readiness is independent of process liveness and reveals no database/credential diagnostics.
+    @app.get("/health/ready", include_in_schema=False)
+    def ready():
+        try:
+            available = readiness is not None and readiness() is True
+        except Exception:
+            available = False
+        return JSONResponse(
+            {"status": "ready" if available else "unavailable"},
+            status_code=200 if available else 503,
+            headers={"Cache-Control": "no-store"},
+        )
 
     if sessions is not None:
         # Normalize fresh command-boundary failures without exposing provider details.

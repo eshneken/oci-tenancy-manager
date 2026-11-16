@@ -38,7 +38,7 @@ no force pushes and no branch deletion. Real OCI/deployment qualification remain
 | Frontend unit coverage | Executed, unskipped unit tests; complete-source line coverage at least 95%; generated types and build |
 | PostgreSQL and Playwright | All postgres marked tests, including real HTTP/worker/browser flows and locally captured email; disposable Docker PostgreSQL, no saved app database |
 | Security and publication | Full candidate privacy/asset guard, pinned Gitleaks, Bandit and locked Python/JavaScript dependency audits |
-| Documentation and contracts | All candidate documentation links/images, top-level section index, generated schemas and design contract checks |
+| Documentation and contracts | All candidate documentation links/images, top-level section index, generated schemas, design contract checks and native mock-only Terraform bootstrap/network tests |
 
 All lanes run for every pull request to `master`, every push to `master`, and manual workflow dispatch.
 There are no path-based skips. No private logs, test databases, screenshots or credential files are

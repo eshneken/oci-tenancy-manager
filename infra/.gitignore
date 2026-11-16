@@ -1,0 +1,15 @@
+# Provider binaries and local backend metadata can contain private deployment coordinates.
+**/.terraform/
+# Keep the dependency checksum locks; actual deployment state/variables are never source.
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.plan
+*.tfvars
+*.tfvars.json
+# Per-environment backend coordinates/auth references belong in private operator custody.
+*.tfbackend
+!*.tfvars.example
+crash.log
+crash.*.log
+.terraform-test*

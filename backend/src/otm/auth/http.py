@@ -109,7 +109,7 @@ class CookieSessionBackend(AuthenticationBackend):
                 and conn.scope.get("method") in {"GET", "HEAD"}
                 and ui_path(conn.url.path)
             )
-            or conn.url.path == "/health/live"
+            or conn.url.path in {"/health/live", "/health/ready"}
             or (conn.url.path == "/api/logout" and conn.scope.get("method") == "POST")
             or (
                 self.allow_local_login
@@ -137,9 +137,9 @@ class BrowserBoundaryMiddleware:
         self.public_ui = public_ui
         self.host = urlsplit(settings.public_origin).netloc
 
-    # Keep health process-only while guarding all other HTTP paths before authentication.
+    # Permit fixed nonsecret health endpoints while guarding all other paths before authentication.
     async def __call__(self, scope, receive, send):
-        if scope["type"] != "http" or scope["path"] == "/health/live":
+        if scope["type"] != "http" or scope["path"] in {"/health/live", "/health/ready"}:
             await self.app(scope, receive, send)
             return
         headers = Headers(scope=scope)

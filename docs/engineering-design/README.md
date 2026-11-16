@@ -48,6 +48,7 @@ integration remains separately qualified.
 | [21: environment email routing and release guards](21-environment-email-policy.md) |
 | [22: recovery console CIDR boundary and 30-day API-key rotation](22-credential-security-lifecycles.md) |
 | [23: proposed managed signing-key rotation execution and accounting](23-signing-key-rotation.md) |
+| [24: isolated staging/production and build-once promotion](24-environments-and-promotion.md) |
 
 ## Authority and decisions
 
@@ -81,3 +82,12 @@ Confirmed required-user email: [current incident/routing/storage contract](../re
 Implemented source: [recovery-password custody/disclosure/rotation subset](../reference/recovery-password-access.md). Migration0027 adds three tables; the [checkpoint receipt](../history/recovery-password-checkpoint-2026-11-09.md) records qualification and saved-app status. Main8443 remains the sole local review environment.
 
 Accepted worker sizing: [one staging worker; initially two production workers after qualification](06-platform-and-delivery.md#accepted-initial-worker-sizing--10-november-2026). The local saved worker is unchanged.
+
+Hosting direction: [paid tenancy, Enhanced OKE, multiple ARM nodes and managed PostgreSQL](06-platform-and-delivery.md#paid-tenancy-platform-direction-and-candidate-sizing--13-november-2026). Numerical capacity is a proposal pending qualification, not an approved allocation.
+
+Hosting region: `us-ashburn-1`; no second-region DR site in V1. [Backup policy and capacity proposal](06-platform-and-delivery.md#ashburn-v1-backup-policy-proposal--13-november-2026) covers retained recovery points, storage accounting and restore drills.
+
+
+- [25: external DNS, Caddy HTTP-01 ingress and automatic certificates](25-https-ingress-and-certificates.md) — implemented held source; two exact image-risk exceptions approved with continuous updates; targeted policy/native validation passes; live issuance remains pending.
+
+- [Immutable ARM64 build source](24-environments-and-promotion.md#immutable-arm64-build-source--16-november-2026) — [candidate field contract](../reference/artifact-releases.md), passing targeted source checks and installed-image probe; hosted publication, authenticated staging acceptance and deployment remain pending.

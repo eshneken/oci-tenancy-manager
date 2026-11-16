@@ -64,10 +64,11 @@ def main(argv=None):
             from otm.recovery_release import render_candidate
 
             path = options.render_recovery_console_from_env
+            # One private release input also supplies the hosted app's network allowlist.
             render_candidate(
                 options.config,
                 path,
-                os.environ.get("OTM_RECOVERY_CONSOLE_ALLOWED_CIDRS"),
+                os.environ.get("OTM_ALLOWED_SOURCE_CIDRS"),
                 validate=lambda candidate: validate_release_settings(
                     candidate, options.expected_environment, options.release_kind
                 ),

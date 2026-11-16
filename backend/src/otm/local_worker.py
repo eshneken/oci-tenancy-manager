@@ -35,6 +35,8 @@ from otm.tenancies.worker import OrganizationLifecycleWorker
 # Consume the scoped native queue; once drains currently available work, not just one job.
 def run_worker(*, once=False):
     settings = load_settings(Path(os.environ["OTM_APPLICATION_CONFIG"]))
+    if settings.provider_mode != "simulated":
+        raise ValueError("LOCAL_OCI_SERVICE_COMPOSITION_PENDING")
 
     # Recheck the deployed desired revision before setup, cleanup and read publication.
     def recovery_console_policy():

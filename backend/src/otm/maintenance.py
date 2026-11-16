@@ -15,7 +15,7 @@ from otm.storage.sessions import SqlSessionRepository
 
 
 # Use explicit credentials, verified remote TLS and a loopback-only development exception.
-def maintenance_engine(database_url: str, ca_file: str | None):
+def database_connection_options(database_url: str, ca_file: str | None):
     if any(key.startswith("PG") for key in os.environ):
         raise ValueError("LIBPQ_ENVIRONMENT_NOT_ALLOWED")
     url = make_url(database_url)
@@ -42,6 +42,12 @@ def maintenance_engine(database_url: str, ca_file: str | None):
         options["hostaddr"] = "::1" if url.host == "::1" else "127.0.0.1"
     else:
         options["sslrootcert"] = ca_file
+    return url, options
+
+
+# Preserve the maintenance pool and loopback-only exception for existing explicit local commands.
+def maintenance_engine(database_url: str, ca_file: str | None):
+    url, options = database_connection_options(database_url, ca_file)
     return create_engine(
         url, connect_args=options, hide_parameters=True, pool_size=1, max_overflow=0
     )

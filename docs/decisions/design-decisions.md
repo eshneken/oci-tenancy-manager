@@ -1099,7 +1099,7 @@ allows; other users retain MFA. No new human recovery account, per-window except
 TOTP broker. D40 first-authorized-disclosure four-hour password rotation and D54 CURRENT/manual restore
 remain unchanged. This refines D39's exception scope; provider implementation/qualification is pending.
 
-Expose `OTM_RECOVERY_CONSOLE_ALLOWED_CIDRS` through protected GitHub Environment variables and map it to
+Expose `OTM_ALLOWED_SOURCE_CIDRS` through protected GitHub Environment variables and map it to
 `recovery_console.allowed_cidrs` in the strict rendered configuration. Use the existing configuration-only
 rolling release, retaining the image; no new settings UI/hot reload. Variable edits alone do not apply.
 Validate nonempty canonical lists and reject unrestricted unions. Review/confirm widening and lockout
@@ -1125,3 +1125,30 @@ identity-domain administrator-role assignments, using captured references and th
 read/evidence mechanism. Broader effective privilege proof, repair and real provider qualification
 remain distinct. Complete negative reads mean Missing or disabled; incomplete/denied/legacy reads
 mean Unable to verify. Simulation labels remain explicit.
+
+### Single hosting compartment and explicit release target — 13 November 2026
+
+The owner selected no subcompartments: use one existing hosting compartment per staging/production environment, retaining separate tenancies and state. `OTM_HOSTING_COMPARTMENT_OCID` is a required protected Actions environment variable used by all infrastructure roots. Separate Vaults/keys remain in that compartment; database-reader policies require the exact database Vault ID and do not grant unconditioned compartment-wide secret access.
+
+
+## 13 November 2026 — Simple secret version retention
+
+The owner approved replacing the historical retirement-evidence/SQL projection approach with keeping
+five newest unscheduled versions per permanent child secret. CURRENT/PREVIOUS/PENDING and explicit
+unfinished-operation pins remain protected, even above five. Skip unclear or unresolved rotations;
+reuse existing per-tenancy rotation serialization, schedule older unpinned DEPRECATED versions after
+one day plus five minutes, and retry missed cleanup in the daily worker sweep. Record outcomes in
+existing audit, with no new table, proof ledger or restore journal. See the
+[canonical policy](../reference/secret-lifecycle.md). Source-only projection experiments were removed;
+saved app data, credential custody and historical audit evidence remain unchanged.
+
+
+## 13 November 2026 — Environment parity and OKE 1.37.0 target
+
+The owner superseded reduced staging capacity: staging mirrors production topology, sizing,
+versions, pod resource budgets, provider mode and deployment/security behavior. Both target two
+API pods and two one-slot workers. Keep separate tenancies, identities/secrets/endpoints and the
+approved staging email override. Promotion must verify this parity, not certify a smaller test
+installation. Owner selected exact OKE v1.37.0 after confirming1.37.1 was unavailable; Oracle's
+published table identifies1.37.0 as preview. Regional availability, ARM image/add-on/sensor behavior
+and deployment approval remain required; no live deployment or implicit patch upgrade is authorized.

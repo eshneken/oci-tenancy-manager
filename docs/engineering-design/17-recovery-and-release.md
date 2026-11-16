@@ -57,6 +57,11 @@ verified fingerprint/version contract; this decision simplifies recovery passwor
 
 ## Manual database restore runbook
 
+The [Ashburn V1 backup policy proposal](06-platform-and-delivery.md#ashburn-v1-backup-policy-proposal--13-november-2026)
+sets the candidate backup/PITR retention, capacity worksheet, monitoring and restore-drill cadence.
+The owner selected `us-ashburn-1` and no second-region DR site in V1; those choices do not alter the
+manual fencing/reconciliation procedure or accepted in-region RPO/RTO targets below.
+
 1. **Stop and pause.** Stop the old API, workers, mail dispatcher and scheduled triggers. Confirm old
    processes cannot keep making changes. Configure the replacement deployment's maintenance/read-only
    mode **outside the restored database**, with workers/dispatchers/triggers suspended before startup.
@@ -126,3 +131,10 @@ No additional reference controller/schema/checker is maintained for the withdraw
 unit, Playwright and disposable PostgreSQL tests cover the actual implementation under D53. The
 facade/simulator must model CURRENT selection, interrupted rotation and restore-maintenance behavior;
 the design cannot stand in for provider permission or actual managed-service qualification.
+
+### Retired secret contents — 13 November 2026
+
+Follow the [version retention policy](../reference/secret-lifecycle.md): historical metadata remains,
+but secret contents follow the keep-five policy with protected current/in-progress exceptions.
+Database restore cannot revive deleted versions. Use the existing paused manual restore procedure;
+never use an old restored version reference as a fallback. No separate cleanup proof journal is required.

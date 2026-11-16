@@ -38,3 +38,14 @@ application_origin = "https://otm.example.test"
 [testing]
 # Required single destination; replace with the testing administrator's controlled mailbox.
 email_override = "testing-admin@example.test"
+
+# Hosted entry-point policy; replace example origin and proxy CIDRs before deployment.
+[hosted]
+# Trusted public HTTPS origin; must match notification application_origin when supplied.
+public_origin = "https://otm.example.test"
+# Only actual ingress proxy source networks may supply forwarded headers; no universal trust.
+trusted_proxy_cidrs = ["192.0.2.0/24"]
+# Per-process SQLAlchemy pool,1-16 connections, no overflow; native worker adds at most2.
+database_pool_size = 2
+# Worker drain1-240 seconds, below Kubernetes worker termination grace300 seconds.
+worker_shutdown_seconds = 120

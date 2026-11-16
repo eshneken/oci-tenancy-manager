@@ -32,7 +32,7 @@ def test_prototype_and_documentation_endpoints_are_not_exposed(path):
 
 
 # App construction cannot inherit mutable routes or accidentally mount prototype handlers.
-def test_only_explicit_health_route_is_mounted_and_factories_are_independent():
+def test_only_explicit_health_routes_are_mounted_and_factories_are_independent():
     first, second = create_app(), create_app()
     assert first is not second and first.router is not second.router
-    assert {route.path for route in first.routes} == {"/health/live"}
+    assert {route.path for route in first.routes} == {"/health/live", "/health/ready"}

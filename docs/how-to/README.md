@@ -6,6 +6,12 @@ isolated synthetic fixtures; private enrollment factors do not belong in reports
 - [Stakeholder demo script](stakeholder-demo.md) — natural 30-minute flow, 12-minute route, presenter cues and three synthetic CSVs; preserve saved data and rehearse installed capabilities
 
 - [Real OCI manual test manifest](real-oci-test-manifest.md) — maintain pending live-only cases for every slice
+- [Hosted administrator runbooks](hosted-administration.md) — design-stage application, infrastructure, combined/settings updates and backup/restore procedures; implementation and staging walkthrough required before live use
+- [Terraform state bootstrap](terraform-state-bootstrap.md) — implemented isolated roots, mock checks and pending live operator procedure; does not create the application platform
+- [Network foundation](network-foundation.md) — subnet/routing/NSG source, private shared-input rendering and platform initialization; OKE source attached, app LB/DB and live qualification pending
+- [Enhanced OKE and worker bootstrap](oke-foundation.md) — source-restricted public API, private ARM node/pod bindings, sensitive cloud-init input and pending Falcon ARM64 qualification
+- [OKE traffic matrix](oke-network-traffic.md) — explicit control/CNI/DNS/egress rules, remaining application LB/health wiring and pending job-specific admission
+- [Platform versions and image selection](platform-versions.md) — OKE/PostgreSQL Actions variables, automatic image resolution and executable private staging-to-production image handoff
 - [Pending credential-security qualification](real-oci-test-manifest.md#credential-security-lifecycles) — recovery-console CIDR boundary and 30-day automation-key retirement
 - [Local review: Required users and manual Check now](required-users-runbook.md) — fresh simulated create/import, result provenance and historical unqualified records; [inventory summary follow-up](required-users-runbook.md#inventory-summary-source-checkpoint) is ready in the upgraded main preview
 - [Manual check: baseline updates](baseline-update-runbook.md)
@@ -42,3 +48,28 @@ includes replacement verification, identity retention/removal and manual resourc
 - [Managed signing-key rotation local review](signing-key-rotation-runbook.md): newly onboarded simulated child, original schedule, guarded manual expedite and immutable history; use after confirmed installation.
 
 - [Container development](container-development.md) — installed image, private build-context checks and disposable image qualification
+
+- [Managed PostgreSQL foundation](managed-postgresql.md) — private two-node service, provisioning references, recovery policy and upgrade safeguards; live qualification pending
+
+- [Vault custody foundation](vault-foundation.md) — separate security roots, shared Vault/HSM keys, private ingestion handoff and database-reader IAM
+
+- [Hosting compartment input](hosting-compartment.md) — required per-environment Actions variable, private renderer and one-compartment placement across infrastructure roots
+
+- [Hosted Kubernetes workload bundle](kubernetes-workloads.md) — disabled API/worker/migration manifests, immutable settings, credential references and strict schema checks; startup mechanics implemented; hosted composition/activation pending.
+
+- [Hosted startup foundation](hosted-startup.md) — explicit TLS/roles, readiness, migration and worker composition; activation remains held.
+
+- [Schema-changing release maintenance](hosted-administration.md#schema-changing-application-release) — approved V1 drain/migrate/start/reopen procedure; unchanged-schema releases roll normally.
+
+
+- [Laptop OCI development](laptop-oci-development.md) — named API-key profiles, strict mode selection and minimal development Terraform custody.
+
+
+- [Hosted workload identity and Vault IAM](oke-workload-identity.md) — security-root Vault handoff, cluster-bound policies, projected tokens and remaining live checks.
+
+
+- [V1 NSG-only networking](nsg-only-networking.md) — network controls, relay inputs and pending live checks; pod policy engine deferred.
+
+- [Caddy HTTP-01 ingress review](caddy-ingress.md) — settings/network handoff, mixed-scope 14-object bundle and native evidence; approved narrow image-risk policy, continuous updates and pending live qualification.
+
+- [Application release review](application-releases.md) — exact Checkpoint-triggered ARM64 source flow, four artifact/provenance checks and 90-day versus long-term custody; deployment not implemented.
