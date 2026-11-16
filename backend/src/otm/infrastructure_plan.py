@@ -160,7 +160,9 @@ def signing_pair():
 
 # OCI validates the signed GitHub claims; local checks do not substitute for the configured
 # trust/IAM.
-def federate(directory, target, environment, values):
+def federate(directory, target, environment, values, *, lifetime_minutes=60):
+    if type(lifetime_minutes) is not int or lifetime_minutes not in (60, 120):
+        raise ValueError("BOUNDED_FEDERATION_LIFETIME_REQUIRED")
     domain = values.get("OTM_INFRA_IDENTITY_DOMAIN_URL", "")
     endpoint = urllib.parse.urlsplit(values.get("ACTIONS_ID_TOKEN_REQUEST_URL", ""))
     client_id, client_secret = (
@@ -207,7 +209,7 @@ def federate(directory, target, environment, values):
             "subject_token": token,
             "public_key": public.decode("ascii"),
             "res_type": "githubactions",
-            "rpst_exp": "60",
+            "rpst_exp": str(lifetime_minutes),
         }
     ).encode()
     exchanged = request_json(
@@ -230,7 +232,9 @@ def federate(directory, target, environment, values):
         not isinstance(claims, dict)
         or claims.get("res_tenant") != target["tenancy_ocid"]
         or type(claims.get("exp")) is not int
-        or not time.time() + 2100 < claims["exp"] <= time.time() + 4200
+        or not time.time() + (lifetime_minutes - 25) * 60
+        < claims["exp"]
+        <= time.time() + (lifetime_minutes + 10) * 60
     ):
         raise ValueError("OCI_SESSION_TARGET_OR_LIFETIME_REJECTED")
     private_write(directory / "private.pem", private)
@@ -304,7 +308,9 @@ def terraform(command, arguments, root, environment, directory, deadline):
         shell=False,
     )
     with (directory / "terraform.log").open("ab") as stream:
-        stream.write(result.stdout + result.stderr)
+        # Machine-readable plans/outputs can contain sensitive values and never belong in logs.
+        machine_output = len(arguments) > 1 and arguments[1] == "-json"
+        stream.write((b"" if machine_output else result.stdout) + result.stderr)
     if result.returncode:
         raise ValueError("TERRAFORM_PLAN_COMMAND_FAILED")
     return result.stdout
@@ -331,8 +337,8 @@ def change_counts(plan):
     return result
 
 
-# Store secret-bearing plans only in the environment's verified private versioned state bucket.
-def upload_plan(directory, credentials, target, environment, hosting_compartment, key):
+# The shared private bucket boundary is used for plan upload and later exact-plan consumption.
+def plan_storage(credentials, target, environment, hosting_compartment):
     signer = oci.auth.signers.EphemeralResourcePrincipalSigner(
         session_token=credentials["OCI_RESOURCE_PRINCIPAL_RPST"],
         private_key=credentials["OCI_RESOURCE_PRINCIPAL_PRIVATE_PEM"],
@@ -353,6 +359,12 @@ def upload_plan(directory, credentials, target, environment, hosting_compartment
         or metadata.versioning != "Enabled"
     ):
         raise ValueError("PRIVATE_ENVIRONMENT_PLAN_BUCKET_REQUIRED")
+    return client, namespace, bucket
+
+
+# Store secret-bearing plans only in the environment's verified private versioned state bucket.
+def upload_plan(directory, credentials, target, environment, hosting_compartment, key):
+    client, namespace, bucket = plan_storage(credentials, target, environment, hosting_compartment)
     with (directory / "plan.tar").open("rb") as stream:
         client.put_object(
             namespace,
@@ -365,17 +377,14 @@ def upload_plan(directory, credentials, target, environment, hosting_compartment
         )
 
 
-# This entry point can initialize/lock/read state and upload a plan, but contains no apply/destroy
-# path.
-def prepare_plan(environment, component, values):
-    inputs = context(environment, component, values)
+# Both plan and apply must use the exact checked-out workflow source and installed toolchain.
+def checked_source(values):
     command = shutil.which("terraform")
     if not command or not os.path.isabs(command):
         raise ValueError("TERRAFORM_REQUIRED")
     git = shutil.which("git")
     if not git or not os.path.isabs(git):
         raise ValueError("GIT_REQUIRED")
-    root = ROOT / "infra/environments" / environment / component
     if (
         subprocess.check_output(  # nosec B603
             [git, "rev-parse", "HEAD"], cwd=ROOT, text=True, timeout=10, shell=False
@@ -383,41 +392,60 @@ def prepare_plan(environment, component, values):
         != values["GITHUB_SHA"]
     ):
         raise ValueError("EXACT_WORKFLOW_SOURCE_REQUIRED")
+    return command
+
+
+# Initialize only this environment's fixed backend with the minted signer and readonly provider
+# lock.
+def initialize_terraform(
+    directory, root, command, inputs, environment, credentials, values, deadline
+):
+    child_env = terraform_environment(directory, credentials, values)
+    backend = {
+        "bucket": "otm-" + environment + "-tfstate",
+        "namespace": inputs["target"]["object_storage_namespace"],
+        "region": inputs["target"]["region"],
+        "auth": "ResourcePrincipal",
+    }
+    private_write(directory / "backend.json", canonical(backend))
+    version = decode_json(
+        terraform(command, ["version", "-json"], root, child_env, directory, deadline)
+    )
+    if version.get("terraform_version") != "1.15.5":
+        raise ValueError("EXACT_TERRAFORM_VERSION_REQUIRED")
+    terraform(
+        command,
+        [
+            "init",
+            "-input=false",
+            "-lockfile=readonly",
+            "-no-color",
+            "-backend-config=" + str(directory / "backend.json"),
+        ],
+        root,
+        child_env,
+        directory,
+        deadline,
+    )
+    terraform(command, ["validate", "-no-color"], root, child_env, directory, deadline)
+    return child_env
+
+
+# Generate a plan without applying; shared setup does not introduce a mutable command selector.
+def prepare_plan(environment, component, values):
+    inputs = context(environment, component, values)
+    command = checked_source(values)
+    root = ROOT / "infra/environments" / environment / component
     previous_umask = os.umask(0o077)
     try:
         with tempfile.TemporaryDirectory(prefix="otm-infrastructure-") as temporary:
             directory = Path(temporary)
             files, digest = render_inputs(directory, inputs, component, values)
             credentials = federate(directory, inputs["target"], environment, values)
-            child_env = terraform_environment(directory, credentials, values)
-            backend = {
-                "bucket": "otm-" + environment + "-tfstate",
-                "namespace": inputs["target"]["object_storage_namespace"],
-                "region": inputs["target"]["region"],
-                "auth": "ResourcePrincipal",
-            }
-            private_write(directory / "backend.json", canonical(backend))
             deadline = time.monotonic() + 1200
-            version = decode_json(
-                terraform(command, ["version", "-json"], root, child_env, directory, deadline)
+            child_env = initialize_terraform(
+                directory, root, command, inputs, environment, credentials, values, deadline
             )
-            if version.get("terraform_version") != "1.15.5":
-                raise ValueError("EXACT_TERRAFORM_VERSION_REQUIRED")
-            terraform(
-                command,
-                [
-                    "init",
-                    "-input=false",
-                    "-lockfile=readonly",
-                    "-no-color",
-                    "-backend-config=" + str(directory / "backend.json"),
-                ],
-                root,
-                child_env,
-                directory,
-                deadline,
-            )
-            terraform(command, ["validate", "-no-color"], root, child_env, directory, deadline)
             terraform(
                 command,
                 [

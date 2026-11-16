@@ -241,5 +241,6 @@ The [recovery-network repair source subset](reference/recovery-network-repair.md
 
 - [Private infrastructure plan contract](reference/infrastructure-plans.md) and
   [operator procedure](how-to/infrastructure-plans.md) — held, fixed-environment staging/production
-  plan workflows, short-lived federation and private state-bucket plan custody. No apply consumer;
-  live trust/IAM/state/storage qualification remains Pending.
+  plan/review/apply workflows, short-lived federation, private plan custody and permanent single-attempt
+  markers; production requires successful staging apply plus manual test confirmation. Live
+  trust/IAM/state/storage/apply qualification remains Pending.

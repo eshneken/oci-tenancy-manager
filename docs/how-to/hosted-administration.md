@@ -117,7 +117,9 @@ once their bundled schema differs; rolling back an image is safe only when its s
    target, capacity/placement and effect on the database, networking and keys. Any unexplained
    replacement/deletion is a stop. Take the approved pre-change backup for high-risk DB work and
    verify it is usable; ensure quotas/capacity allow recovery and rolling-node surge.
-3. Apply the reviewed staging plan. For OKE, validate the supported version-skew/upgrade path,
+3. Use the [reviewed-plan apply procedure](infrastructure-plans.md#apply-staging-test-explicitly-then-review-production)
+   with the staging producer run and privately reviewed binary hash. Each plan allows one attempt;
+   investigate failures and create/review a fresh plan rather than retrying it. For OKE, validate the supported version-skew/upgrade path,
    upgrade the control plane, then cycle/upgrade managed workers using the qualified approach.
    Updating a node-pool version alone is not proof all existing nodes were upgraded. Recheck all
    nodes, add-ons, workload placement and surviving capacity, with IMDSv1 still disabled.
@@ -132,7 +134,12 @@ once their bundled schema differs; rolling back an image is safe only when its s
 6. Run `infra-production.yml` in plan mode using the same tested source/provider locks but
    production's own state and approved values. Review/approve this production plan and maintenance
    impact; never apply a staging plan to production. Re-plan/re-review if its inputs/state change.
-7. Apply in the rehearsed order, confirm the installed versions and repeat safe production health,
+   The consumer requires the same-source/component successful staging apply, explicit manual test
+   confirmation, shared-field parity and qualified ARM image; no automated test proof is verified.
+7. Obtain production Environment approval and apply its exact reviewed plan once through the same
+   procedure. On uncertain failure keep the attempt marker, investigate actual effects/state and
+   repair native failed-backend recovery state only through authorized manual handling.
+   Confirm the installed versions and repeat safe production health,
    backup, deadline and capacity checks. Record completion. Do not build an application image
    merely because infrastructure changed.
 

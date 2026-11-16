@@ -450,6 +450,7 @@ def test_terraform_command_and_budget(tmp_path, monkeypatch):
     assert execute.call_args.args[0] == ["/usr/bin/terraform", "version", "-json"]
     assert execute.call_args.kwargs["shell"] is False
     assert 0 < execute.call_args.kwargs["timeout"] <= 10
+    assert (tmp_path / "terraform.log").read_bytes() == b"private-error"
     execute.return_value.returncode = 1
     with pytest.raises(ValueError, match="TERRAFORM_PLAN_COMMAND_FAILED"):
         module.terraform("/usr/bin/terraform", ["plan"], tmp_path, {}, tmp_path, deadline)
@@ -659,7 +660,7 @@ def test_cli_and_entrypoint(monkeypatch, capsys):
 
 
 # Both workflows require fixed protected environments, exact source, bounded jobs and no
-# apply/artifacts.
+# unreviewed apply/artifacts.
 @pytest.mark.parametrize("environment", ["staging", "production"])
 def test_workflow_contract(environment):
     path = module.ROOT / ".github/workflows" / f"infra-{environment}.yml"
@@ -674,11 +675,11 @@ def test_workflow_contract(environment):
         "group": "otm-environment-" + environment,
         "cancel-in-progress": False,
     }
-    job = workflow["jobs"]["plan"]
+    job = workflow["jobs"]["infrastructure"]
     assert job["environment"] == environment and job["if"] == "github.ref == 'refs/heads/master'"
     assert (
-        job["permissions"] == {"contents": "read", "id-token": "write"}
-        and job["timeout-minutes"] == 30
+        job["permissions"] == {"contents": "read", "actions": "read", "id-token": "write"}
+        and job["timeout-minutes"] == "${{ inputs.operation == 'apply' && 90 || 30 }}"
     )
     checkout = job["steps"][0]
     assert checkout["with"] == {"ref": "${{ github.sha }}", "persist-credentials": False}
@@ -686,7 +687,21 @@ def test_workflow_contract(environment):
     assert all(len(action.rsplit("@", 1)[1]) == 40 for action in actions)
     assert not any("upload-artifact" in action for action in actions)
     final = job["steps"][-1]
-    assert final["run"].endswith(f'--environment {environment} --component "$OTM_COMPONENT"')
+    assert 'case "$OTM_OPERATION" in' in final["run"]
+    assert f"otm.infrastructure_plan --environment {environment}" in final["run"]
+    assert f"otm.infrastructure_apply --environment {environment}" in final["run"]
+    inputs = workflow[True]["workflow_dispatch"]["inputs"]
+    assert inputs["operation"]["options"] == ["plan", "apply"]
+    assert inputs["operation"]["default"] == "plan"
+    assert inputs["plan_run_id"]["type"] == "string"
+    assert inputs["reviewed_plan_sha256"]["type"] == "string"
+    assert final["env"]["OTM_INFRASTRUCTURE_APPLY_ENABLED"] == (
+        "${{ vars.OTM_INFRASTRUCTURE_APPLY_ENABLED || 'false' }}"
+    )
+    if environment == "production":
+        assert inputs["staging_tests_confirmed"]["default"] is False
+        assert inputs["staging_apply_run_id"]["type"] == "string"
+        assert '--staging-tests-confirmed "$OTM_STAGING_TESTS_CONFIRMED"' in final["run"]
     assert (
         final["env"]["OTM_INFRASTRUCTURE_ENABLED"]
         == "${{ vars.OTM_INFRASTRUCTURE_ENABLED || 'false' }}"
@@ -700,3 +715,32 @@ def test_workflow_contract(environment):
     ):
         assert final["env"][field] == "${{ secrets." + field + " }}"
     assert all("${{" not in step.get("run", "") for step in job["steps"])
+
+
+# Apply sessions receive two hours; shorter plan tokens cannot be reused for a longer execution.
+@pytest.mark.parametrize(
+    "minutes,expires,accepted",
+    [
+        (120, 7200, True),
+        (120, 3600, False),
+        (60, 7200, False),
+        (True, 3600, False),
+        (180, 10800, False),
+    ],
+)
+def test_federation_bounded_apply_lifetime(tmp_path, monkeypatch, minutes, expires, accepted):
+    values = environment_values()
+    target = json.loads(values["OTM_INFRASTRUCTURE_INPUTS_JSON"])["target"]
+    request = Mock(
+        side_effect=[{"value": "synthetic-jwt"}, {"token": rpst(exp=int(time.time()) + expires)}]
+    )
+    monkeypatch.setattr(module, "request_json", request)
+    monkeypatch.setattr(module, "signing_pair", lambda: (b"synthetic-private", b"synthetic-public"))
+    if not accepted:
+        with pytest.raises(ValueError):
+            module.federate(tmp_path, target, "staging", values, lifetime_minutes=minutes)
+        assert not list(tmp_path.iterdir())
+    else:
+        module.federate(tmp_path, target, "staging", values, lifetime_minutes=minutes)
+        payload = module.urllib.parse.parse_qs(request.call_args.args[2].decode())
+        assert payload["rpst_exp"] == ["120"]

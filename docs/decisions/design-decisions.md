@@ -1172,3 +1172,23 @@ settings, live values, OCI resources, application tables or saved local data cha
 
 [Implemented contract](../reference/infrastructure-plans.md) ·
 [Operator runbook](../how-to/infrastructure-plans.md).
+
+## 16 November 2026 — Reviewed infrastructure apply and manual staging-test confirmation
+
+The owner approved a successful staging infrastructure apply plus explicit manual confirmation of
+required staging tests before production. Each environment generates/reviews its own saved plan;
+production never consumes staging's binary or state. Require identical source and component,
+shared-version/sizing parity through the explicit whitelist, the qualified ARM image record and
+protected production approval. Manual confirmation does not authenticate an automated test run.
+
+The consumer authenticates plan identity/hash through the exact successful GitHub producer
+run/attempt/job logs, not a mutable private-bucket receipt alone. Current input hash and reviewed
+binary hash must agree. Two default-false enable flags keep plan access and apply activation separate.
+A conditional bucket marker permanently consumes one apply attempt per producer plan; never clear
+it or automatically replay an uncertain/failed apply. Investigate actual effects/state, manually
+repair native failed-backend recovery state if necessary, then generate/review a fresh plan.
+Best-effort private retention of Terraform's `errored.tfstate` supplies no rollback or automatic
+state-repair authority. No live OCI, application deployment or saved Atlas change is claimed.
+
+[Exact apply/parity contract](../reference/infrastructure-plans.md#reviewed-plan-apply-contract) ·
+[Operator procedure](../how-to/infrastructure-plans.md#apply-staging-test-explicitly-then-review-production).

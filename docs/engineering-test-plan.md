@@ -1523,7 +1523,7 @@ This hosted record supersedes only the earlier pending hosted-dispatch status. E
 counts and laptop checks retain their original scope; required milestone suites and synthetic
 negative assertions remain unchanged.
 
-## Infrastructure plan-only source checkpoint — 16 November 2026
+## Historical infrastructure plan-only source checkpoint — 16 November 2026
 
 The [plan contract](reference/infrastructure-plans.md) and
 [operator procedure](how-to/infrastructure-plans.md) define the two held workflows and private
@@ -1541,6 +1541,27 @@ Tests use synthetic service responses and disposable files; local key generation
 Native provider mocks independently exercise the existing Terraform roots/replacement guards.
 No application/UI/schema change is implied, and no claim is made about live external-principal IAM,
 remote locking, private OCI object custody, hosted cancellation or apply/promotion. The
-[manual manifest](how-to/real-oci-test-manifest.md#plan-only-infrastructure-delivery-qualification)
+[manual manifest](how-to/real-oci-test-manifest.md#infrastructure-planreviewapply-qualification)
 retains those cases Pending. Complete-source unit coverage and the normal milestone CI gates
 remain required; no new coverage exclusion or path-skip rule is added.
+
+## Reviewed infrastructure apply source — 16 November 2026
+
+The [apply contract](reference/infrastructure-plans.md#reviewed-plan-apply-contract) and
+[operator procedure](how-to/infrastructure-plans.md#apply-staging-test-explicitly-then-review-production)
+add held consumers, not a live qualification result. Required regressions cover exact successful
+GitHub run/attempt/single-job log authentication and rerun races; unavailable/duplicate/malformed
+reports; wrong source/component/environment; reviewed binary/receipt/input hashes; bounded regular
+archive members; native state locking/stale plans; default-false enable flags; fixed saved-plan argv;
+production manual confirmation and exact parity whitelist; wrong qualified/applied ARM image;
+conditional marker collisions and uncertain claim; failed/interrupted apply with no replay; native
+failed-backend state retention success/failure and no automatic state push/marker removal; isolated
+GitHub/OCI credentials, longer bounded apply token/job/Terraform windows and redacted public reports.
+
+Security parity is component-only; platform parity covers only the reference's listed effective
+variables, not all environmental configuration. Tests must preserve that limit rather than claim
+full live equivalence. An accepted manual boolean is not automated staging-test evidence. Synthetic
+service/process fixtures and local Terraform mocks cannot qualify OCI conditional object writes,
+IAM, real backend persistence failures, long-running token use or staging acceptance. Keep all
+hosted/live cases Pending in the manual manifest. Earlier plan-only checkpoint results, including
+the cb0 source checkpoint's counts, remain historical; no new passing test count is claimed here.

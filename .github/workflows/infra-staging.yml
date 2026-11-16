@@ -1,10 +1,22 @@
-name: Plan staging infrastructure
+name: Staging infrastructure
 
 on:
   workflow_dispatch:
     inputs:
+      operation:
+        description: Plan first; apply consumes one separately reviewed saved plan.
+        required: true
+        type: choice
+        default: plan
+        options: [plan, apply]
+      plan_run_id:
+        description: Successful plan run ID; required only for apply.
+        type: string
+      reviewed_plan_sha256:
+        description: SHA-256 of the privately reviewed binary plan; required only for apply.
+        type: string
       component:
-        description: Existing staging Terraform root to plan; state bootstrap remains an operator task.
+        description: Existing staging Terraform root to plan/apply; state bootstrap remains an operator task.
         required: true
         type: choice
         options: [security, platform]
@@ -18,13 +30,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  plan:
+  infrastructure:
+    name: Infrastructure
     if: github.ref == 'refs/heads/master'
     environment: staging
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: ${{ inputs.operation == 'apply' && 90 || 30 }}
     permissions:
       contents: read
+      actions: read
       id-token: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -43,8 +57,17 @@ jobs:
         with:
           terraform_version: '1.15.5'
           terraform_wrapper: false
-      - name: Generate and privately retain a staging plan
+      - name: Plan or apply reviewed staging infrastructure
         env:
+          # The read-only job token verifies successful producer metadata and exact attempt logs.
+          GH_TOKEN: ${{ github.token }}
+          # Fixed operation choice; no arbitrary Terraform command reaches the shell.
+          OTM_OPERATION: ${{ inputs.operation }}
+          # Numeric producer run and exact reviewed digest are validated before OCI access.
+          OTM_PLAN_RUN_ID: ${{ inputs.plan_run_id }}
+          OTM_REVIEWED_PLAN_SHA256: ${{ inputs.reviewed_plan_sha256 }}
+          # Separate opt-in keeps apply held even when plan-only qualification is enabled.
+          OTM_INFRASTRUCTURE_APPLY_ENABLED: ${{ vars.OTM_INFRASTRUCTURE_APPLY_ENABLED || 'false' }}
           # Must be deliberately enabled after environment protection, trust and IAM qualification.
           OTM_INFRASTRUCTURE_ENABLED: ${{ vars.OTM_INFRASTRUCTURE_ENABLED || 'false' }}
           # Choice values are data; Python independently allowlists the fixed root.
@@ -65,6 +88,15 @@ jobs:
           OTM_OKE_KUBERNETES_VERSION: ${{ vars.OTM_OKE_KUBERNETES_VERSION }}
           # Reviewed two-digit managed PostgreSQL major; platform only, not an automatic upgrade.
           OTM_POSTGRESQL_VERSION: ${{ vars.OTM_POSTGRESQL_VERSION }}
-          # Private node bootstrap script, parsed but never executed by this workflow.
+          # Private node bootstrap script; never executed on the runner, supplied to nodes by apply.
           OTM_WORKER_CLOUD_INIT: ${{ secrets.OTM_WORKER_CLOUD_INIT }}
-        run: uv run --project backend python -m otm.infrastructure_plan --environment staging --component "$OTM_COMPONENT"
+        run: |
+          case "$OTM_OPERATION" in
+            plan)
+              uv run --project backend python -m otm.infrastructure_plan --environment staging --component "$OTM_COMPONENT"
+              ;;
+            apply)
+              uv run --project backend python -m otm.infrastructure_apply --environment staging --component "$OTM_COMPONENT" --plan-run-id "$OTM_PLAN_RUN_ID" --reviewed-plan-sha256 "$OTM_REVIEWED_PLAN_SHA256"
+              ;;
+            *) exit 2 ;;
+          esac

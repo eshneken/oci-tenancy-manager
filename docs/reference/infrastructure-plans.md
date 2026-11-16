@@ -1,6 +1,6 @@
 # Private infrastructure plans
 
-16 November 2026 · Source-only, plan-only checkpoint · Live OCI qualification pending
+16 November 2026 · Held plan/review/apply source · Live OCI qualification pending
 
 [Documentation home](../README.md) · [Operator procedure](../how-to/infrastructure-plans.md) ·
 [Environment design](../engineering-design/24-environments-and-promotion.md)
@@ -11,19 +11,24 @@ The manual [staging workflow](../../.github/workflows/infra-staging.yml) and
 [production workflow](../../.github/workflows/infra-production.yml) invoke
 [`otm.infrastructure_plan`](../../backend/src/otm/infrastructure_plan.py) from the exact protected
 master source. Each selects only its own `security` or `platform` root. State-bucket bootstrap
-remains a separately authorized operator procedure. There is no apply, destroy, deployment,
-production promotion or arbitrary Terraform command/ref/path input.
+remains a separately authorized operator procedure. The default operation is `plan`; `apply` invokes
+[`otm.infrastructure_apply`](../../backend/src/otm/infrastructure_apply.py) to consume a separately
+reviewed saved plan. There is no destroy operation, application deployment or arbitrary Terraform
+command/ref/path input.
 
 Workflows require deliberate `OTM_INFRASTRUCTURE_ENABLED=true`; absence means failure before
-federation. No GitHub environments, secrets, IAM trusts or OCI resources are configured by adding
+federation. Apply additionally requires `OTM_INFRASTRUCTURE_APPLY_ENABLED=true`. Both variables
+default to false in the workflows; enabling plans does not enable apply. No GitHub environments, secrets, IAM trusts or OCI resources are configured by adding
 these files. Configure and qualify environment protection before enabling either workflow.
 The fixed GitHub Environment must restrict deployment branches to master and require the selected
 human reviewer. An environment name or enable flag alone is not proof of protection or authorization.
 
-The current slice is intentionally **not** the complete plan/review/apply milestone. A future apply
-consumer must independently verify trusted successful plan-run/source identity, current private
-inputs, the reviewed plan hash, state freshness and production approval. It must apply the reviewed
-environment's exact plan, never a staging plan to production. Nothing here supplies those apply gates.
+The apply consumer authenticates the successful producer run and exact attempt/job logs, checks
+current private inputs and the reviewed binary-plan hash, then applies only that environment's saved
+plan. Production additionally requires a successful staging apply of the same source/component,
+shared-input parity and explicit manual staging-test confirmation. These are implemented guards,
+not evidence of configured production approval or an exercised OCI apply. Terraform retains native
+state locking/stale-plan checks; an obsolete plan must be regenerated and reviewed.
 
 ## Federation contract
 
@@ -41,8 +46,10 @@ never sent to GitHub or OCI. Only the public key and GitHub JWT enter the verifi
 timeout and bounded JSON responses. The response's `res_tenant` and expiry fence target/lifetime
 mistakes; parsing claims is not a substitute for OCI verifying the signed workload JWT.
 
-The exchange requests a 60-minute RPST. The returned session must have more than 35 and at most 70
-minutes remaining. Jobs have a 30-minute hard timeout; Terraform commands share a 20-minute budget.
+Planning requests a 60-minute RPST (more than 35 and at most 70 minutes remaining), with a
+30-minute job timeout and shared 20-minute Terraform budget. Apply requests a 120-minute RPST
+(more than 95 and at most 130 minutes remaining), with a 90-minute job timeout and shared
+75-minute Terraform budget, including initialization, inspection, apply and output reads.
 No human approval waits inside a live credential window. There is no refresh-token daemon or
 automatic credential fallback. A new job mints a new pair/session. Failures remain visible.
 
@@ -86,6 +93,7 @@ All settings below are documented configuration, not actual configured values.
 | Input | Kind and effect |
 | --- | --- |
 | `OTM_INFRASTRUCTURE_ENABLED` | Variable; exactly `true` only after live setup/qualification; otherwise held |
+| `OTM_INFRASTRUCTURE_APPLY_ENABLED` | Separate variable; exactly `true` required for apply; defaults false independently of plan enablement |
 | `OTM_INFRA_IDENTITY_DOMAIN_URL` | Secret (private coordinate); exact HTTPS `*.identity.oraclecloud.com` origin, no port/path/query/fragment |
 | `OTM_INFRA_CLIENT_ID` | Secret (private reference); environment's restricted token-exchange client |
 | `OTM_INFRA_CLIENT_SECRET` | Secret; environment-specific OAuth credential; never bootstrap/admin authority |
@@ -95,7 +103,7 @@ All settings below are documented configuration, not actual configured values.
 | `OTM_ALLOWED_SOURCE_CIDRS` | Secret (private configuration); comma-separated canonical IPv4 CIDRs, validated by the existing platform/recovery parser; platform only |
 | `OTM_OKE_KUBERNETES_VERSION` | Variable; exact canonical reviewed `vMAJOR.MINOR.PATCH`; platform only |
 | `OTM_POSTGRESQL_VERSION` | Variable; reviewed two-digit managed major; platform only |
-| `OTM_WORKER_CLOUD_INIT` | Secret; existing bounded Bash/cloud-init renderer; syntax checked, never executed by this workflow |
+| `OTM_WORKER_CLOUD_INIT` | Secret; existing bounded Bash/cloud-init renderer; syntax checked, never executed on the runner; approved apply supplies it to nodes |
 
 Selected JSON is passed as `OTM_INFRASTRUCTURE_INPUTS_JSON`. `target` has exactly `environment`,
 `tenancy_ocid`, `object_storage_namespace` and `region`; explicit region is `us-ashburn-1`.
@@ -145,7 +153,7 @@ These do not validate a real IAM trust, backend lock, provider read, OAuth secre
 No schema, ER model, application UI or saved local instance changes are required.
 See [the live manifest](../how-to/real-oci-test-manifest.md) before enabling hosted plans.
 
-### Local source checkpoint — 16 November 2026
+### Historical plan-only source checkpoint — 16 November 2026
 
 Complete-source backend unit validation passed 3,109 tests with 95.5339% line coverage across 200
 modules; frontend unit validation passed 650 tests with 96.99% line coverage. The complete disposable
@@ -160,3 +168,90 @@ installed file-backed signer/client, explicitly prohibiting API calls. It is not
 service qualification. No app snapshot, migration, UI or dependency lock changed. This is a local
 plan-only source checkpoint, not a new hosted workflow, image-publication or deployment qualification.
 The complete milestone's normal PR/CI gates and the live checklist remain required before release.
+
+## Reviewed-plan apply contract
+
+Use GitHub CLI **2.104.0 or newer**. The consumer uses an explicit job token and isolated CLI
+configuration against github.com; no local-login fallback or caller-supplied URL is accepted.
+`operation=apply` requires `plan_run_id` and lowercase 64-hex `reviewed_plan_sha256`. Production
+also requires `staging_apply_run_id` and `staging_tests_confirmed=true`. Component is `security`
+or `platform`; source/ref/environment are fixed by the protected workflow.
+
+For each producer, authenticated GitHub metadata must identify a successful completed manual master
+run of the correct environment workflow and the consumer's exact source SHA. Its selected attempt
+must contain exactly one successful `Infrastructure` job. Exactly one status report in that job's
+native logs supplies the expected hash and identity; a matching receipt in a mutable bucket is
+insufficient. Attempt identity is rechecked after reading logs, and producer evidence is rechecked
+immediately before claiming apply. Missing logs, changed attempts or unavailable evidence stop use.
+
+The exact private `plan.tar` may contain only bounded regular `plan.tfplan` and `receipt.json` members.
+The receipt must match the authenticated report and the binary SHA256 must match both the report
+and operator-reviewed digest. There is no separately attested whole-tar hash. Current rendered input
+hash must also match. Terraform 1.15.5 initializes the own-environment backend with readonly provider
+locks, inspects the saved plan and checks action counts before invoking `apply` on that exact binary.
+It does not create another plan, append variable overrides or automatically retry a failed apply.
+
+### Production staging gate and exact parity whitelist
+
+Production generates and reviews its **own** plan against production state/identities. It never
+reuses staging's binary. Both producer runs and the apply consumer must use the same immutable
+source SHA. A successful staging apply is necessary, plus explicit operator confirmation that the
+referenced staging deployment passed the required tests. The boolean is manual evidence; no test
+workflow, test-result signature or automated staging-acceptance proof is authenticated here.
+Protected production Environment review remains separately required before credentials are minted.
+
+For `platform`, parity hashes only these effective saved-plan variables: complete `oke`, complete
+`database`, `oke_kubernetes_version`, `postgresql_version` and `caddy_ingress_enabled`. OKE
+availability-domain lists are sorted after removing each tenancy-specific prefix before the last
+colon, so logical domain names/count and remaining OKE sizing/settings must agree. Other values
+such as target identity, VCN CIDR, Vault references, contacts, cloud-init and SMTP settings are not
+part of this automatic parity check; review environment-specific security and deployment behavior
+separately. For `security`, parity contains only the component name, not an assertion that secrets,
+IAM identities or live behavior match.
+
+Platform production also requires the canonical four-field staging image selection:
+`image_ocid`, `kubernetes_version`, `architecture=AARCH64` and `os_major` (8 or 9). Its hash must match
+production's `qualified_node_image` plan value; the cluster output after apply is checked against the
+staging image hash again. A recorded image selection plus manual tests does not prove every live
+compatibility or capacity property. No private image OCID is printed in the public report.
+
+### Single attempt and failed-backend recovery
+
+Immediately before Terraform apply, a conditional `if-none-match:*` write creates
+`apply-attempt.json` beside the selected producer's `plan.tar`, recording plan hash and consuming
+apply run/attempt. This is one apply attempt per producer plan across all consuming jobs/reruns.
+The marker is never cleared, even after failure, cancellation or an uncertain write response.
+A changed apply-run ID is not permission to consume the same plan again. Actual OCI conditional-write
+and IAM enforcement remain live qualification requirements.
+
+A failed/interrupted apply may already have changed infrastructure. Investigate the selected run,
+provider effects, state and marker before generating/reviewing a fresh plan; never force-unlock or
+replay automatically. If Terraform emits its native `errored.tfstate` after backend persistence
+failure, the consumer best-effort preserves that bounded regular file privately beside the plan,
+with conditional creation. It never edits, pushes or restores state automatically. Retention failure
+must not trigger another apply; reconcile through a separately authorized manual state-repair
+procedure. The marker remains in place after repair.
+
+Success emits exactly 15 fields: `status=applied`, `environment`, `component`, `source_sha`, `run_id`,
+`attempt`, `plan_run_id`, `plan_attempt`, `plan_sha256`, `inputs_sha256`, `parity_sha256`,
+`node_image_sha256`, `staging_apply_run_id`, `staging_tests_confirmed` and `applied=true`.
+Security has null node-image hash; staging has null staging-run reference and false test confirmation.
+Failure returns exit 1 with fixed `INFRASTRUCTURE_APPLY_STOPPED`, a `recovery_state_retained` boolean
+and investigation guidance, never a rollback claim or raw Terraform/provider diagnostics. Invalid
+CLI choices return argparse exit 2. No live apply, staging tests or Atlas data changes are claimed.
+
+### Local reviewed-apply validation — 16 November 2026
+
+The final backend unit run passed 3,201 tests with 95.5811% complete-source line coverage across
+201 modules. Focused plan/apply regressions passed 191 cases. Frontend units passed 650 cases
+with 96.99% line coverage; the native disposable PostgreSQL/Playwright run passed all 472 cases
+with zero failures, errors or skips and no persistent database use. It rebuilt the frontend from
+source. Native Terraform mocks, eight replacement guards and strict Kubernetes schema checks passed.
+Independent security and documentation reviews closed their findings; publication, credentials,
+source/purpose and dependency checks remain part of the checkpoint evidence.
+
+The outer verification wrapper reached its separate 600-second default before the native integration
+run finished successfully. Review-driven test/documentation corrections also invalidated its tree
+receipt. These native results are recorded independently; final stable-tree PR certification remains
+required before shipping. Live OCI setup, IAM, conditional writes, state locking/recovery and actual
+applies remain Pending in the qualification manifest. Atlas and its saved data were unchanged.

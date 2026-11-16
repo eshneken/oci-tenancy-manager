@@ -74,5 +74,6 @@ includes replacement verification, identity retention/removal and manual resourc
 
 - [Application release review](application-releases.md) — manual or automatic four-file verification, qualified master-only Actions dispatch, genuine publisher/signature evidence, intentional wrong-Checkpoint rejection and remaining acceptance/deployment/custody boundaries.
 
-- [Prepare an infrastructure plan](infrastructure-plans.md) — separate environment setup, private
-  inputs, held manual workflows, safe review/storage procedure and remaining OCI qualification.
+- [Review and apply an infrastructure plan](infrastructure-plans.md) — separate environment setup,
+  private inputs, held plan/apply workflows, manual staging-test confirmation and single-attempt
+  failure/recovery procedure; live OCI qualification remains Pending.

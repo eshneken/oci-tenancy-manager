@@ -643,11 +643,12 @@ passed; unexercised variants and the remaining hosted/OCI boundaries are Pending
   authority or staging acceptance is granted. Other invalid-input/failure variants, remaining
   access/custody and OCI acceptance cases above remain Pending.
 
-## Plan-only infrastructure delivery qualification
+## Infrastructure plan/review/apply qualification
 
-Status: **Pending**. The [implemented plan-only source](../reference/infrastructure-plans.md)
-is tested with synthetic credentials/responses and disposable files. No environment is enabled,
-no OCI resources were created and no controlled apply consumer exists in this checkpoint.
+Status: **Pending**. The [held plan/review/apply source](../reference/infrastructure-plans.md)
+includes a reviewed-plan consumer; the earlier plan-only checkpoint evidence retains its original
+scope. No environment is enabled, no live OCI apply or staging tests are qualified, no OCI resource
+was created and no saved Atlas data was changed by this source work.
 
 | Case | Required hosted/OCI qualification | Status |
 | --- | --- | --- |
@@ -655,5 +656,8 @@ no OCI resources were created and no controlled apply consumer exists in this ch
 | GitHub-to-OCI trust | With separate restricted confidential clients, qualify the actual issuer/JWKS/audience and five exact repository/owner/environment/ref/workflow claims. Reject each mismatch, wrong OAuth client and wrong environment. Qualify trust-issuer uniqueness before adding later delivery workflows; do not weaken claims or invent domains/policies. | Pending |
 | Common backend/provider signer | Verify RPST `res_tenant`, matching ephemeral key, file-backed ResourcePrincipal v2.2 and explicit region for both provider and native backend. Deny API-key/default-profile/node fallback. Rehearse representative planning within the 30-minute job and 60-minute issued session; expiry/errors fail closed. | Pending |
 | State and private plan custody | Verify native state locking/conflicting plan rejection, separate fixed state keys and expected namespace. Inspect the private versioned bucket, environment compartment and effective IAM. Confirm two-file conditional plan upload, wrong-bucket/public/unversioned denial and no overwrite; inspect uncertain upload before any retry. | Pending |
-| Least privilege and disclosure | Deny cross-environment state/plans, unrelated application secrets, trust administration and resource changes. Confirm no token, PEM, cloud-init, raw plan/resource attributes or provider errors in public logs/artifacts. Check actual runner cancellation/loss cleanup separately from normal Python cleanup. | Pending |
-| Review without apply | Privately retrieve the exact run/attempt bundle, check archive members/digest and inspect with the pinned source/toolchain. Public counts alone do not authorize apply. Verify future apply is still unavailable; no staging plan is accepted as a production plan and no accepted-source/approval claim is inferred from this planner. | Pending |
+| Least privilege and disclosure | Deny cross-environment state/plans, unrelated application secrets, trust administration and unapproved resource changes. Qualify separately enabled apply authority and plan-only read boundary. Confirm no token, PEM, cloud-init, raw plan/resource attributes or provider errors in public logs/artifacts. Check actual runner cancellation/loss cleanup separately from normal Python cleanup. | Pending |
+| Reviewed own-environment plan | Privately inspect the exact binary with pinned source/toolchain. Authenticate its hash through successful exact GitHub run/attempt/single-job logs, then match receipt/current inputs/operator-reviewed digest. Reject unavailable logs, changed attempts, wrong source/hash/root and stale Terraform state. Production never accepts staging's binary plan. | Pending |
+| Single apply attempt and failed-backend recovery | Prove conditional marker creation permits one consuming attempt per producer plan across reruns/concurrent jobs. Interrupt before/after provider mutation and during backend persistence; marker remains. Privately retain native errored.tfstate best effort; retention failure remains a failed apply. Investigate/reconcile manually, generate/review a fresh plan and never automatically replay, push state, force-unlock or clear the marker. | Pending |
+| Staging-first production and parity | Apply staging successfully, perform required tests and explicitly confirm them before protected production approval. Reject missing/false confirmation, failed/wrong staging run/component/source, changed whitelisted sizing/version/placement/ingress fields and mismatched qualified or applied ARM image. Review non-whitelisted environment differences independently; no automated staging-test proof is claimed. | Pending |
+| Apply identity lifetime and bounds | Qualify GitHub CLI 2.104.0+, own-environment backend/provider identity, 90-minute apply job, 120-minute issued session and shared 75-minute Terraform budget under representative latency. Expiry/interruption remains failed/uncertain with no refresh fallback or replay; plan bounds remain 30/60/20 minutes. | Pending |

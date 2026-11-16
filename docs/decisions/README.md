@@ -12,4 +12,7 @@ The [design decision log](design-decisions.md#7-november-2026--explicit-former-o
 records the shared-only Keep/removal clarification and preservation of existing privileges.
 
 - [Infrastructure federation and private CI input custody](design-decisions.md#16-november-2026--infrastructure-federation-and-private-ci-input-custody)
-  — GitHub-hosted OAuth-assisted sessions and private coordinate masking; held plans only.
+  — GitHub-hosted OAuth-assisted sessions and private coordinate masking; historical initial plan boundary.
+
+- [Reviewed infrastructure apply](design-decisions.md#16-november-2026--reviewed-infrastructure-apply-and-manual-staging-test-confirmation)
+  — own-environment plans, manual staging-test confirmation, permanent single-attempt markers and manual recovery; live OCI Pending.

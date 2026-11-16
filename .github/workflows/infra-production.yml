@@ -1,10 +1,29 @@
-name: Plan production infrastructure
+name: Production infrastructure
 
 on:
   workflow_dispatch:
     inputs:
+      operation:
+        description: Plan first; apply consumes one separately reviewed saved plan.
+        required: true
+        type: choice
+        default: plan
+        options: [plan, apply]
+      plan_run_id:
+        description: Successful plan run ID; required only for apply.
+        type: string
+      reviewed_plan_sha256:
+        description: SHA-256 of the privately reviewed binary plan; required only for apply.
+        type: string
+      staging_apply_run_id:
+        description: Successful staging apply of this same source/component; required for apply.
+        type: string
+      staging_tests_confirmed:
+        description: I confirm the referenced staging deployment passed the required tests.
+        type: boolean
+        default: false
       component:
-        description: Existing production Terraform root to plan; this workflow never applies a plan.
+        description: Existing production Terraform root for a plan or its separately reviewed apply.
         required: true
         type: choice
         options: [security, platform]
@@ -18,13 +37,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  plan:
+  infrastructure:
+    name: Infrastructure
     if: github.ref == 'refs/heads/master'
     environment: production
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: ${{ inputs.operation == 'apply' && 90 || 30 }}
     permissions:
       contents: read
+      actions: read
       id-token: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -43,8 +64,20 @@ jobs:
         with:
           terraform_version: '1.15.5'
           terraform_wrapper: false
-      - name: Generate and privately retain a production plan
+      - name: Plan or apply reviewed production infrastructure
         env:
+          # Read-only job token: trusted production plan and staging apply metadata/logs only.
+          GH_TOKEN: ${{ github.token }}
+          # Fixed operation choice; no arbitrary command or source ref is accepted.
+          OTM_OPERATION: ${{ inputs.operation }}
+          # Numeric producer run and reviewed binary hash; no artifact URL or bucket override.
+          OTM_PLAN_RUN_ID: ${{ inputs.plan_run_id }}
+          OTM_REVIEWED_PLAN_SHA256: ${{ inputs.reviewed_plan_sha256 }}
+          # Successful staging apply plus explicit manual testing confirmation precede production.
+          OTM_STAGING_APPLY_RUN_ID: ${{ inputs.staging_apply_run_id }}
+          OTM_STAGING_TESTS_CONFIRMED: ${{ inputs.staging_tests_confirmed && 'true' || 'false' }}
+          # Separate opt-in; true only after the apply path has been qualified in staging.
+          OTM_INFRASTRUCTURE_APPLY_ENABLED: ${{ vars.OTM_INFRASTRUCTURE_APPLY_ENABLED || 'false' }}
           # Enable only after production-specific protection, trust and IAM are qualified.
           OTM_INFRASTRUCTURE_ENABLED: ${{ vars.OTM_INFRASTRUCTURE_ENABLED || 'false' }}
           # Fixed-root choice, never interpolated into executable shell code or file paths.
@@ -67,4 +100,13 @@ jobs:
           OTM_POSTGRESQL_VERSION: ${{ vars.OTM_POSTGRESQL_VERSION }}
           # Per-environment private node bootstrap script; never published in logs/artifacts.
           OTM_WORKER_CLOUD_INIT: ${{ secrets.OTM_WORKER_CLOUD_INIT }}
-        run: uv run --project backend python -m otm.infrastructure_plan --environment production --component "$OTM_COMPONENT"
+        run: |
+          case "$OTM_OPERATION" in
+            plan)
+              uv run --project backend python -m otm.infrastructure_plan --environment production --component "$OTM_COMPONENT"
+              ;;
+            apply)
+              uv run --project backend python -m otm.infrastructure_apply --environment production --component "$OTM_COMPONENT" --plan-run-id "$OTM_PLAN_RUN_ID" --reviewed-plan-sha256 "$OTM_REVIEWED_PLAN_SHA256" --staging-run-id "$OTM_STAGING_APPLY_RUN_ID" --staging-tests-confirmed "$OTM_STAGING_TESTS_CONFIRMED"
+              ;;
+            *) exit 2 ;;
+          esac

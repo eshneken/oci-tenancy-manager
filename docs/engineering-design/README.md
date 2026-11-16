@@ -92,5 +92,6 @@ Hosting region: `us-ashburn-1`; no second-region DR site in V1. [Backup policy a
 
 - [Repeatable release verification](24-environments-and-promotion.md#repeatable-release-verification--16-november-2026) — [candidate and workflow contract](../reference/artifact-releases.md); genuine native ARM publication, six signed subjects and hosted manual verification qualified, including wrong-Checkpoint rejection; remaining custody and OCI acceptance/deployment stay Pending.
 
-- [Plan-only infrastructure delivery](24-environments-and-promotion.md#plan-only-infrastructure-delivery--16-november-2026)
-  — GitHub-hosted OAuth-assisted federation, private environment plans and explicit no-apply checkpoint.
+- [Infrastructure plan/review/apply delivery](24-environments-and-promotion.md#infrastructure-planreviewapply-delivery--16-november-2026)
+  — held OAuth-assisted workflows, authenticated own-environment plans, single-use apply and explicit
+  manual staging-test confirmation; live OCI remains Pending.

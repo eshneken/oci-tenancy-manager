@@ -109,4 +109,5 @@ Operations now supports [type/state/search filtering](operations.md#operation-ty
 - [Immutable ARM64 release candidates](artifact-releases.md) — 16 model fields, exact-run download, qualified read-only hosted verification, nine report fields, genuine signed evidence, wrong-Checkpoint rejection and remaining acceptance/custody limits.
 
 - [Private infrastructure plans](infrastructure-plans.md) — fixed roots, protected inputs,
-  common provider/backend federation, private binary-plan custody and plan-only public receipts.
+  common provider/backend federation, authenticated reviewed-plan apply, explicit parity whitelist,
+  single-attempt custody and safe public plan/apply receipts; live OCI Pending.

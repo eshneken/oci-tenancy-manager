@@ -59,8 +59,8 @@ not implemented deployment claims. Environment entry points stay separate and bi
 | --- | --- |
 | `build-application.yml` — first native hosted publication qualified | Follows exact successful master-push Checkpoint; builds/scans two ARM64 images, binds SBOM/public-source/schema metadata and standard attestations. No staging/production mutation authority |
 | `verify-application-release.yml` — hosted success and wrong-Checkpoint rejection qualified | Master-only manual run selection, exact native artifact download and six read-only provenance/SBOM checks; no acceptance or deployment authority |
-| `infra-staging.yml` — held plan-only source implemented | Plan the fixed staging security/platform root with its own identity/state; private plan custody. Reviewed-plan apply remains a following slice |
-| `infra-production.yml` — held plan-only source implemented | Generate production's own private plan; no apply or staging-acceptance gate implemented yet |
+| `infra-staging.yml` — held plan/review/apply source implemented | Plan the fixed staging security/platform root, then consume one separately reviewed private plan once; own identity/state |
+| `infra-production.yml` — held plan/review/apply source implemented | Review/apply production's own plan after successful same-source staging apply, explicit manual test confirmation, parity/image checks and production approval |
 | `deploy-staging.yml` | Select the trusted build's release ID, deploy its exact image/deployment bundle, apply compatible migrations and run required staging acceptance; record pass/fail against the exact deployed candidate |
 | `promote-production.yml` | Select only a staging-qualified release ID; verify provenance, evidence, compatibility and current security policy; obtain production approval and deploy the same artifact bytes, without rebuilding |
 | `deploy-settings-staging.yml` / `promote-settings-production.yml` | Separately qualify and promote reviewed compatible nonsecret settings/maintenance definitions using the deployed application image; no image rebuild |
@@ -340,12 +340,13 @@ registry logout succeeded. The report retains `staging_acceptance: not_evaluated
 OCI pulls/deployment or authenticated staging acceptance; those remain Pending.
 No app UI, database model, schema or saved preview changes are required.
 
-## Plan-only infrastructure delivery — 16 November 2026
+## Infrastructure plan/review/apply delivery — 16 November 2026
 
-The first infrastructure-delivery checkpoint implements held, manual `infra-staging.yml` and
-`infra-production.yml` plan entry points for the existing security/platform roots. Both check out
+The infrastructure-delivery source implements held, manual `infra-staging.yml` and
+`infra-production.yml` plan and reviewed-plan apply entry points for the existing security/platform roots. Both check out
 the exact protected master source, use their fixed GitHub Environment and share that environment's
-non-cancelling change group. An explicit enable variable is required after environment protection
+non-cancelling change group. `OTM_INFRASTRUCTURE_ENABLED` gates both operations, and the separate
+default-false `OTM_INFRASTRUCTURE_APPLY_ENABLED` additionally gates apply after environment protection
 and live qualification. No environments, secrets, cloud resources or IAM configuration were created.
 
 The owner selected GitHub-hosted runners with restricted per-environment OAuth client secrets.
@@ -362,11 +363,20 @@ environment state bucket's `infrastructure-plans/` prefix. Its compartment, priv
 versioning are checked before upload. GitHub emits only counts, hashes and source/run references;
 it stores no sensitive plan artifact. No new bucket, service, application table or registry is added.
 
-This is a plan/review handoff checkpoint, not the complete controlled apply or promotion path.
-The next apply slice must bind trusted plan-run/source identity, private inputs, exact reviewed plan
-digest, current state and human/environment approval; production uses its own plan and independent
-staging qualification. No current command can apply or destroy resources. Preserve the separate
-bootstrap, private secret ingestion and staging-before-production rules above.
+The apply consumer binds the exact successful GitHub producer run/attempt/job-log report, current
+private-input hash and reviewed binary-plan digest before applying that own-environment saved plan.
+A conditional private-bucket marker permits one apply attempt per producer plan and is never cleared.
+Failed/interrupted execution requires investigation and a fresh plan/review, not replay. Native
+`errored.tfstate` is best-effort retained privately after failed backend saving; repair remains manual.
+
+Production requires a successful same-source/component staging apply and explicit manual confirmation
+that its required tests passed; no automated staging-test proof is verified. It uses its own plan,
+protected production approval, the exact shared-variable parity whitelist and staging-qualified ARM
+image selection described in the reference. Environment-specific values remain separately reviewed.
+GitHub CLI 2.104.0+ authenticates producer evidence. Plan job/token/Terraform budgets are 30/60/20
+minutes; apply budgets are 90/120/75. Neither enable flag is deployment authorization. No destroy or
+application-deployment operation is introduced. Preserve separate bootstrap, secret ingestion and
+staging-before-production rules. The earlier plan-only checkpoint retains its historical scope.
 
 [Source contract](../reference/infrastructure-plans.md) ·
 [Human-readable setup/review runbook](../how-to/infrastructure-plans.md).
