@@ -57,7 +57,7 @@ The model representation and fixed configuration diagnostics do not expose confi
 ## Private candidate rendering
 
 The existing release validator has an optional `--render-recovery-console-from-env PRIVATE_OUTPUT`
-argument. It consumes `OTM_RECOVERY_CONSOLE_ALLOWED_CIDRS` as data, validates the complete target
+argument. It consumes `OTM_ALLOWED_SOURCE_CIDRS` as data, validates the complete target
 settings, renders TOML from the validated model and exclusively creates an owner-only0600 file.
 Existing files and symlinks are refused. Invalid input or mismatched target creates no candidate.
 The command reports fingerprints/environment/routing facts, never CIDRs. It does not modify a deployed
@@ -69,7 +69,9 @@ input through the protected process environment; do not put operational ranges i
 repository files, logs, screenshots or CI artifacts. The supplied installation-specific private file
 remains untouched. No environment override was added to the runtime loader.
 
-Protected GitHub Environment variables, target-image validation, release locking, reviewed candidate
+The shared variable's private staging/production values are configured separately; app ingress
+enforcement is [forthcoming network work](../engineering-design/06-platform-and-delivery.md#shared-inbound-source-allowlist--13-november-2026).
+Protected deployment approvals, target-image validation, release locking, reviewed candidate
 fingerprint confirmation, ConfigMap rollout and per-child enforcement are still implementation work.
 There is no deployed configuration-release workflow to claim complete or a new competing settings UI.
 A rendered desired fingerprint does not certify any child's applied configuration.

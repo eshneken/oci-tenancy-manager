@@ -137,6 +137,7 @@ Transitive package inventories and exact versions belong in [the backend manifes
 | [FastAPI](https://fastapi.tiangolo.com/) | HTTP API routes and integration of validated requests/responses. |
 | [Starlette](https://www.starlette.io/) | ASGI middleware, browser/authentication boundaries and static frontend delivery beneath FastAPI. |
 | [Uvicorn](https://www.uvicorn.org/) | Runs the Python ASGI web application. |
+| [OCI Python SDK](https://docs.oracle.com/en-us/iaas/tools/python/latest/) | Implements named development API-key or hosted OKE workload-identity clients and scoped Vault secret retrieval; adapters remain separate from domain contracts and simulators. |
 | [Pydantic](https://docs.pydantic.dev/latest/) | Validates settings, request/response contracts and domain data; produces authoritative JSON Schema. |
 | [JSON Schema](https://json-schema.org/) | Describes exported API/domain contract shapes for generated frontend types and consistency checks. |
 
@@ -205,6 +206,8 @@ separate CSS component framework. HTML/CSS are web standards rather than additio
 
 | Technology | How we use it |
 | --- | --- |
+| [Caddy](https://caddyserver.com/) / [Pebble](https://github.com/letsencrypt/pebble) | Separate digest-pinned HTTP-01 TLS ingress source and isolated local ACME test CA; [two exact image-risk exceptions require continuous official updates](docs/reference/caddy-security-exceptions.md). Neither is installed in the Python app image. |
+| [Kubeconform](https://github.com/yannh/kubeconform) | Strict Kubernetes schema checks for synthetic staging/production workload bundles, including an invalid-field rejection control; runs separately from the application image. |
 | [Trivy](https://trivy.dev/) | Scans the exact final image's OS/Python packages; HIGH/CRITICAL findings or unavailable/incomplete scans block qualification. |
 | [Gitleaks](https://github.com/gitleaks/gitleaks) | Scans the publication candidate for exposed credentials. |
 | [Bandit](https://bandit.readthedocs.io/) | Static security analysis of Python application source. |
@@ -230,8 +233,8 @@ qualified by the local application:
 | Technology or service | Status and intended use |
 | --- | --- |
 | [GitHub Actions](https://github.com/features/actions) | Current hosted CI service; runs the five required checkpoint jobs. The service itself is distinct from the open-source actions and runner projects. |
-| [Kubernetes](https://kubernetes.io/) | Planned orchestration of API/worker pods and maintenance CronJobs; Kubernetes is open source. |
-| [Terraform](https://developer.hashicorp.com/terraform) | Planned OCI infrastructure provisioning. [Current Terraform licensing](https://github.com/hashicorp/terraform/blob/main/LICENSE) is source-available, so it is not classified as an open-source dependency here. |
+| [Kubernetes](https://kubernetes.io/) | API/worker and maintenance orchestration; the [disabled hosted workload bundle](docs/how-to/kubernetes-workloads.md) defines pod/security/settings contracts while hosted activation remains pending. |
+| [Terraform](https://developer.hashicorp.com/terraform) | [Isolated state/network/Enhanced OKE source and mock tests](infra/README.md). [Current Terraform licensing](https://github.com/hashicorp/terraform/blob/main/LICENSE) is source-available, so it is not classified as an open-source dependency here. |
 | [OCI OKE](https://www.oracle.com/cloud/cloud-native/container-engine-kubernetes/), [OCI Database with PostgreSQL](https://www.oracle.com/cloud/postgresql/) and [OCI Vault](https://www.oracle.com/security/cloud-security/key-management/) | Planned managed hosting, PostgreSQL and credential custody. These OCI services are not open-source projects or locally qualified integrations. |
 
 For the built/runtime distinction and current image qualification limits, see

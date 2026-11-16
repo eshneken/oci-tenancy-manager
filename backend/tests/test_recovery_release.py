@@ -64,7 +64,7 @@ def test_hosted_gate_requires_explicit_boundary(kind):
 @pytest.mark.parametrize("kind", ["application", "configuration"])
 def test_cli_render_and_safe_receipt(tmp_path, monkeypatch, capsys, kind):
     path = tmp_path / "candidate.toml"
-    monkeypatch.setenv("OTM_RECOVERY_CONSOLE_ALLOWED_CIDRS", "198.51.100.0/24,2001:db8::/32")
+    monkeypatch.setenv("OTM_ALLOWED_SOURCE_CIDRS", "198.51.100.0/24,203.0.113.7/32,2001:db8::/32")
     assert (
         main(
             [
@@ -84,6 +84,11 @@ def test_cli_render_and_safe_receipt(tmp_path, monkeypatch, capsys, kind):
     assert "recovery_console_fingerprint" in receipt
     assert "198.51" not in receipt and "2001:" not in receipt
     assert load_settings(path).environment == "production"
+    assert load_settings(path).recovery_console.allowed_cidrs == (
+        "198.51.100.0/24",
+        "203.0.113.7/32",
+        "2001:db8::/32",
+    )
 
 
 # Missing/malicious inputs and mismatched trusted environments produce fixed errors, never output.
@@ -93,9 +98,9 @@ def test_cli_render_and_safe_receipt(tmp_path, monkeypatch, capsys, kind):
 def test_cli_rejects_private_input_safely(tmp_path, monkeypatch, capsys, value):
     path = tmp_path / "candidate.toml"
     if value is None:
-        monkeypatch.delenv("OTM_RECOVERY_CONSOLE_ALLOWED_CIDRS", raising=False)
+        monkeypatch.delenv("OTM_ALLOWED_SOURCE_CIDRS", raising=False)
     else:
-        monkeypatch.setenv("OTM_RECOVERY_CONSOLE_ALLOWED_CIDRS", value)
+        monkeypatch.setenv("OTM_ALLOWED_SOURCE_CIDRS", value)
     assert (
         main(
             [
@@ -129,7 +134,7 @@ def test_strict_toml_encoder():
 # The trusted environment is checked before candidate creation, not after a partial release effect.
 def test_cli_wrong_environment_creates_no_file(tmp_path, monkeypatch, capsys):
     path = tmp_path / "candidate.toml"
-    monkeypatch.setenv("OTM_RECOVERY_CONSOLE_ALLOWED_CIDRS", "198.51.100.0/24")
+    monkeypatch.setenv("OTM_ALLOWED_SOURCE_CIDRS", "198.51.100.0/24")
     assert (
         main(
             [

@@ -89,3 +89,21 @@ Current source [Operations check-section mapping](operations.md#recorded-require
 Operations now supports [type/state/search filtering](operations.md#operation-type-filtering--10-november-2026) without changing workspace-wide action counts.
 
 - [Create/import public bootstrap key and candidate-password refinement](tenancy-onboarding.md#public-bootstrap-handoff--12-november-2026) — current bundle targeted qualification PASS; saved publication PASS.
+
+- [Secret inventory, naming and version cleanup](secret-lifecycle.md) — approved keep-five policy, protected exceptions and tested metadata executor; OCI/worker/settings/CronJob integration pending.
+
+
+- [OCI Vault retrieval and OKE identity](vault-retrieval.md) — scoped CURRENT/immutable reads, redacted results and explicit identity; hosted activation pending.
+
+
+- [Platform identity and development settings](../how-to/laptop-oci-development.md#explicit-application-settings) — provider_mode plus nonsecret OCI selector; no credential material in TOML.
+
+
+- [Hosted workload identity contract](../how-to/oke-workload-identity.md) — read-only Vault grants, role-specific token projection and unchanged held workloads.
+
+
+- [V1 network boundary and SMTP inputs](../how-to/nsg-only-networking.md) — OCI NSGs, shared pod group, no pod NetworkPolicy enforcement.
+
+- [Caddy image-risk acceptance](caddy-security-exceptions.md) — two exact owner-approved DoS exceptions, retained findings and daily/weekly update checks; policy validation/hosted activation status kept separate.
+
+- [Immutable ARM64 release candidates](artifact-releases.md) — 16 declared model fields, exact CI/source/image/SBOM/schema identity and content-matching limits; not staging authorization.

@@ -131,7 +131,7 @@ SMTP/browser fixtures cover these conditions:
 The tracked hosted templates intentionally omit operational recovery-console networks. Validating
 those templates directly is expected to return RELEASE_SETTINGS_REJECTED. First supply the approved
 comma-separated CIDRs through the protected operator environment variable
-`OTM_RECOVERY_CONSOLE_ALLOWED_CIDRS`, then render private candidates as described in the
+`OTM_ALLOWED_SOURCE_CIDRS`, then render private candidates as described in the
 [recovery-console guide](../reference/recovery-console-verification.md#private-candidate-rendering).
 Never put actual ranges in commands, repository files, logs or CI artifacts.
 

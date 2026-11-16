@@ -3,8 +3,8 @@
 This is the separate production backend foundation. The preserved organization prototype remains
 under `prototype/`, with its own environment and executable regression evidence.
 
-The default application exposes only `GET /health/live`, confirming process liveness rather than
-external readiness. [Session verification](../docs/reference/authentication.md) can be explicitly composed to add
+The default application exposes `GET /health/live` for process liveness and
+`GET /health/ready`, which remains unavailable without an explicitly composed readiness check. [Session verification](../docs/reference/authentication.md) can be explicitly composed to add
 session context and explicit activity/logout endpoints. Non-health access requires current
 administrator authority, except narrowly guarded logout and explicitly composed local sign-in.
 [Local recovery authentication](../docs/reference/local-authentication.md) provides operator bootstrap/reset
@@ -34,7 +34,7 @@ uv build --project backend --no-sources
 ```
 
 To run the application, follow [setup, private bootstrap and HTTPS startup](../docs/reference/local-application.md).
-No password or MFA seed belongs in chat. To serve only the liveness endpoint:
+No password or MFA seed belongs in chat. To serve the health-only application:
 
 ```sh
 uv run --project backend uvicorn otm.app:create_app --factory --host 127.0.0.1 --port 8000
@@ -52,7 +52,7 @@ and a stateful, clock-controlled simulator. The [durable simulated worker](../do
 consumes the accepted operation, persists scoped step/results and uses required current authority.
 Inspection verifies exact child/parent/organization/attempt
 pairing and fresh evidence; denied/delayed/unavailable reads do not imply absence. The models generate
-checked structural schemas under `backend/contracts`. No real OCI adapter, cloud secret access or provider mutation is implemented. Internal durable admission
+checked structural schemas under `backend/contracts`. Tenancy inspection and mutation still use simulators. The [read-only OCI Vault adapter](../docs/reference/vault-retrieval.md) implements explicit SDK-backed secret retrieval; full hosted service composition and live qualification remain pending. Internal durable admission
 is described below; simulated execution now builds on it. The approved data model supplies separate raw home-region key
 and qualified identifier fields; unknown mapping remains null.
 

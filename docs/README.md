@@ -25,6 +25,18 @@ Earlier dated preservation receipts remain historical evidence.
 | Recovery-window wait before key replacement | [Targeted correction qualified; saved republication PASS](reference/signing-key-rotation.md#recovery-window-waiting) |
 | Signer setup authority and rotation regression scope | [Current authority checks](reference/signing-key-rotation.md#setup-authority-and-ship-regression-checks--10-november-2026) |
 | Worker deployment sizing | [Staging/production targets and qualification](engineering-design/06-platform-and-delivery.md#accepted-initial-worker-sizing--10-november-2026) |
+| Paid OCI platform and candidate capacity | [Enhanced OKE, ARM nodes and managed PostgreSQL](engineering-design/06-platform-and-delivery.md#paid-tenancy-platform-direction-and-candidate-sizing--13-november-2026) |
+| Ashburn backups and restore qualification | [V1 backup policy, sizing and regional boundary](engineering-design/06-platform-and-delivery.md#ashburn-v1-backup-policy-proposal--13-november-2026) |
+| Staging, production and release promotion | [Isolated tenancies and build-once delivery](engineering-design/24-environments-and-promotion.md) |
+| Hosted administrator updates, backup and restore | [Human-readable operating runbooks](how-to/hosted-administration.md) — design-stage procedures, pending staging qualification |
+| Terraform state foundation | [Implemented layout and mock-only tests](../infra/README.md), [operator bootstrap procedure](how-to/terraform-state-bootstrap.md) — live qualification pending |
+| Network foundation | [Subnets, routing, source allowlist and private-input renderer](how-to/network-foundation.md) — OKE and managed PostgreSQL source attached; optional [held Caddy ingress](how-to/caddy-ingress.md) and live qualification documented separately |
+| Enhanced OKE, worker initialization and sensor | [Cluster/pool fields and private cloud-init procedure](how-to/oke-foundation.md), [NSG traffic matrix](how-to/oke-network-traffic.md) — live ARM64 sensor, deployment and connectivity qualification pending |
+| Hosting compartment | [Protected environment input and single-compartment placement](how-to/hosting-compartment.md) — required reference in all infrastructure roots; live tenancy value pending |
+| Vault custody foundation | [Single-compartment Vaults, HSM keys and scoped database-reader IAM](how-to/vault-foundation.md) — source implemented; ingestion/effective permissions and live qualification pending |
+| Managed PostgreSQL foundation | [Private database, credentials, backups and upgrade safeguards](how-to/managed-postgresql.md) — source implemented; live recovery/HA/TLS qualification pending |
+| OKE/PostgreSQL versions and node image resolution | [Protected variables and staging-qualified image promotion](how-to/platform-versions.md) — OKE resolver and private operator handoff implemented; managed database consumption implemented; live qualification pending |
+| App ingress and recovery-console source restrictions | [Shared allowlist contract](engineering-design/06-platform-and-delivery.md#shared-inbound-source-allowlist--13-november-2026) — one private environment input; live enforcement pending |
 | Create/import bootstrap handoff and copy fields | [Public bootstrap handoff](reference/tenancy-onboarding.md#public-bootstrap-handoff--12-november-2026), [complete action and field dictionary](reference/tenancy-onboarding.md#complete-contract-field-dictionary) |
 | Maintained container base, isolated qualification and security gate | [Container development](how-to/container-development.md) |
 | Run the application | [Local HTTPS setup](reference/local-application.md) |
@@ -199,3 +211,30 @@ The [recovery-network repair source subset](reference/recovery-network-repair.md
 - [Signing-key rotation targeted checkpoint](history/signing-key-rotation-checkpoint-2026-11-10.md): nine targeted PG/native/SMTP/browser cases and source-unit gates pass; preserved saved publication PASS; full-suite/PR and live OCI Pending. [Operator review after installation](how-to/signing-key-rotation-runbook.md).
 
 - [Create/import public bootstrap key and candidate-password refinement](reference/tenancy-onboarding.md#public-bootstrap-handoff--12-november-2026) — current bundle targeted qualification PASS; saved publication PASS.
+
+- [Secret inventory, naming and version cleanup](reference/secret-lifecycle.md) — approved keep-five policy, protected exceptions and tested metadata executor; OCI/worker/settings/CronJob integration pending.
+
+- [Hosted Kubernetes workload bundle](how-to/kubernetes-workloads.md) — disabled API/worker/migration manifests, immutable settings, credential references and strict schema checks; hosted runtime/activation pending.
+
+- [Hosted startup foundation](how-to/hosted-startup.md) — explicit TLS/roles, readiness, migration and worker composition; activation remains held.
+
+- [Schema-changing release maintenance](how-to/hosted-administration.md#schema-changing-application-release) — approved V1 drain/migrate/start/reopen procedure; unchanged-schema releases roll normally.
+
+
+- [OCI Vault retrieval and OKE identity](reference/vault-retrieval.md) — implemented read-only boundary; IAM/projection source is implemented; live deployment/networking/service wiring remain pending.
+
+
+- [Laptop OCI development](how-to/laptop-oci-development.md) — explicit named API-key identity, local database and separate development/staging custody; no real tenancy required for source tests.
+
+
+- [Hosted workload identity and Vault IAM](how-to/oke-workload-identity.md) — exact workload-read policies and explicit role-only token/CA projections; networking/activation remain pending.
+
+
+- [V1 NSG-only networking](how-to/nsg-only-networking.md) — approved no-Calico model, no NetworkPolicy objects, explicit optional SMTP egress and accurate boundary limits.
+
+
+- [Caddy HTTP-01 ingress](how-to/caddy-ingress.md) and [accepted design](engineering-design/25-https-ingress-and-certificates.md) — held source and portable, hardened local Pebble protocol tests; [two exact image-risk exceptions](reference/caddy-security-exceptions.md) approved with continuous official-update checks; targeted policy/native validation passes; hosted execution and live qualification remain pending.
+
+- [Caddy image-risk acceptance](reference/caddy-security-exceptions.md) — 15-November exact official-build exceptions; retained availability risks, latest-release checks and continuous update requirements.
+
+- [Immutable ARM64 release artifacts](reference/artifact-releases.md) and [operator review](how-to/application-releases.md) — implemented candidate/build source and passing targeted checks, all fields and four-file evidence; hosted publication/staging acceptance/deployment remain pending.

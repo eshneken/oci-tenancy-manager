@@ -762,9 +762,16 @@ async function organizationFlows(page: Page) {
   for(const width of [1280,390,320]) {
     await page.setViewportSize({width,height:900});
     if(width===1280) {
-      const titleBox=await membersToolbar.getByRole("heading").boundingBox();
-      const actionBox=await membersToolbar.getByRole("button",{name:"Add member",exact:true}).boundingBox();
-      expect(Math.abs(titleBox!.y+titleBox!.height/2-actionBox!.y-actionBox!.height/2)).toBeLessThanOrEqual(1);
+      // Read both viewport-relative boxes in one frame; loading/focus may move the whole panel.
+      await expect.poll(() => membersToolbar.evaluate((toolbar) => {
+        const heading = toolbar.querySelector("h2");
+        const action = toolbar.querySelector("button");
+        if (!heading || !action) return Infinity;
+        const titleBox = heading.getBoundingClientRect();
+        const actionBox = action.getBoundingClientRect();
+        if (!titleBox.width || !titleBox.height || !actionBox.width || !actionBox.height) return Infinity;
+        return Math.abs(titleBox.y + titleBox.height / 2 - actionBox.y - actionBox.height / 2);
+      })).toBeLessThanOrEqual(1);
     }
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     await membersToolbar.screenshot({path:`.local-dev/browser/shared-members-toolbar-${width}.png`});

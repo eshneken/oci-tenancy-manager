@@ -1522,3 +1522,29 @@ Manual resource, dedicated-empty-compartment and additional-account cleanup is e
 default-closed panel and remains the administrator/current owner's responsibility. Actual warnings,
 identity targets and required acknowledgments remain visible. Failed cleanup cannot claim verified
 removal. See the [implemented flow](../reference/organization-workflows.md#explicit-former-owner-disposition--7-november-2026).
+
+## Two hosted environments and immutable promotion — 13 November 2026
+
+The owner selected staging and production as separate hosted environments in `us-ashburn-1`.
+Each uses its own OCI parent/child tenancies and isolated hosting, database, secrets, Terraform state
+and runtime/deployment identities. Staging email redirection remains mandatory; production rejects
+test-routing overrides. Laptop/CI fixtures are not a third hosted environment.
+
+Separate GitHub workflow entry points build the application, plan/apply infrastructure for each
+environment, deploy to staging and promote to production. Build one immutable image including its
+frontend and migration assets, qualify that exact release in staging, then require production
+approval to deploy the same digest and deployment bundle without rebuild. Production selects only
+a trusted staging-qualified release ID. Infrastructure reuses tested source with separately reviewed
+environment-specific plans/state; settings releases preserve the image and validate independently
+bound profiles. [The delivery contract](../engineering-design/24-environments-and-promotion.md)
+defines isolation, evidence, negative gates and safe rollout/rollback. This is an accepted design
+requirement, not implemented deployment, live qualification or authorization to provision resources.
+
+
+### Secret retention simplification — 13 November 2026
+
+Keep the newest five unscheduled versions of each permanent managed child automation/recovery secret,
+plus protected CURRENT/PREVIOUS/PENDING and unfinished-operation versions. Skip unresolved rotation
+or unclear state. After successful rotation and in the daily retry sweep, schedule older unpinned
+DEPRECATED versions for delayed deletion using existing serialization and audit. No historical-proof
+subsystem or new database entity is required. [Policy and implementation boundary](../reference/secret-lifecycle.md).

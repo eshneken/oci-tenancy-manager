@@ -116,6 +116,17 @@ def test_canonical_multiple_ranges_and_effective_fingerprint():
     assert "198.51" not in repr(policy)
 
 
+# Multiple single-host entries stay exact alongside network ranges without widening access.
+def test_multiple_hosts_and_ranges_share_release_input():
+    policy = parse_release_cidrs("203.0.113.7/32,198.51.100.0/24,203.0.113.8/32,2001:db8::7/128")
+    assert policy.allowed_cidrs == (
+        "198.51.100.0/24",
+        "203.0.113.7/32",
+        "203.0.113.8/32",
+        "2001:db8::7/128",
+    )
+
+
 # Split universal ranges are as unsafe as /0; a single bad entry rejects the entire candidate.
 @pytest.mark.parametrize(
     "values",

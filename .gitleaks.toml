@@ -1,4 +1,4 @@
-# Keep every upstream detector; this exception covers one reviewed integrity checksum only.
+# Keep every upstream detector; exceptions are reviewed exact values in named files only.
 [extend]
 useDefault = true
 
@@ -57,3 +57,31 @@ condition = "AND"
 paths = ['''(^|/)backend/migrations/sql/manifest\.json$''']
 regexTarget = "line"
 regexes = ['''^\s*"0028-signing-credentials\.sql":\s*"d5895716c62ba4d0a3892598ff4a6ceed954cba79f0c363cc0b78271fa228f3e"\s*,?\s*$''']
+
+# Owner approved these nonsecret fixture references after independent security review.
+[[allowlists]]
+description = "Approved exact synthetic PostgreSQL provisioning Vault reference"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = [
+  '''(^|/)infra/environments/staging/platform/terraform\.tfvars\.example$''',
+  '''(^|/)infra/environments/production/platform/terraform\.tfvars\.example$''',
+  '''(^|/)infra/environments/staging/platform/tests/binding\.tftest\.hcl$''',
+  '''(^|/)infra/environments/production/platform/tests/binding\.tftest\.hcl$''',
+  '''(^|/)infra/modules/postgresql/tests/database\.tftest\.hcl$''',
+  '''(^|/)infra/modules/postgresql/tests/upgrade\.tftest\.hcl$''',
+  '''(^|/)infra/modules/postgresql/guard-tests/replacement\.tftest\.hcl$''',
+]
+regexTarget = "secret"
+regexes = ['''^ocid1\.vaultsecret\.oc1\.iad\.synthetic$''']
+
+[[allowlists]]
+description = "Approved exact OCI Vault-reference password-type enum, not a credential"
+targetRules = ["hashicorp-tf-password"]
+condition = "AND"
+paths = [
+  '''(^|/)infra/modules/postgresql/main\.tf$''',
+  '''(^|/)infra/modules/postgresql/tests/database\.tftest\.hcl$''',
+]
+regexTarget = "secret"
+regexes = ['''^"VAULT_SECRET"$''']

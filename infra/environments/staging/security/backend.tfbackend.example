@@ -1,0 +1,9 @@
+# Private synthetic references only; replace after this environment's state bootstrap.
+# Existing private state bucket in this environment's tenancy; never use the other environment.
+bucket = "otm-staging-tfstate"
+# Exact Object Storage namespace for the independently verified target tenancy.
+namespace = "syntheticstaging"
+# Region containing the state bucket; initial approved target is Ashburn.
+region = "us-ashburn-1"
+# Short-lived SecurityToken backend profile, authenticated separately from the resource provider.
+config_file_profile = "DEFAULT"

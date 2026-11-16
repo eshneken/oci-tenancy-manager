@@ -91,7 +91,7 @@ No new settings UI, hot-reload service, coordinator, table or per-tenancy overri
 | Field | Purpose, format, bounds and operational effect |
 | --- | --- |
 | `recovery_console.allowed_cidrs` | Required nonempty array of canonical IPv4/IPv6 network CIDRs; 1–64 entries and at most 4096 serialized input bytes. Entries are ORed. Restricts only each bound recovery user's console sign-in. No organization-specific default. Missing/invalid policy blocks live recovery provisioning/disclosure, while unrelated functions may remain available. |
-| `OTM_RECOVERY_CONSOLE_ALLOWED_CIDRS` | Comma-separated release input for the array. Trim surrounding whitespace, reject empty elements and host bits, strictly validate every network, deduplicate and sort deterministically. Required in both live deployment paths; not an arbitrary runtime environment override of the strict loader. |
+| `OTM_ALLOWED_SOURCE_CIDRS` | Shared comma-separated release input for app ingress and this array. Trim surrounding whitespace, reject empty elements and host bits, strictly validate every network, deduplicate and sort deterministically. Required in both live deployment paths; not an arbitrary runtime environment override of the strict loader. Individual IPv4/IPv6 addresses use `/32` and `/128`; multiple addresses and networks may be mixed. |
 
 Reject malformed entries, individual `/0` networks and effective unions covering all IPv4 or all
 IPv6 (including narrower ranges that together allow everything). Never silently widen host addresses
@@ -109,14 +109,14 @@ allowed_cidrs = ["198.51.100.0/24", "203.0.113.0/24"]
 
 ```
 
-Define `OTM_RECOVERY_CONSOLE_ALLOWED_CIDRS` as a configuration variable in each protected GitHub
+Define `OTM_ALLOWED_SOURCE_CIDRS` as a configuration variable in each protected GitHub
 Environment. Map it into the release job environment; do not hardcode operational ranges in YAML:
 
 ```yaml
 # Release-job fragment; the existing job selects the trusted protected deployment environment.
 env:
-  # Approved recovery-console source CIDRs; validated before obtaining deployment credentials.
-  OTM_RECOVERY_CONSOLE_ALLOWED_CIDRS: ${{ vars.OTM_RECOVERY_CONSOLE_ALLOWED_CIDRS }}
+  # Shared app-ingress/recovery-console source CIDRs; validated before deployment credentials.
+  OTM_ALLOWED_SOURCE_CIDRS: ${{ vars.OTM_ALLOWED_SOURCE_CIDRS }}
 
 ```
 
@@ -129,7 +129,9 @@ protected environments, deployment authority and required checks; untrusted/PR j
 Configured corporate ranges are operational information: do not echo the list, dump environments or
 publish rendered files as CI artifacts. Keep the supplied initial ranges in ignored local configuration
 and deployment variables. Public docs/fixtures use synthetic CIDRs. No GitHub variable/workflow or
-running provider is created by this document.
+running provider is created by this document. The [13 November shared ingress decision](06-platform-and-delivery.md#shared-inbound-source-allowlist--13-november-2026)
+renames the release variable and provisions its private staging/production values separately; it does
+not establish network enforcement or change recovery-only MFA scope.
 
 ### Update the running environment
 
@@ -362,3 +364,19 @@ window drain, staged/upload/probe/CAS/retire phases and recovery/overdue evidenc
 qualification and saved installation. No installed OKE CronJob or live provider qualification is claimed.
 
 The [recovery-window wait correction](../reference/signing-key-rotation.md#availability-correction-targeted-evidence--10-november-2026) has targeted local source/unit/PG/native-browser qualification; saved republication PASS. Its direct-worker overlap and native-browser evidence are separate from live OCI/OKE timing and full-suite qualification.
+
+## Secret inventory and version retention — 13 November 2026
+
+The owner selected the [simple keep-five policy](../reference/secret-lifecycle.md): retain the newest
+five unscheduled versions plus CURRENT/PREVIOUS/PENDING and any explicit unfinished-operation pins.
+Skip unclear/failed/in-progress rotation; reuse existing per-tenancy serialization. Schedule only
+older unpinned DEPRECATED versions after one day plus five minutes. Cleanup follows successful
+rotation and retries via the daily durable sweep; record outcomes in existing operation/audit history.
+
+This supersedes historical retirement-proof reconstruction and the experimental SQL projection.
+There is no new retirement ledger, reconciliation journal or table. Preserve existing exact secret
+binding, conditional writes, protected-stage checks, quota limits and normal paused restore procedure.
+The planner, metadata simulator and executor interfaces are implemented and tested. Production
+adapter, worker/reservation composition, TOML binding, notifications and hosted CronJob remain pending.
+Only registered permanent child automation/recovery secrets qualify; bootstrap/platform lifecycles
+remain separate. No saved-app update or live OCI mutation accompanies this source simplification.

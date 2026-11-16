@@ -19,7 +19,16 @@ independent recovery access. This manifest does not itself authorize live resour
 
 | Area | Procedure / expected qualification | Status |
 | --- | --- | --- |
-| Initial multi-worker production sizing | [Two-worker qualification](#initial-multi-worker-production-qualification): staging one slot, production two one-slot workers; locks, child isolation, deadlines, crash recovery and connection budget. | Pending |
+| Terraform state bootstrap | [Private bucket, target identity, local-state custody and future backend qualification](#terraform-state-bootstrap); mock plans are not live authorization or recovery evidence. | Pending |
+| App source allowlist | [Shared ingress contract](../engineering-design/06-platform-and-delivery.md#shared-inbound-source-allowlist--13-november-2026): permit HTTPS from each approved range/host and deny unapproved sources for UI and API. Inspect all NSG/security-list/controller rules for broad unions; reject missing/invalid input and ensure no alternate endpoint, NodePort, IPv6 or forwarded-header bypass. Qualify shared recovery-console propagation and lockout-safe updates independently. Network/allowlist and optional Caddy ingress source are implemented; full deployment/activation and effective live enforcement remain Pending. | Pending |
+| Network foundation | [Source and operator procedure](#network-foundation): actual private subnet flags, closed default/attached lists, routing/service prefix, deployment runner reachability, pod-to-database NSG identity and state separation. | Pending |
+| Enhanced OKE and private worker bootstrap | [Cluster, launch metadata, sensor and public-API qualification](#enhanced-oke-and-worker-bootstrap). ARM64 sensor compatibility is unknown and must be established before application deployment. | Pending |
+| Secret version retention and cleanup | [Cleanup qualification](#secret-version-retention-and-cleanup): exact binding/IAM, keep-five retention, protected versions, conditional scheduling, quota pressure and actual purge. | Pending |
+| Single hosting compartment input | [Placement/input qualification](#single-hosting-compartment-input): environment variable origin, tenancy/ancestry, all-resource placement and fail-closed targeting. | Pending |
+| Vault custody foundation | [Vault/IAM qualification](#vault-custody-foundation): Vault-conditioned access isolation, group scope, secure ingestion, key custody/rotation and actual provisioning. | Pending |
+| Managed PostgreSQL foundation | [Database qualification](#managed-postgresql-foundation): private bindings/TLS, Vault provisioning, HA/load, backup/PITR and real provider upgrade/replacement behavior. | Pending |
+| Platform version and image promotion | [Version/image matrix](#platform-version-and-image-promotion): real regional lookup, saved-plan pinning, full staging selection/provenance and safe future PostgreSQL-major changes. | Pending |
+| Initial multi-worker production sizing | [Two-worker qualification](#initial-multi-worker-production-qualification): identical staging/production two one-slot workers; locks, child isolation, deadlines, crash recovery and connection budget. | Pending |
 | Configuration drift and selected repair | [Live scenario matrix](configuration-drift-runbook.md#pending-real-oci-manual-validation): exact objects, override preservation, permissions, partial outcomes, concurrency and unrelated-resource protection. | Pending |
 | Required-user presence | [Live presence matrix](configuration-drift-runbook.md#pending-required-user-presence-qualification): exact domain/SCIM/OCI identities, qualified absence, independent subjects and stale authority. | Pending |
 | Permanent-user capture during onboarding | Create and import a disposable child; retain provider-returned automation and recovery domain/SCIM/OCI identities independently. Verify durable values against OCI. Retry interrupted setup without adopting same-name/different-ID accounts or inventing bindings for older records. Preserve post-policy access checks before retiring temporary credentials. Version 3 implements simulated capture; qualification still requires a real adapter and approved disposable child. Saved previews must be deliberately upgraded before local UI review. | Pending |
@@ -41,6 +50,122 @@ linked local runbooks are preparation and comparison material, not live qualific
 | Recovery credentials | With independent recovery access, qualify per-child Vault secret custody, audited disclosure, required notices and four-hour password rotation. Verify the actual user and Vault CURRENT agree after rotation and that failures block unsafe disclosure. Exercise the approved manual restore/recovery procedure without publishing credential material. | [Access design](../engineering-design/12-access-health-and-repair.md) | Pending |
 | Email and staging isolation | Route actual OCI activation/identity and application emails to the authorized testing administrator in staging. Verify every external email path is covered, correct responsible-admin delivery and bounded retry/failure handling for create/import, deletion, shared-membership, ownership-transfer and person-offboarding action/failure notices. Verify routine successes and provider-only waits send no mail, changed/revoked responsible contacts block without fallback, and uncertain acceptance is never blindly resent. Production must reject staging override configuration. | [Email runbook](lifecycle-email-runbook.md) | Pending |
 | OKE schedules and recovery | Deploy reviewed infrastructure/configuration, verify daily drift/cost jobs and cleanup schedules run through the normal worker, and test least-privilege service access. Complete an in-region backup/restore drill against the 15-minute RPO/four-hour RTO targets. Verify corporate SSO and independent local recovery authentication in the hosted environment. | [Build/deployment design](../engineering-design/18-database-ci-and-build-order.md) | Pending |
+
+## Platform version and image promotion
+
+Status: **Pending**. [Implemented selection/input contract](platform-versions.md) uses mock-tested
+OCI option/Compute intersection; no live image or database upgrade was qualified.
+
+- Verify Actions environment values reach exactly their fixed staging/production roots as strings.
+  Rejected/missing/floating/malformed pins must not create a candidate or obtain deployment authority.
+- Query actual version/AARCH64/shape/OS options in Ashburn and verify the resolved image is the
+  newest approved eligible image, with a correct timestamp and no architecture/OS fallback.
+- Apply the exact reviewed saved staging plan and qualify actual ARM image/kernel, CNI, metadata,
+  Falcon health and application workloads. A fresh plan selecting a new image needs new acceptance.
+- Retain the whole selected image/version/architecture/OS record with trusted source/acceptance
+  evidence. Verify artifact provenance before production credentials; raw JSON agreement is not proof.
+- Exercise the implemented `otm.image_handoff` operator procedure against the accepted staging
+  cluster output, retain its private digest/evidence, and plan production with the resulting tfvars.
+  Confirm endpoints, state and worker cloud-init never enter the handoff or public workflow artifacts.
+- Publish a newer same-version image between staging and production and prove the reviewed
+  still-eligible staged image remains selected; reject missing/mismatched records and withdrawn IDs.
+- With the implemented managed database module, qualify service-supported majors and explicit upgrade
+  behavior, replacement prevention, backup/restore, extensions, migrations and matching CI coverage.
+  The source now includes a real database resource, but source tests perform no live creation/upgrade.
+
+## Enhanced OKE and worker bootstrap
+
+Status: **Pending**. [OKE/bootstrap source procedure](oke-foundation.md) and
+[traffic matrix](oke-network-traffic.md) are mock-tested intent, not live enforcement evidence.
+
+- Qualify the newest approved regional GA patch, exact version/ARM-filtered OKE image, OS/kernel,
+  A1 availability and AD/fault-domain placement. Reject unavailable pins, never substitute silently.
+- Provision only after explicit approval, with operator-reviewed private script and scoped IAM.
+  Confirm `areLegacyImdsEndpointsDisabled=true` on every launched/replacement compute instance;
+  verify IMDSv1 refusal, IMDSv2 availability, private node/pod VNICs and exact NSG attachments.
+- Qualify public API TCP6443 access from approved human sources with certificate verification and
+  actual OCI/Kubernetes authorization; deny unapproved sources. Verify external TCP12250/10250/22
+  remain closed, API IGW-only routing, private node/pod routing and no IPv6/public workload bypass.
+- Exercise node/pod registration, CNI, in-cluster DNS, kubelet inspection, OCI service access,
+  HTTPS registries/API/installer access and PMTU. Read back the effective NSG/security-list union.
+- **Falcon ARM64 compatibility is unknown.** Validate the private installer and sensor against A1,
+  the exact OKE image/kernel and required prerequisites. Confirm sensor service health, registration
+  and policy before application workloads; repeat for each replacement node. A Ready node alone is
+  insufficient. The reference bootstraps OKE before installing the sensor; account for that interval.
+- Confirm private full script retains OKE initialization, uses IMDSv2, has bounded verified downloads,
+  correct exit/failure reporting and approved installer integrity/version. Validate cloud-init failure
+  visibility and total metadata size, with no bearer URLs/secret script in public logs/artifacts.
+  Private state/versions/backups, saved plans and node metadata retain recoverable script bytes.
+- Change the approved script/image/version and prove `INSTANCE_REPLACE` cycling, one surge node,
+  zero unavailable, sufficient pod IPs, non-forced draining and restored sensor health on every node.
+- Qualify owned deployment `/32` admission, job identity/RBAC and cleanup after success/failure/
+  interruption. No job admission or full GitHub CIDR rule is supplied by this source slice.
+- Qualify the optional [Caddy/NLB backend/health rules and controller annotations](caddy-ingress.md), managed
+  database/TLS, scoped [workload IAM](oke-workload-identity.md) and held application manifests before marking the full app deployable. Their source exists; full launch composition and activation remain pending.
+
+## Network foundation
+
+Status: **Pending**. [Implemented source and offline operator guide](network-foundation.md) add
+network resources and the shared private-input renderer. The platform roots now also compose the
+OKE cluster/workers, managed PostgreSQL and workload Vault-read IAM described above. Optional Caddy ingress adds reserved-IP/NSG source and a held NLB renderer; no runner is included and no application is activated. No live
+resource was created during source qualification. Native mocks verify plans only.
+
+- Independently verify live target identity/compartment ancestry and regional service-prefix lookup;
+  check enterprise routing overlap and pod-IP capacity before applying the address plan.
+- Read back all subnet public-IP/internet-ingress flags, disabled IPv6, explicit security-list
+  associations and both empty security lists. Verify Edge and API use internet-gateway routes,
+  private nodes/pods route through NAT/services, and Database has no internet default.
+- Compare actual remote backend key, tenancy, namespace and bucket with the selected root and
+  independent bootstrap state. Test locking, interrupted operations and version recovery separately.
+- With later resources attached, verify edge allowlist enforcement and absence of alternate paths;
+  qualify required OKE/CNI/health-check egress and internal rules without broadening app admission.
+- Qualify actual PostgreSQL source VNIC/pod NSG membership and TLS. A created NSG does not establish
+  that a managed service honors the intended source path; never widen to whole-VCN/public access
+  merely to pass a connectivity test.
+- Qualify public endpoint administration/CI identity and narrowly scoped API access.
+  The selected public API admits approved humans directly. Job-specific runner `/32` admission, cleanup and authentication remain pending; no private runner is required by this design.
+
+## Terraform state bootstrap
+
+Status: **Pending**. Source and mock-only checks are in [infra](../../infra/README.md);
+the [operator procedure](terraform-state-bootstrap.md) requires approved tenancy access.
+
+- Verify the actual short-lived principal, intended tenancy, compartment ancestry and namespace.
+  Exercise a wrong namespace and a wrong-tenancy record, including a principal with access to
+  multiple tenancies. Labels/OCID syntax must not be treated as authorization.
+- Create staging's bucket first; verify private access, Standard storage, encryption, versioning
+  and the expected compartment. Repeat independently for production only after approval.
+- Protect and recover each environment's separate local bootstrap state and backup. Exercise
+  interrupted creation without losing ownership or attempting an independent duplicate creation.
+- Before remote delivery is enabled, qualify the later platform backend's separate state key,
+  concurrent-writer locking, interrupted lock recovery, version restore and least-privilege IAM.
+  Bucket creation alone does not establish these properties; no live retention lock is permitted
+  on mutable state or lock objects.
+- Verify deletion protections and access roles against direct OCI changes, not only Terraform's
+  configuration-dependent `prevent_destroy`. Keep state, plans, identifiers and credentials out
+  of public evidence and CI artifacts.
+
+No OKE, database, federation or live state migration is implemented by this bootstrap checkpoint.
+
+## Isolated environments and staging-first promotion
+
+| Planned live scenario | Steps / expected outcome | Status |
+| --- | --- | --- |
+| Tenancy/identity/state isolation | Provision separate staging and production parent/child populations and hosting resources in Ashburn. Prove staging credentials cannot access production OCI/Kubernetes/DB/Vault/state resources, and production jobs do not load staging credentials. Validate per-environment trust subjects, approvals, private registry pulls, target preflights and mandatory staging email override / production override rejection. | Pending |
+| Exact artifact promotion and negative gates | Build/attest one ARM release, deploy it to staging and complete applicable acceptance. Promote by release ID and confirm production uses the same image/platform and deployment-bundle identities, without rebuild. Reject arbitrary or mismatched source/run/artifacts, failed/incomplete acceptance, mutable-tag substitution, changed unreviewed inputs and wrong tenancy. Re-scan before promotion and reject newly blocking CVEs. Old candidate results cannot qualify another candidate. | Pending |
+| Separate infrastructure/settings release and rollback | Qualify the same Terraform/module/provider-lock revision in staging, then generate/review a separate production plan against isolated state and inputs. Re-plan on drift; never reuse staging plans. Qualify settings changes using the deployed image and separately validated production profile. Verify per-environment serialization, migration/worker drain, compatibility, post-deploy smoke and rollback to a previously qualified digest without DB/OCI replay. | Pending |
+| Administrator runbook walkthrough | After workflows and controls exist, an administrator other than the author follows the [hosted runbooks](hosted-administration.md) for application-only, infrastructure-only, combined and settings updates, manual backup and isolated restore without undocumented assistance. Replace proposed entry points with actual links/inputs/results; verify stop/recovery paths, irreversible-version handling and credential deadlines. Record observed duration, downtime, gaps and restricted evidence before go-live. | Pending |
+
+See [the environment and promotion contract](../engineering-design/24-environments-and-promotion.md). These cases require hosted staging/production resources; no cloud or deployment gate is qualified by local simulation alone.
+
+## Ashburn backup and restore qualification
+
+| Planned live scenario | Steps / expected outcome | Status |
+| --- | --- | --- |
+| Managed backup/PITR configuration and cost | In `us-ashburn-1`, validate the proposed daily/35-day backup and 35-day PITR policy, actual recovery-window endpoints, pre-change checkpoint expiry, backup survival after approved DB deletion and encryption/restore permissions. Measure baseline, incremental, WAL/PITR and manual-checkpoint storage without double counting or assuming compression; verify independent failure/freshness/retention/cost monitoring and retained keys. No runtime or ordinary application-deploy identity can delete backups. | Pending |
+| Full isolated in-region restore drill | Restore recent and older retained points across the drill program into explicitly owned private replacement systems, with sufficient quotas and no real child/email effects. Execute old-process fencing, endpoint/TLS/roles/schema/queue checks, invalidation of restored sessions, pending-work holds and OCI/Vault reconciliation under the existing manual restore runbook. Measure the 15-minute RPO / four-hour end-to-end RTO, retain evidence and remove owned drill systems only after review. No regional-loss recovery claim. | Pending |
+
+See the [backup policy and sizing proposal](../engineering-design/06-platform-and-delivery.md#ashburn-v1-backup-policy-proposal--13-november-2026) and [manual restore procedure](../engineering-design/17-recovery-and-release.md#manual-database-restore-runbook). These scenarios require managed-service staging access and have not been exercised locally.
 
 ## Canonical binding qualification
 
@@ -268,8 +393,8 @@ children/test mailboxes and exact scoped credentials; do not create another loca
 
 ## Initial multi-worker production qualification
 
-**Pending — staging/OKE and real OCI required.** Start one staging worker/one slot, then qualify the
-initial two-worker/one-slot-each production target from the
+**Pending — staging/OKE and real OCI required.** Qualify the same two-worker/one-slot-each
+topology, node/database sizing and software versions in staging and production, from the
 [accepted sizing decision](../engineering-design/06-platform-and-delivery.md#accepted-initial-worker-sizing--10-november-2026).
 Measure queue wait/provider latency and database connection use. Confirm unrelated-child progress,
 operation lock/claim exclusion, the per-child rotation pause, duplicate delivery, graceful and abrupt
@@ -325,3 +450,174 @@ Local source implementation does not establish either live result below.
 - On the selected musl-based image, qualify the actual OCI SDK and any introduced native libraries,
   remote PostgreSQL verify-full/CA behavior and authenticated lifecycle worker operations. Current
   image probes cover generic native jobs and local simulator composition, not those provider calls.
+
+## Managed PostgreSQL foundation
+
+Status: **Pending**. The [implemented source module](managed-postgresql.md) is mock-tested only.
+
+- Verify the approved major, E5 shape/resource bounds and uniquely compatible configuration against
+  actual Ashburn service results; confirm plan pins and no version/shape fallback.
+- Provision the strong initial administrator secret in the correct environment's Vault, verify exact
+  version/requester reads and separate custodian key-use grants, and confirm no secret content is exposed in plans, state or outputs.
+  Separately create least-privileged runtime/migration users; never use this provisioning login for pods.
+- Verify actual private database subnet/NSG attachments, no public endpoint, pod-only TCP5432,
+  rejection from other sources, FQDN/CA hostname-verified TLS and service SSL policy.
+- Load-test real query/queue/connection/history/WAL behavior, HA placement/failover, transient retries
+  and the initial two-node1OCPU/16GB capacity/performance choice before accepting cost/latency.
+- Verify DAILY35-day retention semantics, STANDARD35-day PITR coexistence, usable recovery-window
+  freshness, encryption/key custody, deletion survival, independent monitoring and backup cost.
+- Complete an isolated restore/cutover drill against15-minute RPO/four-hour RTO and repeat quarterly;
+  test both recent and older recovery points. Confirm backup/key permissions and replacement capacity.
+- On a disposable live staging DB, prove an unapproved major change plans replacement and is blocked
+  by prevent_destroy; mocks cannot exercise OCI custom diff. Qualify an explicit supported in-place
+  major upgrade with target configuration, checkpoint, maintenance window, application/driver/queue/
+  migration tests and opt-in reset. A downgrade must not silently replace the database.
+- Qualify initial Vault reference and later administrator-password rotation separately; updating a
+  secret or Terraform reference alone must not be assumed to rotate the existing database password.
+
+## Vault custody foundation
+
+Status: **Pending**. [Implemented security roots](vault-foundation.md) use mocked providers only.
+
+- Verify independent staging/production tenancy, hosting ancestry, actual group membership/principal,
+  state key/bucket grants and IAM propagation; no inherited policy may unintentionally bridge domains.
+- Verify no child compartments are created; both DEFAULT shared Vaults and enabled HSM AES256 keys use the selected existing hosting compartment; no
+  secret payload enters Terraform input, state, plan, GitHub logs/artifacts or public source.
+- Through the approved custodian, ingest a strong initial database password into its exact DB Vault/key in the selected hosting compartment. Retain only private OCID/version references and verify real DB provisioning
+  using the intended requester read grants; add no speculative broad service/tenancy fallback.
+- Prove provisioning readers can read only the intended DB-Vault secrets/metadata via exact Vault-ID conditions and cannot create,
+  update, move or delete them or read application-Vault secrets through other grants. Verify future workload
+  identities cannot read initial provisioning credentials. Source policy text is not effective IAM proof.
+- Verify manual master-key version rotation preserves decryption of retained old secrets and recovery
+  dependencies. Qualify the custodian's schedule/runbook and deletion/disable alerts before go-live;
+  shared Vaults do not claim private-vault automatic key rotation or cross-region recovery.
+- Review Vault/key lifecycle protections and private state recovery; confirm no app
+  deployment needs security-state or initial DB-administrator access. Terraform guards do not prevent
+  direct privileged deletion/disablement or configuration removal.
+
+## Single hosting compartment input
+
+Status: **Pending**. [Implemented input/renderer](hosting-compartment.md) is offline-tested only.
+
+- Configure each protected Environment's real OTM_HOSTING_COMPARTMENT_OCID only after verifying the
+  approved existing compartment in that tenancy. No synthetic live value, default or PR/fork override.
+- Confirm bootstrap bucket, all Vaults/keys/policies, networking, OKE and PostgreSQL are in that exact
+  compartment with no children created. Tenancy/namespace/label agreement is not ownership proof.
+- Verify workflow-sourced input/digest and reviewed saved plans; malformed/missing values stop before
+  mutation. Wrong-tenancy or unauthorized targets must fail under the actual identity/IAM.
+- With both Vaults in the same compartment, prove database readers can read the intended Vault's
+  secret/versions/bundles but cannot read application-Vault secrets, with no broad fallback grant.
+  Validate actual target.vault.id condition support for all required calls and effective inherited IAM.
+
+## Secret version retention and cleanup
+
+Status: **Pending**. The [keep-five planner/simulator/executor](../reference/secret-lifecycle.md)
+has no live adapter, rotation hooks, durable cleanup dispatch or hosted schedule yet. Historical
+retirement-proof and SQL projection experiments were removed following the owner's simplification.
+
+- Qualify the exact registered application Vault/region/secret binding and actual name length/charset;
+  platform/KMS/bootstrap secrets remain outside permanent child version retention.
+- Create more than five versions and verify only the newest five unscheduled versions remain, plus
+  protected CURRENT/PREVIOUS/PENDING and explicit operation pins. Unsorted inventory must not alter
+  selection; only older unpinned DEPRECATED versions qualify.
+- Force an unresolved/failed rotation and an execution pause: cleanup skips the secret. Qualify reuse
+  of the existing per-tenancy rotation reservation, including overlapping worker requests and release
+  after failures; no SQL transaction is held across SDK calls.
+- Verify complete pagination and actual active/pending quotas; scheduled but overdue versions still
+  count until purged. Confirm protected versions are never sacrificed to make room.
+- Schedule eligible versions at the approved delay, verify CURRENT remains usable, observe actual
+  irreversible purge and confirm capacity accounting. Never substitute whole-secret deletion.
+- Force provider permission/transport/revision failures: cleanup retries safely without extending
+  existing deadlines or misreporting a successful rotation as failed. Record scheduling/failures in
+  existing audit and qualify email incidents/pressure alerts.
+- Verify daily CronJob duplicate/missed-trigger handling and bounded durable worker work, including
+  paused restore behavior. No historical-retirement reconstruction or additional journal is required.
+- Qualify temporary bootstrap whole-secret cleanup separately after verified replacement access and
+  temporary-account removal. Never infer numeric Vault versions from local counters or opaque saved
+  simulator references.
+
+
+## Hosted Kubernetes workloads
+
+Status: **Pending**. The [disabled workload bundle](kubernetes-workloads.md) is source/schema-tested,
+not an active hosted application. No cluster, hosted runtime or migration command is composed yet.
+
+- Validate the actual selected OKE API version and Restricted Pod Security admission; qualify ARM64
+  digest/pull identity and node resource/surge/loss headroom. Confirm API/worker/migration use the
+  exact accepted image and environment-specific namespaces/settings.
+- Qualify named OCI workload identities, Vault custody, registry pulls, role-specific Kubernetes
+  credential references, PostgreSQL verify-full CA/hostname checks and migration/runtime SQL grants.
+- Implement/qualify hosted API and worker composition with no laptop fallback; readiness must reject
+  missing/wrong DB schema/role and use bounded checks. Liveness stays process-only. Measure password
+  hashing memory and connection pools against initial requests/limits; qualify the identical
+  two-worker/one-slot-each topology in staging before production deployment.
+- Qualify effective NSG/security-list rules and approved ingress, DNS, database, OCI/Vault and email
+  paths. Keep public application CIDRs restricted and trusted proxy/TLS boundaries explicit.
+- Prove migration runs only as an approved single-owner release step, fails visibly without automatic
+  retry/down-migration, and gates deployment. Reapplying the same Job must not silently rerun it.
+- Qualify worker SIGTERM/drain/deadline handling and partial external effects, API surge/availability
+  protection and immutable ConfigMap rollout/rollback. Verify no stale queued deployment wins.
+- Remove source-stage held commands/zero replicas/suspension only after these prerequisites and
+  staging acceptance are implemented. A local schema pass does not authorize production activation.
+
+
+### Selected OKE 1.37.0 qualification
+
+Owner-selected target is v1.37.0 in both environments. Oracle currently labels this OKE release
+preview; record that support limitation in deployment approval. Confirm us-ashburn-1 catalog/version,
+compatible ARM64 OKE image and add-on/CNI/sensor support before applying. Local mocked Terraform or
+Kubernetes1.37.0 schema checks do not establish service availability or production qualification.
+For future load balancers, explicitly size bandwidth and keep TLS Secret references in the same
+namespace; qualify the OKE1.37 behavior changes. No preview-to-GA or patch change happens implicitly.
+
+
+## Hosted startup and database qualification
+
+Pending staging: verify managed PostgreSQL DNS/CA chain and separate API/worker/migration grants; reject wrong CA/hostname and excessive runtime authority. Rehearse migration ownership, competing migration rejection, failure rollback and exact-schema readiness. Confirm proxy trust/HTTPS, Vault MFA reader, complete OCI/mail task registration, queue TLS and one slot per worker. Exercise SIGTERM API/worker drain under load, bounded DB/network outage handling, restore and schema-changing release sequencing. Source-only disposable TLS tests are not deployed evidence. See [startup contract](hosted-startup.md).
+
+
+## Vault retrieval and OKE identity
+
+Pending: deploy explicit service-account token/CA mounts and workload IAM scoped by exact cluster, namespace, service account and application Vault. Verify permitted metadata/bundle reads, wrong Vault/compartment and unauthorized-secret denial; confirm no database-provisioning access. Exercise workload token refresh, denied/expired identity, network/TLS failures, CURRENT changes and exact version reads. Validate no credential-file/node/simulator fallback and no plaintext in logs. Qualify each service consumer separately before activating held manifests. [Source/test boundary](../reference/vault-retrieval.md).
+
+
+## Laptop API-key development
+
+Pending tenancy access: register a dedicated development API key/profile and verify intended principal/region/tenancy, least-privilege development Vault and parent authority, denial for staging Vault access, real SDK signature verification and revoked-key errors. Qualify all OCI-triggered activation/owner emails go to the configured test address. Confirm laptop/local database and hosted staging manage independent child inventories without sharing credentials or state. Apply/review the minimal development custody Terraform root only with private inputs/state and verify Vault/key guards/effective IAM. Full live service/launcher composition remains pending; synthetic profile tests do not prove live permissions. [Runbook and source boundary](laptop-oci-development.md).
+
+
+## Hosted workload Vault identity
+
+Pending Enhanced OKE access: confirm both role service accounts can exchange projected default-audience tokens and read only the intended application Vault; verify numeric-version/CURRENT reads. Run nonroot, wait past token expiry and confirm directory projection/signing refresh without restarts. Deny wrong cluster, namespace, service account, compartment/Vault; verify migration and node identity gain no grant from these policies. Audit other broader IAM grants independently. Confirm CA ConfigMap existence, actual mode/group readability, issuer/audience/expiry, IAM propagation and required network paths. Ensure no local config mount/fallback and no token/secret values in logs. Keep workloads held until launch/service/network/DB-secret composition and staging rehearsal pass. [Source contract](oke-workload-identity.md).
+
+
+## NSG-only V1 network boundary
+
+Pending staging: verify effective union of attached NSGs/security lists/routes; inbound allowlists; private PostgreSQL TCP5432; OKE/CNI/proxymux and regional/public HTTPS paths; the implemented optional [Caddy load-balancer backend/health paths](caddy-ingress.md), after approved staging activation. Confirm no Atlas NetworkPolicy or policy-engine installation is expected; do not claim role/namespace network isolation. Audit actual metadata reachability, IMDSv1 disabled and node IAM lacking unintended Vault/parent privileges; NSGs do not filter link-local traffic. For SMTP, qualify approved relay IPs/port, matching app settings, verified TLS, routing and blocked unapproved destinations outside any other allowed rule. Removing an explicit relay rule must not be misreported as denying a broader overlapping OSN/CNI rule. See [approved source contract](nsg-only-networking.md).
+
+
+## External DNS and Caddy certificates
+
+Pending remaining release gates and domain/OCI access; targeted policy/native checks pass with two accepted findings and zero blocked findings: HTTP-01 is selected. Qualify external IPv4 A routing to the reserved address, real Let's Encrypt issuance/renewal, ordinary HTTP 404/no redirect/no app proxying, active challenge-only 80 and allowed/denied 443 through the exact edge NSG. Verify controller rule-management annotations, NLB source NAT/Local behavior, overwritten forwarding headers and API proxy trust, private NodePort/backend/health paths, infrastructure-owned StorageClass bootstrap, CSI encryption/nonroot ownership/placement and certificate/account-state backup/restore. Validate TLS/app health independently of TCP health. Keep separate environment state; do not publish AAAA or silently select a DNS plugin/alternative CA. Local Pebble protocol evidence is not public-CA or OCI qualification; the two exact official-Caddy DoS findings have owner-approved scoped exceptions, while any other/new HIGH/CRITICAL finding still blocks. No live deployment follows from the risk acceptance. See [design](../engineering-design/25-https-ingress-and-certificates.md) and [source review](caddy-ingress.md).
+
+## Immutable ARM64 release artifacts
+
+Status: **Pending**. [Implemented source](../reference/artifact-releases.md) and [review procedure](application-releases.md)
+do not establish hosted publication or staging acceptance.
+
+- Qualify the protected-master Checkpoint follow-on with exact standard SHA context and independent
+  run/five-job API validation. Deny forks/PR/manual/spoofed runs, stale source and partial job evidence.
+- On the actual native ARM runner, build each app/Caddy image once, inspect architecture/installed
+  migration/settings contract, scan saved image bytes with OS/language coverage and produce SBOMs.
+  App findings have no exception; recheck the exact approved Caddy policy and current official release.
+- Verify GHCR tag-to-digest/manifest identity and permissions, standard image/descriptor/public-source
+  provenance and image-bound SBOM attestations. Verify expected repository/workflow/ref/source and
+  exact subjects from trusted records; a matching JSON hash or arbitrary signed artifact is insufficient.
+- Exercise partial build/push/attestation failures without producing a qualified release. Confirm only
+  four public files upload, 90-day retention, no sensitive logs/config/image archives and separately
+  retained long-term descriptor/archive/SBOM/verified-attestation custody. Missing evidence blocks use;
+  never silently rebuild under old acceptance.
+- Qualify private OCI ARM pulls, registry credentials/rotation, actual staging deployment/render/schema
+  compatibility and trusted acceptance records. Verify production selects the exact accepted candidate
+  without rebuild and rejects fingerprint/source/platform/artifact substitution. These deployment and
+  authenticated acceptance workflows are not implemented by the current content-matching helper.

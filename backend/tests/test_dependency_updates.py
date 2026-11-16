@@ -47,7 +47,13 @@ def test_update_configuration_covers_actual_manifests():
     assert config["version"] == 2
     updates = {entry["package-ecosystem"]: entry for entry in config["updates"]}
     docker = updates["docker"]
-    assert set(docker["directories"]) == {"/", "/tools/trivy"}
+    assert set(docker["directories"]) == {
+        "/",
+        "/tools/trivy",
+        "/tools/kubeconform",
+        "/tools/caddy",
+        "/tools/pebble",
+    }
     for directory in docker["directories"]:
         assert (ROOT / directory.lstrip("/") / "Dockerfile").is_file()
     assert updates["github-actions"]["directory"] == "/"

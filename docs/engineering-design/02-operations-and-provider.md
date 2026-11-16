@@ -352,3 +352,8 @@ delete, dismiss, force-success or rewrite records merely to clear a badge. The c
 action hint, not command authorization or a guarantee a retry succeeds. Existing live authority/
 context guards still apply. No new table, state, acknowledgment, migration or generic retry control
 is introduced. See the [Operations guide](../reference/operations.md) for capabilities.
+
+
+## Read-only Vault adapter — 14 November 2026
+
+[Vault retrieval](../reference/vault-retrieval.md) implements an SDK-independent scope/result contract and concrete `_oci.py` reader, separate from all simulators. Identity is explicit: a [named laptop API-key profile](../how-to/laptop-oci-development.md) or [OKE workload identity with scoped IAM/token projection source](../how-to/oke-workload-identity.md). Reads verify exact registered custody scope before requesting bytes. No new provider registry, fallback, schema or browser endpoint. Full service composition, activation and live qualification remain pending.

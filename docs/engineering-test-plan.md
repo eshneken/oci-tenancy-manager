@@ -1361,3 +1361,107 @@ untrusted certificates/wrong hostnames, actual worker composition/drain and a se
 Procrastinate task. These checks do not replace OTM lifecycle/browser tests or remote database TLS
 qualification. The same existing Security and publication CI job runs fresh image build/scan checks;
 all five hosted check names, coverage thresholds and existing application-suite budgets remain intact.
+
+
+## Secret version cleanup source and remaining tests — 13 November 2026
+
+The owner-approved [keep-five policy](reference/secret-lifecycle.md) replaces historical retirement
+proofs and SQL projection experiments; their source-only tests/modules are removed. Required units
+cover retention at fewer/exactly/more than five versions, unordered/gapped version numbers, additive
+CURRENT/PREVIOUS/PENDING/explicit pins, unresolved rotation holds, invalid labels/incomplete inventory,
+already-scheduled protected versions, both quota pools, conditional-write races, partial-batch holds,
+lost-response replay, no deadline extension, actual simulated delayed purge and exact safe names.
+
+Worker integration must add disposable PostgreSQL/native-worker cases for reuse of the existing
+per-tenancy rotation reservation, current operation state, audit outcomes, durable daily retries and
+execution pauses. No new historical-proof query/journal is required. Current metadata-only changes
+need the complete backend unit coverage gate and focused units, not fake database integration tests.
+No new UI or schema is introduced. Real OCI/Vault IAM, quotas, name boundaries and purge remain
+Pending in the [manual manifest](how-to/real-oci-test-manifest.md#secret-version-retention-and-cleanup).
+
+
+## Disabled Kubernetes bundle qualification — 13 November 2026
+
+Units cover environment mismatch/local settings rejection, CIDR/email gate reuse, digest syntax,
+deterministic immutable settings/release identity, isolated role credential references, non-root/
+read-only/token-free pod security, resource/probe contracts, zero replicas, suspended migration,
+private non-overwriting outputs and fixed CLI failure receipts. Native Docker schema validation
+requires all18 staging/production resources to pass strict Kubernetes1.37.0 schemas, zero missing/
+skipped/errors and rejection of a deliberately invalid Deployment field. Script regressions cover
+missing Docker, timeouts, unexpected exits/counts, malformed validator output and ownership cleanup.
+No API-server/admission/live deployment is qualified. Hosted startup/readiness/drain/migration and
+OCI integration remain Pending in the [manual manifest](how-to/real-oci-test-manifest.md#hosted-kubernetes-workloads).
+
+
+## Hosted startup source regressions
+
+`backend/tests/test_hosted_runtime.py` covers fail-closed composition and configuration; `backend/tests/test_hosted_postgres.py` owns a disposable TLS PostgreSQL container for certificate/role checks, transactional migration rollback/locking, real local-auth HTTP and native queue execution. Hosted qualification remains [Pending](how-to/real-oci-test-manifest.md#hosted-startup-and-database-qualification).
+
+
+## Read-only OCI Vault boundary
+
+`backend/tests/test_vault_oci.py` uses real SDK models and intercepted real-client dispatch to test custody scope, content/identity/version guards, redaction, region selection and failure normalization. No cloud contact. Native dependency/image checks and unit coverage remain required. [Live identity/IAM cases](how-to/real-oci-test-manifest.md#vault-retrieval-and-oke-identity) remain Pending.
+
+
+## Laptop OCI identity regressions
+
+`backend/tests/test_platform_auth.py` uses generated disposable RSA keys and private temporary INI files. It covers named profile selection, strict complete-section/no-DEFAULT inheritance, wrong target/region, no browser/OKE fallback, file custody, settings/email guards, real SDK signer/client construction without network and simulator-launch rejection. Development custody Terraform has native mock plans; actual key registration, IAM and independent inventories remain in the [live manifest](how-to/real-oci-test-manifest.md#laptop-api-key-development).
+
+
+## Workload IAM and pod projection regressions
+
+`infra/modules/workload-vault-access/tests` compares exact read statements/roles and invalid target rejection; each platform root tests the cluster/Vault handoff. `test_kubernetes_release.py` covers OCI-only API/worker projections, token/CA permissions and no migration identity. Base schema candidates include both provider modes in both environments (32 resources). The later optional Caddy source expands the current required gate to 60 resources across six candidates, plus the invalid-field canary. [Live token/IAM/network cases](how-to/real-oci-test-manifest.md#hosted-workload-vault-identity) remain Pending.
+
+
+## NSG-only source regressions
+
+Bundle/schema tests require eight objects per variant and no NetworkPolicy in all four environment/provider-mode variants. The four base fixtures have 32 resources; the later optional Caddy fixtures expand current native validation to 60 valid resources plus the invalid-field canary. Terraform networking mocks cover explicit optional relay access and invalid CIDR/port bounds while preserving existing PostgreSQL/control-plane/CNI rules. No pod policy engine is installed or simulated; [live NSG/metadata/SMTP tests](how-to/real-oci-test-manifest.md#nsg-only-v1-network-boundary) remain pending.
+
+## Caddy HTTP-01 source and exact image-risk acceptance — 15 November 2026
+
+[Design](engineering-design/25-https-ingress-and-certificates.md) and [review guide](how-to/caddy-ingress.md)
+define the optional six ingress objects, including the infrastructure-owned cluster-scoped
+StorageClass. Base bundles remain eight objects; optional ingress candidates have 14. The current
+schema gate requires 60 valid resources (base simulated/base OCI/OCI+Caddy, two environments) and its
+invalid-field rejection. Earlier dated18/36/32-resource results retain their historical scope.
+
+Required source tests cover strict hostname/contact and six-field network handoff validation,
+independently matched environment/source CIDRs, separately pinned image, zero replicas/Recreate,
+retained 50 Gi RWO claim, no ingress token/app/DB authority, admin disabled, HTTP 404/no redirect,
+NLB Local/SNAT and exact public port 80/restricted 443/backend rules. Infrastructure flag defaults false.
+Native disposable Caddy/Pebble tests have passed real local HTTP-01 issuance, TLS/proxy/header checks,
+no ordinary HTTP upstream access, restart persistence and actual short-lived-certificate renewal.
+No public ACME/OCI contact occurs in these fixtures.
+
+On 15 November the owner approved only CVE-2026-116587/go-jose/v3 v3.0.5 and
+CVE-2026-78661/x/net v0.60.0 in the official Caddy 2.11.9 `usr/bin/caddy` binary, with retained findings,
+latest-official checks and continuous update proposals. These are accepted availability risks, not
+proven absence of exploit paths. [Policy tests](reference/caddy-security-exceptions.md) must reject
+other IDs, package/version/path/severity or Caddy release changes and malformed/incomplete reports. Same-release Dockerfile digest updates receive normal PR review and fresh native/scan checks; they need not invalidate matching accepted finding tuples. The
+policy-specific native rerun passed with two accepted and zero blocked findings, and the stricter evaluator rechecked that same scan successfully. The complete backend unit gate passed 2,861 cases at 95.4027% across 197 modules. No full milestone or hosted pass follows from this targeted checkpoint. All
+live DNS/NLB/CSI/certificate/state-recovery cases remain [Pending](how-to/real-oci-test-manifest.md#external-dns-and-caddy-certificates).
+
+## Immutable ARM64 application release source — 16 November 2026
+
+[Contract](reference/artifact-releases.md) and [review flow](how-to/application-releases.md) define a
+strict source/Checkpoint/build-run/attempt candidate with two immutable ARM64 image/SBOM references,
+public-source/schema hashes and actual accepted Caddy findings. Source tests reject fork/PR/manual,
+wrong SHA/workflow/path/run, missing/skipped/duplicate jobs, wrong repositories/platform/tags and
+fingerprint substitution. They exercise deterministic eight-member public tar generation, owned
+Git-archive exclusion of untracked inputs, installed-image contract mismatch and bounded commands.
+Synthetic scanner/SBOM negatives preserve OS+language coverage, strict findings and no app exception;
+Caddy retains only the approved narrow policy. Orchestration tests prove one build/push per image
+and no completed descriptor after failure, without calling real GitHub/GHCR or Docker publication.
+Workflow tests check ARM runner, guarded standard context, declared permissions, pinned actions,
+`create-storage-record: false` on all five attestation steps and exactly four uploaded files, not
+image-archive/log/cache/private-workspace dumps. No artifact-metadata write authority is needed.
+
+Targeted source results pass: 2,921 complete backend units at 95.4192% coverage across 198 modules,
+including 60 focused cases. Owned native application-container checks pass, and the installed-contract
+probe matched actual ARM64 image migration/settings metadata to source; the real-Git archive test
+passes. No registry publication/full milestone result is claimed. Real hosted trigger/permissions,
+native runner execution, scan/registry digest linkage, standard provenance/SBOM attestations, artifact retention,
+long-term verified custody and trusted acceptance consumption require [qualification](how-to/real-oci-test-manifest.md#immutable-arm64-release-artifacts).
+The current matching helper performs content equality only; it does not prove an authenticated
+staging pass. No deployment workflow, OCI trust bootstrap, actual publication or saved 8443 change
+is implied. All five required milestone/PR gates and 95% complete-source unit thresholds remain.

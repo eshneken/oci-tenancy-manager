@@ -23,6 +23,115 @@ image registry, secrets/KMS, telemetry and admin access. No VM may enable IMDSv1
 Define dev/simulator, integration, staging/pilot and production boundaries, allowed live credentials
 and disposable targets. Terraform manages hosting; application handlers manage bound child objects.
 
+## Shared inbound source allowlist — 13 November 2026
+
+Use one environment-scoped GitHub Actions variable, **`OTM_ALLOWED_SOURCE_CIDRS`**, for both
+hosted app ingress and each child tenancy's recovery-console perimeter. Values are a comma-separated
+list of canonical CIDRs, with multiple network ranges and individual addresses represented as IPv4
+`/32` or IPv6 `/128`. Reuse the [existing strict parser and bounds](22-credential-security-lifecycles.md#configuration-contract-and-github-actions):
+reject the whole candidate on missing/empty/malformed entries, host bits, or an unrestricted union;
+never default to public access. Operational values stay in environment variables/private deployment
+inputs, not source, examples, plan artifacts or logs. The approved initial three-entry list is retained
+privately; the saved laptop runtime is not changed by this hosted deployment decision.
+
+The same validated list supplies the Terraform `app_ingress_allowed_cidrs` input and
+`recovery_console.allowed_cidrs` in rendered application settings. The
+[network source foundation](../how-to/network-foundation.md) now implements this input and its private
+renderer; it is not an input to bucket bootstrap. OKE attachment and the optional [held Caddy ingress](../how-to/caddy-ingress.md) backend/health rules now exist as source. Deployment and live filtering remain unqualified.
+Keep these two consumers consistent during reviewed network/settings releases; changing a GitHub
+variable alone does not mutate either control. A widening must review both consequences; a removal
+must account for administrator lockout. Do not create separate independently editable lists.
+
+Restrict the app's internet-facing load balancer to TCP 443 from this union, covering both SPA and
+API traffic. Private nodes/pods/database must not expose a bypass through public IPs, alternate
+load balancers, NodePorts or management endpoints. Health checks use separately scoped internal
+rules, not a public health-check exception. SSO/session authorization and MFA remain required.
+Network admission uses the actual connection source, never a client-supplied forwarded-IP header.
+No public IPv6 listener is enabled until its allowlist enforcement is qualified. The owner subsequently approved reusing the human list for Kubernetes API TCP6443 only; it does not grant SSH, database or Kubernetes authorization. Runner admission stays separate.
+
+Inspect the **effective union** of load-balancer NSGs, subnet security lists and any controller-created
+rules: adding a restrictive NSG does not compensate for another permissive rule. Ensure Kubernetes
+load-balancer manifests explicitly set the supported source restriction rather than allowing an
+omitted value to create internet-wide access. See [Oracle's OKE load-balancer security guidance](https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contengconfiguringloadbalancersnetworkloadbalancers-subtopic.htm)
+and [listener ingress rules](https://docs.oracle.com/en-us/iaas/Content/Balance/Tasks/managinglisteners_topic-Enabling_Listeners_to_Accept_Traffic.htm).
+
+Staging/production environment variables are configured with the approved list and restricted to
+protected-branch deployments. Deployment workflows, production approval controls and actual network
+enforcement remain to be implemented and qualified; variable creation is not proof of protection.
+
+## Paid-tenancy platform direction and candidate sizing — 13 November 2026
+
+The [Enhanced OKE source follow-up](../how-to/oke-foundation.md) implements cluster/pool pins,
+private node/pod attachments and the [explicit traffic matrix](../how-to/oke-network-traffic.md).
+The owner approved a source-restricted **public** Kubernetes API for Lens/kubectl and hosted CI,
+superseding the private-endpoint/private-runner proposal. Human TCP6443 uses the existing shared
+allowlist; job-specific `/32` admission remains a separate deployment control. Node cloud-init is
+required from per-environment GitHub Actions secret `OTM_WORKER_CLOUD_INIT`, never a published script.
+Terraform state/plans and node metadata retain its base64 content; use restricted private custody.
+Falcon ARM64 compatibility is unknown and is a staging/go-live prerequisite. No live resources have
+been created or qualified by this source checkpoint.
+
+The owner confirmed a fully paid OCI tenancy, managed PostgreSQL, an Enhanced OKE cluster and
+multiple Kubernetes nodes. The family-grocery-list project is a reference for delivery patterns,
+not an Always Free capacity, networking or availability template. Prefer appropriately sized A1 ARM
+managed nodes, subject to region capacity and compatibility. The hosting compartment can remain in
+a tenancy separate from the managed parent. No cloud resource creation is authorized by this note.
+
+The accepted hosting target is `us-ashburn-1` (13 November 2026). Keep the region an explicit
+environment input with that default, not a baked-in provider constant. This does not select the
+managed parent's home region or restrict administrators' child-tenancy home-region choices.
+
+Use the newest generally available, region-supported OKE Kubernetes release compatible with the
+selected ARM node image and required add-ons. Pin the exact version through protected Actions inputs.
+The [image resolver](../how-to/platform-versions.md) selects a unique newest compatible version/ARM/OS
+image during a reviewed infrastructure plan; apply that saved plan and promote the exact staging
+selection. Replanning can change the image and requires renewed qualification; no floating Kubernetes
+version is accepted. Preview releases require a separate explicit decision. Disable IMDSv1 on every node.
+Validate ARM application images, native dependencies and add-ons, including native crypto, TLS and
+Psycopg smoke tests; an amd64 image or an emulated build alone does not qualify the ARM deployment.
+
+The following numbers are **engineering proposals for qualification, not accepted capacity or
+performance guarantees**:
+
+| Production component | Candidate starting point | Qualification condition |
+| --- | --- | --- |
+| Shared managed node pool | Three `VM.Standard.A1.Flex` nodes, each 2 OCPUs / 8 GB RAM | Spread across availability domains where available, otherwise fault domains; demonstrate remaining-node capacity during one-node loss and rolling updates, including system/add-on reservations |
+| API | Two small replicas, spread across nodes | Measure dashboard/feed latency, requests/limits, connection use and graceful drain; no dedicated API node pool initially |
+| Durable workers | Existing accepted target: two pods, one execution slot each | Shared native Procrastinate queue, per-tenancy exclusion, duplicate delivery and interrupted-write controls remain mandatory; extra nodes do not imply extra execution slots |
+| Managed PostgreSQL | Two `PostgreSQL.VM.Standard.E5.Flex` database nodes, each 1 OCPU / 16 GB RAM | Primary plus HA replica; validate target-region shape/configuration support, realistic history/query/queue load and failover; consider 2 OCPUs per node only if measurements justify it |
+| PostgreSQL storage performance | Lowest supported suitable performance tier | Measure query/write latency, storage growth, WAL and temporary spill before increasing the tier; no speculative premium tier |
+
+Prefer regional database placement in a multi-AD region. Initially use the primary endpoint for
+application reads and writes; the second node is for availability, not a new read-replica routing
+feature. Database HA and backup/PITR recovery are separate; retain the accepted in-region RPO/RTO
+targets and qualify restore independently. The database CPU architecture need not match ARM clients.
+
+OCI PostgreSQL automatically scales shared data/WAL storage independently of compute. Do not model
+it as a manually reserved application PVC or invent a large fixed data-disk allocation. Temporary
+storage is separate and shape-dependent. Budget and monitor data, indexes, retained immutable
+history, WAL, temporary/log usage and backups. Do not shorten approved history retention merely to
+meet a storage estimate. Production sizing must include future feed/audit/job history, not just the
+approximately 250 current employee rows.
+
+The owner requires staging to mirror production: both use two API pods and two worker pods with
+one slot each, matching node/database sizing, HA topology, versions and deployment behavior. The
+saved local worker remains unchanged. Qualify multi-worker and database-failover acceptance in
+this same staging topology. Bound total SQL pools across API, workers, native queue consumers, scheduled
+jobs, migrations and reserved operator capacity, including rollout surge. Start with one shared node
+pool; split or scale it only for measured resource contention or required isolation. Track queue age,
+credential deadlines, provider throttling, CPU/memory pressure, database lock/connection waits and
+dashboard query latency. Raise worker parallelism based on measured service limits and queue latency,
+not solely on spare CPU. No runtime settings, pool counts or deployment resources are implemented here.
+
+Platform qualification sources:
+[OKE supported versions](https://docs.oracle.com/en-us/iaas/Content/ContEng/Concepts/contengaboutk8sversions.htm),
+[OKE workload identity](https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contenggrantingworkloadaccesstoresources.htm),
+[PostgreSQL shapes](https://docs.oracle.com/en-us/iaas/Content/postgresql/supported-shapes.htm),
+[PostgreSQL HA](https://docs.oracle.com/en-us/iaas/Content/postgresql/high-availability.htm),
+[PostgreSQL storage](https://docs.oracle.com/en-us/iaas/Content/postgresql/storage-best-practices.htm),
+[PostgreSQL performance tiers](https://docs.oracle.com/en-us/iaas/Content/postgresql/performance-tiers.htm).
+Recheck live region/service capabilities before selecting or provisioning the pinned environment.
+
 ## Database production design
 
 Review the ten-table prototype before proposing additions. Use Alembic expand/contract migrations,
@@ -53,6 +162,72 @@ DB endpoint/network cutover, schema/queue compatibility, secrets, unknown effect
 Oracle's [PostgreSQL PITR documentation](https://docs.oracle.com/en-us/iaas/Content/postgresql/point-time-recovery.htm)
 says a point-in-time restore creates a new DB system. Plan endpoint/network cutover and validation,
 not an assumed in-place rewind. This is documented capability, not an executed restore qualification.
+
+### Ashburn V1 backup policy proposal — 13 November 2026
+
+The owner confirms `us-ashburn-1` as the hosting region and excludes a second-region DR site from
+V1. The following retention, monitoring and drill settings are engineering proposals to qualify in
+that region; they are not deployed policies, measured storage usage or service guarantees.
+
+| Control | Proposed V1 setting / acceptance |
+| --- | --- |
+| Point-in-time recovery | Enable with a 35-day window; verify the actual earliest/latest recoverable timestamps. Daily backup alone cannot meet the accepted 15-minute RPO |
+| Scheduled backups | Daily managed-service backups in a configured UTC window, retained for 35 days; qualify coexistence and accounting with the PITR policy, without implementing another backup engine |
+| Pre-change checkpoints | On-demand backup before destructive/high-risk schema, database or platform changes, with explicit seven-day expiry unless an incident requires an approved extension; never delete the last verified usable recovery source as routine cleanup |
+| Availability | Existing proposed two-node DB system with regional placement; HA/failover does not replace backup or protect against logical mistakes |
+| Restore exercises | Full isolated restore before go-live, at least quarterly afterward, and after material backup/restore/platform changes; include a recent restore point and an older retained point across the drill program |
+| Recovery objective | Retain D51/D52: at most 15 minutes of committed-data loss and application recovery within four hours, in-region only; measure usable application recovery, not just database creation |
+| Monitoring | Independently monitor backup failure/age, PITR being disabled or inactive, recovery-window freshness approaching/exceeding the RPO, retention-policy drift, storage growth and restore-drill age; alerts must work while Atlas/its DB is down |
+| Custody | Provider-managed encrypted backups; qualify chosen encryption-key access, backup retention/deletion permissions and restore permissions. API/worker and ordinary application-deployment identities receive no backup-delete authority |
+| Deletion/restore guard | Reviewed destructive Terraform plans and database lifecycle protections; retain backup/key access and capacity for a replacement DB system. A removed Terraform resource definition or privileged operator can bypass a lifecycle guard, so it is not the only control |
+
+Backup storage is a measured, automatically managed service cost rather than a preallocated PVC or
+fixed disk size. Oracle documents a first full backup followed by incremental backups; do not budget
+35 independent full copies by default, assume a compression/deduplication ratio, or multiply the
+logical backup chain by the number of HA compute nodes. Include changing blocks, retained WAL/PITR
+volume history, retained manual checkpoints and actual service billing categories. Keep growth of
+source snapshots, operation/audit history, queue churn, indexes and maintenance writes in the model;
+new-row size alone does not predict changed-block or WAL volume.
+
+Use `baseline backup bytes + retained incremental bytes + separately accounted PITR/WAL bytes +
+manual-checkpoint bytes + headroom` as a planning worksheet, reconciling it with service reporting
+so shared or already-accounted bytes are not charged twice in the estimate. For illustration only:
+a 10 GiB baseline plus 1 GiB/day of combined additional retained backup/PITR bytes for 35 days is
+about 45 GiB before checkpoints/headroom. Two additional hypothetical 10 GiB checkpoints plus 25%
+headroom bring that to about 81 GiB; a rounded 100 GiB cost-planning allowance is a provisional
+scenario, not a forecast, allocation or hard retention cap. Confirm actual backup/WAL footprint and
+growth during a representative pilot (including maintenance and a baseline rollout), replace the
+assumptions with measured data and review cost regularly. Do not silently shorten recovery windows
+or immutable audit retention to meet that allowance. Budget transient restore-drill compute and
+service quota capacity separately; no idle duplicate database is required outside a drill.
+
+Restore into a separate private system with outbound application effects, workers, schedulers and
+mail delivery fenced. Exercise [the existing simple manual restore procedure](17-recovery-and-release.md#manual-database-restore-runbook):
+prove old-process fencing, endpoint/TLS/role/migration compatibility, historical integrity, fresh
+authentication, restored pending-work holds and reconciliation with current OCI/Vault state before
+an administrator resumes mutations. A drill must not act against real child tenancies or send real
+notifications. Exercise process fencing on the owned test installation, without stopping the healthy
+production deployment; the real incident procedure still requires fencing the original installation.
+Keep restored data, credentials and detailed drill logs restricted, outside source and CI artifacts.
+Record timestamps, actual recovery gap, end-to-end recovery duration and results;
+remove only the explicitly owned drill system after review. Backups do not restore Vault or reverse
+OCI effects, and there is no new coordinator, external effect journal or automatic queue replay.
+
+Future DR is a separate design/qualification milestone. Oracle currently documents that backups
+of PostgreSQL systems with regional data placement cannot be copied to another region. Therefore
+do not promise to add cross-region DR by simply toggling backup-copy configuration on this regional
+HA design. Reassess supported replication/copy/export mechanisms, placement, key/network custody,
+cost and separate regional-loss RPO/RTO then. V1 retains no standby region and makes no regional-loss
+recovery promise. Independent indefinite application audit retention is not indefinite backup retention.
+
+Service facts checked 13 November 2026:
+[backup mechanics, retention and copy limits](https://docs.oracle.com/en-us/iaas/Content/postgresql/backups.htm),
+[PITR and replacement DB systems](https://docs.oracle.com/en-us/iaas/Content/postgresql/point-time-recovery.htm),
+[backup billing](https://docs.oracle.com/en-us/iaas/Content/postgresql/billing.htm),
+[manual backup expiry](https://docs.oracle.com/en-us/iaas/Content/postgresql/create-backup.htm),
+[backup survival after DB deletion](https://docs.oracle.com/en-us/iaas/Content/postgresql/delete-db.htm).
+Reconfirm retention/deletion semantics, policy coexistence, recoverability, encryption and monitoring
+API fields in the Ashburn pilot rather than inferring them from backup labels or a successful plan.
 
 ## CI/CD and operational acceptance
 
@@ -108,12 +283,13 @@ capabilities from a target number.
 |---|---|---|---|
 | Laptop / CI | Synthetic or approved local feed data; simulated OCI/Vault/email | Local organization logic, disposable PostgreSQL, facade failure injection | Repeatable setup, schema/model parity, crash/race and UI checks |
 | Integration | Isolated app/DB; approved disposable targets only | Runner/managed-PostgreSQL integration and explicitly authorized adapter probes | Same-transaction enqueue, actual service privileges, safe secret handling |
-| Staging / pilot | Separate hosting configuration, DB and scoped secrets; restricted real children | Reviewed create/import/config/access/cost scenarios; approved email test recipients | Capability matrix, observed limits, rollback/restore drill and operator signoff |
-| Production | Production DB, secrets and SSO entitlement; registered organization targets | Reviewed V1 operations behind all normal guards | Release evidence, monitoring, recovery ownership and runbooks |
+| Staging / pilot | Separate OCI parent/children and isolated hosting tenancy/resources, DB, state, secrets and deployment identities; restricted real children | Reviewed create/import/config/access/cost scenarios; approved email test recipients | Candidate-bound acceptance, capability matrix, observed limits, rollback/restore drill and operator signoff |
+| Production | Its own OCI parent/children and isolated hosting tenancy/resources, DB, state, secrets and entitlement; no staging authority | Reviewed V1 operations behind all normal guards, using only staging-qualified release artifacts | Exact digest promotion, release evidence, monitoring, recovery ownership and runbooks |
 
 Propose one repository, one modular Python service image, an API deployment and separate worker
 process roles. Use the same immutable image digest for those roles; no per-feature microservices.
-Serve the responsive frontend as a separately built immutable asset artifact. Kubernetes CronJobs
+The installed image contains the compiled responsive frontend and migration assets; no separate
+frontend rebuild occurs during promotion. Kubernetes CronJobs
 only trigger due work; occurrence uniqueness and database transactions remain authoritative even if
 Kubernetes duplicates a trigger. Reserve worker capacity for due credential rotation/recovery so a
 fleet scan cannot starve it. Exact runner queues, replicas, pod budgets and resource sizes require
@@ -205,6 +381,11 @@ missing history or target misses honestly. Exact backup/PITR retention and servi
 remain implementation qualification; the target does not imply automatic replay or zero data loss.
 
 ### CI/CD gates and promotion
+
+The [two-environment deployment contract](24-environments-and-promotion.md) requires staging's own
+OCI parent tenancy, separate production tenancy/resources/identities/state and build-once promotion.
+Separate GitHub entry points build the app, plan/apply each environment's infrastructure, deploy to
+staging and promote the exact qualified release to production. Settings retain their separate path.
 
 D53 requires protected `master` as the integration/default branch, with one migration/contract owner.
 All required tests run on every CI build, with unit-only line coverage at least 95%. Require Playwright
@@ -394,11 +575,13 @@ feature merges; scans or hosted controls are not configured merely by documentin
 
 ## Accepted initial worker sizing — 10 November 2026
 
-Start staging with one worker pod and one execution slot. Measure actual OCI request duration,
-queue wait, credential-closure timeliness and contention before adjusting it. The initial production
-target is two small worker pods with one slot each, qualified together before deployment. This
-provides process availability and allows unrelated tenancies to progress while another provider call
-waits. The local saved worker remains one process/one slot; this decision does not deploy pods.
+Superseded on 13 November 2026: staging must mirror production. Both target two worker pods with
+one execution slot each and two API pods, with identical node/database capacity, software versions,
+security/deployment controls and resource budgets. Measure OCI request duration, queue wait,
+credential-closure timeliness, contention and node-loss/surge headroom in that staging topology
+before promoting the exact tested release. Environment identities, credentials/endpoints and the
+staging email redirection stay isolated. The local saved worker remains one process/one slot; no
+pods are deployed by this decision.
 
 Workers share the existing PostgreSQL/Procrastinate queue; no separate queue service or scheduler
 is added. Native operation locks and application claim/revision checks remain required. The
@@ -423,3 +606,29 @@ runtime stages. The Debian candidate's remaining OS findings are not blanket-exe
 base must pass native crypto/TLS/database/job compatibility and strict OS/Python image scanning.
 The existing security CI lane owns that image gate; base updates require a fresh uncached build
 and reviewed dependency changes. No arbitrary shared-library removal or hand-maintained distro.
+
+### Managed PostgreSQL source follow-up — 13 November 2026
+
+The [managed database source guide](../how-to/managed-postgresql.md) records the implemented private two-node resource, service configuration/shape discovery, Vault-reference provisioning, backup/PITR intent and upgrade safeguards. These source checks do not qualify the proposed capacity, backup freshness, restore targets or live version transitions. Runtime roles, Vault/IAM wiring and hosted monitoring remain separate slices.
+
+### Vault custody source follow-up — 13 November 2026
+
+The [Vault/IAM foundation](../how-to/vault-foundation.md) creates separate database-provisioning/application Vaults and HSM AES256 keys in one existing hosting compartment in separate environment security roots. Initial secret ingestion remains outside Terraform; an approved existing provisioning group gains only exact-Vault-conditioned database-secret/Vault reads. Runtime workloads, federation, effective IAM, key rotation and service recovery still require their own qualification.
+
+
+## V1 network simplification — 14 November 2026
+
+[Approved NSG-only source](../how-to/nsg-only-networking.md): no pod policy engine and no generated NetworkPolicy. Existing NSG matrix remains; optional explicit SMTP CIDRs/port465 or587 add only relay rules. No claim of per-pod network isolation or link-local metadata filtering. IMDSv1 stays disabled, workload IAM stays separate from node authority, and actual rule unions/routing/metadata/SMTP behavior require staging qualification.
+
+## Caddy HTTP-01 source checkpoint — 15 November 2026
+
+[Accepted ingress design](25-https-ingress-and-certificates.md) and [review procedure](../how-to/caddy-ingress.md): external DNS remains operator-managed; public port 80 serves active ACME challenges only, ordinary HTTP 404, HTTPS 443 remains source-restricted. Separate pinned Caddy image, held single-writer ingress/PVC and exact NLB/NSG handoff are implemented as source. StorageClass bootstrap needs infrastructure authority, not app CI cluster-admin. Native Pebble issuance/renewal/restart/header tests pass. On 15 November the owner accepted two exact official-image DoS findings under the [scoped continuous-update policy](../reference/caddy-security-exceptions.md); targeted policy/native checks pass with two accepted and zero blocked findings, while full milestone/hosted/live gates remain separate. Real OCI/Let's Encrypt and persistent-volume recovery remain unqualified.
+
+## Immutable ARM64 build source — 16 November 2026
+
+[Candidate fields and trust boundary](../reference/artifact-releases.md) and [operator review](../how-to/application-releases.md):
+exact successful master-push Checkpoint source, native ARM64 app/Caddy build-once source, actual-image
+scans and SBOMs, standard GitHub attestations and four allowlisted public files. Git archive plus
+Docker filtering excludes local private build inputs. Hosted publication/attestation, 90-day versus
+long-term evidence custody, OCI pulls and staging/production acceptance remain unqualified. No OCI
+deployment, app/table/UI change or saved 8443 update occurs in this source checkpoint.

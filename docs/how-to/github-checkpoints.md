@@ -38,7 +38,7 @@ no force pushes and no branch deletion. Real OCI/deployment qualification remain
 | Frontend unit coverage | Executed, unskipped unit tests; complete-source line coverage at least 95%; generated types and build |
 | PostgreSQL and Playwright | All postgres marked tests, including real HTTP/worker/browser flows and locally captured email; disposable Docker PostgreSQL, no saved app database |
 | Security and publication | Full candidate privacy/asset guard, pinned Gitleaks, Bandit and locked Python/JavaScript dependency audits |
-| Documentation and contracts | All candidate documentation links/images, top-level section index, generated schemas and design contract checks |
+| Documentation and contracts | All candidate documentation links/images, top-level section index, generated schemas, design contract checks and native mock-only Terraform bootstrap/network tests |
 
 All lanes run for every pull request to `master`, every push to `master`, and manual workflow dispatch.
 There are no path-based skips. No private logs, test databases, screenshots or credential files are
@@ -52,7 +52,7 @@ job invokes `scripts/run_backend_postgres_tests.py` (`-m postgres`). Together th
 backend test once across the required lanes. The integration job no longer repeats units already
 owned by the independently required coverage job. Frontend units remain a separate required job.
 This changes test orchestration only: assertions, unit scope, the 95% threshold and required hosted
-checks remain intact. The user approved a 600-second aggregate integration budget; individual test
+checks remain intact. The current approved aggregate integration budget is 900 seconds; individual test
 limits remain unchanged. A lane's missing/skipped/timed-out evidence blocks
 merge; a passing companion lane cannot compensate. [Canonical policy](../engineering-test-plan.md#complementary-backend-test-lanes).
 

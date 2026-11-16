@@ -482,8 +482,7 @@ def test_bootstrap_key_preparation_preserves_handoff_and_replay(registry):
     ):
         view = flow.progress(connection, row, app.facade, bootstrap_keys=app.bootstrap_keys)
     assert (
-        view.public_key == "public-metadata"
-        and "prepare_bootstrap_key" in view.available_actions
+        view.public_key == "public-metadata" and "prepare_bootstrap_key" in view.available_actions
     )
 
 

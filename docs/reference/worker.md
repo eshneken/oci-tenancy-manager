@@ -203,8 +203,8 @@ See [authority, attempts and all persisted fields](user-presence-checks.md). Loc
 ## Initial staging and production sizing
 
 The [accepted platform sizing](../engineering-design/06-platform-and-delivery.md#accepted-initial-worker-sizing--10-november-2026)
-starts staging at one worker/one slot and targets production at two independently qualified workers,
-one slot each. The saved local app stays one worker. Shared queue locks and business-state fences
+now requires staging to mirror production: two workers with one slot each in both environments,
+with matching versions, resource limits, node/database capacity and deployment controls. The saved local app stays one worker. Shared queue locks and business-state fences
 still govern each operation; an interrupted uncertain write is not automatically retryable just
 because another worker is available. Actual OKE replica/connection settings and live timings remain
 staging/pilot qualification, not an implemented local deployment change.

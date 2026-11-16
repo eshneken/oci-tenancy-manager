@@ -1,0 +1,19 @@
+{
+  "caddy_version": "2.11.9",
+  "approved_on": "2026-11-15",
+  "reason": "Owner accepts these two dependency denial-of-service risks while using the latest official stable Caddy release and continuously checking updates. Exploit-path unreachability is not established. No other vulnerabilities are exempted.",
+  "exceptions": [
+    {
+      "id": "CVE-2026-116587",
+      "package": "github.com/go-jose/go-jose/v3",
+      "version": "v3.0.5",
+      "severity": "HIGH"
+    },
+    {
+      "id": "CVE-2026-78661",
+      "package": "golang.org/x/net",
+      "version": "v0.60.0",
+      "severity": "HIGH"
+    }
+  ]
+}

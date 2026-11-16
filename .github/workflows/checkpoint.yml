@@ -127,6 +127,17 @@ jobs:
           version: '0.13.5'
           enable-cache: false
       - run: uv sync --project backend --locked
+      # Native provider mocks validate both isolated roots; no OCI credentials or backend access.
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4
+        with:
+          terraform_version: '1.15.5'
+          terraform_wrapper: false
+      - run: bash scripts/check_infrastructure.sh
+      # Synthetic held manifests only; no kubeconfig, OCI credentials or apply.
+      - run: uv run --project backend python scripts/check_kubernetes_bundle.py
+      - run: uv run --project backend python scripts/caddy_image_policy.py
+      # Real isolated Caddy/ACME protocol tests and ingress image scan; no real CA or saved instance.
+      - run: uv run --project backend python scripts/check_caddy_ingress.py
       - run: uv run --project backend python scripts/export_backend_contracts.py --check
       - run: uv run --project backend python scripts/check_design_docs.py
       - run: uv run --no-project scripts/check_c5_contracts.py

@@ -1,11 +1,39 @@
 # Updates propose reviewed pull requests; they never merge or deploy automatically.
 version: 2
 updates:
+  # One reviewed proposal keeps the shared provider and both environment locks aligned.
+  - package-ecosystem: terraform
+    directories:
+      - /infra/modules/state-bootstrap
+      - /infra/environments/staging/bootstrap
+      - /infra/environments/production/bootstrap
+      - /infra/modules/secret-foundation
+      - /infra/environments/staging/security
+      - /infra/environments/production/security
+      - /infra/modules/postgresql
+      - /infra/modules/oke
+      - /infra/modules/networking
+      - /infra/modules/workload-vault-access
+      - /infra/environments/development/custody
+      - /infra/environments/staging/platform
+      - /infra/environments/production/platform
+    schedule:
+      interval: weekly
+      day: monday
+      time: '11:00'
+      timezone: Etc/UTC
+    open-pull-requests-limit: 1
+    groups:
+      terraform-providers:
+        patterns: ['*']
   # One grouped weekly PR covers application build/runtime images and the scanner engine pin.
   - package-ecosystem: docker
     directories:
       - /
       - /tools/trivy
+      - /tools/kubeconform
+      - /tools/caddy
+      - /tools/pebble
     schedule:
       interval: weekly
       day: monday

@@ -8,6 +8,10 @@
 
 ## Keep identity and outbound routing separate
 
+Staging and production use [separate OCI parent tenancies and isolated delivery/runtime identities](24-environments-and-promotion.md).
+Promote the same application image, not staging's complete settings: its test destination and OCI
+bindings must never become production inputs. Production profile validation remains mandatory.
+
 Employee email remains the canonical organization identifier. Feed records, manager references,
 stable person/tenancy relationships, SSO issuer/subject and login identities are not rewritten to a
 test mailbox. The environment email override is an operator-owned delivery/contact policy, not an
