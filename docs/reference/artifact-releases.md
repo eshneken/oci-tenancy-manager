@@ -1,13 +1,14 @@
 # Immutable ARM64 application release candidates
 
-16 November 2026 · Implemented publisher and read-only integrity consumer · No hosted publication or deployment
+16 November 2026 · Implemented publisher and read-only integrity consumer · Genuine hosted publication/signatures qualified; no OCI deployment
 
 [Operator review](../how-to/application-releases.md) · [Promotion design](../engineering-design/24-environments-and-promotion.md)
 
 A candidate binds one protected source commit, successful Checkpoint run, publishing run/attempt,
 two immutable image references, their SBOMs, public deployment source and installed schema contract.
 It is **not staging acceptance**. The pure models/helper add no HTTP endpoint, database table,
-application workflow or deployment authority. Hosted registry/attestation and OCI qualification remain pending.
+application workflow or deployment authority. Native publication and genuine laptop signature checks
+are qualified below; hosted dispatch, remaining custody cases and OCI qualification stay pending.
 
 ## Contract and field dictionary
 
@@ -71,7 +72,7 @@ The source job targets `ubuntu-24.04-arm`, serializes publication by source SHA 
 in-flight work, and requests only contents/actions read plus GHCR package and GitHub attestation
 publication permissions. GitHub attestation OIDC is distinct from OCI federation; this workflow has
 no OCI credentials, Terraform/apply, Kubernetes target or staging/production Environment authority.
-No hosted execution is claimed before the source workflow is published and qualified.
+The genuine hosted publisher execution is qualified below; deployment and acceptance remain separate.
 
 ## Build, inspect, scan and publish
 
@@ -164,9 +165,9 @@ No publication, push/merge, cloud resource or saved 8443 change is part of this 
 
 ## Read-only authenticated integrity verification
 
-`scripts/verify_application_release.py` invokes `otm.release_verification.main`. Three required selectors
-are `--directory` (an operator-downloaded four-file directory), `--repository` (trusted expected
-GitHub owner/repository) and `--run-id` (trusted expected publishing run ID). It neither downloads
+`scripts/verify_application_release.py` invokes `otm.release_verification.main`. Select exactly one input mode: `--directory` (four existing public files) or `--download`
+(the selected run’s current successful publishing attempt). Both require `--repository` (trusted
+expected GitHub owner/repository) and `--run-id` (trusted expected publishing run ID). It neither downloads
 arbitrary archives nor accepts attestation JSON, custom trust roots, unsigned fallbacks or pass flags.
 The shared `BUNDLE_FILES` allowlist lives in `otm.artifact_release`; the publisher and verifier use the
 same unchanged seven-source-file contract plus generated settings schema. Descriptor format stays 1.
@@ -223,7 +224,7 @@ References: [GitHub CLI verification](https://cli.github.com/manual/gh_attestati
 [ref-matching advisory](https://github.com/cli/cli/security/advisories/GHSA-4mq3-hpgx-9cx8),
 [workflow-run attempt API](https://docs.github.com/en/rest/actions/workflow-runs#get-a-workflow-run-attempt).
 
-### Integrity-consumer source checkpoint — 16 November 2026
+### Historical integrity-consumer source checkpoint (before hosted qualification)
 
 The complete backend unit-only gate passes **2,982 tests**, with **95.4638%** line coverage across
 199 application modules; this includes **119 focused candidate/publisher/verifier tests**. The
@@ -236,3 +237,33 @@ This is a targeted source checkpoint after the preceding full platform qualifica
 PostgreSQL/browser suite is not rerun for this read-only CLI-only addition; required complete
 milestone/PR gates remain mandatory before its next PR. Genuine hosted cryptographic verification,
 registry authorization, OCI deployment and authenticated staging acceptance remain Pending.
+
+## Repeatable verification workflow and genuine qualification — 16 November 2026
+
+`verify_run` authenticates current publishing metadata before a native `gh run download` into a
+fresh private temporary directory. Artifact name is derived from exact source/run/attempt; callers
+cannot supply an archive URL, artifact name, output path or verification JSON. GitHub CLI 2.102.0+
+includes both the signature-policy and [symlink extraction fixes](https://github.com/cli/cli/security/advisories/GHSA-39wj-f2f4-978v).
+The normal verifier rechecks all signed subjects and binds its resulting source/attempt to the initial
+selection. Downloaded data is never executed; cleanup runs on success/failure. Native download and
+extraction happen before file-read bounds, so those bounds are not an extraction-disk quota.
+Directory mode continues to support exact earlier successful attempts; download mode fails if the
+currently selected publishing attempt is not successful.
+
+`.github/workflows/verify-application-release.yml` exposes one string input, `build_run_id`, through
+manual dispatch from master only. Protected verifier source is checked out by exact workflow SHA.
+Job permissions are read-only contents/actions/packages/attestations; it has no environment, OIDC,
+cloud, publication or deployment grant. Existing pinned checkout/Python/uv/registry-login actions
+are reused. Input enters Python through quoted environment values, never expression interpolation
+into shell code. The existing job token supplies ephemeral registry authentication; cleanup logs out.
+The workflow uploads no artifact/report and grants no acceptance authority.
+
+[First native ARM release](https://github.com/eshneken/oci-tenancy-manager/actions/runs/43901645180)
+completed on protected source after all five Checkpoint jobs passed. Its two ARM64 images and
+four-file artifact were published with the five expected attestation steps. The laptop automatic
+consumer verified all six genuine provenance/SBOM subjects with exact source/run/attempt identity.
+An authenticated temporary registry configuration fixed the expected failure of unauthenticated
+image reads; credentials were removed afterward. Genuine cryptographic rejection of a modified
+descriptor and metadata rejection of a Checkpoint run also passed. This does not qualify every
+negative path, retention/restore, hosted manual dispatch, OCI pulls/deployment or staging acceptance.
+Earlier source-only checkpoint statements above are historical and do not supersede this evidence.

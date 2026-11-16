@@ -3,6 +3,7 @@
 import io
 import json
 import os
+import re
 import subprocess
 import tarfile
 from pathlib import Path
@@ -381,3 +382,161 @@ def test_gh_requires_existing_absolute_binary(monkeypatch, resolved):
     monkeypatch.setattr(verify.shutil, "which", lambda _: resolved)
     with pytest.raises(ValueError, match="RELEASE_GITHUB_CLI_UNAVAILABLE"):
         verify.gh(["--version"])
+
+
+# A run download stays within a new private directory and reuses every existing signature check.
+def test_native_download_and_verify(tmp_path, monkeypatch):
+    item, _, files, calls, build, *_ = github_fixture(tmp_path, monkeypatch)
+    original = verify.gh
+    downloaded = []
+
+    # Native gh extraction is replaced only in tests; the real verifier still checks frozen bytes.
+    def download(arguments):
+        if arguments[:2] == ["run", "download"]:
+            work = Path(arguments[arguments.index("--dir") + 1])
+            assert work.is_absolute() and work.stat().st_mode & 0o777 == 0o700
+            assert arguments[2] == "2"
+            assert arguments[arguments.index("--repo") + 1] == "github.com/" + item.repository
+            assert (
+                arguments[arguments.index("--name") + 1] == "application-release-" + item.release_id
+            )
+            for name, content in files.items():
+                (work / name).write_bytes(content)
+            downloaded.append(work)
+            return b""
+        if arguments[0] == "api" and arguments[-1].endswith("/runs/2"):
+            return json.dumps(build).encode()
+        return original(arguments)
+
+    monkeypatch.setattr(verify, "gh", download)
+    report = verify.verify_run(repository=item.repository, run_id=2)
+    assert report["fingerprint"] == item.fingerprint
+    assert len(downloaded) == 1 and not downloaded[0].exists()
+    assert sum(call[0] == "attestation" for call in calls) == 6
+    assert verify.main(["--download", "--repository", item.repository, "--run-id", "2"]) == 0
+
+
+# Reject untrusted publication metadata before any artifact extraction command can execute.
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("conclusion", "failure"),
+        ("status", "in_progress"),
+        ("event", "pull_request"),
+        ("path", ".github/workflows/untrusted.yml"),
+        ("head_branch", "feature"),
+        ("repository", {"full_name": "fork/atlas"}),
+        ("head_repository", {"full_name": "fork/atlas"}),
+        ("head_sha", "../bad"),
+        ("head_sha", None),
+        ("run_attempt", 0),
+        ("run_attempt", True),
+        ("id", 3),
+        ("id", True),
+    ],
+)
+def test_download_refuses_untrusted_run(tmp_path, monkeypatch, field, value):
+    _, _, _, _, build, *_ = github_fixture(tmp_path, monkeypatch)
+    build[field] = value
+    calls = []
+
+    # Any native download would be an unsafe side effect for rejected metadata.
+    def metadata(arguments):
+        calls.append(arguments)
+        return b"gh version 2.104.0" if arguments == ["--version"] else json.dumps(build).encode()
+
+    monkeypatch.setattr(verify, "gh", metadata)
+    with pytest.raises(ValueError, match="RELEASE_BUILD_UNTRUSTED"):
+        verify.verify_run(repository="example/atlas", run_id=2)
+    assert not any(call[:2] == ["run", "download"] for call in calls)
+
+
+# Download errors and invalid selectors remain generic failures without an unsigned fallback.
+@pytest.mark.parametrize("fault", ["missing", "failed", "wrong_files", "version", "run_id"])
+def test_download_fail_closed(tmp_path, monkeypatch, fault, capsys):
+    item, _, files, _, build, *_ = github_fixture(tmp_path, monkeypatch)
+    original = verify.gh
+    locations = []
+
+    # Exercise native extraction failures and cleanup while retaining the actual verification path.
+    def failed(arguments):
+        if arguments[:2] == ["run", "download"]:
+            locations.append(Path(arguments[-1]))
+            if fault == "failed":
+                raise ValueError("synthetic private diagnostic")
+            if fault == "wrong_files":
+                (locations[-1] / "unexpected").write_text("synthetic")
+            return b""
+        if arguments == ["--version"] and fault == "version":
+            return b"gh version 2.101.0"
+        if arguments[0] == "api" and arguments[-1].endswith("/runs/2"):
+            return json.dumps(build).encode()
+        return original(arguments)
+
+    monkeypatch.setattr(verify, "gh", failed)
+    assert (
+        verify.main(
+            [
+                "--download",
+                "--repository",
+                item.repository,
+                "--run-id",
+                "0" if fault == "run_id" else "2",
+            ]
+        )
+        == 1
+    )
+    assert "private diagnostic" not in capsys.readouterr().out
+    assert all(not location.exists() for location in locations)
+
+
+# The hosted entry point uses protected source and read-only credentials with no artifact execution.
+def test_read_only_verification_workflow():
+    import yaml
+
+    root = Path(__file__).resolve().parents[2]
+    workflow = yaml.safe_load(
+        (root / ".github/workflows/verify-application-release.yml").read_text()
+    )
+    assert set(workflow[True]) == {"workflow_dispatch"}
+    assert set(workflow[True]["workflow_dispatch"]["inputs"]) == {"build_run_id"}
+    job = workflow["jobs"]["verify"]
+    assert job["if"] == "github.ref == 'refs/heads/master'"
+    assert job["permissions"] == {
+        "contents": "read",
+        "actions": "read",
+        "packages": "read",
+        "attestations": "read",
+    }
+    assert "environment" not in job
+    assert job["timeout-minutes"] == 30
+    checkout = job["steps"][0]
+    assert checkout["with"] == {"ref": "${{ github.sha }}", "persist-credentials": False}
+    step = job["steps"][-1]
+    assert "${{" not in step["run"]
+    assert '--repository "$EXPECTED_REPOSITORY"' in step["run"]
+    assert '--run-id "$BUILD_RUN_ID"' in step["run"] and "--download" in step["run"]
+    assert step["env"]["EXPECTED_REPOSITORY"] == "${{ github.repository }}"
+    assert not any("upload-artifact" in step.get("uses", "") for step in job["steps"])
+    assert all(
+        re.fullmatch(r"[A-Za-z0-9_./-]+@[0-9a-f]{40}", step["uses"])
+        for step in job["steps"]
+        if "uses" in step
+    )
+
+
+# A correctly signed different attempt/source cannot replace the artifact selected before download.
+@pytest.mark.parametrize("field,value", [("source_sha", "f" * 40), ("build_attempt", 2)])
+def test_download_selection_is_pinned(tmp_path, monkeypatch, field, value):
+    item, _, _, _, build, *_ = github_fixture(tmp_path, monkeypatch)
+    report = {"source_sha": item.source_sha, "build_attempt": 1}
+    report[field] = value
+
+    # Authenticate the original selection while replacing verification output only in this test.
+    def native(arguments):
+        return b"gh version 2.104.0" if arguments == ["--version"] else json.dumps(build).encode()
+
+    monkeypatch.setattr(verify, "gh", native)
+    monkeypatch.setattr(verify, "verify_release", lambda *args, **kwargs: report)
+    with pytest.raises(ValueError, match="RELEASE_DOWNLOAD_BINDING_MISMATCH"):
+        verify.verify_run(repository=item.repository, run_id=2)

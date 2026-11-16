@@ -15,6 +15,8 @@ from pathlib import Path
 import certifi
 from alembic.script import ScriptDirectory
 from caddy_image_policy import check_latest, evaluate
+from run_container_smoke import SCANNER
+
 from otm.artifact_release import (
     BUNDLE_FILES,
     ReleaseCandidate,
@@ -23,7 +25,6 @@ from otm.artifact_release import (
 )
 from otm.hosted_database import migration_configuration
 from otm.settings import ApplicationSettings
-from run_container_smoke import SCANNER
 
 ROOT = Path(__file__).resolve().parents[1]
 

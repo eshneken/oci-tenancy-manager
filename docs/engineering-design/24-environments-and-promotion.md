@@ -1,6 +1,6 @@
 # 24: isolated environments and build-once promotion
 
-16 November 2026 · Immutable build source and targeted checks pass · Staging/production deployment remains design-only; no publication/cloud changes
+16 November 2026 · Native ARM publication and genuine signatures pass · OCI deployment and acceptance remain pending
 
 [Design hub](README.md) · [Platform and backups](06-platform-and-delivery.md) ·
 [Application/settings releases](18-database-ci-and-build-order.md#application-and-configuration-deployment-paths) ·
@@ -50,13 +50,15 @@ infrastructure-only, combined and settings updates plus backup/restore. Replace 
 references with actual tested links/inputs during implementation and qualify operator walkthroughs
 before go-live; familiarity with the implementation is not a substitute for usable instructions.
 
-The build workflow now exists as [source](../reference/artifact-releases.md); hosted execution and
-publication qualification remain pending. The other names below remain proposed entry points, not
-implemented deployment claims. Environment entry points stay separate and bind one fixed target.
+The [build workflow](../reference/artifact-releases.md) has completed native ARM publication and
+genuine signature qualification. Read-only verification dispatch source is added; its hosted job
+still needs qualification after merge. Deployment workflow names below remain proposed entry points,
+not implemented deployment claims. Environment entry points stay separate and bind one fixed target.
 
 | GitHub workflow / current scope | Responsibility / authority |
 | --- | --- |
-| `build-application.yml` — implemented source, not yet hosted-qualified | Follows exact successful master-push Checkpoint; builds/scans two ARM64 images, binds SBOM/public-source/schema metadata and standard attestations. No staging/production mutation authority |
+| `build-application.yml` — first native hosted publication qualified | Follows exact successful master-push Checkpoint; builds/scans two ARM64 images, binds SBOM/public-source/schema metadata and standard attestations. No staging/production mutation authority |
+| `verify-application-release.yml` — source implemented; hosted dispatch pending | Master-only manual run selection, exact native artifact download and six read-only provenance/SBOM checks; no acceptance or deployment authority |
 | `infra-staging.yml` | Validate/plan/apply reviewed Terraform source against staging state using staging-only infrastructure identity |
 | `infra-production.yml` | Plan that tested Terraform source against production state; require review/approval of this production plan before apply using production-only infrastructure identity |
 | `deploy-staging.yml` | Select the trusted build's release ID, deploy its exact image/deployment bundle, apply compatible migrations and run required staging acceptance; record pass/fail against the exact deployed candidate |
@@ -145,8 +147,9 @@ attestation binds build identity and image digest. Record only safe nonsecret fi
 
 Use one canonical candidate without OCI environment credentials in the build job. The implemented
 [source publisher](../how-to/application-releases.md) selects GHCR for two immutable ARM64 images,
-without introducing a third OCI environment. Hosted publication/access/attestation and consumer
-verification still require qualification. If each tenancy requires its own
+without introducing a third OCI environment. Native GHCR publication and genuine laptop
+provenance/SBOM verification are qualified. Hosted verification dispatch, remaining access/custody
+variants and OCI deployment/acceptance still require qualification. If each tenancy requires its own
 OCIR repository, copy the selected artifact without rebuilding or format conversion and verify
 destination manifest/platform digest equality. Promotion preserves provenance evidence and needs
 no production access to staging runtime resources or staging registry credentials. If the selected
@@ -277,7 +280,7 @@ The owner approved [NSGs only for V1](../how-to/nsg-only-networking.md), superse
 
 The owner selected [external DNS and Caddy-managed Let's Encrypt HTTP-01 certificates](25-https-ingress-and-certificates.md). No OCI DNS zone or Terraform-managed external DNS is required. The [implemented held source](../how-to/caddy-ingress.md) permits only active challenges on public port 80, returns ordinary HTTP 404 and preserves CIDR-restricted 443 through the exact edge NSG handoff. Staging/production have separate names and certificate/account state; the cluster-scoped StorageClass belongs to infrastructure authority. Local Pebble protocol tests pass. On 15 November the owner approved two exact official-Caddy DoS exceptions with continuous update checks; the policy-specific native rerun passed with two accepted and zero blocked findings, while full milestone/hosted/live gates remain separate. No hosted resource or saved app is changed.
 
-## Immutable ARM64 build source — 16 November 2026
+## Historical immutable ARM64 build source checkpoint — 16 November 2026
 
 The [release contract](../reference/artifact-releases.md) and [review procedure](../how-to/application-releases.md)
 implement only candidate construction/publication source. One candidate binds exact source/CI/build
@@ -292,7 +295,7 @@ staging acceptance. Trusted acceptance, staging deployment, production promotion
 remain future implementation/qualification work. No application DB/schema change or saved app update.
 
 
-## Read-only release integrity consumer — 16 November 2026
+## Historical read-only integrity consumer source checkpoint — 16 November 2026
 
 The [verification procedure](../how-to/application-releases.md) and
 [boundary reference](../reference/artifact-releases.md#read-only-authenticated-integrity-verification)
@@ -310,3 +313,18 @@ existing conservative latest-success/five-job gate. Missing/failed cryptographic
 fails closed. Hosted GitHub/GHCR verification still requires genuine-artifact qualification; OCI
 staging deployment, authenticated acceptance, long-term custody and unchanged-byte production
 promotion remain separate implementation/qualification work. Saved Atlas 8443 stays unchanged.
+
+## Repeatable release verification — 16 November 2026
+
+The read-only consumer now optionally selects/downloads the exact current successful publishing
+attempt through standard patched GitHub CLI, then reuses all existing hash/provenance/SBOM checks.
+A master-only manual [verification workflow](../../.github/workflows/verify-application-release.yml)
+uses read-only GitHub permissions and ephemeral registry authentication, with no OCI/deployment
+authority or staging-acceptance record. Selection is pinned across concurrent publishing reruns.
+The original directory mode remains available for exact earlier successful artifacts.
+
+The first protected native ARM publication and all six genuine signed-subject checks succeeded.
+A modified descriptor failed real signature verification, and a non-publishing run was rejected.
+These are hosted publisher/laptop consumer facts, not hosted-dispatch, OCI deployment, durable
+custody or staging/production acceptance. Those remaining boundaries stay in the manual manifest.
+No app UI, database model, schema or saved preview changes are required.

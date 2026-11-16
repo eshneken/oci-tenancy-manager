@@ -85,23 +85,38 @@ def validate_source(data, candidate):
         raise ValueError("RELEASE_SOURCE_MEMBERS_INVALID")
 
 
-# Bind a successful same-repository publishing attempt to the independently selected run ID.
-def validate_build(run, candidate, *, repository, run_id):
+# Authenticate publication metadata before downloading anything from the selected GitHub run.
+def validate_publishing_run(run, *, repository, run_id):
+    source, attempt = run.get("head_sha"), run.get("run_attempt")
     if (
-        candidate.repository != repository
-        or candidate.build_run_id != run_id
+        type(run_id) is not int
+        or run_id < 1
         or run.get("id") != run_id
         or type(run.get("id")) is not int
-        or run.get("run_attempt") != candidate.build_attempt
-        or type(run.get("run_attempt")) is not int
+        or type(attempt) is not int
+        or attempt < 1
+        or not isinstance(source, str)
+        or re.fullmatch(r"[0-9a-f]{40}", source) is None
         or run.get("repository", {}).get("full_name") != repository
         or run.get("head_repository", {}).get("full_name") != repository
-        or run.get("head_sha") != candidate.source_sha
         or run.get("head_branch") != "master"
         or run.get("event") != "workflow_run"
         or run.get("status") != "completed"
         or run.get("conclusion") != "success"
         or run.get("path") != BUILD_WORKFLOW
+    ):
+        raise ValueError("RELEASE_BUILD_UNTRUSTED")
+    return source, attempt
+
+
+# Bind the independently authenticated attempt to the exact descriptor being verified.
+def validate_build(run, candidate, *, repository, run_id):
+    source, attempt = validate_publishing_run(run, repository=repository, run_id=run_id)
+    if (
+        candidate.repository != repository
+        or candidate.build_run_id != run_id
+        or attempt != candidate.build_attempt
+        or source != candidate.source_sha
     ):
         raise ValueError("RELEASE_BUILD_UNTRUSTED")
 
@@ -156,14 +171,51 @@ def gh(arguments):
     return data
 
 
+# Require patched native verification/download behavior before consuming any remote artifact.
+def require_github_cli():
+    version = re.match(rb"gh version (\d+)\.(\d+)\.(\d+)\b", gh(["--version"]))
+    if not version or tuple(map(int, version.groups())) < (2, 102, 0):
+        raise ValueError("RELEASE_GITHUB_CLI_UPGRADE_REQUIRED")
+
+
+# Download only the exact successful run/attempt artifact into a fresh private disposable directory.
+# Native gh handles extraction; no downloaded code is executed and all four files are reverified.
+def verify_run(*, repository, run_id):
+    repository = TypeAdapter(Repository).validate_python(repository)
+    if type(run_id) is not int or run_id < 1:
+        raise ValueError("RELEASE_RUN_INVALID")
+    require_github_cli()
+    run = parse_json(
+        gh(["api", "--hostname", "github.com", f"/repos/{repository}/actions/runs/{run_id}"])
+    )
+    source, attempt = validate_publishing_run(run, repository=repository, run_id=run_id)
+    name = f"application-release-{source[:12]}-{run_id}-{attempt}"
+    with tempfile.TemporaryDirectory(prefix="otm-download-release-") as work:
+        gh(
+            [
+                "run",
+                "download",
+                str(run_id),
+                "--repo",
+                "github.com/" + repository,
+                "--name",
+                name,
+                "--dir",
+                work,
+            ]
+        )
+        report = verify_release(work, repository=repository, run_id=run_id)
+        if report["source_sha"] != source or report["build_attempt"] != attempt:
+            raise ValueError("RELEASE_DOWNLOAD_BINDING_MISMATCH")
+        return report
+
+
 # Online GitHub API identity and standard Sigstore checks precede any successful integrity report.
 def verify_release(directory, *, repository, run_id):
     repository = TypeAdapter(Repository).validate_python(repository)
     if type(run_id) is not int or run_id < 1:
         raise ValueError("RELEASE_RUN_INVALID")
-    version = re.match(rb"gh version (\d+)\.(\d+)\.(\d+)\b", gh(["--version"]))
-    if not version or tuple(map(int, version.groups())) < (2, 102, 0):
-        raise ValueError("RELEASE_GITHUB_CLI_UPGRADE_REQUIRED")
+    require_github_cli()
     directory = Path(directory)
     if {path.name for path in directory.iterdir()} != set(RELEASE_FILES):
         raise ValueError("RELEASE_PUBLIC_FILES_REQUIRED")
@@ -288,13 +340,23 @@ def main(argv=None):
     parser = argparse.ArgumentParser(
         description="Verify release provenance without deploying or granting staging acceptance."
     )
-    parser.add_argument("--directory", type=Path, required=True)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--directory", type=Path, help="Verify four already-downloaded public files")
+    mode.add_argument(
+        "--download",
+        action="store_true",
+        help="Download and verify the run’s current successful publishing attempt",
+    )
     parser.add_argument("--repository", required=True)
     parser.add_argument("--run-id", type=int, required=True)
     arguments = parser.parse_args(argv)
     try:
-        report = verify_release(
-            arguments.directory, repository=arguments.repository, run_id=arguments.run_id
+        report = (
+            verify_run(repository=arguments.repository, run_id=arguments.run_id)
+            if arguments.download
+            else verify_release(
+                arguments.directory, repository=arguments.repository, run_id=arguments.run_id
+            )
         )
     except (
         ValueError,

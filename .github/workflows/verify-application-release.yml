@@ -1,0 +1,52 @@
+name: Verify application release
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: Successful Build application release run ID to verify
+        required: true
+        type: string
+
+# Verification has no publication, cloud, environment or deployment authority.
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+      packages: read
+      attestations: read
+    steps:
+      # Run the protected verifier, never source or commands from the downloaded candidate.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          version: '0.13.5'
+          enable-cache: false
+      - run: uv sync --project backend --locked
+      # Only ephemeral read credentials; the action logs out during its cleanup step.
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download and verify exact published artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_REPOSITORY: ${{ github.repository }}
+          BUILD_RUN_ID: ${{ inputs.build_run_id }}
+        run: >-
+          uv run --project backend python scripts/verify_application_release.py
+          --download --repository "$EXPECTED_REPOSITORY" --run-id "$BUILD_RUN_ID"

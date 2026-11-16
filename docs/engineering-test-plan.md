@@ -1490,3 +1490,18 @@ Publication, secret, Bandit, purpose-comment and documentation-link checks pass.
 local missing-directory failure are native operator checks, not signature verification. Full
 PostgreSQL/browser milestone qualification precedes this CLI-only addition; no full-suite rerun
 is claimed for it. Required complete gates still run before the next milestone PR.
+
+## Repeatable release verification — 16 November 2026
+
+Synthetic regressions cover native download selection from trusted publication metadata, rejected
+fork/PR/wrong-workflow/source/run/attempt states before extraction, exact artifact/host selection,
+private disposable output/cleanup, missing or extra files, download/CLI failures and a concurrent
+source/attempt substitution after selection. Workflow assertions require master-only manual
+dispatch, exact protected checkout, all-read permissions, pinned actions, quoted environment input,
+no deployment environment/OIDC grant and no artifact upload. All prior six-subject checks remain.
+
+The documented first protected ARM release and its six genuine laptop signature checks passed, including
+read-only authenticated registry access with temporary credentials removed. A tampered descriptor
+failed genuine signature verification; a Checkpoint run was refused as publication evidence. These
+checks do not replace synthetic negatives or required full milestone gates. Hosted manual dispatch
+after merge, durable custody, OCI pulls/deployment and staging acceptance remain Pending.
