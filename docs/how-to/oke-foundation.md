@@ -169,5 +169,4 @@ production deployment authority is limited to reviewed environment-bound jobs.
 
 Use the [traffic matrix](oke-network-traffic.md), [network/state procedures](network-foundation.md)
 and [pending OKE/sensor qualification](real-oci-test-manifest.md#enhanced-oke-and-worker-bootstrap).
-Runtime IAM, application/RBAC manifests, load-balancer health/backend rules, hosted schedules,
-deployment admission cleanup and actual provider/service behavior remain separate qualification.
+[Workload IAM/token projection](oke-workload-identity.md), held [application manifests](kubernetes-workloads.md) and optional [Caddy backend/health rules](caddy-ingress.md) exist as source. Hosted schedules, deployment admission cleanup, full launch composition and actual provider/service behavior remain separate implementation/qualification work.

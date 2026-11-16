@@ -75,7 +75,9 @@ def eventually(function, deadline):
 # Every resource is UUID-owned and cleaned only after label verification; logs remain private.
 def main():
     os.umask(0o077)
-    directory = Path(tempfile.mkdtemp(prefix="caddy-", dir=ROOT / ".local-dev/quality"))
+    artifact_root = ROOT / ".local-dev/quality"
+    artifact_root.mkdir(mode=0o700, parents=True, exist_ok=True)
+    directory = Path(tempfile.mkdtemp(prefix="caddy-", dir=artifact_root))
     owner = uuid4().hex
     client = docker()
     prefix = "otm-ingress-" + owner

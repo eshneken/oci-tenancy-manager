@@ -8,9 +8,9 @@ isolated synthetic fixtures; private enrollment factors do not belong in reports
 - [Real OCI manual test manifest](real-oci-test-manifest.md) — maintain pending live-only cases for every slice
 - [Hosted administrator runbooks](hosted-administration.md) — design-stage application, infrastructure, combined/settings updates and backup/restore procedures; implementation and staging walkthrough required before live use
 - [Terraform state bootstrap](terraform-state-bootstrap.md) — implemented isolated roots, mock checks and pending live operator procedure; does not create the application platform
-- [Network foundation](network-foundation.md) — subnet/routing/NSG source, private shared-input rendering and platform initialization; OKE source attached, app LB/DB and live qualification pending
+- [Network foundation](network-foundation.md) — subnet/routing/NSG source, private shared-input rendering and platform initialization; OKE/managed PostgreSQL and optional [held Caddy ingress](caddy-ingress.md) source; live qualification pending
 - [Enhanced OKE and worker bootstrap](oke-foundation.md) — source-restricted public API, private ARM node/pod bindings, sensitive cloud-init input and pending Falcon ARM64 qualification
-- [OKE traffic matrix](oke-network-traffic.md) — explicit control/CNI/DNS/egress rules, remaining application LB/health wiring and pending job-specific admission
+- [OKE traffic matrix](oke-network-traffic.md) — explicit control/CNI/DNS/egress rules, optional Caddy backend/health rules and pending job-specific admission
 - [Platform versions and image selection](platform-versions.md) — OKE/PostgreSQL Actions variables, automatic image resolution and executable private staging-to-production image handoff
 - [Pending credential-security qualification](real-oci-test-manifest.md#credential-security-lifecycles) — recovery-console CIDR boundary and 30-day automation-key retirement
 - [Local review: Required users and manual Check now](required-users-runbook.md) — fresh simulated create/import, result provenance and historical unqualified records; [inventory summary follow-up](required-users-runbook.md#inventory-summary-source-checkpoint) is ready in the upgraded main preview

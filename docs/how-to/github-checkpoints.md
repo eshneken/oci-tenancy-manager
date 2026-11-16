@@ -52,7 +52,7 @@ job invokes `scripts/run_backend_postgres_tests.py` (`-m postgres`). Together th
 backend test once across the required lanes. The integration job no longer repeats units already
 owned by the independently required coverage job. Frontend units remain a separate required job.
 This changes test orchestration only: assertions, unit scope, the 95% threshold and required hosted
-checks remain intact. The user approved a 600-second aggregate integration budget; individual test
+checks remain intact. The current approved aggregate integration budget is 900 seconds; individual test
 limits remain unchanged. A lane's missing/skipped/timed-out evidence blocks
 merge; a passing companion lane cannot compensate. [Canonical policy](../engineering-test-plan.md#complementary-backend-test-lanes).
 

@@ -30,7 +30,7 @@ Earlier dated preservation receipts remain historical evidence.
 | Staging, production and release promotion | [Isolated tenancies and build-once delivery](engineering-design/24-environments-and-promotion.md) |
 | Hosted administrator updates, backup and restore | [Human-readable operating runbooks](how-to/hosted-administration.md) — design-stage procedures, pending staging qualification |
 | Terraform state foundation | [Implemented layout and mock-only tests](../infra/README.md), [operator bootstrap procedure](how-to/terraform-state-bootstrap.md) — live qualification pending |
-| Network foundation | [Subnets, routing, source allowlist and private-input renderer](how-to/network-foundation.md) — OKE source attached; app LB/DB and live qualification pending |
+| Network foundation | [Subnets, routing, source allowlist and private-input renderer](how-to/network-foundation.md) — OKE and managed PostgreSQL source attached; optional [held Caddy ingress](how-to/caddy-ingress.md) and live qualification documented separately |
 | Enhanced OKE, worker initialization and sensor | [Cluster/pool fields and private cloud-init procedure](how-to/oke-foundation.md), [NSG traffic matrix](how-to/oke-network-traffic.md) — live ARM64 sensor, deployment and connectivity qualification pending |
 | Hosting compartment | [Protected environment input and single-compartment placement](how-to/hosting-compartment.md) — required reference in all infrastructure roots; live tenancy value pending |
 | Vault custody foundation | [Single-compartment Vaults, HSM keys and scoped database-reader IAM](how-to/vault-foundation.md) — source implemented; ingestion/effective permissions and live qualification pending |

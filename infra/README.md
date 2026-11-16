@@ -31,7 +31,7 @@ bash scripts/check_infrastructure.sh
 ```
 
 The script checks formatting, initializes with `-backend=false -lockfile=readonly`, validates all
-eleven configurations and runs native Terraform provider mocks. It needs network access to install
+thirteen configurations and runs native Terraform provider mocks. It needs network access to install
 the locked provider, but no OCI credentials and no OCI API calls. The suites cover all modules and
 both environments' bootstrap/platform roots. Negative journeys also verify cluster and state-bucket replacement guards. A separate negative journey performs a mocked apply followed by a blocked replacement
 plan; the script requires that precise lifecycle rejection, rather than accepting an arbitrary failure.
@@ -124,7 +124,7 @@ it validates the binding without claiming acceptance/provenance or implementing 
 
 ## Managed PostgreSQL
 
-Both platform roots now include the [managed database module and operator guide](../docs/how-to/managed-postgresql.md). Required private administrator Vault references and explicit backup/maintenance windows have no deployment defaults. Runtime database roles/secrets, Vault/IAM grants and live restore/upgrade qualification follow separately.
+Both platform roots now include the [managed database module and operator guide](../docs/how-to/managed-postgresql.md). Required private administrator Vault references and explicit backup/maintenance windows have no deployment defaults. Runtime database role/secret provisioning and live restore/upgrade qualification follow separately. Scoped [workload Vault-read IAM](../docs/how-to/oke-workload-identity.md) and optional [held Caddy ingress](../docs/how-to/caddy-ingress.md) source are implemented but require deployment qualification.
 
 ## Vault custody foundation
 

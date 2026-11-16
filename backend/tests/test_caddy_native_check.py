@@ -51,3 +51,25 @@ def test_local_retry_is_bounded_and_required(monkeypatch):
     assert action.call_count == 2
     with pytest.raises(RuntimeError, match="CADDY_NATIVE_WAIT_EXHAUSTED"):
         MODULE.eventually(Mock(side_effect=AssertionError), 3)
+
+
+# Fresh CI jobs have no ignored artifact parent; startup must create private output before Docker.
+def test_native_check_creates_artifact_parent(tmp_path, monkeypatch):
+    monkeypatch.setattr(MODULE, "ROOT", tmp_path)
+
+    # Stop at the first external boundary after proving private artifact initialization completed.
+    def stop_before_docker():
+        parent = tmp_path / ".local-dev/quality"
+        assert parent.is_dir()
+        directories = list(parent.iterdir())
+        assert len(directories) == 1 and directories[0].is_dir()
+        assert directories[0].stat().st_mode & 0o777 == 0o700
+        raise RuntimeError("STOP_BEFORE_DOCKER")
+
+    monkeypatch.setattr(MODULE, "docker", stop_before_docker)
+    previous_mask = MODULE.os.umask(0o077)
+    try:
+        with pytest.raises(RuntimeError, match="STOP_BEFORE_DOCKER"):
+            MODULE.main()
+    finally:
+        MODULE.os.umask(previous_mask)

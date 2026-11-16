@@ -65,8 +65,9 @@ port465/587 in an NSG does not itself enforce TLS. Store SMTP credentials separa
 DNS/IP/routing/TLS and effective rule unions before enabling hosted notifications. Relay address or
 port changes require reviewed Terraform changes, separate from an ordinary app-only deployment.
 
-Load-balancer backend and health-check NSGs still require the actual ingress implementation. No
-permissive NodePort range or public backend ingress is pre-opened here. Image pulls are node-level
+The base `caddy_ingress_enabled=false` configuration opens no backend/health ports. The optional
+[Caddy ingress source](caddy-ingress.md) defines the exact paired NodePorts and health-check NSGs;
+no permissive NodePort range or public backend ingress is opened. Image pulls are node-level
 traffic, not application pod traffic. Hosted commands remain held, replicas zero and migrations
 suspended until the remaining launch/deployment qualifications pass.
 

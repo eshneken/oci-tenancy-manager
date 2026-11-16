@@ -11,9 +11,9 @@
 | [Focused diagrams and editable sources](diagrams/README.md) | Feature subsets, sources and generated views with implemented/proposed labels. |
 
 The hosting tenancy/compartment need not be the managed parent tenancy. The OCI context view is a
-logical target, not a network/IAM deployment plan or evidence that services are running. Terraform,
-OKE workload composition, managed-service credentials and live adapters still require implementation
-and qualification; see [platform and delivery](../engineering-design/06-platform-and-delivery.md) and
+logical target, not evidence that services are running. Terraform foundations, scoped workload IAM,
+held Kubernetes manifests and hosted startup seams are implemented source. Full credential/service
+launch composition, delivery activation and live qualification remain separate work; see [platform and delivery](../engineering-design/06-platform-and-delivery.md) and
 the [live-OCI qualification manifest](../how-to/real-oci-test-manifest.md).
 
 The OCI context view describes one environment's layout. [Staging and production](../engineering-design/24-environments-and-promotion.md)

@@ -81,7 +81,7 @@ Confirmed required-user email: [current incident/routing/storage contract](../re
 
 Implemented source: [recovery-password custody/disclosure/rotation subset](../reference/recovery-password-access.md). Migration0027 adds three tables; the [checkpoint receipt](../history/recovery-password-checkpoint-2026-11-09.md) records qualification and saved-app status. Main8443 remains the sole local review environment.
 
-Accepted worker sizing: [one staging worker; initially two production workers after qualification](06-platform-and-delivery.md#accepted-initial-worker-sizing--10-november-2026). The local saved worker is unchanged.
+Accepted hosted sizing: [two API pods and two one-slot workers in both staging and production](06-platform-and-delivery.md#accepted-initial-worker-sizing--10-november-2026). Source manifests remain held at zero replicas; the local saved worker is unchanged.
 
 Hosting direction: [paid tenancy, Enhanced OKE, multiple ARM nodes and managed PostgreSQL](06-platform-and-delivery.md#paid-tenancy-platform-direction-and-candidate-sizing--13-november-2026). Numerical capacity is a proposal pending qualification, not an approved allocation.
 

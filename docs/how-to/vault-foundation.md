@@ -145,7 +145,7 @@ or a privileged change that removes the guard. Preserve private state and key-ve
 verify actual backup/recovery dependencies. This foundation does not automatically back up Vaults,
 provide cross-region DR or repair lost keys after a database restore.
 
-Run `bash scripts/check_infrastructure.sh` without OCI credentials. The eleven native configuration
+Run `bash scripts/check_infrastructure.sh` without OCI credentials. The thirteen native configuration
 suites use mock providers and `init -backend=false`. Tests check exact policy text, distinct custody
 domains, HSM key/Vault bindings, invalid input rejection and fixed roots. Two additional negative
 journeys require mock setup followed by the exact protected resource's lifecycle rejection for Vault

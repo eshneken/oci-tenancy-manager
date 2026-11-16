@@ -356,4 +356,4 @@ is introduced. See the [Operations guide](../reference/operations.md) for capabi
 
 ## Read-only Vault adapter — 14 November 2026
 
-[Vault retrieval](../reference/vault-retrieval.md) implements an SDK-independent scope/result contract and concrete `_oci.py` reader, separate from all simulators. Only explicit OKE identity is used; reads verify exact registered custody scope before requesting bytes. No new provider registry, fallback, schema or browser endpoint. Service integration and hosted IAM/token mounts remain pending.
+[Vault retrieval](../reference/vault-retrieval.md) implements an SDK-independent scope/result contract and concrete `_oci.py` reader, separate from all simulators. Identity is explicit: a [named laptop API-key profile](../how-to/laptop-oci-development.md) or [OKE workload identity with scoped IAM/token projection source](../how-to/oke-workload-identity.md). Reads verify exact registered custody scope before requesting bytes. No new provider registry, fallback, schema or browser endpoint. Full service composition, activation and live qualification remain pending.

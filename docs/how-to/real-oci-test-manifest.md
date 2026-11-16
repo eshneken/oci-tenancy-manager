@@ -100,14 +100,14 @@ Status: **Pending**. [OKE/bootstrap source procedure](oke-foundation.md) and
   zero unavailable, sufficient pod IPs, non-forced draining and restored sensor health on every node.
 - Qualify owned deployment `/32` admission, job identity/RBAC and cleanup after success/failure/
   interruption. No job admission or full GitHub CIDR rule is supplied by this source slice.
-- Add and qualify actual application LB backend/health rules and controller annotations, managed
-  database/TLS, runtime IAM and application release manifests before marking the full app deployable.
+- Qualify the optional [Caddy/NLB backend/health rules and controller annotations](caddy-ingress.md), managed
+  database/TLS, scoped [workload IAM](oke-workload-identity.md) and held application manifests before marking the full app deployable. Their source exists; full launch composition and activation remain pending.
 
 ## Network foundation
 
 Status: **Pending**. [Implemented source and offline operator guide](network-foundation.md) add
 network resources and the shared private-input renderer. The platform roots now also compose the
-OKE cluster/workers described above; no app load balancer, database or runner is included. No live
+OKE cluster/workers, managed PostgreSQL and workload Vault-read IAM described above. Optional Caddy ingress adds reserved-IP/NSG source and a held NLB renderer; no runner is included and no application is activated. No live
 resource was created during source qualification. Native mocks verify plans only.
 
 - Independently verify live target identity/compartment ancestry and regional service-prefix lookup;

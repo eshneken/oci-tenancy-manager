@@ -37,8 +37,7 @@ privately; the saved laptop runtime is not changed by this hosted deployment dec
 The same validated list supplies the Terraform `app_ingress_allowed_cidrs` input and
 `recovery_console.allowed_cidrs` in rendered application settings. The
 [network source foundation](../how-to/network-foundation.md) now implements this input and its private
-renderer; it is not an input to bucket bootstrap. Load-balancer/OKE attachment and live filtering
-remain separate pending work.
+renderer; it is not an input to bucket bootstrap. OKE attachment and the optional [held Caddy ingress](../how-to/caddy-ingress.md) backend/health rules now exist as source. Deployment and live filtering remain unqualified.
 Keep these two consumers consistent during reviewed network/settings releases; changing a GitHub
 variable alone does not mutate either control. A widening must review both consequences; a removal
 must account for administrator lockout. Do not create separate independently editable lists.

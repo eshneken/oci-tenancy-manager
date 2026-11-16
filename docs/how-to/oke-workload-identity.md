@@ -75,7 +75,7 @@ Native Terraform mock tests compare the complete policy statement set and exact 
 exercise staging/production binding and invalid environment/OCID rejection; and verify each platform
 root uses its own cluster and handed-off Vault. Python tests check role-only projection, mount
 permissions/path, token lifetime request, absent migration credentials, NSG-only bundle and
-held execution. Native Kubeconform validates all32 resources across simulated/OCI modes in both
+held execution. Native Kubeconform validates all60 resources, plus a separate invalid-field rejection control, across simulated/OCI modes in both
 environments plus the required invalid-field rejection control.
 
 The [live OCI manifest](real-oci-test-manifest.md#hosted-workload-vault-identity) records actual token

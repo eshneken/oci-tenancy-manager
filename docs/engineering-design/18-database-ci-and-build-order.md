@@ -18,7 +18,7 @@ platform or qualify live IAM, backend migration/locking, OCI creation or recover
 
 The following [network source checkpoint](../how-to/network-foundation.md) adds isolated platform
 roots with fixed OCI backend keys, the network module and an offline owner-only allowlist renderer.
-The eleven native module/root suites run in the existing required documentation lane. The
+The thirteen native module/root suites run in the existing required documentation lane. The
 [OKE follow-up](../how-to/oke-foundation.md) adds service NSG attachment and CNI/control/egress wiring
 with the approved public API. Remote-state qualification, job admission and app/DB deployment remain
 pending; this is cluster infrastructure source, not a deployed application. New Python renderer code

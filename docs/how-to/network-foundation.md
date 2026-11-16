@@ -1,6 +1,6 @@
 # Private network foundation
 
-**Implemented source; live OCI qualification Pending.** This guide covers the network definitions. The [OKE follow-up](oke-foundation.md) now adds cluster/node-pool source to both platform roots; a live platform apply would create worker VMs and the [managed PostgreSQL system](managed-postgresql.md). The application load balancer and application deployment remain separate work. No live resources were created during development. Do not infer working connectivity from mocks; the saved laptop app is unchanged.
+**Implemented source; live OCI qualification Pending.** This guide covers the network definitions. The [OKE follow-up](oke-foundation.md) now adds cluster/node-pool source to both platform roots; a live platform apply would create worker VMs and the [managed PostgreSQL system](managed-postgresql.md). Optional [held Caddy/NLB source](caddy-ingress.md) is also available; application activation and live deployment remain separate work. No live resources were created during development. Do not infer working connectivity from mocks; the saved laptop app is unchanged.
 
 Use the [hosting compartment renderer](hosting-compartment.md) to create private `hosting.tfvars.json`
 from `OTM_HOSTING_COMPARTMENT_OCID` before planning. All roots use that existing compartment; no child
@@ -25,7 +25,7 @@ Bootstrap's state remains separate and local; never migrate it onto the platform
 
 | Subnet | Relative allocation in an example `/16` | Intended attachment and routing |
 | --- | --- | --- |
-| Edge | `.0.0/24` | Public HTTPS load balancer only; internet-gateway route |
+| Edge | `.0.0/24` | Restricted HTTPS load balancer and optional public HTTP-01 challenge listener; internet-gateway route |
 | API | `.1.0/24` | Restricted public OKE API; internet-gateway route, human TCP6443 admission |
 | Database | `.2.0/24` | Private PostgreSQL; service-gateway route, no NAT/internet default |
 | Nodes | `.4.0/22` | Private managed nodes; NAT plus service-gateway routes |
@@ -42,13 +42,13 @@ Provider 9.13.0 represents empty rules by **omitting the rule blocks**; its secu
 initialize rule arrays empty. Live readback must still verify both lists. Never add a broad security
 list rule to compensate for missing service NSG wiring.
 
-The Edge NSG permits stateful TCP443 only from `app_ingress_allowed_cidrs`. The database NSG
+The base Edge NSG permits stateful TCP443 only from `app_ingress_allowed_cidrs`. With `caddy_ingress_enabled=true`, the [Caddy ingress source](caddy-ingress.md) adds public TCP80 solely for HTTP-01, exact backend NodePorts31080/31443 and health port32081; the Caddy handler rejects other HTTP traffic. The default false value adds none of those optional rules. The database NSG
 permits TCP5432 only from the pod NSG, with matching pod egress. OCI-managed service requirements,
 actual source VNIC/NSG attachments and PostgreSQL TLS remain live qualification work.
 The OKE follow-up now installs the [explicit CNI/control/DNS/egress matrix](oke-network-traffic.md)
 and attaches API/deployment, node and pod NSGs to the corresponding OKE VNICs. Deployment admission
 remains empty until the owned CI workflow provides its temporary `/32`; no full GitHub range is
-allowed. Edge/backend/health rules remain pending the actual app load-balancer port contract.
+allowed. Optional Edge/backend/health rules now follow the [Caddy port contract](caddy-ingress.md); activation and live enforcement remain pending.
 NAT/service routes do not independently grant traffic. All effectiveness requires live qualification.
 
 The owner selected a restricted public Kubernetes API for direct Lens/kubectl and hosted-runner
