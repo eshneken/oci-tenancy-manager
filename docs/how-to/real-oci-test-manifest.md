@@ -602,8 +602,14 @@ Pending remaining release gates and domain/OCI access; targeted policy/native ch
 
 ## Immutable ARM64 release artifacts
 
-Status: **Pending**. [Implemented source](../reference/artifact-releases.md) and [review procedure](application-releases.md)
-do not establish hosted publication or staging acceptance.
+Status: **Partially qualified — OCI and remaining cases Pending**.
+[First native ARM release](https://github.com/eshneken/oci-tenancy-manager/actions/runs/43901645180)
+passed protected Checkpoint, native ARM build/scan/publication and all five attestation steps.
+The laptop consumer verified all six genuine signed subjects with ephemeral authenticated registry
+access; real tampered-descriptor signature rejection and non-publishing-run rejection also passed.
+No OCI deployment or staging acceptance is implied. [Reference](../reference/artifact-releases.md) ·
+[Procedure](application-releases.md). The checklist below retains its original scope. Only the cases explicitly recorded above have
+passed; unexercised variants and the remaining hosted/OCI boundaries are Pending:
 
 - Qualify the protected-master Checkpoint follow-on with exact standard SHA context and independent
   run/five-job API validation. Deny forks/PR/manual/spoofed runs, stale source and partial job evidence.
@@ -613,6 +619,10 @@ do not establish hosted publication or staging acceptance.
 - Verify GHCR tag-to-digest/manifest identity and permissions, standard image/descriptor/public-source
   provenance and image-bound SBOM attestations. Verify expected repository/workflow/ref/source and
   exact subjects from trusted records; a matching JSON hash or arbitrary signed artifact is insufficient.
+- Run the read-only verifier against genuine published files and all six authenticated subjects,
+  including private registry authorization, exact signed run/attempt identity and mismatch rejection.
+  Qualify exact publishing-attempt reads separately from conservative latest-success Checkpoint reruns;
+  synthetic CLI output is not live signature evidence. No integrity report grants staging acceptance.
 - Exercise partial build/push/attestation failures without producing a qualified release. Confirm only
   four public files upload, 90-day retention, no sensitive logs/config/image archives and separately
   retained long-term descriptor/archive/SBOM/verified-attestation custody. Missing evidence blocks use;
@@ -621,3 +631,8 @@ do not establish hosted publication or staging acceptance.
   compatibility and trusted acceptance records. Verify production selects the exact accepted candidate
   without rebuild and rejects fingerprint/source/platform/artifact substitution. These deployment and
   authenticated acceptance workflows are not implemented by the current content-matching helper.
+
+- **Pending:** exercise master-only Verify application release manual dispatch after its source
+  merges; verify job-token package/attestation access, successful integrity-only output, rejected
+  invalid build IDs and no publication/OCI/environment grant. Laptop success does not qualify this
+  hosted credential path. Preserve all remaining failure, custody and OCI acceptance cases above.
