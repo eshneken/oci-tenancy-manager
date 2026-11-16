@@ -96,6 +96,11 @@ API-backed readiness are not NLB public listeners, and TCP health alone does not
 
 ## Automated evidence and exact accepted exceptions
 
+The isolated upstream and test-CA containers run as the invoking runner UID/GID so they can read
+its private bind-mounted fixtures on Linux. Fixture directories/keys retain `0700`/`0600` modes;
+read-only roots, dropped capabilities and no-new-privileges remain enforced. Caddy retains its
+separate nonroot image identity. No public CA or saved application is used.
+
 Run only disposable source checks; no real hostname or cloud credentials are needed:
 
 ```sh

@@ -25,11 +25,7 @@ HOST = "atlas.example.test"
 
 # Only a fixed version+digest manifest may select an upstream ACME test image.
 def test_image(path):
-    lines = [
-        line
-        for line in path.read_text().splitlines()
-        if line and not line.startswith("#")
-    ]
+    lines = [line for line in path.read_text().splitlines() if line and not line.startswith("#")]
     if (
         len(lines) != 1
         or re.fullmatch(
@@ -82,10 +78,7 @@ def main():
     client = docker()
     prefix = "otm-ingress-" + owner
     network, volume, image = prefix + "-net", prefix + "-state", "otm-caddy:" + owner
-    names = {
-        role: prefix + "-" + role
-        for role in ("caddy", "ca", "backend", "scanner", "adapt")
-    }
+    names = {role: prefix + "-" + role for role in ("caddy", "ca", "backend", "scanner", "adapt")}
     containers, owned_network, owned_volume, owned_image = [], False, False, False
     deadline = time.monotonic() + 300
     stage, passed = "latest-release", False
@@ -95,6 +88,7 @@ def main():
     try:
         latest_verified = check_latest()
         stage = "build"
+
         # Captured fixed argv never carries key material; all logs and test TLS state are private.
         def command(arguments, *, input=None):
             remaining = max(1, int(deadline - time.monotonic()))
@@ -115,6 +109,10 @@ def main():
         def start(role, arguments):
             name = names[role]
             containers.append(name)
+            # Private Linux mounts retain runner ownership; root has no DAC bypass here.
+            fixture_user = (
+                ["--user", f"{os.getuid()}:{os.getgid()}"] if role in {"backend", "ca"} else []
+            )
             return command(
                 [
                     client,
@@ -124,6 +122,7 @@ def main():
                     name,
                     "--label",
                     LABEL + "=" + owner,
+                    *fixture_user,
                     "--read-only",
                     "--cap-drop",
                     "ALL",
@@ -281,8 +280,6 @@ def main():
         start(
             "ca",
             [
-                "--user",
-                "0:0",
                 "--network-alias",
                 "pebble",
                 "--env",
@@ -353,9 +350,9 @@ def main():
                 issuer["ca"] = "https://pebble:14000/dir"
                 issuer["test_ca"] = "https://pebble:14000/dir"
                 issuer["trusted_roots_pem_files"] = ["/etc/pebble-ca.crt"]
-        assert "letsencrypt.org" not in json.dumps(
+        assert "letsencrypt.org" not in json.dumps(config) and "zerossl.com" not in json.dumps(
             config
-        ) and "zerossl.com" not in json.dumps(config)
+        )
         native_config = directory / "caddy.json"
         native_config.write_text(json.dumps(config))
         native_config.chmod(0o644)
@@ -398,9 +395,7 @@ def main():
                 },
             )
             assert status == 200
-            headers = {
-                key.lower(): value for key, value in json.loads(body)["headers"].items()
-            }
+            headers = {key.lower(): value for key, value in json.loads(body)["headers"].items()}
             assert headers["x-forwarded-proto"] == "https"
             assert "attacker" not in headers["x-forwarded-for"]
             assert headers["x-forwarded-host"] == HOST and "forwarded" not in headers
@@ -422,10 +417,7 @@ def main():
                 assert status == 404 and not any(
                     key.lower() == "location" for key, value in headers
                 )
-        assert (
-            request("caddy", 8080, "/", headers={"Host": "unknown.example.test"})[0]
-            == 404
-        )
+        assert request("caddy", 8080, "/", headers={"Host": "unknown.example.test"})[0] == 404
         assert (
             request(
                 "caddy",
@@ -438,21 +430,17 @@ def main():
         )
         assert json.loads(request("backend", 8080, "/counter")[1])["count"] == before
         assert (
-            probe(
-                "caddy", 8443, "/", context=app_context, host="unknown.example.test"
-            ).get("tls_error")
+            probe("caddy", 8443, "/", context=app_context, host="unknown.example.test").get(
+                "tls_error"
+            )
             is True
         )
-        assert (
-            probe("caddy", 2019, "/", method="PORT_CLOSED").get("port_closed") is True
-        )
+        assert probe("caddy", 2019, "/", method="PORT_CLOSED").get("port_closed") is True
         stage = "persistence"
 
         # Compare the verified leaf certificate across a real process restart and persistent volume.
         def certificate():
-            result = probe(
-                "caddy", 8443, "/", method="CERTIFICATE", context=app_context
-            )
+            result = probe("caddy", 8443, "/", method="CERTIFICATE", context=app_context)
             assert "certificate" in result
             return result["certificate"]
 
@@ -548,9 +536,7 @@ def main():
                         timeout=15,
                     ).stdout
                 )[0]
-                labels = (
-                    record["Config"]["Labels"] if kind == "image" else record["Labels"]
-                )
+                labels = record["Config"]["Labels"] if kind == "image" else record["Labels"]
                 if labels.get(LABEL) != owner:
                     raise RuntimeError("CADDY_RESOURCE_OWNERSHIP_MISMATCH")
                 subprocess.run(

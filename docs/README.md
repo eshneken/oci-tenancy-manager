@@ -233,7 +233,7 @@ The [recovery-network repair source subset](reference/recovery-network-repair.md
 - [V1 NSG-only networking](how-to/nsg-only-networking.md) — approved no-Calico model, no NetworkPolicy objects, explicit optional SMTP egress and accurate boundary limits.
 
 
-- [Caddy HTTP-01 ingress](how-to/caddy-ingress.md) and [accepted design](engineering-design/25-https-ingress-and-certificates.md) — held source and local Pebble protocol tests; [two exact image-risk exceptions](reference/caddy-security-exceptions.md) approved with continuous official-update checks; targeted policy/native validation passes; hosted execution and live qualification remain pending.
+- [Caddy HTTP-01 ingress](how-to/caddy-ingress.md) and [accepted design](engineering-design/25-https-ingress-and-certificates.md) — held source and portable, hardened local Pebble protocol tests; [two exact image-risk exceptions](reference/caddy-security-exceptions.md) approved with continuous official-update checks; targeted policy/native validation passes; hosted execution and live qualification remain pending.
 
 - [Caddy image-risk acceptance](reference/caddy-security-exceptions.md) — 15-November exact official-build exceptions; retained availability risks, latest-release checks and continuous update requirements.
 

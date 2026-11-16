@@ -73,3 +73,65 @@ def test_native_check_creates_artifact_parent(tmp_path, monkeypatch):
             MODULE.main()
     finally:
         MODULE.os.umask(previous_mask)
+
+
+# Linux bind mounts retain runner ownership; fixture consumers must not depend on root DAC bypass.
+def test_fixture_containers_use_runner_identity_without_relaxing_permissions(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    original_root = MODULE.ROOT
+    (tmp_path / "Dockerfile").write_bytes((original_root / "Dockerfile").read_bytes())
+    pin = tmp_path / "tools/pebble/Dockerfile"
+    pin.parent.mkdir(parents=True)
+    pin.write_bytes((original_root / "tools/pebble/Dockerfile").read_bytes())
+    monkeypatch.setattr(MODULE, "ROOT", tmp_path)
+    monkeypatch.setattr(MODULE, "docker", lambda: "docker")
+    monkeypatch.setattr(MODULE, "check_latest", lambda: "v2.11.9")
+    monkeypatch.setattr(MODULE, "remove_owned", lambda *args: True)
+    monkeypatch.setattr(MODULE.os, "getuid", lambda: 1001)
+    monkeypatch.setattr(MODULE.os, "getgid", lambda: 1001)
+    calls = []
+    labels = {}
+
+    # Capture real startup argv and stop at the CA boundary before any certificate or network probe.
+    def command(arguments, **kwargs):
+        calls.append(arguments)
+        if "--label" in arguments:
+            key, value = arguments[arguments.index("--label") + 1].split("=", 1)
+            labels[key] = value
+        if "inspect" in arguments:
+            import json
+
+            return SimpleNamespace(
+                returncode=0,
+                stdout=json.dumps([{"Labels": labels, "Config": {"Labels": labels}}]).encode(),
+                stderr=b"",
+            )
+        if arguments[0] == "openssl":
+            for flag in ("-keyout", "-out"):
+                Path(arguments[arguments.index(flag) + 1]).write_text("synthetic fixture")
+        if "--network-alias" in arguments:
+            alias = arguments[arguments.index("--network-alias") + 1]
+            if alias == "pebble":
+                raise RuntimeError("STOP_AFTER_CA_START")
+        return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
+
+    monkeypatch.setattr(MODULE.subprocess, "run", command)
+    previous_mask = MODULE.os.umask(0o077)
+    try:
+        assert MODULE.main() == 1
+    finally:
+        MODULE.os.umask(previous_mask)
+    fixtures = {
+        args[args.index("--network-alias") + 1]: args for args in calls if "--network-alias" in args
+    }
+    assert set(fixtures) == {"otm-api", "pebble"}
+    for arguments in fixtures.values():
+        assert "--user" in arguments
+        assert arguments[arguments.index("--user") + 1] == "1001:1001"
+        assert arguments[arguments.index("--cap-drop") + 1] == "ALL"
+        assert "--read-only" in arguments
+        assert "no-new-privileges" in arguments
+    directory = next((tmp_path / ".local-dev/quality").iterdir())
+    assert directory.stat().st_mode & 0o777 == 0o700
+    assert (directory / "server.key").stat().st_mode & 0o777 == 0o600
