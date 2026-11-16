@@ -290,3 +290,23 @@ still requires qualification. The pure matching helper only
 compares an already authenticated candidate fingerprint; it neither verifies provenance nor grants
 staging acceptance. Trusted acceptance, staging deployment, production promotion and OCI identity
 remain future implementation/qualification work. No application DB/schema change or saved app update.
+
+
+## Read-only release integrity consumer — 16 November 2026
+
+The [verification procedure](../how-to/application-releases.md) and
+[boundary reference](../reference/artifact-releases.md#read-only-authenticated-integrity-verification)
+add a simple consumer of the existing four public release files. The operator selects an expected
+repository/build run; the consumer independently reads GitHub metadata and uses standard GitHub CLI
+cryptographic verification for descriptor/source/image provenance and image-bound SBOMs. Exact
+workflow/ref/source/signer/run/attempt identity and bounded frozen file hashes must agree. Source tar
+members are inspected in memory and never executed or extracted.
+
+This closes the integrity-authentication gap without a release service, custom signing scheme,
+new table, provider operation, deployment workflow or caller-supplied pass flag. A successful report
+means integrity_verified only, with staging acceptance not evaluated and deployment not performed.
+The exact publishing attempt remains eligible after a later publishing rerun; Checkpoint keeps the
+existing conservative latest-success/five-job gate. Missing/failed cryptographic or current CI evidence
+fails closed. Hosted GitHub/GHCR verification still requires genuine-artifact qualification; OCI
+staging deployment, authenticated acceptance, long-term custody and unchanged-byte production
+promotion remain separate implementation/qualification work. Saved Atlas 8443 stays unchanged.

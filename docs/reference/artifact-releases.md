@@ -1,6 +1,6 @@
 # Immutable ARM64 application release candidates
 
-16 November 2026 · Implemented build source; targeted source validation passes · No hosted publication or deployment
+16 November 2026 · Implemented publisher and read-only integrity consumer · No hosted publication or deployment
 
 [Operator review](../how-to/application-releases.md) · [Promotion design](../engineering-design/24-environments-and-promotion.md)
 
@@ -130,7 +130,7 @@ permission is granted. Standard GitHub attestation publication and image-attesta
 remain selected; this is not an OCI cloud federation/deployment permission. Attestation does not
 establish application acceptance or OCI deployability.
 A consumer must verify trusted repository/workflow/ref/source and exact subjects, not simply compare
-JSON or accept any attestation signed by an unrelated workflow. That trusted consumer is future work.
+JSON or accept any attestation signed by an unrelated workflow. The read-only integrity consumer below verifies these bindings; authenticated staging acceptance remains separate work.
 
 Ninety days is artifact retention, not permanent release custody. Registry retention/access,
 long-term descriptor/archive/SBOM and verified-attestation preservation remain pending. Missing or
@@ -145,7 +145,7 @@ The caller must first authenticate acceptance through the future trusted deploym
 verification workflow. This function does not verify signatures, approvals, OCI state, acceptance
 run identity or success. No current candidate becomes staging-qualified merely by invoking it.
 
-## Qualification status
+## Historical publisher source qualification (before the integrity consumer)
 
 The complete backend unit-only gate passed 2,921 cases at 95.4192% line coverage across 198
 application modules; the 60 focused cases pass. The owned native application-container pipeline
@@ -157,6 +157,82 @@ The owned real-Git archive regression also passed. These results do not execute 
 publication or the full milestone suite. Static/purpose/privacy and independent security review pass.
 
 GitHub trigger/permissions, the actual hosted native ARM runner, registry digest/SBOM/provenance
-publication and trusted consumer behavior still require hosted qualification. OCI ARM pulls, compatible migrations,
+publication and genuine-artifact consumer behavior still require hosted qualification. OCI ARM pulls, compatible migrations,
 staging acceptance, production approval and unchanged-byte promotion remain [Pending](../how-to/real-oci-test-manifest.md#immutable-arm64-release-artifacts).
 No publication, push/merge, cloud resource or saved 8443 change is part of this source checkpoint.
+
+
+## Read-only authenticated integrity verification
+
+`scripts/verify_application_release.py` invokes `otm.release_verification.main`. Three required selectors
+are `--directory` (an operator-downloaded four-file directory), `--repository` (trusted expected
+GitHub owner/repository) and `--run-id` (trusted expected publishing run ID). It neither downloads
+arbitrary archives nor accepts attestation JSON, custom trust roots, unsigned fallbacks or pass flags.
+The shared `BUNDLE_FILES` allowlist lives in `otm.artifact_release`; the publisher and verifier use the
+same unchanged seven-source-file contract plus generated settings schema. Descriptor format stays 1.
+
+The implementation:
+
+1. Requires GitHub CLI 2.102.0 or newer, including the attestation ref-matching security correction.
+2. Requires exactly the four public filenames, reads regular files without following final-component
+   symlinks and freezes their bytes. Each file and parsed CLI response is limited to 16 MiB; subprocess
+   capture first uses private temporary disk files, with a 120-second timeout for each `gh` call.
+3. Rejects duplicate JSON keys and noncanonical descriptors. Independently fetches the exact successful
+   publishing attempt from GitHub, checks repository/head repository, SHA, master, workflow_run event,
+   exact publishing path/run/attempt, and revalidates the existing Checkpoint/five-job gate.
+4. Checks source/SBOM/schema hashes. Reads the plain tar in memory without extracting or executing it;
+   members must be the exact allowlist once each, regular, bounded and without PAX headers. Inventories
+   must identify CycloneDX and contain components.
+5. Invokes standard online `gh attestation verify` six times: provenance for descriptor and source tar,
+   provenance for each immutable image, and CycloneDX SBOM for each image. The producer has five
+   attestation **steps** because its file-provenance step signs both local files; these counts differ.
+6. Pins github.com, the current expected repository, exact publishing workflow, master ref, source and
+   signer SHA, and GitHub-hosted runners. Requires the verified certificate's signed `runInvocationURI`
+   to identify the exact build run/attempt, the expected subject digest/predicate type and matching SBOM
+   predicate contents. It fetches attestations through GitHub rather than accepting local bundles.
+
+Publishing attempts use the exact attempt endpoint so later reruns cannot substitute metadata for
+an earlier immutable candidate. The Checkpoint contract intentionally remains conservative: its
+current run and latest five jobs must all be successful; a pending/failed rerun blocks verification.
+
+Only successful verification emits these nine report fields:
+
+| Field | Meaning |
+| --- | --- |
+| `status` | `integrity_verified`; neither acceptance nor deployment. |
+| `release_id` | Existing candidate locator. |
+| `fingerprint` | Canonical whole-candidate SHA256. |
+| `repository` | Independently selected and authenticated expected repository. |
+| `source_sha` | Exact signed and successful source commit. |
+| `build_run_id` | Independently selected successful publishing run. |
+| `build_attempt` | Exact successful, signed publishing attempt. |
+| `staging_acceptance` | Always `not_evaluated`. |
+| `deployment` | Always `not_performed`. |
+
+Verification failure produces a fixed nonsecret JSON message and exit 1, without raw command output,
+credentials or file contents. Invalid command usage (such as missing or unknown selectors) instead
+uses argparse usage/errors and exit 2, with no verification report. Missing registry/read permissions are failure, not permission to
+substitute unsigned metadata. Tokens remain in approved host/CI credential handling and never become
+CLI arguments. Executable lookup requires an existing absolute GitHub CLI path; legitimate
+installation symlinks are supported. This assumes a trusted installed CLI and host PATH, rather than
+authenticating the CLI binary itself. Standard verification authenticates the signed builder's claims; it does not replace
+an independent deployed-image/readiness check, current vulnerability rescan, durable custody,
+production approval or authenticated staging acceptance. Reports themselves grant no authority.
+
+References: [GitHub CLI verification](https://cli.github.com/manual/gh_attestation_verify),
+[ref-matching advisory](https://github.com/cli/cli/security/advisories/GHSA-4mq3-hpgx-9cx8),
+[workflow-run attempt API](https://docs.github.com/en/rest/actions/workflow-runs#get-a-workflow-run-attempt).
+
+### Integrity-consumer source checkpoint — 16 November 2026
+
+The complete backend unit-only gate passes **2,982 tests**, with **95.4638%** line coverage across
+199 application modules; this includes **119 focused candidate/publisher/verifier tests**. The
+unchanged frontend gate passes 650 tests at 96.99%. Purpose/link/publication/credential scans and
+Bandit pass. Scoped B404/B603 annotations describe independently reviewed fixed-argv subprocess
+false positives; executable resolution is absolute and shell execution is explicitly disabled.
+No scanner policy, assertion, timeout or coverage threshold was weakened.
+
+This is a targeted source checkpoint after the preceding full platform qualification. The full
+PostgreSQL/browser suite is not rerun for this read-only CLI-only addition; required complete
+milestone/PR gates remain mandatory before its next PR. Genuine hosted cryptographic verification,
+registry authorization, OCI deployment and authenticated staging acceptance remain Pending.

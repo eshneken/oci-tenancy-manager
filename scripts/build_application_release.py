@@ -15,23 +15,17 @@ from pathlib import Path
 import certifi
 from alembic.script import ScriptDirectory
 from caddy_image_policy import check_latest, evaluate
-from run_container_smoke import SCANNER
-
-from otm.artifact_release import ReleaseCandidate, ReleaseImage, validate_checkpoint
+from otm.artifact_release import (
+    BUNDLE_FILES,
+    ReleaseCandidate,
+    ReleaseImage,
+    validate_checkpoint,
+)
 from otm.hosted_database import migration_configuration
 from otm.settings import ApplicationSettings
+from run_container_smoke import SCANNER
 
 ROOT = Path(__file__).resolve().parents[1]
-# Explicit public source only; never include a workspace directory, private config or test captures.
-BUNDLE_FILES = (
-    "backend/src/otm/kubernetes_release.py",
-    "backend/src/otm/caddy_ingress.py",
-    "backend/src/otm/ingress_settings.py",
-    "backend/config/staging.application.toml",
-    "backend/config/production.application.toml",
-    "tools/caddy/Dockerfile",
-    "tools/caddy/security-exceptions.json",
-)
 
 
 # Standard SHA256 is shared by bundle/SBOM identities; no private file is passed to this helper.

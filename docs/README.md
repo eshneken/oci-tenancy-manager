@@ -237,4 +237,4 @@ The [recovery-network repair source subset](reference/recovery-network-repair.md
 
 - [Caddy image-risk acceptance](reference/caddy-security-exceptions.md) — 15-November exact official-build exceptions; retained availability risks, latest-release checks and continuous update requirements.
 
-- [Immutable ARM64 release artifacts](reference/artifact-releases.md) and [operator review](how-to/application-releases.md) — implemented candidate/build source and passing targeted checks, all fields and four-file evidence; hosted publication/staging acceptance/deployment remain pending.
+- [Immutable ARM64 release artifacts](reference/artifact-releases.md) and [operator review](how-to/application-releases.md) — candidate/publisher plus read-only authenticated integrity verifier, exact public files and signed source/run/image/SBOM identity; genuine hosted verification, staging acceptance and deployment remain separately qualified.

@@ -613,6 +613,10 @@ do not establish hosted publication or staging acceptance.
 - Verify GHCR tag-to-digest/manifest identity and permissions, standard image/descriptor/public-source
   provenance and image-bound SBOM attestations. Verify expected repository/workflow/ref/source and
   exact subjects from trusted records; a matching JSON hash or arbitrary signed artifact is insufficient.
+- Run the read-only verifier against genuine published files and all six authenticated subjects,
+  including private registry authorization, exact signed run/attempt identity and mismatch rejection.
+  Qualify exact publishing-attempt reads separately from conservative latest-success Checkpoint reruns;
+  synthetic CLI output is not live signature evidence. No integrity report grants staging acceptance.
 - Exercise partial build/push/attestation failures without producing a qualified release. Confirm only
   four public files upload, 90-day retention, no sensitive logs/config/image archives and separately
   retained long-term descriptor/archive/SBOM/verified-attestation custody. Missing evidence blocks use;

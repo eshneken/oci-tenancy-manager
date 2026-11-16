@@ -1465,3 +1465,28 @@ long-term verified custody and trusted acceptance consumption require [qualifica
 The current matching helper performs content equality only; it does not prove an authenticated
 staging pass. No deployment workflow, OCI trust bootstrap, actual publication or saved 8443 change
 is implied. All five required milestone/PR gates and 95% complete-source unit thresholds remain.
+
+
+## Authenticated release integrity consumer — 16 November 2026
+
+The [read-only verifier](how-to/application-releases.md) adds synthetic end-to-end orchestration
+checks without OCI or registry publication. Test cases reject unexpected/missing files, final-file
+symlinks/FIFOs/oversize, duplicate JSON keys, noncanonical descriptors, altered source/schema/SBOMs,
+tar traversal/extra/duplicate/link/oversize members, substituted repository/workflow/SHA/run/attempt,
+wrong signed subjects/predicates/inventories, empty verification results, outdated/missing GitHub CLI,
+failed/timed-out/oversized CLI responses and arbitrary pass flags. The successful path asserts six
+standard cryptographic-verifier invocations with exact hostname/repository/workflow/ref/source/signer
+identity and hosted-runner policy, followed by an integrity-only report. No test-generated verification
+JSON is accepted through the runtime CLI. Unit transport substitution is not live signature evidence.
+
+Existing candidate/build fixtures and archive allowlist remain shared; no deployment or schema change.
+Keep genuine hosted attestation/registry tests and later OCI deployment/acceptance tests
+[Pending](how-to/real-oci-test-manifest.md#immutable-arm64-release-artifacts) until exercised. Full milestone
+CI, disposable integration suites and complete-source 95% unit coverage remain unchanged.
+
+Source checkpoint evidence: 2,982 complete backend units pass at 95.4638% coverage across 199 modules,
+including 119 focused candidate/publisher/verifier cases. Frontend remains 650 tests/96.99%.
+Publication, secret, Bandit, purpose-comment and documentation-link checks pass. The CLI help and
+local missing-directory failure are native operator checks, not signature verification. Full
+PostgreSQL/browser milestone qualification precedes this CLI-only addition; no full-suite rerun
+is claimed for it. Required complete gates still run before the next milestone PR.

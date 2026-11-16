@@ -72,4 +72,4 @@ includes replacement verification, identity retention/removal and manual resourc
 
 - [Caddy HTTP-01 ingress review](caddy-ingress.md) — settings/network handoff, mixed-scope 14-object bundle and native evidence; approved narrow image-risk policy, continuous updates and pending live qualification.
 
-- [Application release review](application-releases.md) — exact Checkpoint-triggered ARM64 source flow, four artifact/provenance checks and 90-day versus long-term custody; deployment not implemented.
+- [Application release review](application-releases.md) — download four public files, run the read-only authenticated provenance/SBOM verifier and distinguish integrity from staging acceptance, deployment and long-term custody.
