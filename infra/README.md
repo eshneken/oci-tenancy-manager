@@ -1,7 +1,7 @@
 # Terraform infrastructure
 
 The implementation supplies the **state-bucket bootstrap, network, Enhanced OKE, managed PostgreSQL and Vault custody source**. Staging
-and production use separate roots and separate tenancies. App load-balancer resources, federation and delivery workflows follow in later slices. A live platform apply now creates managed ARM nodes; their launch metadata explicitly disables IMDSv1. No cloud resources were created during development.
+and production use separate roots and separate tenancies. Optional [held Caddy/NLB source](../docs/how-to/caddy-ingress.md) and scoped workload Vault-read IAM are implemented. Federation, deployment/promotion workflows, activation and live qualification follow separately. A live platform apply now creates managed ARM nodes; their launch metadata explicitly disables IMDSv1. No cloud resources were created during development.
 
 | Directory | Responsibility |
 | --- | --- |
@@ -128,7 +128,7 @@ Both platform roots now include the [managed database module and operator guide]
 
 ## Vault custody foundation
 
-Create each environment's [security root](../docs/how-to/vault-foundation.md) after state bootstrap and before platform creation. A separately approved custodian ingests the initial DB secret outside Terraform; private references connect the stages. Workload/federation grants and runtime database roles remain separate work.
+Create each environment's [security root](../docs/how-to/vault-foundation.md) after state bootstrap and before platform creation. A separately approved custodian ingests the initial DB secret outside Terraform; private references connect the stages. Exact API/worker [workload Vault-read grants](../docs/how-to/oke-workload-identity.md) exist as source. Federation grants, runtime database role provisioning and live activation remain separate work.
 
 The required [hosting compartment Actions input](../docs/how-to/hosting-compartment.md) is rendered privately from `OTM_HOSTING_COMPARTMENT_OCID`; no live target value is configured until the real tenancy is available.
 

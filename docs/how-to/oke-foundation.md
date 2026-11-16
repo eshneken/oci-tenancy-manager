@@ -3,8 +3,7 @@
 **Implemented source; live qualification Pending.** The platform roots now compose network and
 Enhanced OKE and [managed PostgreSQL](managed-postgresql.md) resources. No OCI cluster, VM,
 database or application was created during these source slices. Database provisioning needs approved
-private Vault references and explicit UTC windows. The application load balancer/deployment, runtime
-IAM and delivery workflows remain separate work. Keep the running local Atlas instance unchanged.
+private Vault references and explicit UTC windows. [Scoped workload IAM/token projection](oke-workload-identity.md) and optional [held Caddy/NLB source](caddy-ingress.md) are implemented. Full service launch, activation, deployment/promotion workflows and live qualification remain separate work. Keep the running local Atlas instance unchanged.
 
 For version variables, automatic image resolution and exact staging selection, use the
 [platform version guide](platform-versions.md).
