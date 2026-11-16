@@ -8,6 +8,17 @@ from pydantic import Field, model_validator
 
 from otm.contracts import Contract
 
+# Explicit public source only; never include a workspace directory, private config or test captures.
+BUNDLE_FILES = (
+    "backend/src/otm/kubernetes_release.py",
+    "backend/src/otm/caddy_ingress.py",
+    "backend/src/otm/ingress_settings.py",
+    "backend/config/staging.application.toml",
+    "backend/config/production.application.toml",
+    "tools/caddy/Dockerfile",
+    "tools/caddy/security-exceptions.json",
+)
+
 Sha256 = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
 SourceSha = Annotated[str, Field(pattern=r"^[0-9a-f]{40}$")]
 Repository = Annotated[str, Field(pattern=r"^[a-z0-9][a-z0-9-]{0,38}/[a-z0-9][a-z0-9._-]{0,99}$")]
