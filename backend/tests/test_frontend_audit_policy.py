@@ -77,6 +77,29 @@ def test_exact_advisory_and_clean_audit():
     assert MODULE.evaluate(report, lock)["blocked"] == []
 
 
+# A reported forced older-major tooling downgrade is not a compatible patch; other proposals
+# remain blocking, including direct root replacements and newer or malformed tool versions.
+@pytest.mark.parametrize(
+    "proposal,accepted",
+    [
+        ({"name": "tool", "version": "0.9.0", "isSemVerMajor": True}, True),
+        ({"name": "tool", "version": "0.9.0", "isSemVerMajor": False}, False),
+        ({"name": "tool", "version": "2.0.0", "isSemVerMajor": True}, False),
+        ({"name": "tool", "version": "1.0.0", "isSemVerMajor": True}, False),
+        ({"name": "picomatch", "version": "3.0.0", "isSemVerMajor": True}, False),
+        ({"name": "missing", "version": "0.9.0", "isSemVerMajor": True}, False),
+        ({"name": "tool", "version": "0.9.0-beta", "isSemVerMajor": True}, False),
+        ({"name": "tool", "version": None, "isSemVerMajor": True}, False),
+    ],
+)
+def test_forced_downgrade_is_not_a_patch(proposal, accepted):
+    report, lock = evidence()
+    report["vulnerabilities"]["picomatch"]["fixAvailable"] = proposal
+    assert ("tool" in MODULE.evaluate(report, lock)["accepted"]) is accepted
+    lock["packages"]["node_modules/tool"]["dev"] = False
+    assert not MODULE.no_compatible_fix(proposal, lock)
+
+
 # Name, URL, severity, version, runtime use, missing paths and newly available fixes cannot inherit
 # this approval; mixed roots and rootless/unknown dependency chains also remain blocking.
 @pytest.mark.parametrize(

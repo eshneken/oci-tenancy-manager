@@ -12,11 +12,19 @@ not waive the security job, protected-master checks or any unrelated vulnerabili
 The sole accepted root is [GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf),
 the high-severity repeated-extglob regular-expression denial-of-service advisory in
 **picomatch4.0.7**. The reported affected range must remain `<=4.0.7`. Acceptance requires exact
-locked development-only installation, high severity and no fix reported available. Every dependent
+locked development-only installation, high severity and no compatible fix reported available. Every dependent
 finding must also be development-only and have only this root cause throughout its complete npm
 `via` graph. Peer cycles do not grant acceptance unless they reach the approved advisory, and every
 reachable cause is checked. No production dependency, new advisory, changed root version/range,
 severity escalation or newly available compatible fix inherits this approval.
+
+npm11 labels forced downgrades of development tooling to older major releases as available fixes
+(for example Vite8 to Vite6), while npm12 can report no fix for the same root. These proposals are
+not compatible patches. The evaluator permits that reporting difference only when the proposed
+target is an exact currently locked development dependency, npm explicitly marks a breaking change,
+and the proposed numeric version has a strictly older major. This never authorizes performing the
+downgrade. Direct picomatch replacement proposals, newer/equal majors, compatible fixes, unknown
+targets and malformed proposals remain blocking. All exact advisory/version/scope checks still apply.
 
 The latest raw npm audit reports ten high entries including dependents. Those findings remain
 present in the original report; the exception does not make the audit clean or the vulnerable code
@@ -50,5 +58,6 @@ requirements remain unchanged.
 
 Synthetic policy tests cover clean scans, the exact root with a peer cycle, additional/mixed
 advisories, rootless and unknown graphs, changed versions/ranges/severity, runtime dependencies,
-available fixes, missing nodes, malformed/count-inconsistent reports and process/network failures.
+compatible fixes, rejected new/equal/root/malformed downgrade proposals, missing nodes,
+malformed/count-inconsistent reports and process/network failures.
 Actual npm evaluation and independent security review are recorded with the milestone check results.

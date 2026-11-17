@@ -1,12 +1,34 @@
 """Apply one owner-approved development dependency exception without hiding audit findings."""
 
 import json
+import re
 import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ADVISORY = "https://github.com/advisories/GHSA-fc5q-39xc-vjpf"
 VERSION = "4.0.7"
+
+
+# npm 11 can call a forced older-major tooling downgrade a fix where npm 12 reports none.
+# This never authorizes a downgrade: compatible upgrades, direct root fixes and unknown proposals
+# require review, while the exact advisory/version/dev-only checks still apply independently.
+def no_compatible_fix(fix, lock):
+    if fix is False:
+        return True
+    if not isinstance(fix, dict) or fix.get("isSemVerMajor") is not True:
+        return False
+    name, proposed = fix.get("name"), fix.get("version")
+    if not isinstance(name, str) or name == "picomatch" or not isinstance(proposed, str):
+        return False
+    installed = lock["packages"].get("node_modules/" + name, {})
+    version = installed.get("version", "")
+    return bool(
+        installed.get("dev") is True
+        and re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", proposed)
+        and re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version)
+        and int(proposed.split(".")[0]) < int(version.split(".")[0])
+    )
 
 
 # Accept only development-only findings whose complete dependency chain has this one root cause.
@@ -46,7 +68,7 @@ def evaluate(report, lock):
             if (
                 finding.get("name") != current
                 or finding.get("severity") != "high"
-                or finding.get("fixAvailable") is not False
+                or not no_compatible_fix(finding.get("fixAvailable"), lock)
                 or not isinstance(finding.get("nodes"), list)
                 or not finding["nodes"]
                 or not isinstance(finding.get("via"), list)
