@@ -53,7 +53,7 @@ includes replacement verification, identity retention/removal and manual resourc
 
 - [Vault custody foundation](vault-foundation.md) — separate security roots, shared Vault/HSM keys, private ingestion handoff and database-reader IAM
 
-- [Hosting compartment input](hosting-compartment.md) — required per-environment Actions variable, private renderer and one-compartment placement across infrastructure roots
+- [Hosting compartment input](hosting-compartment.md) — required per-environment Actions Secret, private renderer and one-compartment placement across infrastructure roots
 
 - [Hosted Kubernetes workload bundle](kubernetes-workloads.md) — disabled API/worker/migration manifests, immutable settings, credential references and strict schema checks; startup mechanics implemented; hosted composition/activation pending.
 
@@ -72,4 +72,8 @@ includes replacement verification, identity retention/removal and manual resourc
 
 - [Caddy HTTP-01 ingress review](caddy-ingress.md) — settings/network handoff, mixed-scope 14-object bundle and native evidence; approved narrow image-risk policy, continuous updates and pending live qualification.
 
-- [Application release review](application-releases.md) — manual or automatic four-file verification, master-only Actions dispatch, genuine publisher/signature evidence and remaining acceptance/deployment/custody boundaries.
+- [Application release review](application-releases.md) — manual or automatic four-file verification, qualified master-only Actions dispatch, genuine publisher/signature evidence, intentional wrong-Checkpoint rejection and remaining acceptance/deployment/custody boundaries.
+
+- [Review and apply an infrastructure plan](infrastructure-plans.md) — separate environment setup,
+  private inputs, held plan/apply workflows, manual staging-test confirmation and single-attempt
+  failure/recovery procedure; live OCI qualification remains Pending.

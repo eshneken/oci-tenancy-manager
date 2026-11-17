@@ -56,6 +56,17 @@ checks remain intact. The current approved aggregate integration budget is 900 s
 limits remain unchanged. A lane's missing/skipped/timed-out evidence blocks
 merge; a passing companion lane cannot compensate. [Canonical policy](../engineering-test-plan.md#complementary-backend-test-lanes).
 
+### Responsive browser geometry
+
+Compare related element rectangles from one synchronous browser snapshot using
+`frontend/e2e/layout.ts`. Separate awaited rectangle reads can observe different scroll origins
+after focus, resizing or scroll anchoring. The helper records numeric rectangles and viewport/scroll
+metadata only. Keep existing pixel tolerances and responsive assertions; do not widen them to hide
+failures. A focused browser regression demonstrates a false mismatch across two scroll instants,
+then verifies that the snapshot preserves alignment and still detects a genuine four-pixel offset.
+Private browser captures and full assertion logs remain local; public CI exposes bounded source
+locations rather than raw page contents.
+
 ## Publication checks
 
 Run from the repository root:

@@ -1,7 +1,7 @@
 # Terraform infrastructure
 
 The implementation supplies the **state-bucket bootstrap, network, Enhanced OKE, managed PostgreSQL and Vault custody source**. Staging
-and production use separate roots and separate tenancies. Optional [held Caddy/NLB source](../docs/how-to/caddy-ingress.md) and scoped workload Vault-read IAM are implemented. Federation, deployment/promotion workflows, activation and live qualification follow separately. A live platform apply now creates managed ARM nodes; their launch metadata explicitly disables IMDSv1. No cloud resources were created during development.
+and production use separate roots and separate tenancies. Optional [held Caddy/NLB source](../docs/how-to/caddy-ingress.md) and scoped workload Vault-read IAM are implemented. Held [plan/review/apply workflow/federation source](../docs/how-to/infrastructure-plans.md) is implemented; activation, live apply qualification and application deployment/promotion remain separate. A live platform apply now creates managed ARM nodes; their launch metadata explicitly disables IMDSv1. No cloud resources were created during development.
 
 | Directory | Responsibility |
 | --- | --- |
@@ -148,3 +148,25 @@ Application workload source is separate from Terraform ownership: see the [disab
 ## V1 NSG-only network boundary
 
 The owner approved [NSGs only](../docs/how-to/nsg-only-networking.md), without Calico or Kubernetes NetworkPolicy objects. Optional platform `smtp_egress={cidrs=[...],port=587}` adds bounded relay-specific pod-NSG rules; null adds none. Existing CNI/Oracle service allowances remain additive. Live network unions, metadata/IAM and ingress/SMTP qualification remain pending.
+
+## Held environment plan/review/apply workflows
+
+`infra-staging.yml` and `infra-production.yml` are manual master-only entry points for their fixed
+`security` or `platform` root. Both remain held unless deliberately enabled after live qualification.
+They use separate protected-environment OAuth client secrets to exchange a GitHub JWT for an
+ephemeral signing session. Provider and backend explicitly use file-backed `ResourcePrincipal`;
+operator defaults remain unchanged. Default operation is plan; apply additionally requires the
+separate default-false `OTM_INFRASTRUCTURE_APPLY_ENABLED` flag and an exact reviewed producer plan.
+There is no destroy operation. Environment approval and both enable flags are required before apply.
+
+Secret-bearing plans are stored only under `infrastructure-plans/` in that environment's existing
+private versioned state bucket; no public GitHub plan artifact or raw plan output is produced.
+See the [reference](../docs/reference/infrastructure-plans.md) and
+[operator procedure](../docs/how-to/infrastructure-plans.md). Backend locking, actual trust/IAM,
+private storage, job cleanup and actual apply remain live qualification. The apply consumer
+authenticates the exact successful GitHub producer run/attempt/job logs, matches private inputs and
+reviewed binary hash, and conditionally consumes the producer plan once. Production requires its own
+plan, same-source successful staging apply, manual test confirmation, explicit shared-field parity,
+qualified ARM image and production approval. Failed/interrupted apply requires investigation and a
+fresh plan; native failed-backend state is best-effort retained privately for manual repair only.
+The permanent attempt marker is never removed. No live OCI or saved Atlas change is claimed.

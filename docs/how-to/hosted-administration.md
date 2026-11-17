@@ -5,8 +5,9 @@
 [Documentation home](../README.md) · [How-to index](README.md) ·
 [Environment/release contract](../engineering-design/24-environments-and-promotion.md)
 
-These procedures describe the intended staging/production operations. The named GitHub workflows,
-hosted maintenance controls and environment links still need implementation and qualification.
+These procedures describe the intended staging/production operations. The held infrastructure
+plan/review/apply workflows are implemented as source; live qualification remains pending. Application
+deployment workflows, hosted maintenance controls and environment links still need implementation and qualification.
 Before go-live, replace proposed entry-point names with actual links and tested instructions, and
 have an administrator other than the author complete each procedure in staging. If a referenced
 control is missing, stop; do not invent a CLI, edit database rows or bypass a protection rule.
@@ -56,10 +57,11 @@ Do not repeatedly click Run to resolve an uncertain operation. Inspect its actua
 ## Application update — the normal release path
 
 1. Select an approved protected-master source revision with passing required checks. The
-   [implemented build source](application-releases.md) follows the exact successful master-push
-   Checkpoint automatically once published/enabled; hosted qualification is still pending. Select
-   only its completed trusted candidate and verified provenance. Record the release ID and immutable
-   image/public-source identities. Do not use `latest`. The deployment steps below remain proposed.
+   [qualified publisher](application-releases.md) follows the exact successful master-push Checkpoint
+   automatically. Select only its completed trusted candidate and manually run the read-only hosted
+   verifier; its integrity result does not establish staging acceptance or deployment.
+   Record the release ID and immutable image/public-source identities. Do not use `latest`.
+   The deployment steps below remain proposed; OCI and durable-custody qualification remain Pending.
 2. Run `deploy-staging.yml` for that release ID. Check that the selected target is staging and that
    email goes only to its approved test destination. The workflow validates compatibility, applies
    any reviewed migrations once, drains old workers safely and deploys the candidate.
@@ -116,7 +118,9 @@ once their bundled schema differs; rolling back an image is safe only when its s
    target, capacity/placement and effect on the database, networking and keys. Any unexplained
    replacement/deletion is a stop. Take the approved pre-change backup for high-risk DB work and
    verify it is usable; ensure quotas/capacity allow recovery and rolling-node surge.
-3. Apply the reviewed staging plan. For OKE, validate the supported version-skew/upgrade path,
+3. Use the [reviewed-plan apply procedure](infrastructure-plans.md#apply-staging-test-explicitly-then-review-production)
+   with the staging producer run and privately reviewed binary hash. Each plan allows one attempt;
+   investigate failures and create/review a fresh plan rather than retrying it. For OKE, validate the supported version-skew/upgrade path,
    upgrade the control plane, then cycle/upgrade managed workers using the qualified approach.
    Updating a node-pool version alone is not proof all existing nodes were upgraded. Recheck all
    nodes, add-ons, workload placement and surviving capacity, with IMDSv1 still disabled.
@@ -131,7 +135,12 @@ once their bundled schema differs; rolling back an image is safe only when its s
 6. Run `infra-production.yml` in plan mode using the same tested source/provider locks but
    production's own state and approved values. Review/approve this production plan and maintenance
    impact; never apply a staging plan to production. Re-plan/re-review if its inputs/state change.
-7. Apply in the rehearsed order, confirm the installed versions and repeat safe production health,
+   The consumer requires the same-source/component successful staging apply, explicit manual test
+   confirmation, shared-field parity and qualified ARM image; no automated test proof is verified.
+7. Obtain production Environment approval and apply its exact reviewed plan once through the same
+   procedure. On uncertain failure keep the attempt marker, investigate actual effects/state and
+   repair native failed-backend recovery state only through authorized manual handling.
+   Confirm the installed versions and repeat safe production health,
    backup, deadline and capacity checks. Record completion. Do not build an application image
    merely because infrastructure changed.
 

@@ -51,16 +51,16 @@ references with actual tested links/inputs during implementation and qualify ope
 before go-live; familiarity with the implementation is not a substitute for usable instructions.
 
 The [build workflow](../reference/artifact-releases.md) has completed native ARM publication and
-genuine signature qualification. Read-only verification dispatch source is added; its hosted job
-still needs qualification after merge. Deployment workflow names below remain proposed entry points,
+genuine signature qualification. Read-only hosted verification dispatch has also succeeded, with
+one intentional wrong-Checkpoint rejection and registry cleanup qualified. Deployment workflow names below remain proposed entry points,
 not implemented deployment claims. Environment entry points stay separate and bind one fixed target.
 
 | GitHub workflow / current scope | Responsibility / authority |
 | --- | --- |
 | `build-application.yml` — first native hosted publication qualified | Follows exact successful master-push Checkpoint; builds/scans two ARM64 images, binds SBOM/public-source/schema metadata and standard attestations. No staging/production mutation authority |
-| `verify-application-release.yml` — source implemented; hosted dispatch pending | Master-only manual run selection, exact native artifact download and six read-only provenance/SBOM checks; no acceptance or deployment authority |
-| `infra-staging.yml` | Validate/plan/apply reviewed Terraform source against staging state using staging-only infrastructure identity |
-| `infra-production.yml` | Plan that tested Terraform source against production state; require review/approval of this production plan before apply using production-only infrastructure identity |
+| `verify-application-release.yml` — hosted success and wrong-Checkpoint rejection qualified | Master-only manual run selection, exact native artifact download and six read-only provenance/SBOM checks; no acceptance or deployment authority |
+| `infra-staging.yml` — held plan/review/apply source implemented | Plan the fixed staging security/platform root, then consume one separately reviewed private plan once; own identity/state |
+| `infra-production.yml` — held plan/review/apply source implemented | Review/apply production's own plan after successful same-source staging apply, explicit manual test confirmation, parity/image checks and production approval |
 | `deploy-staging.yml` | Select the trusted build's release ID, deploy its exact image/deployment bundle, apply compatible migrations and run required staging acceptance; record pass/fail against the exact deployed candidate |
 | `promote-production.yml` | Select only a staging-qualified release ID; verify provenance, evidence, compatibility and current security policy; obtain production approval and deploy the same artifact bytes, without rebuilding |
 | `deploy-settings-staging.yml` / `promote-settings-production.yml` | Separately qualify and promote reviewed compatible nonsecret settings/maintenance definitions using the deployed application image; no image rebuild |
@@ -148,7 +148,7 @@ attestation binds build identity and image digest. Record only safe nonsecret fi
 Use one canonical candidate without OCI environment credentials in the build job. The implemented
 [source publisher](../how-to/application-releases.md) selects GHCR for two immutable ARM64 images,
 without introducing a third OCI environment. Native GHCR publication and genuine laptop
-provenance/SBOM verification are qualified. Hosted verification dispatch, remaining access/custody
+provenance/SBOM verification and hosted verification dispatch are qualified. Remaining access/custody
 variants and OCI deployment/acceptance still require qualification. If each tenancy requires its own
 OCIR repository, copy the selected artifact without rebuilding or format conversion and verify
 destination manifest/platform digest equality. Promotion preserves provenance evidence and needs
@@ -231,7 +231,7 @@ References: [GitHub deployment environments](https://docs.github.com/en/actions/
 
 ## Single hosting compartment — owner decision, 13 November 2026
 
-All infrastructure in each environment lives in one existing compartment selected by the protected GitHub Environment variable `OTM_HOSTING_COMPARTMENT_OCID`. Bootstrap/security/platform roots consume the same required flat input; no child compartments are created. Staging and production still use separate tenancies. Separate Vaults and exact Vault-ID IAM conditions retain credential scope without compartment proliferation. See the [input contract](../how-to/hosting-compartment.md).
+All infrastructure in each environment lives in one existing compartment selected by the protected GitHub Environment Secret `OTM_HOSTING_COMPARTMENT_OCID`. Bootstrap/security/platform roots consume the same required flat input; no child compartments are created. Staging and production still use separate tenancies. Separate Vaults and exact Vault-ID IAM conditions retain credential scope without compartment proliferation. See the [input contract](../how-to/hosting-compartment.md).
 
 
 ## Disabled Kubernetes workload source — 13 November 2026
@@ -325,6 +325,60 @@ The original directory mode remains available for exact earlier successful artif
 
 The first protected native ARM publication and all six genuine signed-subject checks succeeded.
 A modified descriptor failed real signature verification, and a non-publishing run was rejected.
-These are hosted publisher/laptop consumer facts, not hosted-dispatch, OCI deployment, durable
-custody or staging/production acceptance. Those remaining boundaries stay in the manual manifest.
+These initial results qualify the publisher/laptop consumer. Subsequent hosted verification also
+passed; the evidence and remaining boundaries are recorded below and in the manual manifest.
+
+After the verifier merged in PR #11 at `a3883ed`, the [first hosted verification](https://github.com/eshneken/oci-tenancy-manager/actions/runs/43922343367)
+succeeded. The [intentional wrong-Checkpoint rejection](https://github.com/eshneken/oci-tenancy-manager/actions/runs/43922642231) failed as expected;
+registry logout succeeded on that rejection path. After the dependency updates, protected source
+`d0aa007fddd23d39338491053a6d0bc69c66a2d0` passed [all five Checkpoint jobs](https://github.com/eshneken/oci-tenancy-manager/actions/runs/43927027728).
+Its [native ARM publisher](https://github.com/eshneken/oci-tenancy-manager/actions/runs/43928708074) completed every step, including the upgraded
+artifact upload action and all five attestation steps. The [matching hosted verification](https://github.com/eshneken/oci-tenancy-manager/actions/runs/43929086428)
+then succeeded with the nine-field integrity-only report, bound to that exact source and build run;
+registry logout succeeded. The report retains `staging_acceptance: not_evaluated` and
+`deployment: not_performed`. These checks do not qualify every negative path, durable custody,
+OCI pulls/deployment or authenticated staging acceptance; those remain Pending.
 No app UI, database model, schema or saved preview changes are required.
+
+## Infrastructure plan/review/apply delivery — 16 November 2026
+
+The infrastructure-delivery source implements held, manual `infra-staging.yml` and
+`infra-production.yml` plan and reviewed-plan apply entry points for the existing security/platform roots. Both check out
+the exact protected master source, use their fixed GitHub Environment and share that environment's
+non-cancelling change group. `OTM_INFRASTRUCTURE_ENABLED` gates both operations, and the separate
+default-false `OTM_INFRASTRUCTURE_APPLY_ENABLED` additionally gates apply after environment protection
+and live qualification. No environments, secrets, cloud resources or IAM configuration were created.
+
+The owner selected GitHub-hosted runners with restricted per-environment OAuth client secrets.
+Jobs use the documented JWT-to-RPST exchange and ephemeral RSA keys; this avoids persistent OCI
+user signing keys but is not fully secretless. Separate privileged bootstrap authority establishes
+the exact issuer/JWKS/audience and immutable repository/owner/environment/master/workflow claim
+trust. Runtime clients receive no identity-domain administrator role. The Terraform provider and
+native backend use the common explicit file-backed ResourcePrincipal path; provider-only federation
+support must not be mistaken for native backend support. No API-key/node identity fallback is added.
+
+Raw input, credentials, provider diagnostics and binary plans remain private. After successful
+planning with locking, the two-file plan/receipt bundle is conditionally stored under the existing
+environment state bucket's `infrastructure-plans/` prefix. Its compartment, private access and
+versioning are checked before upload. GitHub emits only counts, hashes and source/run references;
+it stores no sensitive plan artifact. No new bucket, service, application table or registry is added.
+
+The apply consumer binds the exact successful GitHub producer run/attempt/job-log report, current
+private-input hash and reviewed binary-plan digest before applying that own-environment saved plan.
+A conditional private-bucket marker permits one apply attempt per producer plan and is never cleared.
+Failed/interrupted execution requires investigation and a fresh plan/review, not replay. Native
+`errored.tfstate` is best-effort retained privately after failed backend saving; repair remains manual.
+
+Production requires a successful same-source/component staging apply and explicit manual confirmation
+that its required tests passed; no automated staging-test proof is verified. It uses its own plan,
+protected production approval, the exact shared-variable parity whitelist and staging-qualified ARM
+image selection described in the reference. Environment-specific values remain separately reviewed.
+GitHub CLI 2.104.0+ authenticates producer evidence. Plan job/token/Terraform budgets are 30/60/20
+minutes; apply budgets are 90/120/75. Neither enable flag is deployment authorization. No destroy or
+application-deployment operation is introduced. Preserve separate bootstrap, secret ingestion and
+staging-before-production rules. The earlier plan-only checkpoint retains its historical scope.
+
+[Source contract](../reference/infrastructure-plans.md) ·
+[Human-readable setup/review runbook](../how-to/infrastructure-plans.md).
+Synthetic and native-mock source checks do not qualify actual trust/IAM, conditional object writes,
+state locking, long-running token behavior or hosted cleanup. Those remain in the live manifest.

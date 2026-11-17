@@ -30,5 +30,11 @@ jobs:
       - run: uv sync --project backend --locked
       # Verified official latest release; a newer release or unavailable lookup fails visibly.
       - run: uv run --project backend python scripts/caddy_image_policy.py
+        # Use the ephemeral read-only job token rather than shared anonymous API limits.
+        env:
+          GH_TOKEN: ${{ github.token }}
       # Fresh vulnerability database, exact accepted findings retained, isolated ACME tests.
       - run: uv run --project backend python scripts/check_caddy_ingress.py
+        # Keep authentication limited to the command that performs the upstream lookup.
+        env:
+          GH_TOKEN: ${{ github.token }}

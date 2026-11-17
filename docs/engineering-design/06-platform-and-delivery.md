@@ -25,7 +25,7 @@ and disposable targets. Terraform manages hosting; application handlers manage b
 
 ## Shared inbound source allowlist — 13 November 2026
 
-Use one environment-scoped GitHub Actions variable, **`OTM_ALLOWED_SOURCE_CIDRS`**, for both
+Use one protected GitHub Environment Secret, **`OTM_ALLOWED_SOURCE_CIDRS`**, for both
 hosted app ingress and each child tenancy's recovery-console perimeter. Values are a comma-separated
 list of canonical CIDRs, with multiple network ranges and individual addresses represented as IPv4
 `/32` or IPv6 `/128`. Reuse the [existing strict parser and bounds](22-credential-security-lifecycles.md#configuration-contract-and-github-actions):

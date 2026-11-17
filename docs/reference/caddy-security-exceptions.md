@@ -83,3 +83,13 @@ were verified. These are targeted source results, not a full milestone run or ho
 qualification and the normal deployment prerequisites. The sole saved Atlas 8443 application,
 its data and all live OCI/public-CA resources remain unchanged. No app/UI/database feature or broader
 risk acceptance is added by this policy.
+
+## Authenticated upstream metadata checks — 16 November 2026
+
+CI's official-release lookups now use the existing ephemeral read-only `GH_TOKEN`, scoped to the
+specific Caddy checking commands. This addresses observed anonymous GitHub API rate-limit failures;
+it grants no additional workflow permissions. The fixed GitHub HTTPS API request rejects redirects,
+retains verified TLS/timeouts and never falls back anonymously after an authenticated failure.
+Local use without a token remains available and fail-closed. Tests cover authenticated/anonymous
+requests, redirect refusal and 401/403/429/503 failure propagation. The two exact accepted findings,
+latest-official requirement and blocking treatment of every other finding are unchanged.

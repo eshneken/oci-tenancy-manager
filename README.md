@@ -105,6 +105,7 @@ The complete SVG supports zooming; entities and relationships remain editable in
 | See tables and relationships | [Implemented database directory](docs/architecture/implemented-database.md) |
 | Rehearse a synthetic demonstration | [Stakeholder demo guide](docs/how-to/stakeholder-demo.md) |
 | Build and qualify the runtime image | [Container development](docs/how-to/container-development.md) |
+| Review infrastructure plans and the held apply procedure | [Infrastructure plan/review/apply guide](docs/how-to/infrastructure-plans.md) |
 | Contribute and checkpoint work | [GitHub checkpoint workflow](docs/how-to/github-checkpoints.md) |
 | Understand remaining cloud validation | [Real-OCI qualification manifest](docs/how-to/real-oci-test-manifest.md) |
 

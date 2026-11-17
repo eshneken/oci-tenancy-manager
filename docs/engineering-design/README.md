@@ -90,4 +90,8 @@ Hosting region: `us-ashburn-1`; no second-region DR site in V1. [Backup policy a
 
 - [25: external DNS, Caddy HTTP-01 ingress and automatic certificates](25-https-ingress-and-certificates.md) — implemented held source; two exact image-risk exceptions approved with continuous updates; targeted policy/native validation passes; live issuance remains pending.
 
-- [Repeatable release verification](24-environments-and-promotion.md#repeatable-release-verification--16-november-2026) — [candidate and workflow contract](../reference/artifact-releases.md); genuine native ARM publication and six signed subjects verified, with hosted manual dispatch, custody and OCI acceptance/deployment still separately qualified.
+- [Repeatable release verification](24-environments-and-promotion.md#repeatable-release-verification--16-november-2026) — [candidate and workflow contract](../reference/artifact-releases.md); genuine native ARM publication, six signed subjects and hosted manual verification qualified, including wrong-Checkpoint rejection; remaining custody and OCI acceptance/deployment stay Pending.
+
+- [Infrastructure plan/review/apply delivery](24-environments-and-promotion.md#infrastructure-planreviewapply-delivery--16-november-2026)
+  — held OAuth-assisted workflows, authenticated own-environment plans, single-use apply and explicit
+  manual staging-test confirmation; live OCI remains Pending.

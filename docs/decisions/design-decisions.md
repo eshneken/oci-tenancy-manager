@@ -1152,3 +1152,43 @@ approved staging email override. Promotion must verify this parity, not certify 
 installation. Owner selected exact OKE v1.37.0 after confirming1.37.1 was unavailable; Oracle's
 published table identifies1.37.0 as preview. Regional availability, ARM image/add-on/sensor behavior
 and deployment approval remain required; no live deployment or implicit patch upgrade is authorized.
+
+## 16 November 2026 — Infrastructure federation and private CI input custody
+
+The owner selected GitHub-hosted infrastructure runners with restricted per-environment OAuth
+client secrets. Generate a fresh signing pair and short-lived OCI RPST per approved job; no persistent
+OCI user signing key or implicit instance/profile fallback. Provider and backend use the common
+file-backed ResourcePrincipal boundary because provider-only federation support is insufficient
+for the pinned native Terraform backend. The first held workflows generate private plans only;
+controlled apply, effective trust/IAM and live state/storage qualification remain separate work.
+
+Independent review caught GitHub's public step-header exposure of ordinary variables. Keep the
+same single-source configuration names, but store private CIDRs, hosting compartment, domain URL
+and client ID in protected Environment Secrets. These references/settings are not necessarily
+authentication credentials; this custody prevents disclosure before application code can mask it.
+This transport classification supersedes earlier entries that called CIDR/compartment inputs
+ordinary GitHub variables. Enablement and version pins remain variables. No actual GitHub
+settings, live values, OCI resources, application tables or saved local data changed.
+
+[Implemented contract](../reference/infrastructure-plans.md) ·
+[Operator runbook](../how-to/infrastructure-plans.md).
+
+## 16 November 2026 — Reviewed infrastructure apply and manual staging-test confirmation
+
+The owner approved a successful staging infrastructure apply plus explicit manual confirmation of
+required staging tests before production. Each environment generates/reviews its own saved plan;
+production never consumes staging's binary or state. Require identical source and component,
+shared-version/sizing parity through the explicit whitelist, the qualified ARM image record and
+protected production approval. Manual confirmation does not authenticate an automated test run.
+
+The consumer authenticates plan identity/hash through the exact successful GitHub producer
+run/attempt/job logs, not a mutable private-bucket receipt alone. Current input hash and reviewed
+binary hash must agree. Two default-false enable flags keep plan access and apply activation separate.
+A conditional bucket marker permanently consumes one apply attempt per producer plan; never clear
+it or automatically replay an uncertain/failed apply. Investigate actual effects/state, manually
+repair native failed-backend recovery state if necessary, then generate/review a fresh plan.
+Best-effort private retention of Terraform's `errored.tfstate` supplies no rollback or automatic
+state-repair authority. No live OCI, application deployment or saved Atlas change is claimed.
+
+[Exact apply/parity contract](../reference/infrastructure-plans.md#reviewed-plan-apply-contract) ·
+[Operator procedure](../how-to/infrastructure-plans.md#apply-staging-test-explicitly-then-review-production).
