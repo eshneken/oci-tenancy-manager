@@ -545,6 +545,7 @@ async function organizationFlows(page: Page) {
         // Laptop status pairs share a row; mobile keeps label/value groups readable in one column.
         const facts = users.locator(".required-user-card").first().locator(":scope > .required-user-facts");
         const statusFacts = facts.locator(":scope > div").filter({has:page.getByText(/^(Identity record|Presence)$/,{exact:true})});
+        expect(await statusFacts.count()).toBe(2);
         await expect(statusFacts.nth(0).locator("dt")).toHaveText("Identity record");
         await expect(statusFacts.nth(1).locator("dt")).toHaveText("Presence");
         const factLayout = await layoutSnapshot(page,{identity:statusFacts.nth(0),presence:statusFacts.nth(1)});
