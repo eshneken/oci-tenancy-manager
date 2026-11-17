@@ -1,4 +1,5 @@
 import {test,expect} from "@playwright/test";
+import {layoutSnapshot} from "./layout";
 import {createHmac} from "node:crypto";
 import {resolve} from "node:path";
 
@@ -40,11 +41,12 @@ test("rotate a managed signing key through the independent native worker",async(
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
       await toolbar.scrollIntoViewIfNeeded();
       if(width===1280){
-        const search=await toolbar.getByRole("searchbox").boundingBox();
-        const link=await toolbar.getByRole("link").boundingBox();
-        expect(Math.abs(search!.y+search!.height/2-link!.y-link!.height/2)).toBeLessThan(2);
-        const checkbox=await toolbar.locator(".directory-filter").boundingBox();
-        expect(Math.abs(search!.y+search!.height/2-checkbox!.y-checkbox!.height/2)).toBeLessThan(2);
+        // DOM order is search, checkbox, link; one snapshot prevents viewport scrolling between reads.
+        const layout=await layoutSnapshot(toolbar.getByRole("searchbox").or(toolbar.locator(".directory-filter")).or(toolbar.getByRole("link")));
+        expect(layout.boxes).toHaveLength(3);
+        const [search,checkbox,link]=layout.boxes;
+        expect(Math.abs(search.y+search.height/2-link.y-link.height/2),JSON.stringify(layout)).toBeLessThan(2);
+        expect(Math.abs(search.y+search.height/2-checkbox.y-checkbox.height/2),JSON.stringify(layout)).toBeLessThan(2);
       }
       await page.screenshot({path:resolve(".local-dev/browser",`directory-${path}-${width}.png`),fullPage:true});
     }
@@ -168,4 +170,23 @@ test("rotate a managed signing key through the independent native worker",async(
   }
   await page.unroute(endpoint);
   expect(errors).toEqual([]);
+});
+
+// Scrolling between independent reads must not create false alignment failures or hide genuine offsets.
+test("layout comparisons use one viewport snapshot",async({page})=>{
+  await page.setContent('<main style="height:3000px;padding-top:1000px"><div style="display:grid;grid-template-columns:1fr 1fr"><div data-fact>Identity record</div><div data-fact>Presence</div></div></main>');
+  const facts=page.locator("[data-fact]");
+  const before=await facts.nth(0).boundingBox();
+  await page.evaluate(()=>scrollTo(0,800));
+  const after=await facts.nth(1).boundingBox();
+  expect(Math.abs(before!.y-after!.y)).toBeGreaterThan(100);
+  const aligned=await layoutSnapshot(facts);
+  expect(aligned.boxes).toHaveLength(2);
+  expect(Math.abs(aligned.boxes[0].y-aligned.boxes[1].y)).toBeLessThan(2);
+  expect(aligned.scrollY).toBe(800);
+  await facts.nth(1).evaluate(element=>{(element as HTMLElement).style.transform="translateY(4px)";});
+  const misaligned=await layoutSnapshot(facts);
+  expect(Math.abs(misaligned.boxes[0].y-misaligned.boxes[1].y)).toBe(4);
+  await facts.evaluateAll(elements=>elements.forEach(element=>{(element as HTMLElement).style.display="none";}));
+  await expect(layoutSnapshot(facts)).rejects.toThrow("Layout target is not rendered");
 });

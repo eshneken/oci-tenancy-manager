@@ -50,7 +50,7 @@ Earlier dated preservation receipts remain historical evidence.
 | Review/test/operator procedures | [How-to guides](how-to/README.md) |
 | Accepted engineering decisions | [D1–D17](decisions/engineering-review-decisions.md), [D18–D58](decisions/design-decisions.md) |
 | Diagram source and generated views | [Architecture diagrams](architecture/diagrams/README.md) |
-| GitHub checkpoints and CI definitions | [Checkpoint workflow guide](how-to/github-checkpoints.md), [required backend lane partition](engineering-test-plan.md#complementary-backend-test-lanes) |
+| GitHub checkpoints and CI definitions | [Checkpoint workflow guide](how-to/github-checkpoints.md) (including [responsive geometry checks](how-to/github-checkpoints.md#responsive-browser-geometry)), [required backend lane partition](engineering-test-plan.md#complementary-backend-test-lanes) |
 | All pending real-OCI manual qualification | [Live test manifest](how-to/real-oci-test-manifest.md) |
 | Pending real-OCI drift and repair validation | [Manual checklist and automated coverage](how-to/configuration-drift-runbook.md#pending-real-oci-manual-validation) |
 | Required quality/security conventions | [Testing](engineering-test-plan.md), [security](security-review-policy.md), [code documentation](code-documentation-policy.md), [UI review](ui-ux-review-policy.md) |

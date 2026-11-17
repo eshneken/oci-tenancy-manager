@@ -1,3 +1,4 @@
+import {layoutSnapshot} from "./layout";
 import {recoveryAccess} from "./recovery-access";
 import {keepOwnershipRoundTrip,removeFormerOwner} from "./ownership-transfer";
 import {tenancyOverrides} from "./tenancy-overrides";
@@ -543,11 +544,14 @@ async function organizationFlows(page: Page) {
         else expect(Math.abs(cards[0].y - cards[1].y)).toBeLessThan(2);
         // Laptop status pairs share a row; mobile keeps label/value groups readable in one column.
         const facts = users.locator(".required-user-card").first().locator(":scope > .required-user-facts");
-        const identity = await facts.locator("div").filter({has:page.getByText("Identity record",{exact:true})}).boundingBox();
-        const presence = await facts.locator("div").filter({has:page.getByText("Presence",{exact:true})}).boundingBox();
-        expect(identity).not.toBeNull(); expect(presence).not.toBeNull();
-        if(width > 700) expect(Math.abs(identity!.y-presence!.y)).toBeLessThan(2);
-        else expect(presence!.y).toBeGreaterThan(identity!.y);
+        const statusFacts = facts.locator(":scope > div").filter({has:page.getByText(/^(Identity record|Presence)$/,{exact:true})});
+        await expect(statusFacts.nth(0).locator("dt")).toHaveText("Identity record");
+        await expect(statusFacts.nth(1).locator("dt")).toHaveText("Presence");
+        const factLayout = await layoutSnapshot(statusFacts);
+        expect(factLayout.boxes).toHaveLength(2);
+        const [identity,presence] = factLayout.boxes;
+        if(width > 700) expect(Math.abs(identity.y-presence.y),JSON.stringify(factLayout)).toBeLessThan(2);
+        else expect(presence.y,JSON.stringify(factLayout)).toBeGreaterThan(identity.y);
         // Recovery's three short facts share one row while policy controls retain their wider pair.
         const recoveryFacts=users.locator(".required-recovery-facts");
         const overview=await recoveryFacts.locator(".required-user-overview-fact").evaluateAll(nodes=>nodes.map(node=>{const box=node.getBoundingClientRect();return {x:box.x,y:box.y};}));
