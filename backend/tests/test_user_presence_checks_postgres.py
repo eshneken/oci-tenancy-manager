@@ -399,7 +399,7 @@ def test_inventory_summary_parity_and_fixed_reads(presence_case, pg_engine, tmp_
             )
             reads.clear()
             current = summaries(c.service, connection, c.policy.workspace_id, (row,))
-            assert len(reads) == 4 and current[row["id"]] == child.required_users
+            assert len(reads) == 5 and current[row["id"]] == child.required_users
             assert summaries(c.service, connection, "foreign", ()) == {}
     finally:
         event.remove(c.engine, "before_cursor_execute", queried)

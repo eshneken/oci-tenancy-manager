@@ -10,6 +10,7 @@ from otm.contracts import Contract, UtcInstant
 from otm.email_policy import EmailContacts
 from otm.financial.contracts import CostView
 from otm.tenancies.contracts import Action, OrganizationContext
+from otm.tenancies.import_contracts import AdoptedIdentity
 from otm.tenancies.presence_contracts import RequiredUsersSummary
 
 
@@ -61,6 +62,7 @@ class PersonOption(Contract):
 
 # Show every current obligation with only the actions allowed by its role and tenancy type.
 class AssociationView(Contract):
+    imported_access: AdoptedIdentity | None = None
     id: UUID
     person_id: UUID
     tenancy_id: UUID

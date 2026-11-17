@@ -32,6 +32,7 @@ from otm.tenancies.workflows import OrganizationWorkflows
 # Construct only explicitly configured laptop dependencies; never use a saved prototype connection.
 def create_local_application():
     settings = load_settings(Path(os.environ["OTM_APPLICATION_CONFIG"]))
+    member_directory = Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "member-access-inventory"
     if settings.provider_mode != "simulated":
         raise ValueError("LOCAL_OCI_SERVICE_COMPOSITION_PENDING")
 
@@ -50,6 +51,7 @@ def create_local_application():
         path.resolve().is_relative_to(frontend.resolve())
         for path in (
             custody_path,
+            member_directory,
             Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "recovery-passwords",
             Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "automation-key-inventory",
             Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "signing-key-custody",
@@ -68,6 +70,7 @@ def create_local_application():
         )
     ):
         raise ValueError("SECRET_CUSTODY_CANNOT_BE_PUBLIC")
+    member_directory.mkdir(mode=0o700, exist_ok=True)
     engine = maintenance_engine(os.environ["OTM_DATABASE_URL"], None)
 
     # Authentication time comes from aware server UTC; browser clocks never authorize a request.
@@ -125,6 +128,7 @@ def create_local_application():
                 policy=policy,
                 facade=SimulatedLifecycleFacade(
                     policy,
+                    member_inventory=member_directory,
                     recovery_console=settings.recovery_console,
                     recovery_console_loader=recovery_console_policy,
                     automation_keys=keys,

@@ -15,6 +15,8 @@ import type {
 import { followLink } from "./navigation";
 
 type Action = OrganizationAction["action"];
+const ownerPromotionNotice = "The new owner receives tenancy-root resource administration and identity-domain administrator access. Atlas reuses an existing bound identity when available and verifies replacement access before removing the former owner.";
+
 const destructiveActions = new Set<Action>(["offboard_person", "delete_tenancy", "remove_member", "transfer_owner", "merge"]);
 const labels: Record<Action, string> = {
   create_tenancy: "Create tenancy",
@@ -706,7 +708,7 @@ export function PersonActions({
                             }}
                           >
                             <option value="">{compartmentMode==="create"?"Choose an existing parent":"Choose an existing compartment"}</option>
-                            {selectedDetail.data?.compartment_parents.filter(p=>compartmentMode==="create"||p.ocid!==selectedDetail.data?.tenancy.tenancy_ocid).map(
+                            {selectedDetail.data?.compartment_parents.map(
                               (p) => (
                                 <option key={p.ocid} value={p.ocid}>
                                   {p.name} · {p.ocid.slice(-10)}
@@ -715,6 +717,7 @@ export function PersonActions({
                             )}
                           </Select>
                         </label>
+                        {compartmentMode==="existing" && parent===selectedDetail.data?.tenancy.tenancy_ocid && <p className="notice">Root access covers the entire tenancy. This member assignment does not grant identity-domain administration.</p>}
                         {parent && (
                           <p className="technical-id">
                             {compartmentMode==="create"?"Selected parent":"Selected compartment"}: {parent}
@@ -773,6 +776,7 @@ export function PersonActions({
                     )}
                     {action === "transfer_owner" && (
                       <>
+                      <p className="notice">{ownerPromotionNotice}</p>
                       <label>
                         New owner
                         <Select
@@ -877,6 +881,7 @@ export function PersonActions({
                                   ))}
                                 </Select>
                               </label>
+                              <p className="notice">{ownerPromotionNotice}</p>
                               <label>{"Former owner for " + a.tenancy_name}
                                 <Select required disabled={busy} value={plan[a.id].formerOwner} onChange={event=>{setPlan({...plan,[a.id]:{...plan[a.id],formerOwner:event.target.value as "keep_member"|"remove"}});edited();}}>
                                   <option value="remove">Remove from tenancy — delete their recorded user</option>

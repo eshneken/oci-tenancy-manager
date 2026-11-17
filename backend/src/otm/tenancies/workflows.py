@@ -42,6 +42,7 @@ from otm.tenancies.directory import (
     tenancy_directory,
     tenancy_view,
 )
+from otm.tenancies.import_contracts import AdoptedIdentity, stored_import
 from otm.tenancies.views import TenancyDetail
 
 
@@ -1091,6 +1092,14 @@ class OrganizationWorkflows:
             )
             frozen.append(
                 FrozenAssociation(
+                    imported_access=stored_import(AdoptedIdentity, link["imported_access"])
+                    if link.get("imported_access") is not None
+                    else None,
+                    recipient_imported_access=stored_import(
+                        AdoptedIdentity, recipient_link["imported_access"]
+                    )
+                    if recipient_link and recipient_link.get("imported_access") is not None
+                    else None,
                     id=link["id"],
                     tenancy_id=row["id"],
                     tenancy_revision=row["revision"],
@@ -1191,10 +1200,7 @@ class OrganizationWorkflows:
                 self.signing_guard(connection, state.workspace, row["id"], at)
             choices = {p.ocid: p for p in self.facade.compartments(row["tenancy_ocid"])}
             if command.existing_compartment_ocid is not None:
-                if (
-                    command.existing_compartment_ocid not in choices
-                    or command.existing_compartment_ocid == row["tenancy_ocid"]
-                ):
+                if command.existing_compartment_ocid not in choices:
                     raise OrganizationConflict("EXISTING_COMPARTMENT_REQUIRED")
             else:
                 if not command.compartment_name or not command.compartment_name.strip():
@@ -1265,7 +1271,19 @@ class OrganizationWorkflows:
             state.workspace,
             (item.tenancy_id for item in plan if item.action == "delete"),
         )
+        from otm.tenancies import owner_access
+
+        plan = owner_access.prepare(connection, state, plan, self.facade)
+        member_domain = (
+            owner_access.domain(connection, state.workspace, tenant_id)
+            if command.action == "join_shared"
+            else None
+        )
         intent = OrganizationIntent(
+            member_domain_ocid=member_domain,
+            import_adoption_contract="import-adoption-1"
+            if command.action == "import_tenancy" and command.tenancy_kind == "shared"
+            else None,
             workspace_id=state.workspace,
             policy_revision=self.policy.policy_revision,
             organization_id=self.policy.organization_id,
@@ -1604,6 +1622,16 @@ class OrganizationWorkflows:
             | {a.person_id for a in intent.associations if intent.whole_tenancy_deletion}
             | {a.recipient_person_id for a in intent.associations if a.action == "transfer"}
         )
+        if intent.import_adoption_contract is not None:
+            from otm.tenancies import import_adoption
+            from otm.tenancies.onboarding import step_rows
+
+            steps = step_rows(connection, row)
+            if steps.get("handoff", {}).get("inputs", {}).get("import_manifest"):
+                affected |= {
+                    member.person_id
+                    for member in import_adoption.accepted(connection, row, steps).members
+                }
         for key in affected:
             connection.execute(
                 update(org_person)

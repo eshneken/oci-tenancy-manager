@@ -380,3 +380,44 @@ def test_capture_failure_retains_temporary_access_and_retry_records_users(workfl
         )
     assert {o["outcome"] for o in outcomes} == {"blocked", "verified"}
     assert next(o for o in outcomes if o["outcome"] == "verified")["required_users"]
+
+
+# Root is an explicit shared resource scope; joining it never silently grants domain administration.
+def test_join_shared_root_keeps_resource_and_domain_roles_distinct(workflow_case):
+    c = workflow_case
+    people = {p.email: p.id for p in c.store.head(c.principal).people}
+    _, created = action(c, people["one@example.test"], "create_tenancy", tenancy_kind="shared")
+    complete_setup(c, created.operation_id)
+    child = c.workflow.tenancies(c.principal, TenancyQuery()).items[0]
+    _, joined = action(
+        c,
+        people["engineer@example.test"],
+        "join_shared",
+        tenancy_id=child.id,
+        existing_compartment_ocid=child.tenancy_ocid,
+    )
+    c.worker.run(joined.operation_id)
+    member = next(
+        m
+        for m in c.workflow.tenancy_detail(c.principal, child.id).memberships
+        if m.person_id == people["engineer@example.test"]
+    )
+    assert member.compartment_ocid == child.tenancy_ocid
+    state = c.provider._member_access[(child.tenancy_ocid, member.user_ocid)]
+    observed = c.provider.inspect_member(child.tenancy_ocid, state["domain_ocid"], member.user_ocid)
+    assert not observed.administrator and not observed.roles
+    with c.engine.connect() as connection:
+        assert (
+            connection.execute(
+                select(tenancy_membership.c.parent_compartment_ocid).where(
+                    tenancy_membership.c.id == member.id
+                )
+            ).scalar_one()
+            is None
+        )
+    _, removed = action(
+        c, member.person_id, "remove_member", tenancy_id=child.id, confirm_shared=True
+    )
+    c.worker.run(removed.operation_id)
+    assert c.workflow.tenancy_detail(c.principal, child.id).tenancy.status == "active"
+    assert c.provider.compartments(child.tenancy_ocid)[0].ocid == child.tenancy_ocid

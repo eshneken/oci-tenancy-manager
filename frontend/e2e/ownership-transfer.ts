@@ -1,6 +1,6 @@
 import {expect,type Page} from "@playwright/test";
 
-// Exercise both retention directions without changing any existing user's OCI identity or scope.
+// Reuse identities in both retention directions while promoting each replacement owner to root.
 export async function keepOwnershipRoundTrip(page:Page,sharedName:string){
  await page.getByRole("link",{name:"Tenancies",exact:true}).click();
  await page.getByRole("link",{name:sharedName,exact:true}).click();
@@ -9,6 +9,7 @@ export async function keepOwnershipRoundTrip(page:Page,sharedName:string){
  const original=await read();
  const bindings=original.memberships.filter((a:{status:string})=>a.status==="active");
  const originalOwner=original.tenancy.owner_person_id;
+ const scopes=new Map(bindings.map((a:{person_id:string;compartment_ocid:string|null})=>[a.person_id,a.compartment_ocid]));
  const member=bindings.find((a:{person_id:string})=>a.person_id!==originalOwner).person_id;
  for(const recipient of [member,originalOwner]){
   await page.getByRole("button",{name:"Transfer owner",exact:true}).click();
@@ -16,6 +17,7 @@ export async function keepOwnershipRoundTrip(page:Page,sharedName:string){
   await modal.getByRole("combobox",{name:"New owner",exact:true}).selectOption(recipient);
   const disposition=modal.getByRole("combobox",{name:"Former owner",exact:true});
   await expect(disposition).toHaveValue("");
+  await expect(modal.getByText(/The new owner receives tenancy-root resource administration/)).toBeVisible();
   await disposition.selectOption("keep_member");
   await expect(modal.getByText(/including any administrator access/)).toBeVisible();
   await expect(modal.getByRole("checkbox",{name:/I acknowledge the consequences/})).toHaveCount(0);
@@ -33,7 +35,9 @@ export async function keepOwnershipRoundTrip(page:Page,sharedName:string){
   const active=after.memberships.filter((a:{status:string})=>a.status==="active");expect(active).toHaveLength(2);
   for(const before of bindings){
    const next=active.find((a:{person_id:string})=>a.person_id===before.person_id);
-   expect(next.user_ocid).toBe(before.user_ocid);expect(next.compartment_ocid).toBe(before.compartment_ocid);
+   expect(next.user_ocid).toBe(before.user_ocid);
+   if(before.person_id===recipient)scopes.set(before.person_id,original.tenancy.tenancy_ocid);
+   expect(next.compartment_ocid).toBe(scopes.get(before.person_id));
   }
  }
  await page.getByRole("link",{name:"Tenancies",exact:true}).click();

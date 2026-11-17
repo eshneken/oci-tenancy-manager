@@ -7,6 +7,7 @@ import type { AdministratorAccessView } from "./contracts";
 import {AutomationKeys} from "./AutomationKeys";
 import {RecoveryAccess} from "./RecoveryAccess";
 import {RecoveryNetworkRepair} from "./RecoveryNetworkRepair";
+import {ImportedAccess} from "./ImportedAccess";
 
 const purposes = { automation: "Automation user", recovery: "Recovery user" };
 const presenceNames = {not_checked:"Not checked", present:"Present", missing:"Missing", unknown:"Unable to verify"};
@@ -174,5 +175,5 @@ export function RequiredUsers({ tenancyId, expired, navigate }: {
         </li>;})}
       </ul>
     </>}
-  </section>{data && <AutomationKeys inventory={data.automation_keys} navigate={navigate} tenancyId={data.signing_rotation_available?tenancyId:undefined} expired={expired}/>}</>;
+  </section>{data?.import_access&&<ImportedAccess value={data.import_access} navigate={navigate}/>} {data && <AutomationKeys inventory={data.automation_keys} navigate={navigate} tenancyId={data.signing_rotation_available?tenancyId:undefined} expired={expired}/>}</>;
 }

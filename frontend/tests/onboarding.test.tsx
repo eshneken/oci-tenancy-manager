@@ -1,3 +1,4 @@
+import {review as importReview} from "./import-members.fixture";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -410,4 +411,34 @@ it.each(["create","import"] as const)("prepares %s bootstrap inputs without rese
  expect(c.write).toHaveBeenCalledWith(identifier,expect.objectContaining({action:"prepare_bootstrap_key",revision:2}),expect.any(AbortSignal));
  expect(screen.getByLabelText("Bootstrap user OCID")).toHaveValue("ocid1.user.oc1..otmsimtyped");
  expect((screen.getByText("OCI administrator checklist") as HTMLElement).closest("details")).not.toHaveAttribute("open");
+});
+
+// Only exact observed identities and the inventory fingerprint cross the adoption command boundary.
+it("requires owner mapping plus both consents for an existing-user import",async()=>{
+ const c=mount({...verified,origin:"import",import_review:importReview,available_actions:["start_setup","refresh_import_inventory"]});
+ const selects=await screen.findAllByRole("combobox");
+ await userEvent.selectOptions(selects[0],"owner");
+ await userEvent.selectOptions(selects[1],"member");
+ const start=screen.getByRole("button",{name:"Start setup"});
+ await userEvent.click(screen.getByRole("checkbox",{name:/I confirm the exact temporary/}));
+ expect(start).toBeDisabled();
+ await userEvent.click(screen.getByRole("checkbox",{name:/I reviewed the selected identities/}));
+ expect(start).toBeEnabled();
+ await userEvent.click(start);
+ await waitFor(()=>expect(c.write).toHaveBeenCalledWith(identifier,expect.objectContaining({action:"start_setup",confirm_cleanup:true,import_adoption:{inventory_hash:importReview.inventory_hash,lifecycle_confirmed:true,members:[{user_ocid:"user-owner",person_id:"owner"},{user_ocid:"user-member",person_id:"member"}]}}),expect.any(AbortSignal)));
+});
+
+// A rejected inventory review points to fresh provider discovery without discarding retry inputs.
+it("explains how to recover an existing-user review failure",async()=>{
+ const c=mount({...verified,origin:"import",import_review:importReview,available_actions:["start_setup","refresh_import_inventory"]});
+ const selects=await screen.findAllByRole("combobox");
+ await userEvent.selectOptions(selects[0],"owner");
+ await userEvent.click(screen.getByRole("checkbox",{name:/I confirm the exact temporary/}));
+ await userEvent.click(screen.getByRole("checkbox",{name:/I reviewed the selected identities/}));
+ c.write.mockRejectedValueOnce(new ApiError(409));
+ await userEvent.click(screen.getByRole("button",{name:"Start setup"}));
+ await screen.findByText(/If existing access changed, choose Refresh existing users/);
+ expect(selects[0]).toHaveValue("owner");
+ await userEvent.click(screen.getByRole("button",{name:"Refresh existing users"}));
+ expect(c.write).toHaveBeenLastCalledWith(identifier,expect.objectContaining({action:"refresh_import_inventory"}),expect.any(AbortSignal));
 });

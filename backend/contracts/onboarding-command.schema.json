@@ -1,5 +1,58 @@
 {
   "$defs": {
+    "ImportAdoption": {
+      "additionalProperties": false,
+      "properties": {
+        "inventory_hash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Inventory Hash",
+          "type": "string"
+        },
+        "lifecycle_confirmed": {
+          "const": true,
+          "title": "Lifecycle Confirmed",
+          "type": "boolean"
+        },
+        "members": {
+          "items": {
+            "$ref": "#/$defs/ImportMemberChoice"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Members",
+          "type": "array"
+        }
+      },
+      "required": [
+        "inventory_hash",
+        "members",
+        "lifecycle_confirmed"
+      ],
+      "title": "ImportAdoption",
+      "type": "object"
+    },
+    "ImportMemberChoice": {
+      "additionalProperties": false,
+      "properties": {
+        "person_id": {
+          "format": "uuid",
+          "title": "Person Id",
+          "type": "string"
+        },
+        "user_ocid": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "User Ocid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "user_ocid",
+        "person_id"
+      ],
+      "title": "ImportMemberChoice",
+      "type": "object"
+    },
     "OnboardingHandoff": {
       "additionalProperties": false,
       "properties": {
@@ -43,7 +96,8 @@
       "enum": [
         "verify_handoff",
         "start_setup",
-        "prepare_bootstrap_key"
+        "prepare_bootstrap_key",
+        "refresh_import_inventory"
       ],
       "title": "Action",
       "type": "string"
@@ -62,6 +116,17 @@
       "anyOf": [
         {
           "$ref": "#/$defs/OnboardingHandoff"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "import_adoption": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ImportAdoption"
         },
         {
           "type": "null"

@@ -9,6 +9,8 @@ from otm.configuration.contracts import BaselineVersion
 from otm.contracts import Contract, Text, UtcInstant
 from otm.email_policy import EmailContacts
 from otm.providers.inspection_contracts import TenancyOcid
+from otm.tenancies.import_contracts import AdoptedIdentity
+from otm.tenancies.owner_access_contracts import OwnerAdministration
 
 Action = Literal[
     "create_tenancy",
@@ -126,6 +128,17 @@ class OrganizationAction(Contract):
 
 # A provider-bound association freezes exact targets; a later merge/feed cannot redirect a job.
 class FrozenAssociation(Contract):
+    owner_administration_required: bool = Field(
+        default=False, exclude_if=lambda value: value is False
+    )
+    recipient_domain_ocid: str | None = Field(default=None, exclude_if=lambda value: value is None)
+    recipient_scim_id: str | None = Field(default=None, exclude_if=lambda value: value is None)
+    imported_access: AdoptedIdentity | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
+    recipient_imported_access: AdoptedIdentity | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
     person_id: UUID | None = None
     person_was_manager: bool = False
     id: UUID
@@ -148,6 +161,20 @@ class FrozenAssociation(Contract):
     user_ocid: str | None = None
     compartment_ocid: str | None = None
 
+    # New promotion work cannot omit the exact domain or an existing account's independently read
+    # SCIM ID.
+    @model_validator(mode="after")
+    def owner_contract(self):
+        if self.owner_administration_required and (
+            self.action != "transfer"
+            or not self.recipient_domain_ocid
+            or self.recipient_person_id is None
+            or self.new_association_id is None
+            or (self.recipient_user_ocid is not None and not self.recipient_scim_id)
+        ):
+            raise ValueError("OWNER_ADMINISTRATION_SCOPE_REQUIRED")
+        return self
+
     # Removal is exact and explicit; a legacy transfer never acquires new destructive effects.
     @property
     def removes_identity(self):
@@ -165,6 +192,10 @@ class LifecycleTarget(Contract):
 
 # The committed immutable intent contains no passwords, PEM keys or raw source-feed content.
 class OrganizationIntent(Contract):
+    member_domain_ocid: str | None = Field(default=None, exclude_if=lambda value: value is None)
+    import_adoption_contract: Literal["import-adoption-1"] | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
     contract_version: Literal["organization-action-1"] = "organization-action-1"
     kind: Literal["organization_action"] = "organization_action"
     workspace_id: Text
@@ -221,6 +252,12 @@ class OrganizationIntent(Contract):
     # New setup graphs cannot silently omit configuration or reuse a legacy action boundary.
     @model_validator(mode="after")
     def baseline_setup_required(self):
+        if self.import_adoption_contract is not None and (
+            self.action != "import_tenancy"
+            or self.tenancy_kind != "shared"
+            or self.onboarding_version not in {3, 4}
+        ):
+            raise ValueError("SHARED_IMPORT_ADOPTION_REQUIRED")
         if self.onboarding_version in {2, 3, 4} and (
             self.action not in {"create_tenancy", "import_tenancy"}
             or self.baseline is None
@@ -268,6 +305,9 @@ class MemberRemoval(Contract):
 
 # A closed simulated completion proves the local registry milestone, never real OCI execution.
 class OrganizationActionOutcome(Contract):
+    owner_administrations: tuple[OwnerAdministration, ...] = Field(
+        default=(), exclude_if=lambda value: not value
+    )
     contract_version: Literal["organization-action-1"] = "organization-action-1"
     provider_mode: Literal["simulated"] = "simulated"
     action: Action

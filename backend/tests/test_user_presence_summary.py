@@ -1,4 +1,4 @@
-"""Inventory summaries preserve exact evidence and a fixed, scoped four-query read budget."""
+"""Inventory summaries preserve exact evidence and a fixed, scoped five-query read budget."""
 
 from datetime import timedelta
 from unittest.mock import MagicMock, patch
@@ -99,6 +99,7 @@ def test_scoped_batch_projection(mode):
         rows([]),
         rows([] if mode == "empty" else [latest]),
         rows(pending),
+        rows([]),
     ]
     with patch("otm.tenancies.presence_summary.bound_snapshot", return_value=snapshot):
         result = summaries(c.service, c.connection, c.row["workspace_id"], (child,))
@@ -116,7 +117,7 @@ def test_scoped_batch_projection(mode):
         else "present"
     )
     assert view.state == expected and view.checking == (mode == "pending")
-    assert c.connection.execute.call_count == 4
+    assert c.connection.execute.call_count == 5
     for call in c.connection.execute.call_args_list:
         parameters = call.args[0].compile().params
         assert c.row["workspace_id"] in parameters.values()
@@ -134,9 +135,9 @@ def test_fixed_query_budget(count):
     children = tuple(
         {**c.child, "id": uuid4(), "workspace_id": c.row["workspace_id"]} for _ in range(count)
     )
-    c.connection.execute.side_effect = [rows([]) for _ in range(4)]
+    c.connection.execute.side_effect = [rows([]) for _ in range(5)]
     result = summaries(c.service, c.connection, c.row["workspace_id"], children)
-    assert len(result) == count and c.connection.execute.call_count == 4
+    assert len(result) == count and c.connection.execute.call_count == 5
     assert all(v.state == "not_checked" for v in result.values())
 
 
@@ -220,6 +221,7 @@ def test_actual_bound_records_in_summary(damage):
         rows([] if damage == "legacy" else [current]),
         rows(identities),
         rows([latest]),
+        rows([]),
         rows([]),
     ]
     child = {**c.child, "workspace_id": c.row["workspace_id"]}

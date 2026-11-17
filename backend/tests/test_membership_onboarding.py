@@ -42,12 +42,15 @@ def test_existing_compartment_exclusive_command_and_digest(registry):
         type(joined)(**{**joined.model_dump(), "compartment_name": "new"})
 
 
-# Only a server-listed nonroot compartment is admitted, with no new-compartment inputs.
+# Only a server-listed compartment, including root, is admitted without creation-only inputs.
 @pytest.mark.parametrize("choice", ["valid", "foreign", "root"])
 def test_existing_compartment_admission_and_exact_binding(registry, choice):
     s, p = registry, person(registry)
     app, connection = service(s), database()
     connection.execute.return_value.scalar_one.return_value = p.id
+    connection.execute.return_value.scalars.return_value.all.return_value = [
+        "ocid1.domain.oc1..otmsimunit"
+    ]
     tenant, _ = attach(s, person(s, "one@example.test"), kind="shared")
     options = app.facade.compartments(tenant["tenancy_ocid"])
     selected = (
@@ -59,7 +62,7 @@ def test_existing_compartment_admission_and_exact_binding(registry, choice):
         id=uuid4(), authorization_revision=uuid4(), identity_kind="local_recovery", email=None
     )
     cmd = command(s, p, "join_shared", tenancy_id=tenant["id"], existing_compartment_ocid=selected)
-    if choice != "valid":
+    if choice == "foreign":
         with pytest.raises(Exception, match="EXISTING_COMPARTMENT_REQUIRED"):
             app._admit(
                 connection,

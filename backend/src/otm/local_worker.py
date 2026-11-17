@@ -35,8 +35,10 @@ from otm.tenancies.worker import OrganizationLifecycleWorker
 # Consume the scoped native queue; once drains currently available work, not just one job.
 def run_worker(*, once=False):
     settings = load_settings(Path(os.environ["OTM_APPLICATION_CONFIG"]))
+    member_directory = Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "member-access-inventory"
     if settings.provider_mode != "simulated":
         raise ValueError("LOCAL_OCI_SERVICE_COMPOSITION_PENDING")
+    member_directory.mkdir(mode=0o700, exist_ok=True)
 
     # Recheck the deployed desired revision before setup, cleanup and read publication.
     def recovery_console_policy():
@@ -196,6 +198,13 @@ def run_worker(*, once=False):
         bootstrap_path = Path(os.environ["OTM_APPLICATION_CONFIG"]).parent / "bootstrap-key-custody"
         bootstrap_path.mkdir(mode=0o700, exist_ok=True)
         bootstrap_keys = LocalBootstrapKeys(bootstrap_path)
+        lifecycle_facade = SimulatedLifecycleFacade(
+            organization_policy().policy,
+            member_inventory=member_directory,
+            recovery_console=settings.recovery_console,
+            recovery_console_loader=recovery_console_policy,
+            automation_keys=key_inventory,
+        )
         register_organization_task(
             native,
             OrganizationLifecycleWorker(
@@ -203,12 +212,7 @@ def run_worker(*, once=False):
                 policy.workspace_id,
                 clock,
                 organization_policy,
-                SimulatedLifecycleFacade(
-                    organization_policy().policy,
-                    recovery_console=settings.recovery_console,
-                    recovery_console_loader=recovery_console_policy,
-                    automation_keys=key_inventory,
-                ),
+                lifecycle_facade,
                 mail_policy_loader=mail_policy,
                 notifications=notifier,
                 recovery_setup=password_setup,
@@ -260,6 +264,7 @@ def run_worker(*, once=False):
                 organization_policy,
                 organization_policy().policy,
                 simulated_presence_inspection,
+                import_inspector=lifecycle_facade.inspect_existing_access,
                 notifications=notifier,
                 recovery_console_loader=recovery_console_policy,
                 recovery_inspection_factory=simulated_console_inspection,

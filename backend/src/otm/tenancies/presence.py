@@ -136,6 +136,9 @@ class PresenceChecks:
         return directory.model_copy(
             update={
                 "signing_rotation_available": self.signing_guard is not None,
+                "import_access": imported_view(
+                    snapshot, latest, event if latest is not None else None, self.store.clock()
+                ),
                 "check_available": reason is None,
                 "check_unavailable_reason": reason,
                 "pending_operation_id": pending,
@@ -322,7 +325,7 @@ def presence_views(snapshot, latest, event, now):
     # Validate the original sealed context first; only harmless registry metadata is ignored here.
     # Dispatch/publication still compare the complete snapshot, including its revision.
     stored = PresenceSnapshot.model_validate_json(json.dumps(latest["context"]))
-    excluded = {"tenancy_revision", "tenancy_name", "recovery_console_fingerprint"}
+    excluded = {"tenancy_revision", "tenancy_name", "recovery_console_fingerprint", "import_access"}
     if snapshot is None or snapshot.model_dump(exclude=excluded) != stored.model_dump(
         exclude=excluded
     ):
@@ -336,6 +339,31 @@ def presence_views(snapshot, latest, event, now):
         )
         for result in evidence.results
     }
+
+
+# Imported-member findings use their own current membership fingerprint and independent freshness.
+def imported_view(snapshot, latest, event, now):
+    from otm.tenancies.import_contracts import ImportedAccessView, import_hash
+
+    if snapshot is None or snapshot.import_access is None:
+        return None
+    if latest is None:
+        return ImportedAccessView()
+    evidence = decode_result(latest, event["data"], event["data_hash"])
+    result = evidence.import_access
+    if result is None or not presence_views(snapshot, latest, event, now):
+        return ImportedAccessView(state="unavailable")
+    stale = (
+        result.context_hash != import_hash(snapshot.import_access)
+        or not result.checked_at <= now < result.checked_at + FRESH_FOR
+    )
+    return ImportedAccessView(
+        state="stale" if stale else result.state,
+        checked_at=result.checked_at,
+        operation_id=latest["operation_id"],
+        members=result.members,
+        unmanaged_user_ocids=result.unmanaged_user_ocids,
+    )
 
 
 # Require current desired policy and the original exact subject/attempt for current labels.

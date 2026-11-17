@@ -11,6 +11,7 @@ from otm.providers.administrator_access import AdministratorCheck
 from otm.providers.automation_keys import AutomationKeyCheck
 from otm.providers.recovery_console import RecoveryConsoleCheck
 from otm.providers.required_user_contracts import RequiredUserObservation, RequiredUserTarget
+from otm.tenancies.import_contracts import ImportedAccessCheck, ImportedAccessSnapshot
 
 
 # Browser commands select no authority, credentials, provider facts or identity IDs.
@@ -20,6 +21,9 @@ class PresenceCheckRequest(Contract):
 
 # A complete registered context freezes the child and both exact independently observed subjects.
 class PresenceSnapshot(Contract):
+    import_access: ImportedAccessSnapshot | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
     tenancy_id: UUID
     tenancy_name: Text
     tenancy_revision: Generation
@@ -99,6 +103,9 @@ class PresenceNoticeEpisode(Contract):
 
 # Each sealed result retains two independent scoped provider observations, never a health claim.
 class PresenceCheckEvidence(Contract):
+    import_access: ImportedAccessCheck | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
     contract_version: Literal["user-presence-check-1"] = "user-presence-check-1"
     tenancy_id: UUID
     operation_id: UUID

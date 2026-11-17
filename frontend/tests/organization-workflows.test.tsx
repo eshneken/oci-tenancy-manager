@@ -1063,7 +1063,7 @@ it.each([
 
 
 // Existing-compartment membership binds the chosen child without sending creation-only fields.
-it("adds a shared member to an existing nonroot compartment", async () => {
+it.each(["project","root"])("adds a shared member to the existing %s compartment", async mode => {
  const c=dialog();
  const existing="ocid1.compartment.oc1..existingproject";
  vi.mocked(api.tenancy).mockResolvedValue({...detail,compartment_parents:[{name:"Tenancy root",ocid:tenant.tenancy_ocid},{name:"Existing project",ocid:existing}]});
@@ -1072,12 +1072,14 @@ it("adds a shared member to an existing nonroot compartment", async () => {
  await waitFor(()=>expect(screen.getByLabelText("Existing parent compartment")).toBeEnabled());
  await userEvent.selectOptions(screen.getByLabelText("Compartment assignment"),"existing");
  expect(screen.queryByLabelText("Employee compartment name")).toBeNull();
- expect(screen.queryByRole("option",{name:/Tenancy root/})).toBeNull();
- await userEvent.selectOptions(screen.getByLabelText("Existing compartment"),existing);
- expect(screen.getByText("Selected compartment: "+existing)).toBeInTheDocument();
+ expect(screen.getByRole("option",{name:/Tenancy root/})).toBeInTheDocument();
+ const selected=mode==="root"?tenant.tenancy_ocid:existing;
+ await userEvent.selectOptions(screen.getByLabelText("Existing compartment"),selected);
+ if(mode==="root")expect(screen.getByText(/Root access covers the entire tenancy/)).toBeInTheDocument();
+ expect(screen.getByText("Selected compartment: "+selected)).toBeInTheDocument();
  await userEvent.click(screen.getByRole("button",{name:"Add to shared tenancy"}));
  await screen.findByText("Operation accepted");
- expect(c.submit).toHaveBeenCalledWith(expect.objectContaining({action:"join_shared",tenancy_id:id,existing_compartment_ocid:existing}),expect.any(AbortSignal));
+ expect(c.submit).toHaveBeenCalledWith(expect.objectContaining({action:"join_shared",tenancy_id:id,existing_compartment_ocid:selected}),expect.any(AbortSignal));
  const command=c.submit.mock.calls[0][0];
  expect(command).not.toHaveProperty("parent_compartment_ocid");
  expect(command).not.toHaveProperty("compartment_name");

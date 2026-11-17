@@ -493,3 +493,20 @@ def test_native_handoff_prepares_bootstrap_once_via_custody(registry):
     with patch.object(flow, "step_rows", return_value={}), patch.object(flow, "transition"):
         assert not flow.advance(Mock(), row, frozen, app.facade, NOW, bootstrap_keys=keys)
     keys.prepare.assert_called_once_with(registry.workspace, row["id"])
+
+
+# Queued reinspection uses the public pending state while durable SQL retains its running enum.
+def test_refreshing_inspection_projects_pending(registry):
+    app, frozen, row, data = case(registry, "import_tenancy")
+    row.update(state="queued", wait_reason=None)
+    handoff = app.facade.onboarding_handoff(frozen)
+    steps = {
+        "handoff": {"state": "verified", "inputs": {"handoff": handoff.model_dump(mode="json")}},
+        "inspect_bootstrap": {"state": "running", "verified_at": None, "inputs": {}},
+    }
+    with patch.object(flow, "load_intent", return_value=data), patch.object(
+        flow, "step_rows", return_value=steps
+    ):
+        view = flow.progress(Mock(), row, app.facade)
+    assert view.phase == "configuring" and view.discovery is None
+    assert view.checks[0].state == "pending" and view.checks[0].verified_at is None

@@ -126,6 +126,14 @@ def decode_result(row, data, digest):
     ):
         raise ValueError("PRESENCE_EVIDENCE_INVALID")
     validate_result_scope(row, evidence.results)
+    if evidence.import_access is not None:
+        from otm.tenancies.import_contracts import import_hash
+
+        snapshot = PresenceSnapshot.model_validate_json(json.dumps(row["context"]))
+        if snapshot.import_access is None or (
+            evidence.import_access.context_hash != import_hash(snapshot.import_access)
+        ):
+            raise ValueError("IMPORT_CHECK_EVIDENCE_INVALID")
     if evidence.recovery_console is not None:
         snapshot = PresenceSnapshot.model_validate_json(json.dumps(row["context"]))
         if (
@@ -158,6 +166,7 @@ def seal(
     administrator_access=None,
     recovery_administrator_access=None,
     automation_keys=None,
+    import_access=None,
 ):
     validate_result_scope(check, results)
     if recovery_console is not None:
@@ -184,6 +193,7 @@ def seal(
         administrator_access=administrator_access,
         recovery_administrator_access=recovery_administrator_access,
         automation_keys=automation_keys,
+        import_access=import_access,
     )
     payload = evidence.model_dump(mode="json")
     event = uuid4()

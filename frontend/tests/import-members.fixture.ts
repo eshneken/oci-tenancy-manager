@@ -1,0 +1,3 @@
+import type {ImportReview} from "../src/contracts";
+
+export const review:ImportReview={inventory_hash:"a".repeat(64),owner_person_id:"owner",people:[{id:"owner",name:"Owner",email:"owner@example.test"},{id:"member",name:"Member",email:"member@example.test"}],inventory:{tenancy_ocid:"tenant",domain_ocid:"domain",complete:true,users:[{user_ocid:"user-owner",scim_id:"scim-owner",user_name:"Existing admin",email:"admin@example.test",administrator:true,groups:["group"],roles:["role"],scopes:[{ocid:"tenant",name:"Root",kind:"root"}],policy_hash:"b".repeat(64)},{user_ocid:"user-member",scim_id:"scim-member",user_name:"Existing member",email:"member@example.test",administrator:false,scopes:[{ocid:"compartment",name:"Project",kind:"compartment"}],policy_hash:"c".repeat(64)}]}};

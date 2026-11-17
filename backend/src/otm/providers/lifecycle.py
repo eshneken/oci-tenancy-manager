@@ -12,6 +12,7 @@ from otm.providers.inspection_contracts import TenancyOcid
 from otm.providers.recovery_console import RecoveryConsoleCapture
 from otm.providers.required_user_contracts import DomainOcid, ObservedRequiredUser
 from otm.tenancies.contracts import MemberRemoval, OrganizationIntent
+from otm.tenancies.owner_access_contracts import OwnerAdministration
 from otm.tenancies.views import CompartmentOption, CreationRegion
 
 
@@ -44,6 +45,7 @@ class MemberBinding(Contract):
 
 # A completion proves only the milestones declared by its qualified provider mode.
 class LifecycleCompletion(Contract):
+    owner_administrations: tuple[OwnerAdministration, ...] = ()
     bindings: tuple[MemberBinding, ...] = ()
     removals: tuple[MemberRemoval, ...] = ()
 
@@ -134,3 +136,12 @@ class LifecycleFacade(Protocol):
 
     # Return qualified existing parents; arbitrary compartment targets are not accepted by the UI.
     def compartments(self, tenancy_ocid: str) -> tuple[CompartmentOption, ...]: ...
+
+    # Enumerate existing humans/grants in the exact child/domain without provisioning or resetting.
+    def inspect_existing_access(self, tenancy_ocid, domain_ocid): ...
+
+    # Resolve one exact user OCID independently; names cannot authorize a replacement identity.
+    def inspect_member(self, tenancy_ocid, domain_ocid, user_ocid): ...
+
+    # Preserve adopted humans while establishing independently verified OTM automation/recovery.
+    def configure_import_access(self, intent, discovery, manifest): ...

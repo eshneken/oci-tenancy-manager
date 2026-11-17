@@ -46,6 +46,8 @@ packages = ["src/otm"]
 # Deploy the frozen migration assets alongside the package; never bundle local environments.
 [tool.hatch.build.targets.wheel.force-include]
 "migrations/versions/0027_recovery_passwords.py" = "otm_migrations/migrations/versions/0027_recovery_passwords.py"
+"migrations/versions/0029_imported_memberships.py" = "otm_migrations/migrations/versions/0029_imported_memberships.py"
+"migrations/sql/0029-imported-memberships.sql" = "otm_migrations/migrations/sql/0029-imported-memberships.sql"
 "migrations/versions/0028_signing_credentials.py" = "otm_migrations/migrations/versions/0028_signing_credentials.py"
 "migrations/sql/0027-recovery-passwords.sql" = "otm_migrations/migrations/sql/0027-recovery-passwords.sql"
 "migrations/sql/0028-signing-credentials.sql" = "otm_migrations/migrations/sql/0028-signing-credentials.sql"

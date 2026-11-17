@@ -60,6 +60,54 @@
       "title": "AdministratorAccessView",
       "type": "object"
     },
+    "AdoptedIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "contract_version": {
+          "const": "import-adoption-1",
+          "default": "import-adoption-1",
+          "title": "Contract Version",
+          "type": "string"
+        },
+        "domain_ocid": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Domain Ocid",
+          "type": "string"
+        },
+        "expected_owner": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OwnerExpectation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "identity": {
+          "$ref": "#/$defs/ExistingIdentity"
+        },
+        "known_user_ocids": {
+          "default": [],
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 200,
+          "title": "Known User Ocids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "domain_ocid",
+        "identity"
+      ],
+      "title": "AdoptedIdentity",
+      "type": "object"
+    },
     "AssociationView": {
       "additionalProperties": false,
       "properties": {
@@ -106,6 +154,17 @@
           "format": "uuid",
           "title": "Id",
           "type": "string"
+        },
+        "imported_access": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AdoptedIdentity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "operation_id": {
           "anyOf": [
@@ -754,6 +813,118 @@
       "title": "EmailRoute",
       "type": "object"
     },
+    "ExistingIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "administrator": {
+          "title": "Administrator",
+          "type": "boolean"
+        },
+        "email": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Email",
+          "type": "string"
+        },
+        "groups": {
+          "default": [],
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Groups",
+          "type": "array"
+        },
+        "policy_hash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Policy Hash",
+          "type": "string"
+        },
+        "roles": {
+          "default": [],
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Roles",
+          "type": "array"
+        },
+        "scim_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Scim Id",
+          "type": "string"
+        },
+        "scopes": {
+          "items": {
+            "$ref": "#/$defs/ExistingScope"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Scopes",
+          "type": "array"
+        },
+        "user_name": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "User Name",
+          "type": "string"
+        },
+        "user_ocid": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "User Ocid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "user_ocid",
+        "scim_id",
+        "user_name",
+        "email",
+        "administrator",
+        "scopes",
+        "policy_hash"
+      ],
+      "title": "ExistingIdentity",
+      "type": "object"
+    },
+    "ExistingScope": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "root",
+            "compartment"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "ocid": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Ocid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ocid",
+        "name",
+        "kind"
+      ],
+      "title": "ExistingScope",
+      "type": "object"
+    },
     "OrganizationContext": {
       "additionalProperties": false,
       "properties": {
@@ -785,6 +956,25 @@
         "registry_revision"
       ],
       "title": "OrganizationContext",
+      "type": "object"
+    },
+    "OwnerExpectation": {
+      "additionalProperties": false,
+      "properties": {
+        "identity": {
+          "$ref": "#/$defs/ExistingIdentity"
+        },
+        "operation_id": {
+          "format": "uuid",
+          "title": "Operation Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "operation_id",
+        "identity"
+      ],
+      "title": "OwnerExpectation",
       "type": "object"
     },
     "PersonOption": {

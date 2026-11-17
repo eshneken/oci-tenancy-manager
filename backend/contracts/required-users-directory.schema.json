@@ -209,6 +209,109 @@
       "title": "AutomationKeysView",
       "type": "object"
     },
+    "ImportedAccessView": {
+      "additionalProperties": false,
+      "properties": {
+        "checked_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Checked At"
+        },
+        "members": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ImportedMemberResult"
+          },
+          "title": "Members",
+          "type": "array"
+        },
+        "operation_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Operation Id"
+        },
+        "state": {
+          "default": "not_checked",
+          "enum": [
+            "not_checked",
+            "matching",
+            "drifted",
+            "unavailable",
+            "stale"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "unmanaged_user_ocids": {
+          "default": [],
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Unmanaged User Ocids",
+          "type": "array"
+        }
+      },
+      "title": "ImportedAccessView",
+      "type": "object"
+    },
+    "ImportedMemberResult": {
+      "additionalProperties": false,
+      "properties": {
+        "association_id": {
+          "format": "uuid",
+          "title": "Association Id",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "matching",
+            "missing",
+            "different",
+            "unknown"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "user_name": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "User Name",
+          "type": "string"
+        },
+        "user_ocid": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "User Ocid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "user_name",
+        "association_id",
+        "user_ocid",
+        "state"
+      ],
+      "title": "ImportedMemberResult",
+      "type": "object"
+    },
     "RecoveryConsoleView": {
       "additionalProperties": false,
       "properties": {
@@ -488,6 +591,17 @@
       ],
       "default": "not_configured",
       "title": "Check Unavailable Reason"
+    },
+    "import_access": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ImportedAccessView"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "pending_operation_id": {
       "anyOf": [

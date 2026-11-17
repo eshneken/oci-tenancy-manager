@@ -311,7 +311,8 @@ def setup_database(root: Path, state: LocalState, project: Path) -> LocalState:
                 "c.otm_tenancy TO otm_local_api"
             )
             connection.exec_driver_sql(
-                "GRANT UPDATE(status,person_id,operation_id,updated_at,revision) ON public.otm_te"
+                "GRANT UPDATE(status,person_id,operation_id,updated_at,revision,imported_access,"
+                "user_ocid,compartment_ocid,compartment_name) ON public.otm_te"
                 "nancy_membership TO otm_local_api"
             )
             worker_exists = connection.scalar(

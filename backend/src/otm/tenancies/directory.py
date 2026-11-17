@@ -24,6 +24,7 @@ from otm.storage.tables import (
     tenancy_membership,
 )
 from otm.tenancies.contracts import OrganizationContext
+from otm.tenancies.import_contracts import AdoptedIdentity, stored_import
 from otm.tenancies.views import (
     AssociationView,
     PersonOption,
@@ -321,6 +322,9 @@ def association_view(state, link):
             )
         )
     return AssociationView(
+        imported_access=stored_import(AdoptedIdentity, link["imported_access"])
+        if link.get("imported_access") is not None
+        else None,
         id=link["id"],
         person_id=link["person_id"],
         tenancy_id=row["id"],
