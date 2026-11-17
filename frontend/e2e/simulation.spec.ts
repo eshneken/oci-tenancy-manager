@@ -532,8 +532,8 @@ async function organizationFlows(page: Page) {
         await page.setViewportSize({ width, height: 900 });
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
         const accessPanel=users.getByRole("region",{name:"Administrator access",exact:true});
-        const accessBox=await accessPanel.boundingBox();
-        const automationBox=await users.locator(".required-user-card").first().boundingBox();
+        const accessLayout=await layoutSnapshot(page,{access:accessPanel,automation:users.locator(".required-user-card").first()});
+        const {access:accessBox,automation:automationBox}=accessLayout.boxes;
         expect(Math.abs(accessBox!.x-automationBox!.x)).toBeLessThan(2);
         expect(Math.abs(accessBox!.width-automationBox!.width)).toBeLessThan(2);
         expect(accessBox!.y-(automationBox!.y+automationBox!.height)).toBeGreaterThanOrEqual(15);
@@ -547,9 +547,9 @@ async function organizationFlows(page: Page) {
         const statusFacts = facts.locator(":scope > div").filter({has:page.getByText(/^(Identity record|Presence)$/,{exact:true})});
         await expect(statusFacts.nth(0).locator("dt")).toHaveText("Identity record");
         await expect(statusFacts.nth(1).locator("dt")).toHaveText("Presence");
-        const factLayout = await layoutSnapshot(statusFacts);
-        expect(factLayout.boxes).toHaveLength(2);
-        const [identity,presence] = factLayout.boxes;
+        const factLayout = await layoutSnapshot(page,{identity:statusFacts.nth(0),presence:statusFacts.nth(1)});
+        expect(Object.keys(factLayout.boxes)).toHaveLength(2);
+        const {identity,presence} = factLayout.boxes;
         if(width > 700) expect(Math.abs(identity.y-presence.y),JSON.stringify(factLayout)).toBeLessThan(2);
         else expect(presence.y,JSON.stringify(factLayout)).toBeGreaterThan(identity.y);
         // Recovery's three short facts share one row while policy controls retain their wider pair.
@@ -572,10 +572,10 @@ async function organizationFlows(page: Page) {
         }else{expect(overview[1].y).toBeGreaterThan(overview[0].y);expect(overview[2].y).toBeGreaterThan(overview[1].y);}
         // Evidence dates follow all badges, share a laptop row and retain compact exact check links.
         for(const card of await users.locator(".required-user-card").all()){
-          const factsBox=await card.locator(":scope > .required-user-facts").boundingBox();
           const footer=card.locator(".required-user-checks");
-          const footerBox=await footer.boundingBox();
-          expect(footerBox!.y).toBeGreaterThan(factsBox!.y+factsBox!.height);
+          const evidenceLayout=await layoutSnapshot(page,{facts:card.locator(":scope > .required-user-facts"),footer});
+          const {facts:factsBox,footer:footerBox}=evidenceLayout.boxes;
+          expect(footerBox.y,JSON.stringify(evidenceLayout)).toBeGreaterThan(factsBox.y+factsBox.height);
           const dates=await footer.locator(":scope > div").evaluateAll(nodes=>nodes.map(node=>{const r=node.getBoundingClientRect();return {x:r.x,y:r.y};}));
           expect(dates).toHaveLength(await card.getByRole("heading",{name:"Recovery user",exact:true}).count()?3:2);
           if(width>700){
@@ -594,12 +594,14 @@ async function organizationFlows(page: Page) {
         }
         const costs = page.getByRole("region",{name:"Current month costs",exact:true});
         const overrides = page.getByRole("region",{name:"Overrides",exact:true});
-        const costBox = await costs.boundingBox(), overrideBox = await overrides.boundingBox();
-        expect(costBox).not.toBeNull(); expect(overrideBox).not.toBeNull();
+        const costLayout=await layoutSnapshot(page,{
+          cost:costs,override:overrides,
+          refresh:costs.getByRole("button",{name:"Refresh costs",exact:true}),
+          manage:overrides.getByRole("button",{name:"Manage overrides",exact:true}),
+        });
+        const {cost:costBox,override:overrideBox,refresh:refreshBox,manage:manageBox}=costLayout.boxes;
         if(width > 1000) {
           expect(Math.abs(costBox!.y-overrideBox!.y)).toBeLessThan(2);
-          const refreshBox=await costs.getByRole("button",{name:"Refresh costs",exact:true}).boundingBox();
-          const manageBox=await overrides.getByRole("button",{name:"Manage overrides",exact:true}).boundingBox();
           expect(Math.abs(refreshBox!.y+refreshBox!.height/2-manageBox!.y-manageBox!.height/2)).toBeLessThan(2);
           expect(Math.abs(costBox!.x+costBox!.width-refreshBox!.x-refreshBox!.width-(overrideBox!.x+overrideBox!.width-manageBox!.x-manageBox!.width))).toBeLessThan(2);
           expect(overrideBox!.x).toBeGreaterThanOrEqual(costBox!.x+costBox!.width);

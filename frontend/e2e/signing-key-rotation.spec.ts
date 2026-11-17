@@ -41,10 +41,10 @@ test("rotate a managed signing key through the independent native worker",async(
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
       await toolbar.scrollIntoViewIfNeeded();
       if(width===1280){
-        // DOM order is search, checkbox, link; one snapshot prevents viewport scrolling between reads.
-        const layout=await layoutSnapshot(toolbar.getByRole("searchbox").or(toolbar.locator(".directory-filter")).or(toolbar.getByRole("link")));
-        expect(layout.boxes).toHaveLength(3);
-        const [search,checkbox,link]=layout.boxes;
+        // Named targets preserve each control's meaning without depending on DOM order.
+        const layout=await layoutSnapshot(page,{search:toolbar.getByRole("searchbox"),checkbox:toolbar.locator(".directory-filter"),link:toolbar.getByRole("link")});
+        expect(Object.keys(layout.boxes)).toHaveLength(3);
+        const {search,checkbox,link}=layout.boxes;
         expect(Math.abs(search.y+search.height/2-link.y-link.height/2),JSON.stringify(layout)).toBeLessThan(2);
         expect(Math.abs(search.y+search.height/2-checkbox.y-checkbox.height/2),JSON.stringify(layout)).toBeLessThan(2);
       }
@@ -180,13 +180,18 @@ test("layout comparisons use one viewport snapshot",async({page})=>{
   await page.evaluate(()=>scrollTo(0,800));
   const after=await facts.nth(1).boundingBox();
   expect(Math.abs(before!.y-after!.y)).toBeGreaterThan(100);
-  const aligned=await layoutSnapshot(facts);
-  expect(aligned.boxes).toHaveLength(2);
-  expect(Math.abs(aligned.boxes[0].y-aligned.boxes[1].y)).toBeLessThan(2);
+  const aligned=await layoutSnapshot(page,{identity:facts.nth(0),presence:facts.nth(1)});
+  expect(Object.keys(aligned.boxes)).toHaveLength(2);
+  expect(Math.abs(aligned.boxes.identity.y-aligned.boxes.presence.y)).toBeLessThan(2);
   expect(aligned.scrollY).toBe(800);
   await facts.nth(1).evaluate(element=>{(element as HTMLElement).style.transform="translateY(4px)";});
-  const misaligned=await layoutSnapshot(facts);
-  expect(Math.abs(misaligned.boxes[0].y-misaligned.boxes[1].y)).toBe(4);
+  const misaligned=await layoutSnapshot(page,{identity:facts.nth(0),presence:facts.nth(1)});
+  expect(Math.abs(misaligned.boxes.identity.y-misaligned.boxes.presence.y)).toBe(4);
+  // A reordered DOM must not swap the semantic identities attached to the numeric rectangles.
+  await facts.nth(1).evaluate(element=>element.parentElement!.prepend(element));
+  const reordered=await layoutSnapshot(page,{presence:page.getByText("Presence",{exact:true}),identity:page.getByText("Identity record",{exact:true})});
+  expect(reordered.boxes.presence.y-reordered.boxes.identity.y).toBe(4);
+  await expect(layoutSnapshot(page,{ambiguous:facts})).rejects.toThrow(/strict mode violation/);
   await facts.evaluateAll(elements=>elements.forEach(element=>{(element as HTMLElement).style.display="none";}));
-  await expect(layoutSnapshot(facts)).rejects.toThrow("Layout target is not rendered");
+  await expect(layoutSnapshot(page,{identity:facts.nth(0),presence:facts.nth(1)})).rejects.toThrow("Layout target is not rendered");
 });
