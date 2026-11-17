@@ -37,7 +37,7 @@ namespace, environment and region remain in `target`. A single flat input avoids
 whole-object tfvars replacement semantics and conflicting handwritten compartment selections.
 Do not use another var-file or `-var` to override the selected hosting value.
 
-The held [plan-only infrastructure workflows](infrastructure-plans.md) pass the reference as data,
+The held [plan/review/apply infrastructure workflows](infrastructure-plans.md) pass the reference as data,
 without shell interpolation or command evaluation. Secret-backed custody prevents GitHub from
 printing the private OCID in a step header before the renderer runs:
 

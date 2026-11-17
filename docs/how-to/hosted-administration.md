@@ -5,8 +5,9 @@
 [Documentation home](../README.md) · [How-to index](README.md) ·
 [Environment/release contract](../engineering-design/24-environments-and-promotion.md)
 
-These procedures describe the intended staging/production operations. The named GitHub workflows,
-hosted maintenance controls and environment links still need implementation and qualification.
+These procedures describe the intended staging/production operations. The held infrastructure
+plan/review/apply workflows are implemented as source; live qualification remains pending. Application
+deployment workflows, hosted maintenance controls and environment links still need implementation and qualification.
 Before go-live, replace proposed entry-point names with actual links and tested instructions, and
 have an administrator other than the author complete each procedure in staging. If a referenced
 control is missing, stop; do not invent a CLI, edit database rows or bypass a protection rule.

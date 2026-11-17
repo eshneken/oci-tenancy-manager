@@ -53,7 +53,7 @@ includes replacement verification, identity retention/removal and manual resourc
 
 - [Vault custody foundation](vault-foundation.md) — separate security roots, shared Vault/HSM keys, private ingestion handoff and database-reader IAM
 
-- [Hosting compartment input](hosting-compartment.md) — required per-environment Actions variable, private renderer and one-compartment placement across infrastructure roots
+- [Hosting compartment input](hosting-compartment.md) — required per-environment Actions Secret, private renderer and one-compartment placement across infrastructure roots
 
 - [Hosted Kubernetes workload bundle](kubernetes-workloads.md) — disabled API/worker/migration manifests, immutable settings, credential references and strict schema checks; startup mechanics implemented; hosted composition/activation pending.
 
