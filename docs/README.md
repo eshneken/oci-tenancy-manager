@@ -1,5 +1,7 @@
 # Documentation
 
+- [Temporary frontend dependency exception](reference/frontend-security-exception.md) — exact advisory acceptance approved for merging; existing update watch and all other security gates remain in force.
+
 Use this index for the current application. Historical checkpoints explain past decisions; they
 are not competing implementation instructions or proof of real OCI behavior.
 
@@ -20,6 +22,8 @@ Earlier dated preservation receipts remain historical evidence.
 | Product scope and acceptance criteria | [Product specification](product/oci-tenancy-manager-spec.md) |
 | Present Atlas to stakeholders | [30-minute demo script, 12-minute route and synthetic CSV sequence](how-to/stakeholder-demo.md) |
 | Current architecture and approved future design | [Engineering design](engineering-design/README.md) |
+| Adopt existing shared-tenancy users | [Shared-import adoption and local publication receipt](engineering-design/24-imported-membership-adoption.md) — 477-test suite and saved8443 migration0029 publication PASS under explicit local risk acceptance; hosted checks remain required with the [exact owner-approved advisory exception](reference/frontend-security-exception.md), live OCI Pending |
+| Shared-root joining and replacement-owner access | [Later source follow-up](engineering-design/24-imported-membership-adoption.md#transfer-privilege-evidence-local-source-follow-up-and-real-adapter-gate) — [published local checkpoint](engineering-design/24-imported-membership-adoption.md#root-membership-and-owner-promotion-follow-up--17-november-2026) with targeted/retry qualification; fresh app1564f8c integration481 PASS, hosted checks require the [exact approved audit policy](reference/frontend-security-exception.md) |
 | Lifecycle action/failure email | [Responsible-only scope and parity](reference/lifecycle-email.md#lifecycle-notice-parity--6-november-2026), [source checkpoint](history/lifecycle-notice-parity-checkpoint-2026-11-06.md) |
 | Find recorded work by type | [Operations filters](reference/operations.md#operation-type-filtering--10-november-2026), [checkpoint receipt](history/operations-filter-checkpoint-2026-11-10.md) |
 | Recovery-window wait before key replacement | [Targeted correction qualified; saved republication PASS](reference/signing-key-rotation.md#recovery-window-waiting) |

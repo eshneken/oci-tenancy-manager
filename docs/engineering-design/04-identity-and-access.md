@@ -60,6 +60,16 @@ composed password/TOTP sign-in; corporate SSO remains future qualification.
 
 ## Binding choices
 
+The [shared-root/owner-promotion source follow-up](24-imported-membership-adoption.md#transfer-privilege-evidence-local-source-follow-up-and-real-adapter-gate)
+separates root-scoped membership from full ownership. Joining an existing root may grant broad
+resource scope but does not itself grant domain administration. New owner transfers freeze exact
+recipient domain/SCIM identity and require independent proof of both root-resource and domain
+administrator privileges before former-owner deletion/publication. Initial imported provenance is
+preserved; only an authenticated accepted/verified transfer delta changes current expected grants.
+The [separate local checkpoint](24-imported-membership-adoption.md#root-membership-and-owner-promotion-follow-up--17-november-2026) records targeted validation/retry and saved8443 publication. It is not a clean full-suite
+milestone receipt; the fresh app1564f8c integration run passed481 tests with zero failures/errors/skips and the hosted dependency checks use the [exact approved advisory exception](../reference/frontend-security-exception.md).
+Actual SDK grants, policy/group/role semantics and propagation remain Pending.
+
 Application access is administrator-only. [D58](19-administrator-provisioning.md) selects OTM-managed
 grants, corporate SSO for ordinary administrators and an independent local recovery administrator.
 Engineer ownership is not an application entitlement. Owners retain full child administration and may create other identities. The tool

@@ -9,6 +9,12 @@ Guided local simulator implemented · Version 3 adds permanent-user capture in s
 
 ## Try the local journey
 
+For the17 November shared-import local implementation, also follow the
+[explicit existing-user adoption review](#shared-import-adoption-source-candidate--17-november-2026).
+The sole saved8443 instance now includes this review for newly accepted shared imports after the
+qualified migration0029 publication under scoped local risk acceptance. Historical accepted imports
+keep their original approval/step graph; the hosted dependency gate remains Blocked and live OCI Pending.
+
 1. Ensure Configuration has a published baseline. Only the latest published version in this
    workspace is the automatic default, including publications already present before the upgrade.
    No separate selection or new publication is required merely to adopt that latest existing recipe.
@@ -61,6 +67,28 @@ configured instead of inventing one. A baseline is selected and pinned at new ad
 four authored categories in the local simulator and then repeats access checks. Actual OCI
 configuration, identity probes and Vault custody remain unqualified. These local observations are
 not a claim of production readiness; version 1 retains the earlier selection-only semantics.
+
+## Shared-import adoption source candidate — 17 November 2026
+
+New shared imports opt into an explicit account-adoption review after bootstrap verification.
+**Existing users and access** shows existing account IDs, scopes and privileges. Start at
+**Leave unmanaged**, select the current employee for each account to manage, and include an existing
+administrator account for the chosen owner. Confirm full identity-lifecycle management as well as
+temporary-access cleanup before **Start setup**. Refreshed existing-user discovery requires review;
+names/emails never authorize automatic adoption. Existing account credentials and grants are preserved
+during adoption; permanent automation/recovery setup remains independent.
+
+Adopted accounts subsequently follow the same transfer, removal and offboarding/user-deletion rules
+as created accounts. There is no permanent preserve-imported-account exemption. Root, shared
+compartments, groups and resources are not personal cleanup targets. Unselected accounts stay
+unmanaged, and adoption never changes an Atlas member's existing OCI privileges merely to match
+its accountability label. All accepted scopes are retained even where compatibility fields show one.
+
+See [the source contract and field authority](../engineering-design/24-imported-membership-adoption.md).
+Migration 0029 adds nullable provenance to existing memberships, with no adoption/backfill of old
+rows or operations. The477-test complete suite and matched saved8443 publication passed under
+[explicit local dependency-risk acceptance](../engineering-design/24-imported-membership-adoption.md#scoped-local-development-risk-acceptance-and-follow-up). The hosted security gate remains Blocked;
+this local simulation does not qualify live OCI behavior.
 
 ## OCI Console handoff instructions
 
@@ -187,10 +215,10 @@ real-provider qualification.
 ## API and UI contract
 
 `GET /api/tenancy-onboarding/{operation_id}` returns `OnboardingView` only for current-workspace guided
-organization actions. It never schedules work. `POST` on the same path accepts at most 4,096 bytes of
+organization actions. It never schedules work. `POST` on the same path accepts at most 65,536 bytes of
 closed JSON `OnboardingCommand`: request UUID, positive revision, action `verify_handoff` with a
 nonsecret handoff, `start_setup` with explicit cleanup confirmation, or `prepare_bootstrap_key`
-without handoff/cleanup inputs for the explicit local key-preparation retry. Arbitrary fields, credentials
+without handoff/cleanup inputs for the explicit local key-preparation retry. The shared-import implementation also accepts refresh_import_inventory without a handoff/cleanup/adoption payload, and an optional import_adoption payload only with start_setup. The shared-import service requires fresh owner-inclusive lifecycle approval before its first setup continuation; later retries reuse accepted evidence. Arbitrary fields, credentials
 and real bootstrap-user IDs are rejected. Queued acceptance returns202; a replayed terminal result
 may return200. Both routes use normal session/Origin/CSRF guards and generic safe failure responses.
 
@@ -202,7 +230,7 @@ is introduced. Long IDs wrap; desktop/mobile controls retain the shared Field Co
 
 ## Complete contract field dictionary
 
-The six onboarding DTOs have54fields in total; reused BaselineVersion is mapped separately in the
+The six onboarding DTOs have 58 fields in the17 November local implementation; reused BaselineVersion is mapped separately in the
 [baseline dictionary](baseline-authoring.md#complete-model-and-source-map), not counted as a seventh
 onboarding model here. Nested models are included in the generated
 [command](../../backend/contracts/onboarding-command.schema.json) and [view](../../backend/contracts/onboarding-view.schema.json)
@@ -211,11 +239,11 @@ schemas; immutable evidence remains server-side. Names below match the code exac
 | Contract | Every field | Source, defaults and nullability |
 |---|---|---|
 | `OnboardingHandoff` (3) | `tenancy_ocid`, `bootstrap_user_ocid`, `activation_user_ocid` | Administrator input or explicit synthetic helper. Exact child target; bootstrap user must have the simulated-user prefix. Activation user is nullable for import and required for create by admission. |
-| `OnboardingCommand` (5) | `client_request_key`, `revision`, `action`, `handoff`, `confirm_cleanup` | Browser request UUID and displayed positive operation revision. Action is verify_handoff/start_setup/prepare_bootstrap_key. Handoff is required only for verification and prohibited for other actions; cleanup defaults false and must be true only for start_setup. Key preparation uses no handoff or cleanup consent. No secret or arbitrary SDK fields. |
+| `OnboardingCommand` (6) | `import_adoption`, `client_request_key`, `revision`, `action`, `handoff`, `confirm_cleanup` | Browser request UUID and displayed positive operation revision. Action is verify_handoff/start_setup/prepare_bootstrap_key/refresh_import_inventory. import_adoption defaults null and is omitted when absent; it is allowed only for start_setup and required by new shared-import admission until a manifest has been accepted. It contains the exact inventory hash, owner-inclusive account/person choices and lifecycle_confirmed=true. An accepted manifest is reused on continuation; it cannot be replaced by another adoption command. Handoff is required only for verification and prohibited for other actions; cleanup defaults false and must be true only for start_setup. Key preparation and refresh_import_inventory use no handoff, cleanup consent or adoption payload. Refresh is offered only for eligible unaccepted shared-import inventory review; it schedules rediscovery rather than accepting the current choices. No secret or arbitrary SDK fields. |
 | `OnboardingDiscovery` (10) | `tenancy_ocid`, `name`, `home_region`, `parent_tenancy_ocid`, `organization_id`, `domain_ocid`, `bootstrap_user_ocid`, `bootstrap_scim_id`, `activation_user_ocid`, `activation_scim_id` | Facade read-back checked against frozen child/parent/organization and submitted user bindings. Stored in inspection step and immutable discovery evidence. Activation fields are null for import; create requires the exact account and a SCIM binding. Other fields are required. |
 | `OnboardingCheck` (4) | `key`, `label`, `state`, `verified_at` | Ordered server step catalog plus current step state/time. Missing steps project pending; verified_at is null until recorded verification. Fixed labels do not use employee data. |
-| `OnboardingView` (23) | `email_contacts`, `baseline`, `operation_id`, `tenancy_id`, `revision`, `state`, `phase`, `origin`, `requested_name`, `requested_home_region`, `can_act`, `expected_parent_tenancy_ocid`, `owner_name`, `administrator_name`, `administrator_email`, `suggested_handoff`, `submitted_handoff`, `discovery`, `bootstrap_username`, `public_key`, `checks`, `issue_code`, `available_actions` | baseline defaults null for historical operations; otherwise it is the complete immutable published BaselineVersion frozen at acceptance, never a fresh default lookup. It records selection, not application. IDs/revision/state come from accepted intent/operation; phase is derived from state/wait. Origin distinguishes create/import. requested_name/requested_home_region are nullable frozen create inputs; imports and missing historical values remain null, independently of observed discovery facts. can_act is false and actions empty for another responsible administrator. email_contacts is nullable for historical operations and otherwise returns exact frozen original/effective activation/bootstrap/owner/person routes; current global override never rewrites it. Parent comes from frozen intent; owner/admin labels are frozen snapshots, not browser claims. administrator_name is the original initiator and the create/import subtitle says Initiated by; current responsible is a separate OperationSummary projection. administrator_email remains the original activation contact, nullable with no verified local mailbox implied. Suggested handoff is deterministic simulation data; submitted handoff and discovery are null before their steps. Username is derived from operation UUID; public_key is the separately stored public PEM, or null before explicit preparation. GET does not generate keys or read private custody. Checks are ordered step projections; issue_code is nullable and closed. |
-| `OnboardingEvidence` (9) | `contract_version`, `step`, `outcome`, `safe_code`, `client_request_key`, `request_hash`, `handoff`, `discovery`, `required_users` | Append-only typed audit payload; version onboarding-1. Step/outcome/code are closed. Accepted human commands have request key/hash; worker evidence leaves these null. Exact nonsecret handoff/discovery/required_users payloads are nullable and populated only by their corresponding event. required_users records verified permanent user identities. No credentials are serialized. |
+| `OnboardingView` (24) | `import_review`, `email_contacts`, `baseline`, `operation_id`, `tenancy_id`, `revision`, `state`, `phase`, `origin`, `requested_name`, `requested_home_region`, `can_act`, `expected_parent_tenancy_ocid`, `owner_name`, `administrator_name`, `administrator_email`, `suggested_handoff`, `submitted_handoff`, `discovery`, `bootstrap_username`, `public_key`, `checks`, `issue_code`, `available_actions` | import_review defaults null; it contains the independently recorded inventory/hash, eligible person suggestions and chosen owner ID only for opted-in imports with verified bootstrap discovery and no accepted manifest. After acceptance or for historical/other work it remains null. available_actions adds refresh_import_inventory only where current server state permits it. baseline defaults null for historical operations; otherwise it is the complete immutable published BaselineVersion frozen at acceptance, never a fresh default lookup. It records selection, not application. IDs/revision/state come from accepted intent/operation; phase is derived from state/wait. Origin distinguishes create/import. requested_name/requested_home_region are nullable frozen create inputs; imports and missing historical values remain null, independently of observed discovery facts. can_act is false and actions empty for another responsible administrator. email_contacts is nullable for historical operations and otherwise returns exact frozen original/effective activation/bootstrap/owner/person routes; current global override never rewrites it. Parent comes from frozen intent; owner/admin labels are frozen snapshots, not browser claims. administrator_name is the original initiator and the create/import subtitle says Initiated by; current responsible is a separate OperationSummary projection. administrator_email remains the original activation contact, nullable with no verified local mailbox implied. Suggested handoff is deterministic simulation data; submitted handoff and discovery are null before their steps. Username is derived from operation UUID; public_key is the separately stored public PEM, or null before explicit preparation. GET does not generate keys or read private custody. Checks are ordered step projections; issue_code is nullable and closed. |
+| `OnboardingEvidence` (11) | `import_inventory`, `import_manifest`, `contract_version`, `step`, `outcome`, `safe_code`, `client_request_key`, `request_hash`, `handoff`, `discovery`, `required_users` | Append-only typed audit payload; version onboarding-1. import_inventory and import_manifest default null and are omitted when absent to preserve historical bytes. Verified opted-in bootstrap discovery records import_inventory; accepted Start setup records the server-created import_manifest, including reviewed inventory and exact member/scope provenance. Subsequent processing authenticates that manifest against the immutable action event. Step/outcome/code are closed. Accepted human commands have request key/hash; worker evidence leaves these null. Exact nonsecret handoff/discovery/required_users payloads are nullable and populated only by their corresponding event. required_users records verified permanent user identities. No credentials are serialized. |
 
 `can_act` and `available_actions` are affordances, not permission tokens; POST repeats current checks.
 The discovery's parent is an observed simulator fact, while expected_parent_tenancy_ocid is the
@@ -408,7 +436,7 @@ Final application qualification and saved-instance receipt (private historical e
 Authored notification/policy integration, validation pending. New configured create/import needs
 explicit safe contact routing before acceptance even when application notifications are disabled.
 Local/staging cannot fall back to an employee address without the configured test destination.
-The preview and 23-field OnboardingView distinguish immutable original contact from effective
+The preview and original 23-field OnboardingView (24 fields with the import-review source extension) distinguish immutable original contact from effective
 delivery. Create labels Activation / bootstrap email; import labels Bootstrap contact email and
 does not imply a new activation. The manual bootstrap username remains distinct from its guarded
 contact. Legacy contacts=null preserve their accepted instructions.

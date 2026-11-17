@@ -4,10 +4,12 @@
 
 - **[OCI deployment](oci-deployment.svg)** ([PNG](oci-deployment.png), [Mermaid](oci-deployment.mmd), [Excalidraw](oci-deployment.excalidraw)): OKE, OCI Database with PostgreSQL and Vault context. Nested export is one SVG for annotation.
 - **[Logical software architecture](logical-architecture.svg)** ([PNG](logical-architecture.png), [Mermaid](logical-architecture.mmd), [Excalidraw](logical-architecture.excalidraw)): components/data flows with simulated and OCI adapters explicitly separated. Scene is element-editable.
-- **[Complete implemented ER](implemented-full-er.svg)** ([PNG](implemented-full-er.png), [Mermaid](implemented-full-er.mmd)): all 34 migrated tables/438 columns/89 foreign keys, including native queue and migration tables. [Table responsibilities and every column](../implemented-database.md).
+- **[Complete implemented ER source](implemented-full-er.mmd)** ([SVG](implemented-full-er.svg), [PNG](implemented-full-er.png)): 34 tables/439 columns/89 foreign keys through freshly reflected migration0029, including native queue and migration tables. SVG/PNG regenerated17 November with pinned Mermaid CLI12.2.0 and visually reviewed; asset publication review remains separate. [Table responsibilities and every column](../implemented-database.md).
 
-The ER is schema-only reflection from a fresh disposable database at source checkpoint `786f83b`;
-no saved organization data was inspected. It does not fold proposed production entities or prototype
+The ER source metadata was re-reflected on 17 November from a freshly migrated empty disposable
+PostgreSQL database through0029, confirming439 columns including nullable `imported_access`.
+The earlier438-column reflection at `786f83b` remains historical. No saved organization data or
+row values were inspected. It does not fold proposed production entities or prototype
 tables into the implemented schema. Existing feature diagrams below retain their own scope labels.
 
 
@@ -33,6 +35,15 @@ migrations or Python validation.
 Each diagram is scoped to the feature/checkpoint named in its source; it is not a separate complete
 inventory of every current table. See [the current model](../../engineering-design/11-production-data-model.md)
 and its runtime guide links for the whole implementation boundary.
+
+Both organization-workflows and complete ER Mermaid sources include the migration0029 source
+column. It stores [initial adoption provenance](../../engineering-design/24-imported-membership-adoption.md),
+not secrets or a second writable user registry. Fresh full-schema metadata reflection and exact table/column name-set checks passed; the complete
+ER exports were regenerated and visually reviewed on17 November. Privacy/provenance review must
+precede publication-manifest hash updates.
+The [separate saved8443 publication](../../engineering-design/24-imported-membership-adoption.md#scoped-local-development-risk-acceptance-and-follow-up) applied0029 under scoped local dependency-risk acceptance with preserved data/settings.
+Hosted security gates remain required with the [exact approved exception](../../reference/frontend-security-exception.md) and real OCI Pending; reflection alone does not establish
+those runtime/provider outcomes.
 
 ## Proposed production model
 

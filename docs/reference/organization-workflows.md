@@ -793,11 +793,23 @@ OrganizationAction and the frozen OrganizationIntent add nullable `existing_comp
 bounded to 1–256 characters when present. When null it is omitted from serialization, preserving historical request digests and stored intent
 shapes. A non-null value is allowed only for join_shared and cannot be combined with
 parent_compartment_ocid or compartment_name. The server discovers the selected registered child's
-compartments and rejects the root, foreign/unknown or changed scope. A new compartment instead uses
+compartments. The original checkpoint rejected root; the later shared-root source follow-up accepts
+only the exact selected child's root as well as verified non-root scopes, while rejecting foreign,
+unknown or changed targets. Its [separate targeted local checkpoint](../engineering-design/24-imported-membership-adoption.md#root-membership-and-owner-promotion-follow-up--17-november-2026) records saved8443 publication, initial full-run failures and successful focused retry;
+the fresh app1564f8c integration run passed481 tests with zero failures/errors/skips and no clean milestone receipt is claimed. A new compartment instead uses
 a discovered parent and a new name. Neither choice lets browser-provided names/OCIDs become target
 authority. Existing assignment creates no replacement compartment; its returned exact binding must
 match the selected OCID before membership becomes active. Stored membership compartment/user fields
 retain the choice without another database column.
+
+Root joining uses the child OCID as `compartment_ocid`, with no parent compartment. It grants broad
+root-resource scope without automatically granting the identity-domain administrator role or
+ownership. Subsequent owner transfer requires separately verified full root-resource AND domain
+administration before removing the outgoing user or publishing ownership. New conditional proof,
+exact domain/SCIM binding and authenticated expected-grant metadata reuse immutable operation/audit
+evidence. Original import provenance remains intact; no SQL field/table/migration is added by this
+follow-up. Shared resources/compartments remain outside personal-member deletion. See
+[the source contract and pending qualification](../engineering-design/24-imported-membership-adoption.md#shared-root-joining-and-independent-fake-provider-state--source-follow-up).
 
 ### Remove identity access, keep resource cleanup manual
 

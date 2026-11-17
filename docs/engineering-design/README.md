@@ -14,6 +14,17 @@ required gates and protections apply to every reviewed candidate.
 
 ## Chapters
 
+[Imported shared-tenancy membership adoption](24-imported-membership-adoption.md) describes the
+17 November local simulator implementation: existing owner/member identities, full lifecycle consent,
+multi-scope provenance and independent read-only access checks. The477-test complete suite and
+saved8443 migration0029 publication passed under explicit local dependency-risk acceptance; the
+hosted security gates remain required, with the [exact advisory exception](../reference/frontend-security-exception.md) and real OCI Pending. This is separate from chapter24's environment design.
+
+The [later shared-root/owner-promotion source follow-up](24-imported-membership-adoption.md#transfer-privilege-evidence-local-source-follow-up-and-real-adapter-gate)
+adds conditional verified administrator proof, operation-authenticated current expectations and
+persistent fake-provider observations. Its [separate published local checkpoint](24-imported-membership-adoption.md#root-membership-and-owner-promotion-follow-up--17-november-2026) records targeted qualification and a successful focused retry after initial full-run
+failures; the fresh app1564f8c integration run passed481 tests with zero failures/errors/skips. It does not inherit the earlier477-test receipt or clear hosted security gates.
+
 Required-account foundation: [implemented presence boundary and remaining integration](../reference/required-user-presence.md).
 Current configuration repair: [implemented flow and field map](../reference/configuration-repair.md).
 

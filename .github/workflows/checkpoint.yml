@@ -105,8 +105,10 @@ jobs:
       - run: uv run --project backend bandit -q -r backend/src/otm
       - run: uv export --project backend --locked --no-dev --no-emit-project --format requirements-txt --output-file .local-dev/runtime-requirements.txt
       - run: uv run --project backend pip-audit -r .local-dev/runtime-requirements.txt
-      - run: npm ci --ignore-scripts && npm audit --audit-level=low
+      - run: npm ci --ignore-scripts
         working-directory: frontend
+      # One explicitly accepted dev-only advisory remains visible; every other finding blocks.
+      - run: uv run --project backend python scripts/check_frontend_audit.py
       # Build and scan the installed image; use only uniquely owned disposable resources.
       - run: uv run --project backend python scripts/run_container_smoke.py
       # No logs, DB dumps, browser captures, private inputs or secrets are uploaded as artifacts.
