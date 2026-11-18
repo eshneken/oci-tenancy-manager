@@ -187,7 +187,7 @@ permissions, endpoint/identifier lookup and supported domain configurations rema
 
 | Workflow | Concrete provider work | Local publication and boundary |
 |---|---|---|
-| Transfer shared owner | Establish/adopt replacement identity, grant full administration, inspect grants; apply D22 previous-owner Remove/Remain profile using primitives above | Publish one new owner only after replacement privileges verified. Old-access cleanup may remain pending; no resource or compartment move |
+| Transfer shared owner | Read exact existing recipient user/domain/SCIM identity, establish/adopt replacement, grant full root-resource and domain administration, independently inspect linked group/root-policy/domain-role evidence; apply the explicit former-owner disposition | Validate exact new-owner proof before outgoing user deletion and again before publication. Requested removal must be verified before the ownership result is published; no resource/compartment move. The [separate targeted local publication](24-imported-membership-adoption.md#root-membership-and-owner-promotion-follow-up--17-november-2026) passed with recorded focused retry, not a clean full-suite milestone; real SDK qualification remains Pending. |
 | Add scoped shared member | `IAM.list_compartments(child_ocid, compartment_id_in_subtree=True, ...)`, `get_compartment(parent_ocid)`; `create_compartment(CreateCompartmentDetails(compartment_id=selected_parent, name, description))` if selected; identity/group/policy handlers | Explicit D24 existing parent; verify target child/scope and grants before active membership. Full-admin profile uses no artificial compartment restriction |
 | Remove shared member | Inspect bound local user/groups/grants; retire scoped memberships and personal user with applicable identity adapter | D23: no resource inventory/purge, `delete_compartment`, bulk delete or cleanup verifier. Show owner/manual compartment guidance; verify identity removal |
 | Delete owned child | Parent: current organization/target/link checks; `Org.delete_organization_tenancy(child_ocid, if_match=... when available, opc_retry_token=..., opc_request_id=...)` | D26: persist a qualified successful initiation receipt and retire only that association. No wait for permanent deletion, no automatic Restore |
@@ -198,6 +198,13 @@ For compartment discovery, a response limited to accessible objects is not proof
 is complete. D24 rechecks selected parent tenancy/lifecycle/path/permissions immediately before
 creation. The parent scope grants no implicit access to siblings. If creation succeeds but profile
 application fails, preserve the compartment binding and resume; never delete as compensation.
+
+The [later shared-root source follow-up](24-imported-membership-adoption.md#shared-root-joining-and-independent-fake-provider-state--source-follow-up)
+also permits the exact child's root for join_shared without creating a compartment. Its parent is
+null and its broad resource access is not proof of identity-domain administration. Simulated owner
+promotion/readback and operation-anchored expected grants are now authored separately; real policy,
+group linkage, SCIM identity/role authority and effective permissions remain provider qualification
+Pending. No new verified SDK call or live effect is implied by a passing fake-provider result.
 
 Deletion success must use the exact operation's qualified response contract. An SDK None body is
 not a failure: inspect successful response/correlation. A timeout/404/access failure is not a

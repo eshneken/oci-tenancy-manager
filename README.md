@@ -77,7 +77,7 @@ The secret-store boundary covers private local custody and OCI Vault.
 
 ## Complete entity-relationship diagram
 
-The complete implemented schema has **34 tables, 438 columns and 89 declared foreign keys**:
+The complete implemented schema has **34 tables, 439 columns and 89 declared foreign keys**:
 29 application tables, four Procrastinate tables and Alembic’s migration marker. This was reflected
 from a freshly migrated disposable PostgreSQL database, not inferred from screenshots or the older
 prototype. The separate production design dictionary also describes future tables.

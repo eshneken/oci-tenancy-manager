@@ -10,6 +10,12 @@ from otm.contracts import Contract, UtcInstant
 from otm.email_policy import EmailContacts
 from otm.providers.inspection_contracts import TenancyOcid
 from otm.providers.lifecycle import OnboardingUsers
+from otm.tenancies.import_contracts import (
+    ExistingAccessInventory,
+    ImportAdoption,
+    ImportManifest,
+    ImportReview,
+)
 
 SimulatedUser = Annotated[str, Field(pattern=r"^ocid1\.user\.oc1\.\.otmsim[a-z0-9]{1,100}$")]
 
@@ -23,15 +29,22 @@ class OnboardingHandoff(Contract):
 
 # Commands fence stale screens and keep transport retries tied to their original operation.
 class OnboardingCommand(Contract):
+    import_adoption: ImportAdoption | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
     client_request_key: UUID
     revision: Annotated[int, Field(ge=1)]
-    action: Literal["verify_handoff", "start_setup", "prepare_bootstrap_key"]
+    action: Literal[
+        "verify_handoff", "start_setup", "prepare_bootstrap_key", "refresh_import_inventory"
+    ]
     handoff: OnboardingHandoff | None = None
     confirm_cleanup: bool = False
 
     # Handoff verification and cleanup confirmation are separate, mutually exclusive decisions.
     @model_validator(mode="after")
     def action_fields(self):
+        if self.import_adoption is not None and self.action != "start_setup":
+            raise ValueError("IMPORT_ADOPTION_REQUIRES_SETUP_REVIEW")
         if (self.action == "verify_handoff") != (self.handoff is not None):
             raise ValueError("HANDOFF_REQUIRED")
         if self.action != "start_setup" and self.confirm_cleanup:
@@ -65,6 +78,7 @@ class OnboardingCheck(Contract):
 
 # The action panel comes from persisted progress rather than browser-local wizard state.
 class OnboardingView(Contract):
+    import_review: ImportReview | None = None
     email_contacts: EmailContacts | None = None
     baseline: BaselineVersion | None = None
     operation_id: UUID
@@ -89,11 +103,22 @@ class OnboardingView(Contract):
     public_key: str | None = None
     checks: tuple[OnboardingCheck, ...]
     issue_code: str | None = None
-    available_actions: tuple[Literal["verify_handoff", "start_setup", "prepare_bootstrap_key"], ...]
+    available_actions: tuple[
+        Literal[
+            "verify_handoff", "start_setup", "prepare_bootstrap_key", "refresh_import_inventory"
+        ],
+        ...,
+    ]
 
 
 # Audit evidence is closed and contains no secrets, raw SDK responses or arbitrary error text.
 class OnboardingEvidence(Contract):
+    import_inventory: ExistingAccessInventory | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
+    import_manifest: ImportManifest | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
     contract_version: Literal["onboarding-1"] = "onboarding-1"
     step: Literal[
         "handoff",

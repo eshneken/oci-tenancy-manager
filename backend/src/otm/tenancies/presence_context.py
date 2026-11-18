@@ -6,6 +6,7 @@ from otm.configuration.drift_context import registered_child
 from otm.operations.contracts import canonical_hash
 from otm.providers.required_user_contracts import RequiredUserTarget
 from otm.storage.tables import managed_object_binding as bindings
+from otm.storage.tables import tenancy_membership
 from otm.storage.tables import user_presence_connection as connections
 from otm.tenancies.presence_contracts import PresenceSnapshot
 
@@ -42,11 +43,27 @@ def capture_snapshot(connection, workspace, child, policy, recovery_console=None
             )
         ).mappings()
     )
-    return bound_snapshot(workspace, child, policy, current, rows, recovery_console)
+    if bound_snapshot(workspace, child, policy, current, rows, recovery_console) is None:
+        return None
+    links = (
+        connection.execute(
+            select(tenancy_membership).where(
+                tenancy_membership.c.workspace_id == workspace,
+                tenancy_membership.c.tenancy_id == child["id"],
+                tenancy_membership.c.status == "active",
+            )
+        )
+        .mappings()
+        .all()
+    )
+    from otm.tenancies.owner_access import authenticate
+
+    authenticate(connection, workspace, links)
+    return bound_snapshot(workspace, child, policy, current, rows, recovery_console, links)
 
 
 # Both single-child and batched views validate the same exact current records, never names.
-def bound_snapshot(workspace, child, policy, current, rows, recovery_console=None):
+def bound_snapshot(workspace, child, policy, current, rows, recovery_console=None, memberships=()):
     if policy is None or policy.workspace_id != workspace or not registered_child(child, policy):
         return None
     if child["status"] != "active" or child["operation_id"] or current is None:
@@ -94,7 +111,26 @@ def bound_snapshot(workspace, child, policy, current, rows, recovery_console=Non
                 tenancy_ocid=child["tenancy_ocid"],
             )
         )
+    from otm.tenancies.import_adoption import membership_snapshot
+
+    imported = membership_snapshot(workspace, child, memberships)
+    if imported is not None:
+        if imported.domain_ocid != subjects[0].domain_ocid:
+            raise ValueError("IMPORT_CHECK_DOMAIN_INVALID")
+        imported = imported.model_copy(
+            update={
+                "known_user_ocids": tuple(
+                    sorted(
+                        {
+                            *imported.known_user_ocids,
+                            *(subject.provider_ocid for subject in subjects),
+                        }
+                    )
+                )
+            }
+        )
     return PresenceSnapshot(
+        import_access=imported,
         tenancy_id=child["id"],
         tenancy_name=child["name"],
         tenancy_revision=child["revision"],

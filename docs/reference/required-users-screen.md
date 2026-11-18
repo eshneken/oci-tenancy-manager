@@ -17,6 +17,28 @@ No daily scheduler, repair or password action is added. The
 assignment health does not introduce another email incident or action badge.
 The original presence checkpoint passed local qualification and its main-preview upgrade; this historical receipt does not qualify later extensions. See the [original receipt](../history/manual-presence-checkpoint-2026-11-06.md).
 
+## Adopted member access source candidate — 17 November 2026
+
+For newly adopted shared-import memberships, **Refresh user data** also acquires independently
+read-only existing-account access evidence. **Adopted member access** shows per-account matching,
+missing or changed evidence, newly discovered unmanaged account IDs and the recorded check time.
+Incomplete/denied reads are Unable to verify; context changes and the existing 24-hour freshness
+limit prevent stale Matching labels. The initial unselected accounts are known unmanaged accounts,
+not newly discovered additions; normal registered members and exact setup service identities are
+also excluded from the newly unmanaged set.
+
+These checks do not repair grants, adopt accounts or weaken ordinary full-lifecycle removal rules.
+The [later owner-promotion source follow-up](../engineering-design/24-imported-membership-adoption.md#transfer-privilege-evidence-local-source-follow-up-and-real-adapter-gate)
+authenticates a narrowly authorized expected-owner delta against accepted/verified operation
+evidence while preserving initial adoption provenance. Unrelated extra observed grants remain drift.
+Its [separate local checkpoint](../engineering-design/24-imported-membership-adoption.md#root-membership-and-owner-promotion-follow-up--17-november-2026) records targeted validation/retry and saved8443 publication, not a clean full-suite
+milestone or inheritance of the earlier477-test result. The fresh app1564f8c integration run passed481 tests with zero failures/errors/skips.
+They remain separate from required automation/recovery readiness. The
+[source contract](../engineering-design/24-imported-membership-adoption.md) describes migration 0029
+and evidence ownership. Local unit, PostgreSQL and native-browser checks passed, including the477-test complete suite;
+the [exact owner-approved audit policy](../reference/frontend-security-exception.md) now governs this advisory. Saved8443 publication passed under
+[explicit local risk acceptance](../engineering-design/24-imported-membership-adoption.md#scoped-local-development-risk-acceptance-and-follow-up); the hosted security gates remain required, with the [exact advisory exception](../reference/frontend-security-exception.md) and no live OCI inventory has been verified.
+
 ## Compact check dates — 9 November 2026
 
 Assignment, presence and policy dates follow all badges in each card's footer. Dates are formatted
@@ -45,11 +67,16 @@ request, authority, immutable evidence, attempt fencing, SQL columns and failure
 | check_available | Derived from active idle registered child, current provider availability and all exact bindings/selected connection. False for historical unqualified children; no guessed backfill. |
 | check_unavailable_reason | Null when eligible; otherwise tenancy_inactive, tenancy_busy, provider_unavailable or not_configured, with explanatory UI text. |
 | pending_operation_id | Matching-current-context queued/running check UUID, nullable. Drives progress/polling, not a positive observation. |
+| signing_rotation_available | Host-selected rotation metadata capability, default false; does not prove custody enrollment for this tenancy. |
+| recovery_console | Independent RecoveryConsoleView, defaulting to its unverified/not-checked state; not inferred from presence. |
+| automation_keys | Independent public AutomationKeysView, defaulting to no verified observation; contains no private key material. |
+| import_access | Optional ImportedAccessView, default null. Present only for an active adopted-member context. Its state is not_checked/matching/drifted/unavailable/stale, with independently dated member results, newly unmanaged IDs and nullable operation_id/checked_at. Historical/no-adoption children gain no invented observation. Saved8443 includes this projection following the scoped local publication; it is not live OCI qualification or a passing hosted dependency gate. |
 | users | Exactly two ordered RequiredUserRecord values, automation then recovery. |
 | RequiredUserRecord.purpose | automation/recovery from canonical logical keys. |
 | identity_state | recorded for active mapping, not_recorded for none, retired for retained retired mapping. |
 | identity | Null exactly when not_recorded; otherwise the following seven-field model. |
 | presence | Independent four-field UserPresenceView below, defaulting to not_checked. |
+| administrator_access | Independent AdministratorAccessView with its own default unverified/not-checked state; user presence alone does not prove administrator grants. |
 | RequiredUserIdentity.user_name | User binding.user_name; escaped observed display metadata, never an adoption key. |
 | user_ocid | User binding.provider_ocid, separate from SCIM ID. |
 | scim_resource_id | User binding.scim_resource_id. |

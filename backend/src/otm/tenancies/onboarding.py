@@ -32,9 +32,15 @@ STEPS = (
 
 # New onboarding applies the accepted baseline and reprobes access before retiring its bootstrap.
 def onboarding_steps(intent):
+    steps = tuple(
+        (key, "Adopt existing users and configure recovery access")
+        if key == "configure_required" and intent.import_adoption_contract is not None
+        else (key, label)
+        for key, label in STEPS
+    )
     if intent.onboarding_version in {2, 3, 4} and intent.baseline is not None:
         return (
-            STEPS[:-1]
+            steps[:-1]
             + (
                 ("configure_baseline", "Apply and verify baseline: policy, quota, budget and tags"),
                 (
@@ -62,9 +68,9 @@ def onboarding_steps(intent):
                 if intent.onboarding_version == 4
                 else ()
             )
-            + STEPS[-1:]
+            + steps[-1:]
         )
-    return STEPS
+    return steps
 
 
 # Read only the current intent's step graph within the caller's existing transaction.
@@ -232,7 +238,26 @@ def progress(connection, row, facade, *, bootstrap_keys=None):
     # Preparation remains idempotently admissible if custody committed before its audit transaction.
     if bootstrap_keys is not None and phase == "handoff":
         actions = (*actions, "prepare_bootstrap_key")
+    import_review = None
+    if (
+        intent.import_adoption_contract is not None
+        and inspection
+        and inspection["state"] == "verified"
+        and not (handoff and handoff["inputs"].get("import_manifest"))
+    ):
+        from otm.tenancies import import_adoption
+        from otm.tenancies.directory import registry_state
+
+        import_review = import_adoption.review(
+            registry_state(connection, row["workspace_id"]),
+            row,
+            intent,
+            import_adoption.discovered_inventory(connection, row, inspection),
+        )
+        if "start_setup" in actions:
+            actions = (*actions, "refresh_import_inventory")
     return OnboardingView(
+        import_review=import_review,
         operation_id=row["id"],
         baseline=intent.baseline,
         tenancy_id=intent.pending_tenancy_id,
@@ -262,7 +287,9 @@ def progress(connection, row, facade, *, bootstrap_keys=None):
             OnboardingCheck(
                 key=k,
                 label=label,
-                state=steps[k]["state"] if k in steps else "pending",
+                state=("pending" if steps[k]["state"] == "running" else steps[k]["state"])
+                if k in steps
+                else "pending",
                 verified_at=steps[k]["verified_at"] if k in steps else None,
             )
             for k, label in onboarding_steps(intent)
@@ -323,7 +350,21 @@ def submit(service, connection, state, row, principal, command, at):
         return ActionReceipt(
             operation_id=row["id"], state=row["state"], provider_mode="simulated", accepted_at=at
         )
-    if command.action == "verify_handoff":
+    if command.action == "refresh_import_inventory":
+        # Explicit read-only reinspection invalidates all prior choices before any setup effect.
+        key = "handoff"
+        inputs = {"handoff": step_rows(connection, row)["handoff"]["inputs"]["handoff"]}
+        connection.execute(
+            update(operation_step)
+            .where(
+                operation_step.c.workspace_id == row["workspace_id"],
+                operation_step.c.operation_id == row["id"],
+                operation_step.c.intent_revision == row["current_intent_revision"],
+                operation_step.c.step_key == "inspect_bootstrap",
+            )
+            .values(state="running", verified_at=None)
+        )
+    elif command.action == "verify_handoff":
         supplied = command.handoff
         expected = view.suggested_handoff
         if supplied.tenancy_ocid != expected.tenancy_ocid or (view.origin == "create") != (
@@ -333,6 +374,38 @@ def submit(service, connection, state, row, principal, command, at):
         key, inputs = "handoff", {"handoff": supplied.model_dump(mode="json")}
     else:
         key, inputs = "handoff", dict(step_rows(connection, row)["handoff"]["inputs"])
+        from otm.tenancies import import_adoption
+
+        if import_adoption.enabled(frozen.intent):
+            steps = step_rows(connection, row)
+            if inputs.get("import_manifest"):
+                manifest = import_adoption.accepted(connection, row, steps)
+                if command.import_adoption is not None:
+                    raise OrganizationConflict("IMPORT_MANIFEST_ALREADY_ACCEPTED")
+            else:
+                observed = import_adoption.discovered_inventory(
+                    connection, row, steps["inspect_bootstrap"]
+                )
+                current = import_adoption.read_inventory(
+                    service.facade, frozen.intent, steps["inspect_bootstrap"]["inputs"]["discovery"]
+                )
+                if current != observed:
+                    raise OrganizationConflict("IMPORT_INVENTORY_CHANGED")
+                manifest = import_adoption.plan(
+                    state, row, frozen.intent, observed, command.import_adoption
+                )
+                import_adoption.reserve(connection, state, row, frozen.intent, manifest, at)
+                service._close_related(
+                    connection,
+                    state,
+                    tuple(m.person_id for m in manifest.members),
+                    "import_tenancy",
+                    at,
+                    operation_id=row["id"],
+                )
+            inputs["import_manifest"] = manifest.model_dump(mode="json")
+        elif command.import_adoption is not None:
+            raise OrganizationConflict("IMPORT_ADOPTION_NOT_AVAILABLE")
         inputs["cleanup_confirmed"] = True
     payload = OnboardingEvidence(
         step="handoff",
@@ -341,6 +414,9 @@ def submit(service, connection, state, row, principal, command, at):
         client_request_key=command.client_request_key,
         request_hash=digest,
         handoff=command.handoff,
+        import_manifest=manifest
+        if command.action == "start_setup" and frozen.intent.import_adoption_contract is not None
+        else None,
     )
     save_step(connection, row, key, at, inputs=inputs, payload=payload, actor=principal.actor)
     transition(
@@ -348,7 +424,11 @@ def submit(service, connection, state, row, principal, command, at):
         row,
         at,
         "queued",
-        "Verifying handoff" if command.action == "verify_handoff" else "Configuring access",
+        "Verifying handoff"
+        if command.action == "verify_handoff"
+        else "Refreshing existing users"
+        if command.action == "refresh_import_inventory"
+        else "Configuring access",
     )
     service.enqueuer.enqueue(connection, row["id"])
     return ActionReceipt(
@@ -367,6 +447,7 @@ def advance(
     recovery_setup=None,
     signing_setup=None,
     bootstrap_keys=None,
+    registry=None,
 ):
     steps = step_rows(connection, row)
     handoff = steps.get("handoff")
@@ -408,17 +489,28 @@ def advance(
                 or (intent.action == "import_tenancy" and discovered.activation_scim_id is not None)
             ):
                 raise ValueError("TARGET_CHANGED")
+            inventory = None
+            if intent.import_adoption_contract is not None:
+                from otm.tenancies.import_adoption import read_inventory
+
+                inventory = read_inventory(facade, intent, discovered.model_dump(mode="json"))
             save_step(
                 connection,
                 row,
                 current,
                 at,
-                inputs={"discovery": discovered.model_dump(mode="json")},
+                inputs={
+                    "discovery": discovered.model_dump(mode="json"),
+                    **(
+                        {"import_inventory": inventory.model_dump(mode="json")} if inventory else {}
+                    ),
+                },
                 payload=OnboardingEvidence(
                     step=current,
                     outcome="verified",
                     safe_code="ONBOARDING_VERIFIED",
                     discovery=discovered,
+                    import_inventory=inventory,
                 ),
             )
             connection.execute(
@@ -440,6 +532,23 @@ def advance(
             return False
         if not handoff["inputs"].get("cleanup_confirmed"):
             raise ValueError("CLEANUP_CONFIRMATION_REQUIRED")
+        manifest = None
+        protected = []
+        capture = steps.get("capture_required_users")
+        if capture and capture["state"] == "verified":
+            facts = OnboardingEvidence.model_validate_json(
+                json.dumps(capture["last_outcome"])
+            ).required_users
+            if facts:
+                protected = [facts.automation.provider_ocid, facts.recovery.provider_ocid]
+        if intent.import_adoption_contract is not None:
+            from otm.tenancies import import_adoption
+
+            manifest = import_adoption.accepted(connection, row, steps)
+            import_adoption.validate_participants(registry, intent, manifest, row["id"])
+            import_adoption.verify(
+                facade, intent, inspection["inputs"]["discovery"], manifest, protected
+            )
         # All provider boundaries remain pure simulation. A network adapter must split dispatch
         # and evidence transactions, with qualified reconciliation, before being composed here.
         for current, _ in onboarding_steps(intent)[1:]:
@@ -486,6 +595,8 @@ def advance(
                     intent, "verify_automation", inspection["inputs"]["discovery"]
                 )
                 facade.onboarding_step(intent, "verify_required", inspection["inputs"]["discovery"])
+            elif current == "configure_required" and manifest is not None:
+                facade.configure_import_access(intent, inspection["inputs"]["discovery"], manifest)
             else:
                 facade.onboarding_step(intent, current, inspection["inputs"]["discovery"])
             # Capture evidence, identities and opted-in connection either all persist or roll back.
@@ -516,6 +627,21 @@ def advance(
                 update(operation)
                 .where(operation.c.workspace_id == row["workspace_id"], operation.c.id == row["id"])
                 .values(effect_knowledge="known")
+            )
+        if manifest is not None:
+            # All provider facts are reread after setup; only exact verified service IDs are
+            # excluded.
+            final_steps = step_rows(connection, row)
+            capture = final_steps.get("capture_required_users")
+            if capture:
+                facts = OnboardingEvidence.model_validate_json(
+                    json.dumps(capture["last_outcome"])
+                ).required_users
+                protected = (
+                    [facts.automation.provider_ocid, facts.recovery.provider_ocid] if facts else []
+                )
+            import_adoption.verify(
+                facade, intent, inspection["inputs"]["discovery"], manifest, protected
             )
         return True
     except ValueError:

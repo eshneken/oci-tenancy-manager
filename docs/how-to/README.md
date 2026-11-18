@@ -6,6 +6,7 @@ isolated synthetic fixtures; private enrollment factors do not belong in reports
 - [Stakeholder demo script](stakeholder-demo.md) — natural 30-minute flow, 12-minute route, presenter cues and three synthetic CSVs; preserve saved data and rehearse installed capabilities
 
 - [Real OCI manual test manifest](real-oci-test-manifest.md) — maintain pending live-only cases for every slice
+- [Pending shared-import adoption qualification](real-oci-test-manifest.md#shared-import-existing-user-adoption) — exact existing users, multiple/shared scopes, full lifecycle and read-only drift
 - [Hosted administrator runbooks](hosted-administration.md) — design-stage application, infrastructure, combined/settings updates and backup/restore procedures; implementation and staging walkthrough required before live use
 - [Terraform state bootstrap](terraform-state-bootstrap.md) — implemented isolated roots, mock checks and pending live operator procedure; does not create the application platform
 - [Network foundation](network-foundation.md) — subnet/routing/NSG source, private shared-input rendering and platform initialization; OKE/managed PostgreSQL and optional [held Caddy ingress](caddy-ingress.md) source; live qualification pending

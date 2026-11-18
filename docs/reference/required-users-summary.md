@@ -70,7 +70,7 @@ that a cloud user is missing. Non-active rows do not render this link; retained 
 
 The service first derives the existing filtered/sorted/paginated Tenancies page. The summary receives
 only those server-selected visible child IDs and the authenticated workspace. For active visible
-children it adds four queries, independent of page size:
+children the import-adoption implementation uses five queries, independent of page size:
 
 1. Current simulated connections, bounded by workspace and the visible ID set.
 2. Active canonical domain/automation/recovery identity bindings with the same scope.
@@ -78,9 +78,14 @@ children it adds four queries, independent of page size:
    outcome event in the same workspace/operation. Window ranking and ID predicates select only
    this page, not arbitrary browser-supplied children.
 4. Pending required-user operations and their immutable accepted intents, under the same scope.
+5. Active memberships for those children, including exact adopted identities, all retained scopes
+   and known unmanaged accounts used to freeze the imported-access context.
 
-This is four added summary queries, **not** a claim that the whole directory endpoint performs only
-four queries. Empty/non-active summary inputs issue no additional summary queries. Existing
+This is five added summary queries, **not** a claim that the whole directory endpoint performs only
+five queries. The earlier qualified summary used four; the additional scoped membership read is
+part of the [17 November implementation and local publication](../engineering-design/24-imported-membership-adoption.md),
+qualified locally with the477-test suite and published to saved8443 under scoped risk acceptance.
+Hosted dependency gates use the [exact approved advisory exception](../reference/frontend-security-exception.md); no live OCI result is claimed. Empty/non-active summary inputs issue no additional summary queries. Existing
 principal authorization and the coherent read-only snapshot remain in force; detail uses the same
 projection for its single selected child.
 
@@ -122,7 +127,7 @@ scheduler or navigation badge is introduced.
 Qualified unit/SQL/browser coverage verifies every aggregate state and mixed-state precedence,
 per-subject timestamps, exact list/detail equivalence, context changes, stale and corrupt proof,
 no historical fallback-to-green, configured corruption versus genuine unconfigured records,
-positive-label metadata guards, pending intents, foreign scope, four-query page scoping and empty
+positive-label metadata guards, pending intents, foreign scope, the original four-query page scoping and empty
 inputs. Final native UI review includes success/503 deep-link focus, no focus/data on 401/403, Users:/Config:
 label separation, actual 320-pixel body containment, long IDs/names and fresh create/import
 check completion updating both views, paging/sort/search stability and responsive containment.

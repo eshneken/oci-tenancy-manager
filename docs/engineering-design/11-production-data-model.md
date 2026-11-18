@@ -7,6 +7,15 @@
 
 ## Read this first
 
+The [17 November shared-import adoption source candidate](24-imported-membership-adoption.md)
+adds nullable `otm_tenancy_membership.imported_access JSONB` in migration0029, without a new table,
+new foreign key or historical adoption/backfill. The [physical field/guard inventory](../architecture/implemented-database.md#otm_tenancy_membership)
+and [exact source-contract dictionary](24-imported-membership-adoption.md#source-field-authority)
+record immutable initial domain/user/SCIM, grant, scope and policy provenance. Current expected
+grants after real ownership transfer remain a separately gated qualification requirement; initial
+provenance is not overwritten by observations. The [verified saved8443 publication](24-imported-membership-adoption.md#scoped-local-development-risk-acceptance-and-follow-up) applied0029 under scoped local dependency-risk acceptance; hosted security gates remain required, with the [exact advisory exception](../reference/frontend-security-exception.md)
+and live OCI Pending.
+
 The [7 November credential-lifecycle design](22-credential-security-lifecycles.md) specifies
 configurable recovery-console CIDRs and 30-day key retirement using existing configuration, managed
 binding, credential/version and operation records. Additional fields remain implementation work;
@@ -2045,7 +2054,8 @@ section; no new column/filter/nav/attention count is introduced. The existing 22
 users directory is unchanged; nested tenancy contract exports are updated within the same 75-schema
 inventory. No migration/ER relationship or table is added; all 14 check columns remain unchanged.
 
-Summary queries use authenticated workspace and server-visible page IDs, with four added reads;
+The original summary used four added reads scoped to the authenticated workspace and server-visible page IDs;
+the [17 November import-adoption source candidate](24-imported-membership-adoption.md) adds a fifth scoped membership read. The historical qualification below covers the original four-read implementation;
 shared snapshot/evidence/age helpers preserve detail equivalence. Fresh dated Missing wins; unsupported positive labels lacking per-account date/check references are unavailable; then stale, Unknown/unavailable, both fresh dated Present, otherwise Not checked. Backend DTO and frontend guards both enforce positive provenance. Configured canonical corruption is unavailable (detail 503), while genuinely unconfigured or validly replaced contexts remain Not checked. Pending is secondary and
 per-user UTC dates stay distinct. Corrupt evidence cannot silently become green or break unrelated
 rows. List/detail cache invalidation and pending polling remain read-only. Simulation/permissions

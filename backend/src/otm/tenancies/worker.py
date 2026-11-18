@@ -201,6 +201,7 @@ class OrganizationLifecycleWorker:
                         recovery_setup=self.recovery_setup,
                         signing_setup=self.signing_setup,
                         bootstrap_keys=self.bootstrap_keys,
+                        registry=state,
                     ):
                         self._stage_email(connection, identifier, at)
                         return
@@ -218,7 +219,10 @@ class OrganizationLifecycleWorker:
                     )
                 except OrganizationConflict:
                     raise LifecycleBlocked("RECOVERY_PASSWORD_ROTATION_REQUIRED") from None
-                if any(item.removes_identity for item in intent.associations):
+                if any(
+                    item.removes_identity or item.owner_administration_required
+                    for item in intent.associations
+                ):
                     # An attempted identity write stays uncertain until independent readback passes.
                     connection.execute(
                         update(operation)
@@ -228,7 +232,25 @@ class OrganizationLifecycleWorker:
                         .values(effect_knowledge="unknown")
                     )
                 try:
-                    completion = self.facade.apply(intent)
+                    if intent.import_adoption_contract is not None:
+                        from otm.tenancies import import_adoption
+                        from otm.tenancies.onboarding import step_rows
+
+                        manifest = import_adoption.accepted(
+                            connection, row, step_rows(connection, row)
+                        )
+                        completion = import_adoption.completion(intent, manifest)
+                    else:
+                        from otm.tenancies.owner_access import domain
+
+                        for association in intent.associations:
+                            if (
+                                association.owner_administration_required
+                                and domain(connection, self.workspace, association.tenancy_id)
+                                != association.recipient_domain_ocid
+                            ):
+                                raise LifecycleBlocked("TARGET_CHANGED")
+                        completion = self.facade.apply(intent)
                 except LifecycleBlocked:
                     raise
                 except Exception:
@@ -270,6 +292,9 @@ class OrganizationLifecycleWorker:
         self, connection, row, intent, identifier, at, code, status, has_workspace, completion=None
     ):
         outcome = OrganizationActionOutcome(
+            owner_administrations=completion.owner_administrations
+            if completion and status == "succeeded"
+            else (),
             action=intent.action,
             safe_code=code,
             removals=completion.removals if completion and status == "succeeded" else (),
@@ -413,7 +438,10 @@ class OrganizationLifecycleWorker:
                 or frozen.actor.key != row["initiating_actor_subject"]
             ):
                 raise ValueError("INVALID_ORGANIZATION_INTENT_SCOPE")
-            if any(item.removes_identity for item in frozen.intent.associations):
+            if any(
+                item.removes_identity or item.owner_administration_required
+                for item in frozen.intent.associations
+            ):
                 # A rolled-back publish cannot prove that an external identity write did not occur.
                 connection.execute(
                     update(operation)
@@ -496,6 +524,10 @@ class OrganizationLifecycleWorker:
                 )
             ):
                 raise LifecycleBlocked("TARGET_CHANGED")
+            if link.get("imported_access") != (
+                item.imported_access.model_dump(mode="json") if item.imported_access else None
+            ):
+                raise LifecycleBlocked("TARGET_CHANGED")
             if (
                 row["provider_mode"] != "simulated"
                 or row["parent_tenancy_ocid"] != intent.parent_tenancy_ocid
@@ -532,6 +564,12 @@ class OrganizationLifecycleWorker:
                     or recipient_link["compartment_ocid"] != item.recipient_compartment_ocid
                     or recipient_link["parent_compartment_ocid"]
                     != item.recipient_parent_compartment_ocid
+                ):
+                    raise LifecycleBlocked("TARGET_CHANGED")
+                if recipient_link and recipient_link.get("imported_access") != (
+                    item.recipient_imported_access.model_dump(mode="json")
+                    if item.recipient_imported_access
+                    else None
                 ):
                     raise LifecycleBlocked("TARGET_CHANGED")
                 recipient = state.people.get(item.recipient_person_id)
@@ -581,6 +619,10 @@ class OrganizationLifecycleWorker:
         from otm.tenancies.membership_access import validate_removals
 
         validate_removals(intent, completion)
+        from otm.tenancies.owner_access import expectation
+        from otm.tenancies.owner_access import validate as validate_owners
+
+        validate_owners(intent, completion)
         from otm.tenancies.recovery_password_lifecycle import retire_terminated_credentials
 
         if intent.whole_tenancy_deletion:
@@ -603,6 +645,28 @@ class OrganizationLifecycleWorker:
             expected[intent.pending_association_id] = (
                 intent.target.tenancy_ocid,
                 intent.target.person_id,
+            )
+        manifest = None
+        if intent.import_adoption_contract is not None:
+            from otm.tenancies import import_adoption
+            from otm.tenancies.onboarding import step_rows
+
+            current = (
+                connection.execute(
+                    select(operation).where(
+                        operation.c.workspace_id == self.workspace, operation.c.id == identifier
+                    )
+                )
+                .mappings()
+                .one()
+            )
+            manifest = import_adoption.accepted(connection, current, step_rows(connection, current))
+            import_adoption.validate_participants(state, intent, manifest, identifier)
+            expected.update(
+                {
+                    member.association_id: (intent.target.tenancy_ocid, member.person_id)
+                    for member in manifest.members
+                }
             )
         bindings = {b.association_id: b for b in completion.bindings}
         if (
@@ -700,6 +764,15 @@ class OrganizationLifecycleWorker:
                 )
                 connection.execute(
                     tenancy_membership.insert().values(
+                        imported_access=(
+                            expectation(
+                                item.recipient_imported_access, identifier, item.tenancy_ocid
+                            )
+                            if item.owner_administration_required
+                            else item.recipient_imported_access
+                        ).model_dump(mode="json")
+                        if item.recipient_imported_access
+                        else None,
                         id=item.new_association_id,
                         workspace_id=self.workspace,
                         tenancy_id=item.tenancy_id,
@@ -708,7 +781,9 @@ class OrganizationLifecycleWorker:
                         status="active",
                         user_ocid=binding.user_ocid,
                         compartment_ocid=binding.compartment_ocid,
-                        compartment_name=item.recipient_compartment_name,
+                        compartment_name="Root compartment"
+                        if item.owner_administration_required
+                        else item.recipient_compartment_name,
                         parent_compartment_ocid=binding.parent_compartment_ocid,
                         created_at=at,
                         updated_at=at,
@@ -744,6 +819,38 @@ class OrganizationLifecycleWorker:
                     revision=tenancy.c.revision + 1,
                 )
             )
+        if manifest is not None:
+            for member in manifest.members:
+                binding = bindings[member.association_id]
+                if (
+                    binding.user_ocid != member.access.identity.user_ocid
+                    or binding.compartment_ocid != member.access.identity.scopes[0].ocid
+                ):
+                    raise LifecycleBlocked("TARGET_CHANGED")
+                if member.association_id != intent.pending_association_id:
+                    connection.execute(
+                        update(tenancy_membership)
+                        .where(
+                            tenancy_membership.c.workspace_id == self.workspace,
+                            tenancy_membership.c.id == member.association_id,
+                            tenancy_membership.c.operation_id == identifier,
+                        )
+                        .values(
+                            status="active",
+                            operation_id=None,
+                            updated_at=at,
+                            revision=tenancy_membership.c.revision + 1,
+                        )
+                    )
+                connection.execute(
+                    update(org_person)
+                    .where(
+                        org_person.c.workspace_id == self.workspace,
+                        org_person.c.id == member.person_id,
+                        org_person.c.pending_operation_id == identifier,
+                    )
+                    .values(pending_operation_id=None)
+                )
         remaining = connection.execute(
             select(tenancy_membership.c.id).where(
                 tenancy_membership.c.workspace_id == self.workspace,

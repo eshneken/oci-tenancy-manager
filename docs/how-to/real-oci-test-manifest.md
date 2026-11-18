@@ -31,7 +31,56 @@ independent recovery access. This manifest does not itself authorize live resour
 | Initial multi-worker production sizing | [Two-worker qualification](#initial-multi-worker-production-qualification): identical staging/production two one-slot workers; locks, child isolation, deadlines, crash recovery and connection budget. | Pending |
 | Configuration drift and selected repair | [Live scenario matrix](configuration-drift-runbook.md#pending-real-oci-manual-validation): exact objects, override preservation, permissions, partial outcomes, concurrency and unrelated-resource protection. | Pending |
 | Required-user presence | [Live presence matrix](configuration-drift-runbook.md#pending-required-user-presence-qualification): exact domain/SCIM/OCI identities, qualified absence, independent subjects and stale authority. | Pending |
+| Shared-import existing-user adoption | [Exact owner/member adoption and ongoing access evidence](#shared-import-existing-user-adoption): complete domain inventory, root/multiple scopes, ordinary lifecycle removal/transfer and preservation of shared resources. | Pending |
 | Permanent-user capture during onboarding | Create and import a disposable child; retain provider-returned automation and recovery domain/SCIM/OCI identities independently. Verify durable values against OCI. Retry interrupted setup without adopting same-name/different-ID accounts or inventing bindings for older records. Preserve post-policy access checks before retiring temporary credentials. Version 3 implements simulated capture; qualification still requires a real adapter and approved disposable child. Saved previews must be deliberately upgraded before local UI review. | Pending |
+
+## Shared-import existing-user adoption
+
+Status: **Pending**. The [17 November source candidate](../engineering-design/24-imported-membership-adoption.md)
+uses a synthetic inventory and existing onboarding/check workers. Local unit or disposable PostgreSQL
+results do not qualify real identity-domain enumeration, permission evidence or destructive effects.
+The saved 8443 installation is unchanged by authoring this contract. Run the following only with a
+qualified adapter, approved disposable shared child, synthetic people and separately authorized
+live changes; retain sanitized provider/application revisions and exact outcome evidence.
+
+1. Import an existing owner and several selected human accounts. Enumerate all inventory pages,
+   including multiple pages of users, groups/roles, policies and compartments. Verify completeness
+   against the exact child/domain, distinguish OCI user OCIDs from SCIM and grant identifiers, and
+   block denied, truncated, wrong-domain or unsupported results rather than assuming an empty set.
+2. Exercise shared root, a shared non-root compartment and several scopes for one identity. Qualify
+   effective administrator/group/role/policy evidence. Root is the exact child; scopes cannot bind a
+   foreign compartment or turn shared resources into a disposable personal compartment.
+3. Map exact identities explicitly to eligible employees, including an existing administrator for
+   the chosen owner. Reject duplicate/foreign/protected identities and changed eligibility or
+   inventory after preview. Verify independent pre-effect and final readback, replay and partial
+   failure recovery. No name/email match, policy label or generic successful GET authorizes adoption.
+4. Confirm adoption reuses the original human account IDs, credentials and current grants without
+   provisioning replacements, resetting passwords or changing resource ownership. Establish OTM
+   automation/recovery separately. Preserve unselected accounts as known unmanaged identities and
+   retain complete reviewed scope/provenance in existing membership and audit records.
+5. Exercise explicit removal/offboarding and ownership transfer under the same full-lifecycle rules
+   as created users. Verify exact accepted identity/membership deletion and last-admin/target guards,
+   with shared groups, root/other compartments, resources and unselected accounts preserved. Transfer
+   an existing adopted member to owner, and retain a former owner as member where allowed; verify
+   that exact bindings and all initial scope provenance survive. D22 requires full replacement-owner
+   administrator grants and independent readback before successful transfer publication; an owner
+   label or the current simulator's binding-continuity result is insufficient. Partial/unknown grants
+   stay unverified; retained former-owner access follows its explicit accepted disposition.
+6. Run ordinary Refresh user data independently of adoption. Qualify Matching, missing adopted user,
+   changed groups/roles/scopes/policy and newly introduced unmanaged accounts. Initial unselected
+   users and normal registered members must not appear as new unmanaged additions. Permission loss,
+   incomplete pagination and context changes cannot establish Missing/Matching; stale evidence loses
+   current-health labels. Checks never silently adopt, delete or repair accounts.
+7. Qualify [current expected grants after transfer](../engineering-design/24-imported-membership-adoption.md#transfer-privilege-evidence-local-source-follow-up-and-real-adapter-gate)
+   using immutable initial adoption provenance plus existing accepted/independently verified transfer
+   evidence. A legitimate verified grant change becomes expected without rewriting `imported_access`;
+   arbitrary newly observed or unrelated extra grants remain drift. Exercise success, partial/failed
+   grants, replay, stale/concurrent transfer context and preserved former-owner access. The later
+   follow-up implements simulated proof and authenticated current-expectation resolution; its
+   [dated local checkpoint](../engineering-design/24-imported-membership-adoption.md#root-membership-and-owner-promotion-follow-up--17-november-2026)
+   records targeted validation, successful focused retry and saved publication, not a clean full-suite
+   milestone. The fresh app1564f8c integration run passed481 tests with zero failures/errors/skips. Actual SDK privilege behavior remains Pending before
+   enabling a real adapter.
 
 ## Remaining provider and deployment qualification
 

@@ -275,7 +275,7 @@ def workflow_router(service):
                 raise ValueError("JSON_REQUIRED")
             data = bytearray()
             async for chunk in request.stream():
-                if len(data) + len(chunk) > 4096:
+                if len(data) + len(chunk) > 65536:
                     raise ValueError("HANDOFF_TOO_LARGE")
                 data.extend(chunk)
             command = OnboardingCommand.model_validate_json(bytes(data))

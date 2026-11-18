@@ -6,6 +6,8 @@ config:
     minEntityWidth: 220
     fontSize: 14
 ---
+%% Fresh empty disposable PostgreSQL metadata reflection through0029:17 November2026;34tables,439columns,89FK.
+%% No row values or saved8443 database inspected; imported_access is nullable JSONB.
 erDiagram
   direction LR
   alembic_version {
@@ -525,6 +527,7 @@ erDiagram
     integer revision "required"
     timestamp_with_time_zone created_at "required"
     timestamp_with_time_zone updated_at "required"
+    jsonb imported_access "nullable; immutable initial adoption provenance"
   }
   otm_operation |o..o{ otm_tenancy_membership : otm_tenancy_membership_workspace_id_operation_id_fkey
   org_person ||..o{ otm_tenancy_membership : otm_tenancy_membership_workspace_id_person_id_fkey

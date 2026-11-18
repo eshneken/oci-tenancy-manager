@@ -1,5 +1,7 @@
 # Implemented application reference
 
+- [Temporary frontend dependency exception](frontend-security-exception.md) — exact approved development-only picomatch advisory; all other audit findings remain blocking.
+
 These guides describe the current local application, its public fields and durable boundaries.
 OCI/provider effects are simulated unless a guide explicitly records otherwise; production design
 is in [the engineering chapters](../engineering-design/README.md).
@@ -8,6 +10,8 @@ is in [the engineering chapters](../engineering-design/README.md).
 
 
 - [Application administrator grants and revocation](administrators.md)
+- [Shared-import identity adoption](tenancy-onboarding.md#shared-import-adoption-source-candidate--17-november-2026) — local simulator extension and saved8443 publication PASS under scoped risk acceptance; hosted checks require the [exact approved audit policy](../reference/frontend-security-exception.md)/live OCI Pending
+- [Shared-root and verified owner-promotion source follow-up](../engineering-design/24-imported-membership-adoption.md#transfer-privilege-evidence-local-source-follow-up-and-real-adapter-gate) — [targeted local checkpoint and saved8443 publication](../engineering-design/24-imported-membership-adoption.md#root-membership-and-owner-promotion-follow-up--17-november-2026); focused retry passed after initial full-run failures; fresh app1564f8c integration481 PASS, hosted checks require the [exact approved audit policy](../reference/frontend-security-exception.md)
 - [Internal operation admission](admission.md)
 - [Application settings and session cleanup](application-settings.md)
 - [Audit History read directory](audit-history.md)

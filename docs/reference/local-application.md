@@ -1,10 +1,29 @@
 # Run the local application
 
-30 October 2026 foundation · Current operating pointers reconciled 10 November 2026
+30 October 2026 foundation · Current operating pointers reconciled 17 November 2026
 
 Use sole saved 8443. The retired 8444 instructions and dated slice qualification below are historical;
-current source is through migration 0028, with 29 OTM application tables. Milestone ship qualification
+current saved source is through migration0029, with29 OTM application tables and439 total public
+columns. Milestone ship qualification
 is recorded separately and is not inferred from earlier slice receipts.
+
+## Saved shared-import adoption publication — 17 November 2026
+
+The sole saved8443 instance now serves matched qualified backend/locked-environment/frontend/worker
+snapshots with new shared-import adoption. The [477-test complete-suite result and scoped local
+dependency-risk acceptance](../engineering-design/24-imported-membership-adoption.md#source-validation-and-review-disposition--17-november-2026)
+are separate facts: npm still reports the known advisory and normal hosted security gates now evaluate the [exact owner-approved exception](../reference/frontend-security-exception.md). The active weekly Monday09:00 dependency watch cannot deploy changes automatically.
+
+A verified private PostgreSQL backup and configuration/custody copies preceded the additive0029
+migration. All33 existing data tables' old-column fingerprints matched before startup; state,
+settings and custody hashes were unchanged. After startup, only migration-version and worker
+registration bookkeeping changed; protected organization/administrator/tenancy/baseline data stayed
+unchanged. Served index/JS/CSS hashes matched the private asset snapshot. Historical memberships
+remain unadopted with null provenance; new shared imports expose explicit adoption review.
+
+Liveness200 and a restricted API database-role probe passed. `/health/ready` is503 because the local
+factory has no readiness callback; no200 readiness, cloud qualification or production readiness is
+claimed. Existing live OCI/manual cases remain Pending. No second persistent instance was created.
 
 [Backend setup](../../backend/README.md) · [Local authentication](local-authentication.md)
 · [Administrator model](administrators.md) · [Application settings](application-settings.md)
@@ -34,7 +53,7 @@ uv run --project backend otm-local setup
 Setup creates a private installation under `.local-dev/application/`. It generates a persistent
 installation UUID, separate database-owner/API/worker passwords and an installation-local issuer.
 It starts an instance-labeled PostgreSQL 16 container from the source-pinned image digest, exposes
-its database port only on `127.0.0.1`, applies the reviewed migrations through `0028_signing_credentials` and provisions a restricted
+its database port only on `127.0.0.1`, applies the reviewed migrations through `0029_imported_memberships` and provisions a restricted
 local API role. It creates no application administrator or default password. Explicit setup upgrades legacy state
 with missing worker custody and adds a separate worker role while preserving existing owner/API
 credentials, account/MFA and all recorded user data.

@@ -1938,3 +1938,12 @@ dialog p {
 .bootstrap-public-row { align-items: start; }
 .bootstrap-public-row textarea { font-size: .85rem; line-height: 1.5; resize: none; overflow: hidden; overflow-wrap: anywhere; background: #f3f5f7; color: #5b6877; }
 @media (max-width: 700px) { .bootstrap-copy-row { grid-template-columns: minmax(0,1fr); } .bootstrap-copy-row .button { width: 100%; } }
+
+/* Keep import review wide data inside an accessible scroll region on narrow screens. */
+.import-members { margin-block: 1.25rem; }
+.import-members table { min-width: 42rem; width: 100%; }
+.import-members td { vertical-align: top; }
+.import-members td:first-child { overflow-wrap: anywhere; }
+.import-members select { max-width: 25rem; width: 100%; }
+.import-members details p { overflow-wrap: anywhere; max-width: 25rem; }
+.import-members .workflow-check { margin-top: 1rem; }

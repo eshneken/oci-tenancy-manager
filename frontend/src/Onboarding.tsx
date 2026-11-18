@@ -1,4 +1,5 @@
 import {BootstrapHandoff} from "./BootstrapHandoff";
+import {adoptionChoice,ImportMembers} from "./ImportMembers";
 import { EmailContactSummary } from "./EmailContacts";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -49,6 +50,8 @@ export function Onboarding({
     activation_user_ocid: null,
   });
   const [confirmed, setConfirmed] = useState(false);
+  const [importMembers,setImportMembers]=useState<Record<string,string>>({});
+  const [importConfirmed,setImportConfirmed]=useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const key = useRef(crypto.randomUUID());
@@ -71,6 +74,7 @@ export function Onboarding({
       },
     );
     setConfirmed(false);
+    setImportMembers({});setImportConfirmed(false);
     key.current = crypto.randomUUID();
   }, [operationId, data?.revision]);
 
@@ -93,6 +97,7 @@ export function Onboarding({
   // Server revision and available actions guard double clicks and stale handoff/cleanup previews.
   async function submit(action: OnboardingCommand["action"]) {
     if (!data) return;
+    if(action === "start_setup" && (!confirmed || data.import_review && !adoptionChoice(data.import_review,importMembers,importConfirmed))) return;
     setBusy(true);
     setError("");
     controller.current = new AbortController();
@@ -108,7 +113,9 @@ export function Onboarding({
             ? { handoff: data.origin === "import"
                 ? { ...handoff, tenancy_ocid: data.suggested_handoff.tenancy_ocid, activation_user_ocid: null }
                 : handoff }
-            : action === "start_setup" ? { confirm_cleanup: confirmed } : {}),
+            : action === "start_setup" ? { confirm_cleanup: confirmed,
+                ...(data.import_review?{import_adoption:adoptionChoice(data.import_review,importMembers,importConfirmed)!}:{})
+              } : {}),
         },
         signal,
       );
@@ -121,7 +128,9 @@ export function Onboarding({
         expired();
       else
         setError(
-          "Setup could not be confirmed. Retry unchanged inputs to recover this request, or refresh the setup before making a new choice.",
+          data.import_review
+            ? "Setup could not be confirmed. Retry unchanged inputs to recover this request. If existing access changed, choose Refresh existing users, then review the mappings and both confirmations again."
+            : "Setup could not be confirmed. Retry unchanged inputs to recover this request, or refresh the setup before making a new choice.",
         );
     } finally {
       if (!signal.aborted) setBusy(false);
@@ -430,6 +439,7 @@ export function Onboarding({
           {data.origin === "import" && (
             <p>Existing human administrators are preserved.</p>
           )}
+          {data.import_review&&<ImportMembers review={data.import_review} selected={importMembers} confirmed={importConfirmed} busy={busy} change={value=>{setImportMembers(value);setImportConfirmed(false);edited();}} confirm={value=>{setImportConfirmed(value);edited();}} refresh={()=>void submit("refresh_import_inventory")}/>}
           <label className="workflow-check">
             <input
               type="checkbox"
@@ -447,7 +457,7 @@ export function Onboarding({
           </label>
           <button
             className="button primary"
-            disabled={!confirmed || busy}
+            disabled={!confirmed || busy || Boolean(data.import_review&&!adoptionChoice(data.import_review,importMembers,importConfirmed))}
             onClick={() => void submit("start_setup")}
           >
             {busy

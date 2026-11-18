@@ -1,3 +1,5 @@
+%% 17 November fresh empty-DB metadata reflection confirms0029 nullable membership JSONB; no new table/FK.
+%% Schema-only reflection does not imply workflow qualification or a saved8443 migration.
 erDiagram
   org_workspace ||--o{ org_person : scopes
   org_workspace ||--o{ org_feed : receives
@@ -134,6 +136,7 @@ erDiagram
     int revision
     timestamptz created_at
     timestamptz updated_at
+    jsonb imported_access "nullable initial adoption provenance"
   }
 
   otm_operation ||--o{ otm_operation_step : current_intent_progress

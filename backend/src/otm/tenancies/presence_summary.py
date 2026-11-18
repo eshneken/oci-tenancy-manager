@@ -5,7 +5,7 @@ from collections import defaultdict
 from sqlalchemy import and_, func, select
 
 from otm.operations.contracts import canonical_hash
-from otm.storage.tables import audit_event
+from otm.storage.tables import audit_event, tenancy_membership
 from otm.storage.tables import managed_object_binding as bindings
 from otm.storage.tables import user_presence_check as checks
 from otm.storage.tables import user_presence_connection as connections
@@ -45,7 +45,7 @@ def summarize(views, checking=False):
     return RequiredUsersSummary(state=state, automation=a, recovery=b, checking=checking)
 
 
-# All four queries are bound to the authenticated workspace and server-selected visible page IDs.
+# All five queries are bound to the authenticated workspace and server-selected visible page IDs.
 def summaries(service, connection, workspace, children):
     children = tuple(c for c in children if c["status"] == "active")
     if not children:
@@ -128,6 +128,23 @@ def summaries(service, connection, workspace, children):
         except (ValueError, KeyError):
             broken.add(child_id)
     result = {}
+    memberships = defaultdict(list)
+    for member in connection.execute(
+        select(tenancy_membership).where(
+            tenancy_membership.c.workspace_id == workspace,
+            tenancy_membership.c.tenancy_id.in_(identifiers),
+            tenancy_membership.c.status == "active",
+        )
+    ).mappings():
+        memberships[member["tenancy_id"]].append(member)
+    from otm.tenancies.owner_access import authenticate
+
+    try:
+        authenticate(
+            connection, workspace, [link for values in memberships.values() for link in values]
+        )
+    except ValueError:
+        return {child["id"]: RequiredUsersSummary(state="unavailable") for child in children}
     for child in children:
         identifier = child["id"]
         try:
@@ -140,6 +157,7 @@ def summaries(service, connection, workspace, children):
                 current[identifier][0] if current[identifier] else None,
                 identities[identifier],
                 console_policy,
+                memberships[identifier],
             )
             row = latest.get(identifier)
             views = presence_views(snapshot, row, row, now)

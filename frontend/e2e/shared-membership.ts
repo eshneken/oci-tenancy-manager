@@ -43,8 +43,9 @@ export async function existingCompartmentMembership(page:Page,sharedName:string)
  await expect(modal.getByRole("combobox",{name:"Existing parent compartment",exact:true}).locator("selectedcontent")).toHaveText("Choose an existing parent");
  await modal.getByRole("combobox",{name:"Compartment assignment",exact:true}).selectOption("existing");
  await expect(picker.locator("selectedcontent")).toHaveText("Choose an existing compartment");
- await expect(picker.locator("option")).toHaveCount(3);
+ await expect(picker.locator("option")).toHaveCount(4);
  await picker.selectOption({index:1});
+ await expect(modal.getByText(/Root access covers the entire tenancy/)).toBeVisible();
  await expect(modal.getByLabel("Employee compartment name",{exact:true})).toHaveCount(0);
  await capture(page,"shared-existing-compartment");
  const pending=page.waitForResponse(r=>r.url().endsWith("/api/organization/actions")&&r.request().method()==="POST");

@@ -25,6 +25,7 @@ class SimulatedLifecycleFacade:
         recovery_console_loader=None,
         automation_keys=None,
         signing_keys=None,
+        member_inventory=None,
     ):
         from otm.providers.configuration_simulator import SimulatedConfigurationFacade
 
@@ -35,6 +36,11 @@ class SimulatedLifecycleFacade:
         self.recovery_console_loader = recovery_console_loader
         self.configuration_facade = SimulatedConfigurationFacade(policy)
         self._member_access = {}
+        from otm.providers.member_inventory_simulator import MemberInventory
+
+        self.member_inventory = MemberInventory(member_inventory)
+        if self.member_inventory.records is None:
+            self._member_access = self.member_inventory.memory
 
     # Local choices simulate parent subscriptions; production must discover them through the
     # parent SDK.
@@ -81,7 +87,7 @@ class SimulatedLifecycleFacade:
     def inspect_onboarding(self, intent, handoff):
         from otm.tenancies.onboarding_contracts import OnboardingDiscovery
 
-        self.apply(intent)
+        self.validate_scope(intent)
         if handoff != self.onboarding_handoff(intent):
             raise ValueError("BOOTSTRAP_UNVERIFIED")
         suffix = intent.pending_tenancy_id.hex
@@ -99,6 +105,45 @@ class SimulatedLifecycleFacade:
             activation_user_ocid=handoff.activation_user_ocid,
             activation_scim_id="activation-" + suffix if handoff.activation_user_ocid else None,
         )
+
+    # Existing human accounts are read independently; directory assignments never create inventory.
+    def inspect_existing_access(self, tenancy_ocid, domain_ocid):
+        from otm.providers.import_inventory_simulator import existing_inventory
+
+        if not domain_ocid.startswith("ocid1.domain.oc1..otmsim"):
+            raise ValueError("IMPORT_DOMAIN_UNVERIFIED")
+        self._member_access.update(self.member_inventory.read(tenancy_ocid))
+        initial = existing_inventory(
+            tenancy_ocid, domain_ocid, self.compartments(tenancy_ocid), self._member_access
+        )
+        from otm.tenancies.import_contracts import ExistingIdentity, stored_import
+
+        users = {user.user_ocid: user for user in initial.users}
+        for (child, user), state in self._member_access.items():
+            if child != tenancy_ocid:
+                continue
+            if not state["user"]:
+                users.pop(user, None)
+            elif not state["groups"] and user in users:
+                users[user] = users[user].model_copy(update={"groups": (), "administrator": False})
+            elif state.get("identity") is not None and state.get("domain_ocid") == domain_ocid:
+                identity = stored_import(ExistingIdentity, state["identity"])
+                users[user] = (
+                    identity
+                    if state["groups"]
+                    else identity.model_copy(update={"groups": (), "administrator": False})
+                )
+        return initial.model_copy(
+            update={"users": tuple(sorted(users.values(), key=lambda u: u.user_ocid))}
+        )
+
+    # Imported owner/member identities are already established; only OTM service access is
+    # configured.
+    def configure_import_access(self, intent, discovery, manifest):
+        self.validate_scope(intent)
+        if not manifest.members:
+            raise ValueError("IMPORT_MANIFEST_REQUIRED")
+        self.onboarding_step(intent, "configure_required", discovery)
 
     # Each bounded capability verifies the same target; a real adapter requires separate
     # qualification.
@@ -214,6 +259,7 @@ class SimulatedLifecycleFacade:
         ):
             raise LifecycleBlocked("TARGET_CHANGED")
         key = (association.tenancy_ocid, association.user_ocid)
+        self._member_access.update(self.member_inventory.read(association.tenancy_ocid))
         self._member_access.setdefault(key, {"groups": True, "user": True})
         self.remove_member_groups(association)
         self.delete_member_user(association)
@@ -221,7 +267,9 @@ class SimulatedLifecycleFacade:
 
     # Remove only this user's group memberships, leaving shared groups and other users intact.
     def remove_member_groups(self, association):
-        self._member_access[(association.tenancy_ocid, association.user_ocid)]["groups"] = False
+        state = self._member_access[(association.tenancy_ocid, association.user_ocid)]
+        state["groups"] = False
+        self.member_inventory.write(association.tenancy_ocid, association.user_ocid, state)
 
     # Delete the exact personal user only after its group memberships have been retired.
     def delete_member_user(self, association):
@@ -229,6 +277,7 @@ class SimulatedLifecycleFacade:
         if state["groups"]:
             raise LifecycleBlocked("TARGET_CHANGED")
         state["user"] = False
+        self.member_inventory.write(association.tenancy_ocid, association.user_ocid, state)
 
     # Independent observation reads mutated fake provider state, rather than echoing desired flags.
     def read_member_access(self, association):
@@ -241,10 +290,9 @@ class SimulatedLifecycleFacade:
             user_deleted=not state["user"],
         )
 
-    # Registry publication is separate from guided setup; simulation never qualifies real
-    # OCI access.
-    # A real adapter must implement those separately before it can be composed into production.
-    def apply(self, intent):
+    # Reject substituted workspace/organization/parent and protected targets before any capability.
+    # Passing local simulation guards never qualifies a real provider or its access.
+    def validate_scope(self, intent):
         if (
             intent.workspace_id,
             intent.policy_revision,
@@ -267,20 +315,43 @@ class SimulatedLifecycleFacade:
             raise LifecycleBlocked("TARGET_CHANGED")
         if any(a.parent_tenancy_ocid != intent.parent_tenancy_ocid for a in intent.associations):
             raise LifecycleBlocked("TARGET_CHANGED")
+
+    # Ordinary lifecycle actions retain the same exact-target deletion rules for adopted identities.
+    def apply(self, intent):
+        self.validate_scope(intent)
         bindings = []
+        administrations = []
         for item in intent.associations:
             if item.action == "transfer":
                 suffix = sha256(
                     (item.tenancy_ocid + str(item.recipient_person_id)).encode()
                 ).hexdigest()[:32]
+                self._member_access.update(self.member_inventory.read(item.tenancy_ocid))
+                candidate = "ocid1.user.oc1..otmsim" + suffix
+                if self._member_access.get((item.tenancy_ocid, candidate), {}).get("user") is False:
+                    candidate = (
+                        "ocid1.user.oc1..otmsim"
+                        + sha256(
+                            (item.tenancy_ocid + str(item.new_association_id)).encode()
+                        ).hexdigest()[:32]
+                    )
+                user = item.recipient_user_ocid or candidate
+                if user == item.user_ocid or not user.startswith("ocid1.user.oc1..otmsim"):
+                    raise LifecycleBlocked("TARGET_CHANGED")
+                if item.owner_administration_required:
+                    administrations.append(self.promote_owner(item, user))
                 bindings.append(
                     MemberBinding(
                         association_id=item.new_association_id,
                         tenancy_ocid=item.tenancy_ocid,
                         person_id=item.recipient_person_id,
-                        user_ocid=item.recipient_user_ocid or "ocid1.user.oc1..otmsim" + suffix,
-                        compartment_ocid=item.recipient_compartment_ocid,
-                        parent_compartment_ocid=item.recipient_parent_compartment_ocid,
+                        user_ocid=user,
+                        compartment_ocid=item.tenancy_ocid
+                        if item.owner_administration_required
+                        else item.recipient_compartment_ocid,
+                        parent_compartment_ocid=None
+                        if item.owner_administration_required
+                        else item.recipient_parent_compartment_ocid,
                     )
                 )
         if intent.pending_association_id is not None:
@@ -291,9 +362,15 @@ class SimulatedLifecycleFacade:
                 intent.existing_compartment_ocid or intent.parent_compartment_ocid
             ) not in {p.ocid for p in self.compartments(tenant)}:
                 raise LifecycleBlocked("TARGET_CHANGED")
-            if intent.existing_compartment_ocid == tenant:
-                raise LifecycleBlocked("TARGET_CHANGED")
             suffix = sha256((tenant + str(intent.target.person_id)).encode()).hexdigest()[:32]
+            self._member_access.update(self.member_inventory.read(tenant))
+            if (
+                self._member_access.get((tenant, "ocid1.user.oc1..otmsim" + suffix), {}).get("user")
+                is False
+            ):
+                suffix = sha256((tenant + str(intent.pending_association_id)).encode()).hexdigest()[
+                    :32
+                ]
             bindings.append(
                 MemberBinding(
                     association_id=intent.pending_association_id,
@@ -307,6 +384,29 @@ class SimulatedLifecycleFacade:
                     parent_compartment_ocid=intent.parent_compartment_ocid,
                 )
             )
+        if intent.pending_association_id is not None:
+            created = bindings[-1]
+            domain = intent.member_domain_ocid or (
+                "ocid1.domain.oc1..otmsim" + intent.pending_tenancy_id.hex
+                if intent.pending_tenancy_id
+                else None
+            )
+            if domain:
+                self.create_member(
+                    created.tenancy_ocid,
+                    domain,
+                    created.user_ocid,
+                    created.compartment_ocid or created.tenancy_ocid,
+                    administrator=intent.action != "join_shared",
+                )
+        from otm.tenancies.owner_access import validate
+
+        validate(
+            intent,
+            LifecycleCompletion(
+                bindings=tuple(bindings), owner_administrations=tuple(administrations)
+            ),
+        )
         # Establish and validate replacement identity before deleting any outgoing owner.
         by_association = {binding.association_id: binding for binding in bindings}
         for item in intent.associations:
@@ -317,10 +417,145 @@ class SimulatedLifecycleFacade:
                 ):
                     raise LifecycleBlocked("TARGET_CHANGED")
         return LifecycleCompletion(
+            owner_administrations=tuple(administrations),
             bindings=tuple(bindings),
             removals=tuple(
                 self.remove_member_access(intent, item)
                 for item in intent.associations
                 if item.removes_identity
             ),
+        )
+
+    # Provision a new simulated identity in provider state; tombstones never authorize resurrection.
+    def create_member(self, tenancy, domain, user, scope, *, administrator=False):
+        from otm.tenancies.import_contracts import ExistingIdentity, ExistingScope
+        from otm.tenancies.owner_access import promoted
+
+        self._member_access.update(self.member_inventory.read(tenancy))
+        current = self._member_access.get((tenancy, user))
+        if current is not None:
+            if not current["user"]:
+                raise LifecycleBlocked("TARGET_CHANGED")
+            return
+        identity = ExistingIdentity(
+            user_ocid=user,
+            scim_id="member-" + sha256(user.encode()).hexdigest()[:24],
+            user_name="Managed member",
+            email="member-" + sha256(user.encode()).hexdigest()[:12] + "@example.test",
+            administrator=False,
+            scopes=(
+                ExistingScope(
+                    ocid=scope,
+                    name="Root compartment" if scope == tenancy else "Member compartment",
+                    kind="root" if scope == tenancy else "compartment",
+                ),
+            ),
+            policy_hash=sha256(("member-grants-" + user).encode()).hexdigest(),
+        )
+        if administrator:
+            identity = promoted(identity, tenancy, domain)
+        state = {
+            "user": True,
+            "groups": True,
+            "domain_ocid": domain,
+            "identity": identity.model_dump(mode="json"),
+        }
+        self.member_inventory.write(tenancy, user, state)
+        self._member_access[(tenancy, user)] = state
+
+    # Apply additive administrator grants, then inspect provider state independently before
+    # deletion.
+    def promote_owner(self, item, user):
+        from otm.tenancies.owner_access import profile, promoted
+
+        domain = item.recipient_domain_ocid
+        if item.recipient_user_ocid is None:
+            self.create_member(item.tenancy_ocid, domain, user, item.tenancy_ocid)
+        current = self.inspect_member(item.tenancy_ocid, domain, user)
+        if current is None:
+            raise LifecycleBlocked("TARGET_CHANGED")
+        grant = profile(item.tenancy_ocid, domain)
+        updated = promoted(current, item.tenancy_ocid, domain)
+        state = dict(
+            self._member_access.get((item.tenancy_ocid, user), {}),
+            user=True,
+            groups=True,
+            domain_ocid=domain,
+            identity=updated.model_dump(mode="json"),
+            root_policy_id=grant["policy"],
+            policy_group_id=grant["group"],
+            policy_scope_ocid=item.tenancy_ocid,
+            manage_all_resources=True,
+            domain_administrator=True,
+        )
+        self.member_inventory.write(item.tenancy_ocid, user, state)
+        self._member_access[(item.tenancy_ocid, user)] = state
+        proof = self.inspect_owner(item, user)
+        if proof.identity.scim_id != current.scim_id:
+            raise LifecycleBlocked("TARGET_CHANGED")
+        return proof
+
+    # Return the observed group/policy/role linkage, not booleans copied from the requested grants.
+    def inspect_owner(self, item, user):
+        from otm.tenancies.owner_access import profile
+        from otm.tenancies.owner_access_contracts import OwnerAdministration
+
+        inventory = self.inspect_existing_access(item.tenancy_ocid, item.recipient_domain_ocid)
+        identity = next(u for u in inventory.users if u.user_ocid == user)
+        state = self._member_access[(item.tenancy_ocid, user)]
+        grant = profile(item.tenancy_ocid, item.recipient_domain_ocid)
+        return OwnerAdministration(
+            association_id=item.new_association_id,
+            tenancy_ocid=item.tenancy_ocid,
+            domain_ocid=item.recipient_domain_ocid,
+            identity=identity,
+            administrator_group_id=grant["group"],
+            administrator_role_id=grant["role"],
+            root_policy_id=state["root_policy_id"],
+            policy_group_id=state["policy_group_id"],
+            policy_scope_ocid=state["policy_scope_ocid"],
+            manage_all_resources=state["manage_all_resources"],
+            domain_administrator=state["domain_administrator"],
+            authorized=True,
+            supported=True,
+            complete=inventory.complete,
+        )
+
+    # Resolve exact observed IDs; legacy deterministic fixture IDs have a stable provider-side
+    # default.
+    def inspect_member(self, tenancy, domain, user):
+        import re
+
+        from otm.tenancies.import_contracts import ExistingIdentity, ExistingScope
+
+        inventory = self.inspect_existing_access(tenancy, domain)
+        if (
+            not inventory.complete
+            or inventory.tenancy_ocid != tenancy
+            or inventory.domain_ocid != domain
+        ):
+            raise ValueError("MEMBER_OBSERVATION_UNVERIFIED")
+        match = next(
+            (candidate for candidate in inventory.users if candidate.user_ocid == user), None
+        )
+        if match is not None:
+            return match
+        if (tenancy, user) in self._member_access or not re.fullmatch(
+            r"ocid1\.user\.oc1\.\.otmsim[0-9a-f]{32}", user
+        ):
+            return None
+        return ExistingIdentity(
+            user_ocid=user,
+            scim_id="member-" + sha256(user.encode()).hexdigest()[:24],
+            user_name="Managed member",
+            email="member-" + sha256(user.encode()).hexdigest()[:12] + "@example.test",
+            administrator=False,
+            scopes=(
+                ExistingScope(
+                    ocid=self.compartments(tenancy)[1].ocid,
+                    name=self.compartments(tenancy)[1].name,
+                    kind="compartment",
+                ),
+            ),
+            policy_hash=sha256(("member-grants-" + user).encode()).hexdigest(),
         )

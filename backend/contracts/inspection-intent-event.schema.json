@@ -37,6 +37,79 @@
       "title": "ActorIdentity",
       "type": "object"
     },
+    "AdoptedIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "contract_version": {
+          "const": "import-adoption-1",
+          "default": "import-adoption-1",
+          "title": "Contract Version",
+          "type": "string"
+        },
+        "domain_ocid": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Domain Ocid",
+          "type": "string"
+        },
+        "expected_owner": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OwnerExpectation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "identity": {
+          "$ref": "#/$defs/ExistingIdentity"
+        },
+        "known_user_ocids": {
+          "default": [],
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 200,
+          "title": "Known User Ocids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "domain_ocid",
+        "identity"
+      ],
+      "title": "AdoptedIdentity",
+      "type": "object"
+    },
+    "AdoptedMember": {
+      "additionalProperties": false,
+      "properties": {
+        "access": {
+          "$ref": "#/$defs/AdoptedIdentity"
+        },
+        "association_id": {
+          "format": "uuid",
+          "title": "Association Id",
+          "type": "string"
+        },
+        "person_id": {
+          "format": "uuid",
+          "title": "Person Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "association_id",
+        "person_id",
+        "access"
+      ],
+      "title": "AdoptedMember",
+      "type": "object"
+    },
     "BaselineContent": {
       "additionalProperties": false,
       "properties": {
@@ -983,6 +1056,118 @@
       "title": "EmailRoute",
       "type": "object"
     },
+    "ExistingIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "administrator": {
+          "title": "Administrator",
+          "type": "boolean"
+        },
+        "email": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Email",
+          "type": "string"
+        },
+        "groups": {
+          "default": [],
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Groups",
+          "type": "array"
+        },
+        "policy_hash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Policy Hash",
+          "type": "string"
+        },
+        "roles": {
+          "default": [],
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Roles",
+          "type": "array"
+        },
+        "scim_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Scim Id",
+          "type": "string"
+        },
+        "scopes": {
+          "items": {
+            "$ref": "#/$defs/ExistingScope"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Scopes",
+          "type": "array"
+        },
+        "user_name": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "User Name",
+          "type": "string"
+        },
+        "user_ocid": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "User Ocid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "user_ocid",
+        "scim_id",
+        "user_name",
+        "email",
+        "administrator",
+        "scopes",
+        "policy_hash"
+      ],
+      "title": "ExistingIdentity",
+      "type": "object"
+    },
+    "ExistingScope": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "root",
+            "compartment"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "ocid": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Ocid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ocid",
+        "name",
+        "kind"
+      ],
+      "title": "ExistingScope",
+      "type": "object"
+    },
     "FrozenAssociation": {
       "additionalProperties": false,
       "properties": {
@@ -1029,6 +1214,17 @@
           "title": "Id",
           "type": "string"
         },
+        "imported_access": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AdoptedIdentity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "new_association_id": {
           "anyOf": [
             {
@@ -1041,6 +1237,11 @@
           ],
           "default": null,
           "title": "New Association Id"
+        },
+        "owner_administration_required": {
+          "default": false,
+          "title": "Owner Administration Required",
+          "type": "boolean"
         },
         "parent_tenancy_ocid": {
           "maxLength": 256,
@@ -1091,6 +1292,29 @@
           "default": null,
           "title": "Recipient Compartment Ocid"
         },
+        "recipient_domain_ocid": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Recipient Domain Ocid"
+        },
+        "recipient_imported_access": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AdoptedIdentity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "recipient_parent_compartment_ocid": {
           "anyOf": [
             {
@@ -1115,6 +1339,18 @@
           ],
           "default": null,
           "title": "Recipient Person Id"
+        },
+        "recipient_scim_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Recipient Scim Id"
         },
         "recipient_user_ocid": {
           "anyOf": [
@@ -1176,6 +1412,47 @@
         "parent_tenancy_ocid"
       ],
       "title": "FrozenAssociation",
+      "type": "object"
+    },
+    "ImportedAccessSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "domain_ocid": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Domain Ocid",
+          "type": "string"
+        },
+        "known_user_ocids": {
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Known User Ocids",
+          "type": "array"
+        },
+        "members": {
+          "items": {
+            "$ref": "#/$defs/AdoptedMember"
+          },
+          "title": "Members",
+          "type": "array"
+        },
+        "tenancy_ocid": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Tenancy Ocid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenancy_ocid",
+        "domain_ocid",
+        "members",
+        "known_user_ocids"
+      ],
+      "title": "ImportedAccessSnapshot",
       "type": "object"
     },
     "InspectionIntent": {
@@ -1450,11 +1727,36 @@
           "default": null,
           "title": "Home Region"
         },
+        "import_adoption_contract": {
+          "anyOf": [
+            {
+              "const": "import-adoption-1",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Import Adoption Contract"
+        },
         "kind": {
           "const": "organization_action",
           "default": "organization_action",
           "title": "Kind",
           "type": "string"
+        },
+        "member_domain_ocid": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Member Domain Ocid"
         },
         "name": {
           "anyOf": [
@@ -1749,6 +2051,25 @@
       "title": "OverrideValues",
       "type": "object"
     },
+    "OwnerExpectation": {
+      "additionalProperties": false,
+      "properties": {
+        "identity": {
+          "$ref": "#/$defs/ExistingIdentity"
+        },
+        "operation_id": {
+          "format": "uuid",
+          "title": "Operation Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "operation_id",
+        "identity"
+      ],
+      "title": "OwnerExpectation",
+      "type": "object"
+    },
     "PasswordLocation": {
       "additionalProperties": false,
       "properties": {
@@ -1861,6 +2182,17 @@
           "minimum": 1,
           "title": "Connection Revision",
           "type": "integer"
+        },
+        "import_access": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ImportedAccessSnapshot"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "policy_hash": {
           "pattern": "^[0-9a-f]{64}$",

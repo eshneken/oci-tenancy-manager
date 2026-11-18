@@ -390,6 +390,9 @@ def test_admission_writes_exact_intent_and_queue_reference(registry, action_name
     s, p = registry, person(registry)
     app, connection = service(s), database()
     connection.execute.return_value.scalar_one.return_value = p.id
+    connection.execute.return_value.scalars.return_value.all.return_value = [
+        "ocid1.domain.oc1..otmsimunit"
+    ]
     connection.execute.return_value.mappings.return_value.one.return_value = dict(
         id=uuid4(), authorization_revision=uuid4(), identity_kind="local_recovery", email=None
     )

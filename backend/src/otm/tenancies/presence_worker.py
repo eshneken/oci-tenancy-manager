@@ -37,8 +37,10 @@ class UserPresenceWorker:
         administrator_inspection_factory=None,
         key_inspection_factory=None,
         signing_dispatch=None,
+        import_inspector=None,
     ):
         self.administrator_inspection_factory = administrator_inspection_factory
+        self.import_inspector = import_inspector
         self.key_inspection_factory = key_inspection_factory
         self.signing_dispatch = signing_dispatch
         self.engine, self.workspace, self.clock = engine, workspace, clock
@@ -79,6 +81,22 @@ class UserPresenceWorker:
         assignments = self.read_administrator(commands[0], source)
         recovery_assignments = self.read_administrator(commands[1], source)
         keys = self.read_keys(commands[0], source)
+        imported = None
+        scope = frozen.intent.snapshot.import_access
+        if scope is not None:
+            from otm.tenancies.import_contracts import ExistingAccessInventory, compare_imported
+
+            try:
+                inventory = (
+                    ExistingAccessInventory.model_validate(
+                        self.import_inspector(scope.tenancy_ocid, scope.domain_ocid)
+                    )
+                    if (source is not None and self.import_inspector is not None)
+                    else None
+                )
+            except Exception:
+                inventory = None
+            imported = compare_imported(scope, inventory, self.clock())
         self.finish(
             identifier,
             check["attempt_id"],
@@ -88,6 +106,7 @@ class UserPresenceWorker:
             assignments,
             recovery_assignments,
             keys=keys,
+            imported=imported,
         )
 
     # Inventory failures remain independent of presence and never become known zero-key reads.
@@ -370,6 +389,7 @@ class UserPresenceWorker:
         assignments=None,
         recovery_assignments=None,
         keys=None,
+        imported=None,
     ):
         with self.engine.begin() as connection:
             locked = self.locked(connection, identifier)
@@ -440,6 +460,21 @@ class UserPresenceWorker:
                     update={"checked_at": at, "state": "unavailable", "keys": ()}
                 )
             episodes, opened = None, ()
+            if imported is not None:
+                from otm.tenancies.import_contracts import compare_imported, import_hash
+
+                imported_scope = frozen.intent.snapshot.import_access
+                if (
+                    imported_scope is None
+                    or imported.context_hash != import_hash(imported_scope)
+                    or not current
+                    or clock_invalid
+                    or not check["started_at"] <= imported.checked_at <= at
+                    or at - check["started_at"] > READ_WINDOW
+                ):
+                    imported = (
+                        compare_imported(imported_scope, None, at) if imported_scope else None
+                    )
             if frozen.intent.notice_policy_version == 1:
                 from otm.tenancies.presence_alerts import advance_episodes
 
@@ -458,6 +493,7 @@ class UserPresenceWorker:
                 administrator_access=assignments,
                 recovery_administrator_access=recovery_assignments,
                 automation_keys=keys,
+                import_access=imported,
             )
             if opened and self.notifications is not None:
                 from otm.tenancies.presence_alerts import stage_missing

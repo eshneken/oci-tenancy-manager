@@ -728,7 +728,7 @@ function MembershipRow({
       </td>
       <td className="tenancy-member-role">{link.role}</td>
       <td>
-        {link.compartment_name ??
+        {link.imported_access?<><span className="badge">Adopted existing identity</span><ul>{(link.imported_access.expected_owner?.identity??link.imported_access.identity).scopes.map(scope=><li key={scope.ocid}>{scope.name}{scope.kind==="root"?" · shared root":""}</li>)}</ul></>:link.compartment_name ??
           (link.role === "owner" ? "Accountable owner" : "Existing access — scope not recorded")}
         <span className="technical-id cell-secondary">
           {link.compartment_ocid}

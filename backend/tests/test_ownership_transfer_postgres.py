@@ -70,7 +70,7 @@ def test_ownership_transfer_choice_preserves_or_removes(workflow_case, dispositi
     assert sum(a.role == "owner" for a in current) == 1
     next_owner = next(a for a in current if a.person_id == new)
     assert next_owner.user_ocid == replacement.user_ocid
-    assert next_owner.compartment_ocid == replacement.compartment_ocid
+    assert next_owner.compartment_ocid == child.tenancy_ocid
     former = next(a for a in after.memberships if a.id == previous.id)
     assert (
         former.user_ocid == previous.user_ocid
@@ -172,10 +172,8 @@ def test_ownership_transfer_partial_removal_retains_obligations(workflow_case):
         )
     assert result["state"] == "needs_attention" and result["effect_knowledge"] == "unknown"
     assert c.workflow.preview(c.principal, old).pending_operation_id == accepted.operation_id
-    assert c.provider._member_access[(child.tenancy_ocid, previous.user_ocid)] == {
-        "groups": False,
-        "user": True,
-    }
+    remaining = c.provider._member_access[(child.tenancy_ocid, previous.user_ocid)]
+    assert remaining["groups"] is False and remaining["user"] is True
 
 
 # Corrupted personal-user mappings cannot delete the canonical automation or recovery identity.
@@ -240,3 +238,44 @@ def test_ownership_transfer_offboard_disposition(workflow_case, keep):
     assert after.directory_status == ("outside" if keep else "offboarded")
     assert len(after.associations) == (1 if keep else 0)
     assert c.workflow.tenancy_detail(c.principal, child.id).tenancy.owner_person_id == new
+
+
+# Denied/partial root proof keeps the old owner and records uncertain grant effects for safe
+# recovery.
+@pytest.mark.parametrize("fault", ["complete", "policy_group_id", "domain_administrator"])
+def test_owner_promotion_blocks_before_removal(workflow_case, fault):
+    c = workflow_case
+    old, new, child = shared_pair(c)
+    _, receipt = action(
+        c,
+        old,
+        "transfer_owner",
+        tenancy_id=child.id,
+        recipient_person_id=new,
+        former_owner_disposition="remove",
+        confirm_shared=True,
+    )
+    inspect_owner = c.provider.inspect_owner
+
+    # Independent readback reports a missing privilege or substituted policy link after grant
+    # writes.
+    def failed(*args):
+        proof = inspect_owner(*args)
+        return proof.model_copy(
+            update={fault: "foreign-group" if fault == "policy_group_id" else False}
+        )
+
+    with (
+        patch.object(c.provider, "inspect_owner", side_effect=failed),
+        patch.object(c.provider, "remove_member_access") as remove,
+    ):
+        c.worker.run(receipt.operation_id)
+        remove.assert_not_called()
+    assert c.workflow.tenancy_detail(c.principal, child.id).tenancy.owner_person_id == old
+    with c.engine.connect() as connection:
+        row = (
+            connection.execute(select(operation).where(operation.c.id == receipt.operation_id))
+            .mappings()
+            .one()
+        )
+        assert row["state"] == "needs_attention" and row["effect_knowledge"] == "unknown"

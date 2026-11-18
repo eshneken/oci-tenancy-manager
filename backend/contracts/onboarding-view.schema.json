@@ -269,6 +269,217 @@
       "title": "EmailRoute",
       "type": "object"
     },
+    "ExistingAccessInventory": {
+      "additionalProperties": false,
+      "properties": {
+        "complete": {
+          "title": "Complete",
+          "type": "boolean"
+        },
+        "domain_ocid": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Domain Ocid",
+          "type": "string"
+        },
+        "tenancy_ocid": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Tenancy Ocid",
+          "type": "string"
+        },
+        "users": {
+          "items": {
+            "$ref": "#/$defs/ExistingIdentity"
+          },
+          "maxItems": 200,
+          "title": "Users",
+          "type": "array"
+        }
+      },
+      "required": [
+        "tenancy_ocid",
+        "domain_ocid",
+        "complete",
+        "users"
+      ],
+      "title": "ExistingAccessInventory",
+      "type": "object"
+    },
+    "ExistingIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "administrator": {
+          "title": "Administrator",
+          "type": "boolean"
+        },
+        "email": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Email",
+          "type": "string"
+        },
+        "groups": {
+          "default": [],
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Groups",
+          "type": "array"
+        },
+        "policy_hash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Policy Hash",
+          "type": "string"
+        },
+        "roles": {
+          "default": [],
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Roles",
+          "type": "array"
+        },
+        "scim_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Scim Id",
+          "type": "string"
+        },
+        "scopes": {
+          "items": {
+            "$ref": "#/$defs/ExistingScope"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Scopes",
+          "type": "array"
+        },
+        "user_name": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "User Name",
+          "type": "string"
+        },
+        "user_ocid": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "User Ocid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "user_ocid",
+        "scim_id",
+        "user_name",
+        "email",
+        "administrator",
+        "scopes",
+        "policy_hash"
+      ],
+      "title": "ExistingIdentity",
+      "type": "object"
+    },
+    "ExistingScope": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "root",
+            "compartment"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "ocid": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Ocid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ocid",
+        "name",
+        "kind"
+      ],
+      "title": "ExistingScope",
+      "type": "object"
+    },
+    "ImportPerson": {
+      "additionalProperties": false,
+      "properties": {
+        "email": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Email",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email"
+      ],
+      "title": "ImportPerson",
+      "type": "object"
+    },
+    "ImportReview": {
+      "additionalProperties": false,
+      "properties": {
+        "inventory": {
+          "$ref": "#/$defs/ExistingAccessInventory"
+        },
+        "inventory_hash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Inventory Hash",
+          "type": "string"
+        },
+        "owner_person_id": {
+          "format": "uuid",
+          "title": "Owner Person Id",
+          "type": "string"
+        },
+        "people": {
+          "items": {
+            "$ref": "#/$defs/ImportPerson"
+          },
+          "title": "People",
+          "type": "array"
+        }
+      },
+      "required": [
+        "inventory",
+        "inventory_hash",
+        "people",
+        "owner_person_id"
+      ],
+      "title": "ImportReview",
+      "type": "object"
+    },
     "OnboardingCheck": {
       "additionalProperties": false,
       "properties": {
@@ -474,7 +685,8 @@
         "enum": [
           "verify_handoff",
           "start_setup",
-          "prepare_bootstrap_key"
+          "prepare_bootstrap_key",
+          "refresh_import_inventory"
         ],
         "type": "string"
       },
@@ -535,6 +747,17 @@
       "pattern": "^ocid1\\.tenancy\\.[A-Za-z0-9.]+$",
       "title": "Expected Parent Tenancy Ocid",
       "type": "string"
+    },
+    "import_review": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ImportReview"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "issue_code": {
       "anyOf": [

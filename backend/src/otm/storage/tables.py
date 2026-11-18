@@ -683,6 +683,8 @@ Index("ix_tenancy_inventory", tenancy.c.workspace_id, tenancy.c.status, tenancy.
 tenancy_membership = Table(
     "otm_tenancy_membership",
     metadata,
+    # Absence is SQL NULL; JSON null violates the provenance guard on ordinary transfers.
+    Column("imported_access", JSONB(none_as_null=True)),
     Column("id", Uuid(as_uuid=True), primary_key=True),
     Column("workspace_id", String(256), nullable=False),
     Column("tenancy_id", Uuid(as_uuid=True), nullable=False),

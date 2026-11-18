@@ -1,16 +1,28 @@
 # Implemented database: complete ER and table directory
 
 This reference describes the **implemented application schema**, not the retained prototype or the
-larger proposed production model. It was reflected from a freshly migrated, empty disposable
-PostgreSQL 16 database at source checkpoint `786f83b`. No saved database or employee data was read.
+larger proposed production model. On 17 November 2026, the complete metadata was reflected using
+SQLAlchemy inspection of `public` in a newly created, empty disposable PostgreSQL database migrated
+through 0029, without seeding or reading row values. It confirms 34 tables, 439 columns, 89 declared
+foreign keys and nullable JSONB `otm_tenancy_membership.imported_access`. The earlier 438-column
+reflection at `786f83b` remains historical. No saved database or employee data was inspected.
 
-**34 tables · 438 columns · 89 declared foreign keys.** The inventory includes 29 application
+**34 tables · 439 columns · 89 declared foreign keys through migration 0029.** The inventory includes 29 application
 tables, four Procrastinate-owned tables and Alembic’s migration marker.
 
 [Full-size SVG](diagrams/implemented-full-er.svg) · [PNG](diagrams/implemented-full-er.png) ·
 [Editable Mermaid source](diagrams/implemented-full-er.mmd)
 
 ![Complete implemented ER diagram](diagrams/implemented-full-er.png)
+
+**Render status:** the editable Mermaid, field directory and regenerated SVG/PNG include
+`imported_access`, confirmed by fresh empty-database reflection and exact table/column name-set
+comparison. On 17 November, pinned Mermaid CLI 12.2.0 produced the zoomable SVG and 2340×2196 PNG;
+visual review found no figure clipping. Independent security privacy/provenance review completed
+and confirmed the exact two schema-only SVG/PNG asset hashes in the publication manifest.
+Schema reflection remains separate from the
+[subsequently verified saved8443 publication](../engineering-design/24-imported-membership-adoption.md#scoped-local-development-risk-acceptance-and-follow-up): migration0029 and matched assets/API/worker were installed under explicit local
+dependency-risk acceptance with existing data/settings preserved. Hosted security gates remain required with the [exact approved exception](../reference/frontend-security-exception.md) and live OCI qualification Pending.
 
 ## Reading the diagram
 
@@ -804,6 +816,20 @@ Individual/shared tenancy-person associations and their identity/compartment ref
 | `revision` | `INTEGER` | Yes | — |
 | `created_at` | `TIMESTAMP WITH TIME ZONE` | Yes | — |
 | `updated_at` | `TIMESTAMP WITH TIME ZONE` | Yes | — |
+| `imported_access` | `JSONB` | No | — |
+
+Migration 0029 adds nullable `imported_access` without a default/backfill, new table or foreign key.
+Its `import-adoption-1` JSON records initial exact domain/user/SCIM identity, observed group/role
+identifiers, all reviewed scopes, policy fingerprint and initial known unmanaged account IDs.
+Existing membership compatibility fields retain one canonical scope; root/shared scopes never
+become disposable personal compartments. Historical associations remain null and unadopted.
+
+`ck_membership_imported_access` requires an object with the expected contract version, an identity
+object whose user OCID equals the membership user, and a nonempty domain identifier. The
+`otm_membership_imported_guard` trigger allows initial attachment only to a pending previously-null
+record and prevents replacing accepted provenance thereafter. Full nested shape, scope and
+authority validation remain application responsibilities; these are not JSON foreign keys.
+See [the adoption source contract and transfer-privilege gate](../engineering-design/24-imported-membership-adoption.md).
 
 Foreign keys:
 
