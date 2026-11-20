@@ -89,6 +89,7 @@ registry push/pull access explicitly instead of assuming an OCI API token is a D
 
 Infrastructure version inputs are [protected environment variables](../how-to/platform-versions.md):
 `OTM_OKE_KUBERNETES_VERSION` for the exact patch and `OTM_POSTGRESQL_VERSION` for the managed major.
+Both environments initially target OKE `v1.37.1` and PostgreSQL `16` in `us-ashburn-1`.
 OKE image discovery intersects version/ARM options with shape/OS images and resolves a unique newest
 candidate during planning. Production requires the complete staging-qualified image selection rather
 than re-resolving a different newest image. Saved plans pin resolution; workflow provenance and live

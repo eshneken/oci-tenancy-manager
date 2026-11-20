@@ -4,7 +4,7 @@ mock_provider "oci" {
   mock_resource "oci_containerengine_cluster" { defaults = { id = "cluster-synthetic" } }
   mock_resource "oci_containerengine_node_pool" { defaults = { id = "pool-synthetic", ssh_public_key = "" } }
   mock_data "oci_containerengine_cluster_option" {
-    defaults = { kubernetes_versions = ["v1.37.0"], cluster_pod_network_options = [{ cni_type = "OCI_VCN_IP_NATIVE" }] }
+    defaults = { kubernetes_versions = ["v1.37.1"], cluster_pod_network_options = [{ cni_type = "OCI_VCN_IP_NATIVE" }] }
   }
   mock_data "oci_containerengine_node_pool_option" {
     defaults = { shapes = ["VM.Standard.A1.Flex"], sources = [{ image_id = "ocid1.image.oc1.iad.syntheticarmimage", source_name = "Old ARM image", source_type = "IMAGE" }, { image_id = "ocid1.image.oc1.iad.newarmimage", source_name = "New ARM image", source_type = "IMAGE" }] }
@@ -37,7 +37,7 @@ variables {
     nsg_ids = { api = "nsg-api", nodes = "nsg-nodes", pods = "nsg-pods", deployment = "nsg-deployment" }
   }
   oke = {
-    kubernetes_version   = "v1.37.0"
+    kubernetes_version   = "v1.37.1"
     availability_domains = ["synthetic:AD-1", "synthetic:AD-2", "synthetic:AD-3"]
   }
 }
@@ -48,9 +48,9 @@ run "newest_compatible_image_uses_real_time_and_explicit_filters" {
     condition = (
       oci_containerengine_node_pool.workers.node_source_details[0].image_id == "ocid1.image.oc1.iad.newarmimage" &&
       data.oci_containerengine_node_pool_option.supported.node_pool_os_arch == "AARCH64" &&
-      data.oci_containerengine_node_pool_option.supported.node_pool_k8s_version == "v1.37.0" &&
+      data.oci_containerengine_node_pool_option.supported.node_pool_k8s_version == "v1.37.1" &&
       data.oci_core_images.node.shape == "VM.Standard.A1.Flex" && data.oci_core_images.node.operating_system_version == "8" &&
-      output.cluster.image_selection.architecture == "AARCH64" && output.cluster.image_selection.kubernetes_version == "v1.37.0"
+      output.cluster.image_selection.architecture == "AARCH64" && output.cluster.image_selection.kubernetes_version == "v1.37.1"
     )
     error_message = "Resolve newest by actual timestamp from the version/ARM/shape/OS intersection, not lexical time/name/order."
   }
@@ -61,7 +61,7 @@ run "qualified_production_retains_older_staging_image" {
   variables {
     environment          = "production"
     network              = merge(var.network, { environment = "production" })
-    qualified_node_image = { image_ocid = "ocid1.image.oc1.iad.syntheticarmimage", kubernetes_version = "v1.37.0", architecture = "AARCH64", os_major = "8" }
+    qualified_node_image = { image_ocid = "ocid1.image.oc1.iad.syntheticarmimage", kubernetes_version = "v1.37.1", architecture = "AARCH64", os_major = "8" }
   }
   assert {
     condition     = oci_containerengine_node_pool.workers.node_source_details[0].image_id == "ocid1.image.oc1.iad.syntheticarmimage"
@@ -80,25 +80,25 @@ run "reject_production_without_staging_selection" {
 
 run "reject_staging_record_wrong_version" {
   command = plan
-  variables { qualified_node_image = { image_ocid = "ocid1.image.oc1.iad.syntheticarmimage", kubernetes_version = "v1.35.2", architecture = "AARCH64", os_major = "8" } }
+  variables { qualified_node_image = { image_ocid = "ocid1.image.oc1.iad.syntheticarmimage", kubernetes_version = "v1.37.0", architecture = "AARCH64", os_major = "8" } }
   expect_failures = [var.qualified_node_image]
 }
 
 run "reject_staging_record_wrong_chipset" {
   command = plan
-  variables { qualified_node_image = { image_ocid = "ocid1.image.oc1.iad.syntheticarmimage", kubernetes_version = "v1.37.0", architecture = "X86_64", os_major = "8" } }
+  variables { qualified_node_image = { image_ocid = "ocid1.image.oc1.iad.syntheticarmimage", kubernetes_version = "v1.37.1", architecture = "X86_64", os_major = "8" } }
   expect_failures = [var.qualified_node_image]
 }
 
 run "reject_staging_record_wrong_os" {
   command = plan
-  variables { qualified_node_image = { image_ocid = "ocid1.image.oc1.iad.syntheticarmimage", kubernetes_version = "v1.37.0", architecture = "AARCH64", os_major = "9" } }
+  variables { qualified_node_image = { image_ocid = "ocid1.image.oc1.iad.syntheticarmimage", kubernetes_version = "v1.37.1", architecture = "AARCH64", os_major = "9" } }
   expect_failures = [var.qualified_node_image]
 }
 
 run "reject_staging_image_no_longer_eligible" {
   command = plan
-  variables { qualified_node_image = { image_ocid = "ocid1.image.oc1.iad.missingarmimage", kubernetes_version = "v1.37.0", architecture = "AARCH64", os_major = "8" } }
+  variables { qualified_node_image = { image_ocid = "ocid1.image.oc1.iad.missingarmimage", kubernetes_version = "v1.37.1", architecture = "AARCH64", os_major = "8" } }
   expect_failures = [oci_containerengine_cluster.app]
 }
 

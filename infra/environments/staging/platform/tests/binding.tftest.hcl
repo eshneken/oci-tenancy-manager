@@ -6,7 +6,7 @@ mock_provider "oci" {
     defaults = { namespace = "syntheticstaging" }
   }
   mock_data "oci_containerengine_cluster_option" {
-    defaults = { kubernetes_versions = ["v1.37.0"], cluster_pod_network_options = [{ cni_type = "OCI_VCN_IP_NATIVE" }] }
+    defaults = { kubernetes_versions = ["v1.37.1"], cluster_pod_network_options = [{ cni_type = "OCI_VCN_IP_NATIVE" }] }
   }
   mock_data "oci_containerengine_node_pool_option" {
     defaults = { shapes = ["VM.Standard.A1.Flex"], sources = [{ image_id = "ocid1.image.oc1.iad.syntheticarmimage", source_name = "Synthetic OKE ARM", source_type = "IMAGE" }] }
@@ -44,7 +44,7 @@ variables {
   hosting_compartment_ocid = "ocid1.compartment.oc1..syntheticstaging"
   database_administrator   = { username = "otm_provisioner", secret_ocid = "ocid1.vaultsecret.oc1.iad.synthetic", secret_version = "1" }
   database                 = { backup_start_utc = "02:00", maintenance_start_utc = "SUN 04:00" }
-  oke_kubernetes_version   = "v1.37.0"
+  oke_kubernetes_version   = "v1.37.1"
   postgresql_version       = "16"
   worker_cloud_init        = "#!/bin/bash\n# Synthetic only; no live installation.\ntrue\n"
   target = {

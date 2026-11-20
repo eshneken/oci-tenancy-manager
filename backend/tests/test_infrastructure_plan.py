@@ -66,7 +66,7 @@ def environment_values(environment="staging", component="security"):
         "ACTIONS_RUNTIME_TOKEN": "synthetic" + "-artifact-credential",
         "OTM_HOSTING_COMPARTMENT_OCID": COMPARTMENT,
         "OTM_ALLOWED_SOURCE_CIDRS": "192.0.2.1/32",
-        "OTM_OKE_KUBERNETES_VERSION": "v1.37.0",
+        "OTM_OKE_KUBERNETES_VERSION": "v1.37.1",
         "OTM_POSTGRESQL_VERSION": "16",
         "OTM_WORKER_CLOUD_INIT": "#!/bin/bash\ntrue\n",
         "PATH": "/usr/bin:/bin",

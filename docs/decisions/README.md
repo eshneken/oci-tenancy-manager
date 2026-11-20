@@ -11,6 +11,7 @@ earlier alternatives. Accepted design does not imply live OCI or deployment qual
 The [design decision log](design-decisions.md#7-november-2026--explicit-former-owner-disposition-clarification)
 records the shared-only Keep/removal clarification and preservation of existing privileges.
 
+- [OKE 1.37.1 deployment target](design-decisions.md#20-november-2026--oke-1371-deployment-target)
 - [Infrastructure federation and private CI input custody](design-decisions.md#16-november-2026--infrastructure-federation-and-private-ci-input-custody)
   — GitHub-hosted OAuth-assisted sessions and private coordinate masking; historical initial plan boundary.
 

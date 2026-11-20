@@ -1,9 +1,9 @@
 # Kubernetes workload bundle
 
-This first source slice renders **disabled review manifests**, not a runnable hosted application.
-The existing image has laptop-only API/worker startup. Hosted API, worker, readiness and migration
-composition must be implemented and qualified before activation. No Kubernetes or OCI resources
-are created by rendering or validation, and the saved local application is unaffected.
+The renderer produces **disabled review manifests**. The [hosted startup foundation](hosted-startup.md)
+implements API, worker, readiness and migration mechanics. Full hosted Vault and OCI composition
+and staging qualification are required before activation. Rendering and validation run locally
+against synthetic settings.
 
 ## What the bundle contains
 
@@ -28,9 +28,8 @@ cluster-wide privileges and does not claim that namespace admission enforcement 
 
 The base API/worker/migration containers explicitly override the image command with a fixed
 `OTM_HOSTED_RUNTIME_NOT_QUALIFIED` failure. This is a temporary source-stage hold, not an activation
-flag or new application subsystem. Even manually scaling a Deployment or unsuspending the Job cannot
-invoke the image's local default. Remove the hold only as part of implementing qualified hosted
-startup. Do not apply this preview to an operating environment as an application release.
+flag or new application subsystem. The held command still exits if someone scales a Deployment
+or unsuspends the Job. Remove the hold as part of the qualified hosted rollout.
 
 ## Image, settings and credentials
 
@@ -125,7 +124,7 @@ uv run --project backend python scripts/check_kubernetes_bundle.py
 ```
 
 The second command uses a uniquely owned disposable Docker container, not a new app instance or
-Kubernetes cluster. It validates60 synthetic resources across base simulated/base OCI/optional OCI+Caddy candidates in both environments against Kubernetes1.37.0 strict schemas and
+Kubernetes cluster. It validates60 synthetic resources across base simulated/base OCI/optional OCI+Caddy candidates in both environments against strict Kubernetes 1.37.1 schemas and
 requires rejection of one deliberately invalid Deployment field. Missing/skipped schemas, tool/network
 failure and unexpected results fail the check. It accesses the public registry/schema service, with
 normal TLS verification; it never receives operator settings or cloud credentials. Containers and
@@ -160,7 +159,7 @@ References: [Pod Security Standards](https://kubernetes.io/docs/concepts/securit
 
 ## Source qualification — 13 November 2026
 
-The final target is owner-selected Kubernetes1.37.0, with matching staging/production activation
+The target for this historical qualification was Kubernetes 1.37.0, with matching staging/production activation
 annotations of two API and two one-slot workers; actual replicas remain zero. All94 focused
 bundle/schema/update/version/handoff unit cases passed. The complete backend unit suite passed2,641
 cases without failures/errors/skips and95.27% complete-source line coverage across189 files. Native

@@ -4,7 +4,7 @@ mock_provider "oci" {
   mock_resource "oci_containerengine_cluster" { defaults = { id = "cluster-synthetic" } }
   mock_resource "oci_containerengine_node_pool" { defaults = { id = "pool-synthetic", ssh_public_key = "" } }
   mock_data "oci_containerengine_cluster_option" {
-    defaults = { kubernetes_versions = ["v1.37.0"], cluster_pod_network_options = [{ cni_type = "OCI_VCN_IP_NATIVE" }] }
+    defaults = { kubernetes_versions = ["v1.37.1"], cluster_pod_network_options = [{ cni_type = "OCI_VCN_IP_NATIVE" }] }
   }
   mock_data "oci_containerengine_node_pool_option" {
     defaults = { shapes = ["VM.Standard.A1.Flex"], sources = [{ image_id = "ocid1.image.oc1.iad.syntheticarmimage", source_name = "Synthetic ARM image", source_type = "IMAGE" }] }
@@ -37,7 +37,7 @@ variables {
     nsg_ids = { api = "nsg-api", nodes = "nsg-nodes", pods = "nsg-pods", deployment = "nsg-deployment" }
   }
   oke = {
-    kubernetes_version   = "v1.37.0"
+    kubernetes_version   = "v1.37.1"
     availability_domains = ["synthetic:AD-1", "synthetic:AD-2", "synthetic:AD-3"]
   }
 }

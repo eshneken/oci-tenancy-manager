@@ -16,11 +16,11 @@ from otm.image_handoff import main, render_image_handoff
 def cluster():
     return {
         "environment": "staging",
-        "kubernetes_version": "v1.37.0",
+        "kubernetes_version": "v1.37.1",
         "endpoints": {"private_endpoint": "synthetic-private-endpoint"},
         "image_selection": {
             "image_ocid": "ocid1.image.oc1.iad.syntheticarmimage",
-            "kubernetes_version": "v1.37.0",
+            "kubernetes_version": "v1.37.1",
             "architecture": "AARCH64",
             "os_major": "8",
         },
@@ -32,7 +32,7 @@ def test_selection_only_private_handoff(tmp_path, cluster):
     source = tmp_path / "cluster.json"
     source.write_text(json.dumps(cluster))
     output = tmp_path / "qualified.tfvars.json"
-    digest = render_image_handoff(source, output, "v1.37.0", "8", "us-ashburn-1")
+    digest = render_image_handoff(source, output, "v1.37.1", "8", "us-ashburn-1")
     assert json.loads(output.read_bytes()) == {"qualified_node_image": cluster["image_selection"]}
     assert "synthetic-private-endpoint" not in output.read_text()
     assert stat.S_IMODE(output.stat().st_mode) == 0o600
@@ -45,7 +45,7 @@ def test_selection_only_private_handoff(tmp_path, cluster):
     [
         ("environment", "production"),
         ("environment", None),
-        ("kubernetes_version", "v1.35.2"),
+        ("kubernetes_version", "v1.37.0"),
         ("image_selection", None),
         ("image_selection", []),
         ("image_ocid", "ocid1.image.oc1.phx.otherregion"),
@@ -54,7 +54,7 @@ def test_selection_only_private_handoff(tmp_path, cluster):
         ("image_ocid", "$(false)"),
         ("architecture", "X86_64"),
         ("os_major", "9"),
-        ("selection_version", "v1.35.2"),
+        ("selection_version", "v1.37.0"),
         ("unexpected", "private-field"),
     ],
 )
@@ -69,7 +69,7 @@ def test_reject_invalid_record(tmp_path, cluster, field, value):
     source.write_text(json.dumps(cluster))
     output = tmp_path / "output.json"
     with pytest.raises(ValueError):
-        render_image_handoff(source, output, "v1.37.0", "8", "us-ashburn-1")
+        render_image_handoff(source, output, "v1.37.1", "8", "us-ashburn-1")
     assert not output.exists()
 
 
@@ -81,8 +81,8 @@ def test_reject_invalid_record(tmp_path, cluster, field, value):
         ("latest", "8", "us-ashburn-1"),
         ("v1.036.4", "8", "us-ashburn-1"),
         ("v1.36." + "1" * 30, "8", "us-ashburn-1"),
-        ("v1.37.0", "10", "us-ashburn-1"),
-        ("v1.37.0", "8", "us-phoenix-1"),
+        ("v1.37.1", "10", "us-ashburn-1"),
+        ("v1.37.1", "8", "us-phoenix-1"),
     ],
 )
 def test_reject_invalid_expected_target(tmp_path, cluster, version, os_major, region):
@@ -108,7 +108,7 @@ def test_reject_invalid_document(tmp_path, raw):
     source = tmp_path / "source.json"
     source.write_text(raw)
     with pytest.raises(ValueError):
-        render_image_handoff(source, tmp_path / "output.json", "v1.37.0", "8", "us-ashburn-1")
+        render_image_handoff(source, tmp_path / "output.json", "v1.37.1", "8", "us-ashburn-1")
 
 
 # An accepted OS9 target preserves that explicitly approved family without changing the image ID.
@@ -117,7 +117,7 @@ def test_os9_selection(tmp_path, cluster):
     source = tmp_path / "source.json"
     source.write_text(json.dumps(cluster))
     output = tmp_path / "output.json"
-    render_image_handoff(source, output, "v1.37.0", "9", "us-ashburn-1")
+    render_image_handoff(source, output, "v1.37.1", "9", "us-ashburn-1")
     assert json.loads(output.read_text())["qualified_node_image"]["os_major"] == "9"
 
 
@@ -131,7 +131,7 @@ def test_existing_candidate_preserved(tmp_path, cluster):
     link.symlink_to(existing)
     for output in (existing, link):
         with pytest.raises(FileExistsError):
-            render_image_handoff(source, output, "v1.37.0", "8", "us-ashburn-1")
+            render_image_handoff(source, output, "v1.37.1", "8", "us-ashburn-1")
     assert existing.read_text() == "keep"
 
 
@@ -150,7 +150,7 @@ def test_cli_success_and_safe_failure(tmp_path, cluster, monkeypatch, capsys):
         "--region",
         "us-ashburn-1",
     ]
-    monkeypatch.setenv("OTM_OKE_KUBERNETES_VERSION", "v1.37.0")
+    monkeypatch.setenv("OTM_OKE_KUBERNETES_VERSION", "v1.37.1")
     assert main(args) == 0
     assert list(json.loads(capsys.readouterr().out)) == ["image_handoff_sha256"]
     monkeypatch.delenv("OTM_OKE_KUBERNETES_VERSION")
@@ -164,7 +164,7 @@ def test_module_entrypoint(tmp_path, cluster, monkeypatch, capsys):
 
     source = tmp_path / "source.json"
     source.write_text(json.dumps(cluster))
-    monkeypatch.setenv("OTM_OKE_KUBERNETES_VERSION", "v1.37.0")
+    monkeypatch.setenv("OTM_OKE_KUBERNETES_VERSION", "v1.37.1")
     monkeypatch.setattr(
         "sys.argv",
         [

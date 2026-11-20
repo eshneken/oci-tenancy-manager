@@ -120,7 +120,7 @@ def validate(directory, paths, image, *, expected_valid, expected_invalid):
                 "-output",
                 "json",
                 "-kubernetes-version",
-                "1.37.0",
+                "1.37.1",
                 *["/fixtures/" + name for name in paths],
             ],
             check=False,
