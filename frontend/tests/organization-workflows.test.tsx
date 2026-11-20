@@ -598,7 +598,11 @@ describe("Tenancy inventory and organization inbox", () => {
         screen.getByRole("button", { name: new RegExp("^" + label + "$") }),
       );
     }
-    await userEvent.type(screen.getByRole("searchbox"), "Shared");
+    const search = screen.getByRole("searchbox", { name: "Search tenancies" });
+    expect(search).toHaveAttribute("placeholder", expect.stringContaining("OCID"));
+    const ocid = "ocid1.tenancy.oc1.." + "x".repeat(230);
+    await userEvent.click(search);
+    await userEvent.paste(ocid);
     await userEvent.selectOptions(
       screen.getByLabelText("Tenancy rows per page"),
       "25",
@@ -609,7 +613,7 @@ describe("Tenancy inventory and organization inbox", () => {
     await userEvent.click(screen.getByRole("button", { name: "Page 3" }));
     await screen.findByText(/Page 3 of 3/);
     expect(read).toHaveBeenLastCalledWith(
-      expect.objectContaining({ query: "Shared", page: 3, page_size: 25 }),
+      expect.objectContaining({ query: ocid, page: 3, page_size: 25 }),
       expect.any(AbortSignal),
     );
     await userEvent.click(screen.getByRole("button", { name: "Refresh all data" }));

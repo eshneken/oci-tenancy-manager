@@ -6,7 +6,7 @@ from unittest.mock import Mock
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from test_organization_fixtures import example_records
 from test_organization_storage_postgres import factors, intake, login_case, organization_case
 
@@ -174,7 +174,16 @@ def test_baseline_addition_and_async_create(workflow_case):
     inventory = c.workflow.tenancies(c.principal, TenancyQuery())
     assert inventory.items[0].status == "active" and inventory.items[0].member_count == 1
     assert inventory.items[0].operation_state == "succeeded"
+    child = inventory.items[0]
+    for term in (child.tenancy_ocid.upper(), child.tenancy_ocid.rsplit(".", 1)[-1][-12:]):
+        filtered = c.workflow.tenancies(c.principal, TenancyQuery(query=term))
+        assert [item.id for item in filtered.items] == [child.id]
+    assert c.workflow.tenancies(c.principal, TenancyQuery(query="%_")).total == 0
     with c.engine.connect() as connection:
+        definition = connection.scalar(
+            text("SELECT pg_get_indexdef('public.ix_tenancy_ocid_search'::regclass)")
+        )
+        assert "USING gin" in definition and "gin_trgm_ops" in definition
         assert (
             connection.scalar(
                 select(operation.c.state).where(operation.c.id == receipt.operation_id)

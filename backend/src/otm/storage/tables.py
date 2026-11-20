@@ -20,6 +20,7 @@ from sqlalchemy import (
     Table,
     UniqueConstraint,
     Uuid,
+    func,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 
@@ -677,6 +678,12 @@ tenancy = Table(
     ),
 )
 Index("ix_tenancy_inventory", tenancy.c.workspace_id, tenancy.c.status, tenancy.c.name)
+Index(
+    "ix_tenancy_ocid_search",
+    func.lower(tenancy.c.tenancy_ocid).label("ocid"),
+    postgresql_using="gin",
+    postgresql_ops={"ocid": "public.gin_trgm_ops"},
+)
 
 
 # Keep ownership and shared membership history; removal leaves compartments/resources untouched.

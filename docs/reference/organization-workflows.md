@@ -452,7 +452,7 @@ current list; browser-supplied option lists are never trusted. No selected/defau
 
 ### TenancyQuery
 
-Literal directory search/sort/direction/paging, at most 128characters and page size10/25/50.
+Literal directory search/sort/direction/paging, at most 256characters and page size10/25/50.
 The visible Shared tenancies only checkbox maps to `shared_only` (defaultfalse), applied to registered
 `kind=shared` before paging and combined with search/sort. Toggling restarts page one, preserving
 search/sort. Inventory cards still count all current tenancies, independent of this shortcut.
@@ -983,3 +983,15 @@ personal identity/groups and neither deletes these other objects nor verifies ma
 Critical consequences, the exact recorded identity and checkbox remain visible outside help.
 After removal, tenancy details retain the affected person's name and known compartment or explicit
 Scope not recorded, plus the same instructions. The guide applies to individual owner removal too.
+
+## Tenancy inventory search
+
+The Tenancies search accepts a full or partial child tenancy OCID alongside the existing
+name, owner, manager and industry segment search. Matching is case-insensitive, and the
+search accepts up to 256 characters so an entire stored OCID can be pasted. Shared-only
+filtering, sorting and pagination still apply. Inventory totals remain workspace-wide.
+
+Migration 0030 adds a PostgreSQL `pg_trgm` GIN index on the lowercased tenancy OCID for
+literal substring lookup. The scoped lookup runs in the same database snapshot as the
+inventory. Name and organization labels still use the existing application-side filter.
+The migration preserves the unique workspace/OCID index and changes no tenancy records.

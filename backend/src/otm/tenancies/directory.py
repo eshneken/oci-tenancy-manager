@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from otm.organization.contracts import Configuration
 from otm.organization.review_rules import has_valid_accountability
@@ -456,9 +456,22 @@ def review_directory(state, query):
     )
 
 
-# Registry cards count registered nonterminated tenancies and include owner associations in
-# membership.
-def tenancy_directory(state, query, costs=None):
+# Use the trigram index for literal OCID substrings within the authenticated workspace.
+def matching_tenancy_ocids(connection, workspace, query):
+    if not query or "\x00" in query:
+        return set()
+    return set(
+        connection.scalars(
+            select(tenancy.c.id).where(
+                tenancy.c.workspace_id == workspace,
+                func.lower(tenancy.c.tenancy_ocid).contains(query.casefold(), autoescape=True),
+            )
+        )
+    )
+
+
+# Registry cards retain full inventory totals even when the search matches only a few rows.
+def tenancy_directory(state, query, costs=None, *, ocid_matches=frozenset()):
     all_rows = [
         tenancy_view(state, t)
         for t in state.tenancies.values()
@@ -472,17 +485,19 @@ def tenancy_directory(state, query, costs=None):
         t
         for t in all_rows
         if (not query.shared_only or t.kind == "shared")
-        and query.query.casefold()
-        in " ".join(
-            (
-                t.name,
-                t.owner_name or "",
-                t.owner_email or "",
-                t.manager_name or "",
-                t.lob_name or "",
-                t.tenancy_ocid,
-            )
-        ).casefold()
+        and (
+            t.id in ocid_matches
+            or query.query.casefold()
+            in " ".join(
+                (
+                    t.name,
+                    t.owner_name or "",
+                    t.owner_email or "",
+                    t.manager_name or "",
+                    t.lob_name or "",
+                )
+            ).casefold()
+        )
     ]
     if query.sort in {"actual", "budget", "forecast"}:
         usable = [

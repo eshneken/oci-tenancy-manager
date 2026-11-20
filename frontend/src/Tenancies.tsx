@@ -242,9 +242,9 @@ export function Tenancies({
                 Search tenancies
                 <input
                   type="search"
-                  maxLength={128}
+                  maxLength={256}
                   value={query.query}
-                  placeholder="Tenancy, owner, manager or industry segment"
+                  placeholder="Name, OCID, owner, manager or segment"
                   onChange={(event) =>
                     setQuery({ ...query, query: event.target.value, page: 1 })
                   }

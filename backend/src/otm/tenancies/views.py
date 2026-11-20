@@ -157,7 +157,7 @@ class TenancyQuery(Contract):
     shared_only: bool = False
     page: Annotated[int, Field(ge=1, le=100000)] = 1
     page_size: Literal[10, 25, 50] = 10
-    query: Annotated[str, Field(max_length=128)] = ""
+    query: Annotated[str, Field(max_length=256)] = ""
     sort: Literal[
         "name",
         "owner_name",
