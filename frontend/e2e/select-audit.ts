@@ -1,7 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 import { resolve } from "node:path";
 
-const shortLabels = new Set(["All states", "Queued", "Running", "Waiting", "Needs attention", "Succeeded", "Cancelled", "Failed", "All categories", "Authentication", "Administration", "Operations", "Organization", "Email delivery", "Check out of date"]);
+const shortLabels = new Set(["All states", "Queued", "Running", "Waiting", "Needs attention", "Succeeded", "Cancelled", "Failed", "All categories", "Authentication", "Administration", "Operations", "Organization", "Email delivery", "Recovery access", "Check out of date"]);
 
 // Inspect the actual shared native picker, including short labels, option bounds and keyboard exit.
 export async function auditSelectPickers(page: Page, tag: string) {

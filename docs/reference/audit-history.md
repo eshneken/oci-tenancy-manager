@@ -39,7 +39,7 @@ without changing its snapshot meaning.
 | `page_size` | 10, 25, 50 or 100; default 10. |
 | `sort` | `at`, `kind` or `actor_name`; default `at`. Event sorting uses the stored kind token. |
 | `direction` | `asc`/`desc`; default `desc`. Nulls are last in both directions; event UUID breaks ties. |
-| `category` | Empty for all, or `authentication`, `administration`, `operations`, `organization`, `email_delivery`. |
+| `category` | Empty for all, or `authentication`, `administration`, `operations`, `organization`, `email_delivery`, `recovery_access`. |
 | `query` | At most 128 characters, literal case-insensitive actor/target-administrator display name or event/operation/administrator UUID substring. SQL `%`/`_` are escaped. |
 | `from_at` | Optional aware UTC instant; inclusive lower bound. |
 | `to_at` | Optional aware UTC instant; exclusive upper bound. If both are supplied, end must be strictly after start. |
@@ -103,7 +103,8 @@ request. Export uses the identical projection.
 | --- | --- |
 | `authentication` | `local_sign_in_succeeded`, `local_sign_in_failed`, `session_logged_out` |
 | `administration` | `administrator_revoked`, `administrator_bootstrapped`, `local_credentials_reset`, `audit_export`, `configuration_review_staged`, `baseline_draft_saved`, `baseline_published`, `baseline_default_changed` |
-| `operations` | `operation_intent`, `inspection_dispatch`, `inspection_outcome`, `organization_action_outcome`, `onboarding_action`, `onboarding_outcome`, `configuration_outcome`, `configuration_retry`, `configuration_check_outcome`, `operation_responsibility_changed` |
+| `operations` | `signing_key_outcome`, `signing_key_requested`, `operation_responsibility_changed`, `configuration_check_outcome`, `cost_collection_outcome`, `required_user_check_outcome`, `recovery_network_outcome`, `recovery_password_outcome`, `cost_refresh_requested`, `operation_intent`, `inspection_dispatch`, `inspection_outcome`, `organization_action_outcome`, `onboarding_action`, `onboarding_outcome`, `configuration_outcome`, `configuration_retry` |
+| `recovery_access` (Recovery access) | `recovery_password_disclosed` only. |
 | `email_delivery` (Email delivery) | `email_delivery` only; independent of the Operations category. |
 | `organization` | `organization_configured`, `organization_feed_received`, `organization_feed_rejected`, `organization_published`, `organization_review_decided` |
 
@@ -186,7 +187,7 @@ exports are not implemented. Export failures leave the existing history filters 
 | `id` | Recorded event UUID. |
 | `at` | Event time as explicit UTC ISO8601. |
 | `kind` | Closed event kind, including `audit_export`. |
-| `category` | Derived authentication/administration/operations/organization/email_delivery category; the latter displays as Email delivery. |
+| `category` | Derived category from the event kind, including Recovery access and Email delivery. |
 | `actor_name` | Same validated actor interpretation as the UI; null is an empty cell. |
 | `operation_id` | Recorded operation UUID when present. |
 | `administrator_id` | Recorded target administrator UUID when present. |
@@ -421,3 +422,13 @@ supplies the safe state/code and scoped tenancy/operation context in the shared 
 projection. Earlier immutable events are not rewritten. These are existence-only simulated read
 outcomes; a completed operation does not certify both accounts or permissions. No new audit column
 or CSV layout is introduced. [Complete evidence map](user-presence-checks.md).
+
+## Recovery access audit
+
+In **Audit history**, select **Category → Recovery access** to see authorized recovery
+password requests by actor, child tenancy and UTC time. The actor and date filters also
+apply to CSV exports. The operation link opens the related password rotation, including
+its original deadline and outcome. Password preparation and rotation outcomes remain in
+Operations. The new category applies to retained events without changing stored history.
+An authorized request can be recorded even if delivery fails. Confirm actual console
+sign-in separately in the child tenancy's OCI identity domain audit records.

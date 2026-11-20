@@ -58,6 +58,7 @@ ADMINISTRATION = (
     "audit_export",
 )
 EMAIL_DELIVERY = ("email_delivery",)
+RECOVERY_ACCESS = ("recovery_password_disclosed",)
 OPERATIONS = (
     "signing_key_outcome",
     "signing_key_requested",
@@ -67,7 +68,6 @@ OPERATIONS = (
     "required_user_check_outcome",
     "recovery_network_outcome",
     "recovery_password_outcome",
-    "recovery_password_disclosed",
     "cost_refresh_requested",
     "operation_intent",
     "inspection_dispatch",
@@ -309,6 +309,8 @@ def entry(row):
     category = (
         "email_delivery"
         if kind in EMAIL_DELIVERY
+        else "recovery_access"
+        if kind in RECOVERY_ACCESS
         else "organization"
         if kind in ORGANIZATION
         else "authentication"
@@ -494,6 +496,7 @@ def selection(workspace: str, query: AuditExportQuery):
                     "operations": OPERATIONS,
                     "organization": ORGANIZATION,
                     "email_delivery": EMAIL_DELIVERY,
+                    "recovery_access": RECOVERY_ACCESS,
                 }[query.category]
             )
         )

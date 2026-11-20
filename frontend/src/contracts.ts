@@ -1364,7 +1364,8 @@ export type Category5 =
   | "administration"
   | "operations"
   | "organization"
-  | "email_delivery";
+  | "email_delivery"
+  | "recovery_access";
 /**
  * @maxItems 512
  */
@@ -1428,7 +1429,8 @@ export type Category6 =
   | "administration"
   | "operations"
   | "organization"
-  | "email_delivery";
+  | "email_delivery"
+  | "recovery_access";
 export type Direction6 = "asc" | "desc";
 export type FromAt = string | null;
 export type Page16 = number;
@@ -1442,7 +1444,8 @@ export type Category7 =
   | "administration"
   | "operations"
   | "organization"
-  | "email_delivery";
+  | "email_delivery"
+  | "recovery_access";
 export type Direction7 = "asc" | "desc";
 export type FromAt1 = string | null;
 export type Query7 = string;

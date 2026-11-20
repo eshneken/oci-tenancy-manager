@@ -24,6 +24,7 @@ const categories: Record<AuditEntry["category"], string> = {
   operations: "Operations",
   organization: "Organization",
   email_delivery: "Email delivery",
+  recovery_access: "Recovery access",
 };
 const columns = [
   ["at", "Time · UTC"],

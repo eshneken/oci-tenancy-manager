@@ -1,16 +1,15 @@
 # Run the local application
 
-30 October 2026 foundation · Current operating pointers reconciled 17 November 2026
+30 October 2026 foundation · Current operating pointers reconciled 20 November 2026
 
-Use sole saved 8443. The retired 8444 instructions and dated slice qualification below are historical;
-current saved source is through migration0029, with29 OTM application tables and439 total public
-columns. Milestone ship qualification
-is recorded separately and is not inferred from earlier slice receipts.
+The saved local instance on 8443 uses migration 0030 and serves the OCID search and
+Recovery access audit filter. Its update used matching private API, worker and asset
+snapshots. The migration was preceded by a private backup and preservation checks.
+The retired 8444 instructions and dated qualification records below are historical.
 
 ## Saved shared-import adoption publication — 17 November 2026
 
-The sole saved8443 instance now serves matched qualified backend/locked-environment/frontend/worker
-snapshots with new shared-import adoption. The [477-test complete-suite result and scoped local
+On 17 November, the saved 8443 instance received matched backend, locked dependency, frontend and worker snapshots for shared-import adoption. The [477-test complete-suite result and scoped local
 dependency-risk acceptance](../engineering-design/24-imported-membership-adoption.md#source-validation-and-review-disposition--17-november-2026)
 are separate facts: npm still reports the known advisory and normal hosted security gates now evaluate the [exact owner-approved exception](../reference/frontend-security-exception.md). The active weekly Monday09:00 dependency watch cannot deploy changes automatically.
 
@@ -53,8 +52,8 @@ uv run --project backend otm-local setup
 Setup creates a private installation under `.local-dev/application/`. It generates a persistent
 installation UUID, separate database-owner/API/worker passwords and an installation-local issuer.
 It starts an instance-labeled PostgreSQL 16 container from the source-pinned image digest, exposes
-its database port only on `127.0.0.1`, applies the reviewed migrations through `0029_imported_memberships` and provisions a restricted
-local API role. It creates no application administrator or default password. Explicit setup upgrades legacy state
+its database port only on `127.0.0.1`, applies reviewed migrations through the current Alembic head and provisions a restricted local
+API role. Migration 0030 adds the OCID search index. It creates no application administrator or default password. Explicit setup upgrades legacy state
 with missing worker custody and adds a separate worker role while preserving existing owner/API
 credentials, account/MFA and all recorded user data.
 

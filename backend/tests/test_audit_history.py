@@ -22,6 +22,7 @@ from otm.storage.audit_directory import (
     AUTHENTICATION,
     EMAIL_DELIVERY,
     OPERATIONS,
+    RECOVERY_ACCESS,
     SqlAuditDirectory,
     entry,
 )
@@ -304,12 +305,16 @@ def event(kind="local_sign_in_succeeded", operator=False):
 
 
 # All supported kinds map to an honest actor/category and only approved public fields.
-@pytest.mark.parametrize("kind", [*AUTHENTICATION, *ADMINISTRATION, *OPERATIONS, *EMAIL_DELIVERY])
+@pytest.mark.parametrize(
+    "kind", [*AUTHENTICATION, *ADMINISTRATION, *OPERATIONS, *EMAIL_DELIVERY, *RECOVERY_ACCESS]
+)
 def test_public_projection_all_kinds(kind):
     result = entry(event(kind))
     assert result.category == (
         "email_delivery"
         if kind in EMAIL_DELIVERY
+        else "recovery_access"
+        if kind in RECOVERY_ACCESS
         else "authentication"
         if kind in AUTHENTICATION
         else "administration"
@@ -423,6 +428,7 @@ def test_projection_integrity_guards(damage):
         ("", "desc", ""),
         ("authentication", "asc", "%_"),
         ("email_delivery", "desc", ""),
+        ("recovery_access", "desc", ""),
         ("operations", "desc", ""),
     ],
 )
@@ -459,6 +465,8 @@ def test_audit_directory_queries(category, direction, query):
         expected = (
             EMAIL_DELIVERY
             if category == "email_delivery"
+            else RECOVERY_ACCESS
+            if category == "recovery_access"
             else OPERATIONS
             if category == "operations"
             else AUTHENTICATION
@@ -467,6 +475,7 @@ def test_audit_directory_queries(category, direction, query):
             value == expected or value == list(expected) for value in compiled.params.values()
         )
         assert ("email_delivery" in expected) == (category == "email_delivery")
+        assert ("recovery_password_disclosed" in expected) == (category == "recovery_access")
     if query:
         assert "/%/_" in compiled.params.values() and "ESCAPE" in str(compiled)
 

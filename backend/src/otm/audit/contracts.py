@@ -45,7 +45,12 @@ AuditKind = Literal[
     "organization_review_decided",
 ]
 AuditCategory = Literal[
-    "authentication", "administration", "operations", "organization", "email_delivery"
+    "authentication",
+    "administration",
+    "operations",
+    "organization",
+    "email_delivery",
+    "recovery_access",
 ]
 
 
@@ -54,7 +59,13 @@ class AuditExportQuery(Contract):
     sort: Literal["at", "kind", "actor_name"] = "at"
     direction: Literal["asc", "desc"] = "desc"
     category: Literal[
-        "", "authentication", "administration", "operations", "organization", "email_delivery"
+        "",
+        "authentication",
+        "administration",
+        "operations",
+        "organization",
+        "email_delivery",
+        "recovery_access",
     ] = ""
     query: Annotated[str, Field(max_length=128)] = ""
     from_at: UtcInstant | None = None

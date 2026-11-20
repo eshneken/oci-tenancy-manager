@@ -29,7 +29,7 @@ is in [the engineering chapters](../engineering-design/README.md).
 - [Required-user presence boundary and responsive tenancy cards](required-user-presence.md)
 - [Internal tenancy inspection](inspection.md)
 - [Lifecycle email and environment contact routing](lifecycle-email.md), including [all supported lifecycle action/failure notices](lifecycle-email.md#lifecycle-notice-parity--6-november-2026)
-- [Run the local application](local-application.md)
+- [Run the local application](local-application.md) — saved preview through migration 0030
 - [Local recovery authentication](local-authentication.md)
 - [Read-only Operations list and detail](operations.md)
 - [Organization intake and reconciliation domain](organization-domain.md)
@@ -53,6 +53,8 @@ establish actual database fields; diagrams explain relationships rather than add
 Audit history includes strict cost-worker identity projection and shared directory/CSV validation; see [audit reference](audit-history.md).
 
 - [Simulated user-presence connections and full field map](user-presence-connections.md)
+
+Tenancies dashboard: [Search by OCID](organization-workflows.md#tenancy-inventory-search).
 
 Normal-directory onboarding without provisioning: [Keep in organization without a tenancy](organization-workflows.md#keep-in-organization-without-a-tenancy).
 
@@ -115,3 +117,5 @@ Operations now supports [type/state/search filtering](operations.md#operation-ty
 - [Private infrastructure plans](infrastructure-plans.md) — fixed roots, protected inputs,
   common provider/backend federation, authenticated reviewed-plan apply, explicit parity whitelist,
   single-attempt custody and safe public plan/apply receipts; live OCI Pending.
+
+[Recovery access audit](audit-history.md#recovery-access-audit) covers password requests and their rotation links.
