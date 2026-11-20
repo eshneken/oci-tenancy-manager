@@ -36,6 +36,7 @@ from otm.tenancies.contracts import (
 )
 from otm.tenancies.directory import (
     association_view,
+    matching_tenancy_ocids,
     person_workflow,
     registry_state,
     review_directory,
@@ -186,7 +187,8 @@ class OrganizationWorkflows:
                 if self.cost_collections
                 else None
             )
-            directory = tenancy_directory(state, query, costs)
+            ocid_matches = matching_tenancy_ocids(connection, workspace, query.query)
+            directory = tenancy_directory(state, query, costs, ocid_matches=ocid_matches)
             if self.configuration_checks:
                 checks = {
                     item.tenancy_id: item

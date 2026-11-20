@@ -124,7 +124,8 @@ describe("Immutable audit history", () => {
     ).not.toBeInTheDocument();
     expect(screen.getByRole("searchbox")).toHaveAttribute("maxlength", "128");
     const category = screen.getByLabelText("Category");
-    expect(within(category).getAllByRole("option")).toHaveLength(6);
+    expect(within(category).getAllByRole("option")).toHaveLength(7);
+    expect(within(category).getByRole("option", { name: "Recovery access" })).toHaveValue("recovery_access");
     expect(
       screen.queryByRole("button", { name: /Edit|Resolve/ }),
     ).not.toBeInTheDocument();

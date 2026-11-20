@@ -13,9 +13,9 @@ from otm.platform_version_release import main, render_platform_versions
 # Both versions stay strings; exact canonical values are preserved in an owner-only candidate.
 def test_private_version_render(tmp_path):
     output = tmp_path / "versions.tfvars.json"
-    digest = render_platform_versions(output, "v1.37.0", "16")
+    digest = render_platform_versions(output, "v1.37.1", "16")
     assert json.loads(output.read_text()) == {
-        "oke_kubernetes_version": "v1.37.0",
+        "oke_kubernetes_version": "v1.37.1",
         "postgresql_version": "16",
     }
     assert stat.S_IMODE(output.stat().st_mode) == 0o600
@@ -29,18 +29,18 @@ def test_private_version_render(tmp_path):
         (None, "16"),
         ("latest", "16"),
         ("v1.36", "16"),
-        ("1.37.0", "16"),
-        ("v01.37.0", "16"),
+        ("1.37.1", "16"),
+        ("v01.37.1", "16"),
         ("v1.036.4", "16"),
         ("v1.36.04", "16"),
-        ("v1.37.0;false", "16"),
+        ("v1.37.1;false", "16"),
         ("v1.36." + "1" * 30, "16"),
-        ("v1.37.0", None),
-        ("v1.37.0", "latest"),
-        ("v1.37.0", "16.4"),
-        ("v1.37.0", "016"),
-        ("v1.37.0", 16),
-        ("v1.37.0", "16\n"),
+        ("v1.37.1", None),
+        ("v1.37.1", "latest"),
+        ("v1.37.1", "16.4"),
+        ("v1.37.1", "016"),
+        ("v1.37.1", 16),
+        ("v1.37.1", "16\n"),
     ],
 )
 def test_invalid_versions_never_create_candidate(tmp_path, oke, postgres):
@@ -58,14 +58,14 @@ def test_preserve_existing_candidate(tmp_path):
     alias.symlink_to(output)
     for destination in (output, alias):
         with pytest.raises(FileExistsError):
-            render_platform_versions(destination, "v1.37.0", "16")
+            render_platform_versions(destination, "v1.37.1", "16")
     assert output.read_text() == "preserve"
 
 
 # The CLI reads both environment variables and returns only a digest or a fixed failure.
 def test_cli_and_missing_variable(tmp_path, monkeypatch, capsys):
     output = tmp_path / "versions.tfvars.json"
-    monkeypatch.setenv("OTM_OKE_KUBERNETES_VERSION", "v1.37.0")
+    monkeypatch.setenv("OTM_OKE_KUBERNETES_VERSION", "v1.37.1")
     monkeypatch.setenv("OTM_POSTGRESQL_VERSION", "16")
     assert main(["--output", str(output)]) == 0
     assert list(json.loads(capsys.readouterr().out)) == ["platform_versions_sha256"]
@@ -79,7 +79,7 @@ def test_module_entrypoint(tmp_path, monkeypatch, capsys):
     import otm.platform_version_release
 
     output = tmp_path / "versions.tfvars.json"
-    monkeypatch.setenv("OTM_OKE_KUBERNETES_VERSION", "v1.37.0")
+    monkeypatch.setenv("OTM_OKE_KUBERNETES_VERSION", "v1.37.1")
     monkeypatch.setenv("OTM_POSTGRESQL_VERSION", "16")
     monkeypatch.setattr("sys.argv", ["otm.platform_version_release", "--output", str(output)])
     with pytest.raises(SystemExit) as result:

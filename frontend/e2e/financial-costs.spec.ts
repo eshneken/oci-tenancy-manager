@@ -34,8 +34,9 @@ test("check a qualified child through HTTPS and the separate native worker", asy
   const name=process.env.OTM_E2E_TENANCY_NAME!;
   const row=page.getByRole("row").filter({has:page.getByRole("link",{name,exact:true})});
   await expect(row.getByText("Not collected",{exact:true})).toBeVisible();
+  const tenancySearch = page.getByRole("searchbox", { name: "Search tenancies", exact: true });
   // Fleet scope must not shrink to the current filtered page.
-  await page.getByRole("searchbox",{name:"Search tenancies",exact:true}).fill("no-matching-tenancy");
+  await tenancySearch.fill("no-matching-tenancy");
   await expect(row).toHaveCount(0);
   const accepted=page.waitForResponse(response=>response.url().endsWith("/api/tenancies/refresh")&&response.request().method()==="POST");
   await expect(page.getByRole("button",{name:"Refresh costs",exact:true})).toHaveCount(0);
@@ -54,7 +55,7 @@ test("check a qualified child through HTTPS and the separate native worker", asy
     await page.screenshot({path:resolve(".local-dev/browser",`fleet-refresh-${width}.png`),fullPage:true});
   }
   await page.setViewportSize({width:1280,height:900});
-  await page.getByRole("searchbox",{name:"Search tenancies",exact:true}).fill("");
+  await tenancySearch.fill(process.env.OTM_E2E_TENANCY_OCID!.toUpperCase());
   await expect(row).toHaveCount(1);
   await expect(row.getByText("Not collected",{exact:true})).toHaveCount(0,{timeout:20000});
   await expect(row.getByLabel("actual: $0.00, within budget",{exact:true})).toBeVisible();

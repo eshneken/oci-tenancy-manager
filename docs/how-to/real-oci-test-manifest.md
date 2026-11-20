@@ -610,19 +610,19 @@ not an active hosted application. No cluster, hosted runtime or migration comman
   staging acceptance are implemented. A local schema pass does not authorize production activation.
 
 
-### Selected OKE 1.37.0 qualification
+### Selected OKE 1.37.1 qualification
 
-Owner-selected target is v1.37.0 in both environments. Oracle currently labels this OKE release
-preview; record that support limitation in deployment approval. Confirm us-ashburn-1 catalog/version,
-compatible ARM64 OKE image and add-on/CNI/sensor support before applying. Local mocked Terraform or
-Kubernetes1.37.0 schema checks do not establish service availability or production qualification.
+The initial target is `v1.37.1` for staging and production. Before applying in `us-ashburn-1`,
+confirm the exact patch in the regional catalog and resolve the compatible ARM64 OKE image.
+Qualify the add-ons, CNI and Falcon sensor on that image in staging, then use the accepted
+image selection in the separate production plan. Live qualification remains Pending.
 For future load balancers, explicitly size bandwidth and keep TLS Secret references in the same
-namespace; qualify the OKE1.37 behavior changes. No preview-to-GA or patch change happens implicitly.
+namespace as the load balancer configuration.
 
 
 ## Hosted startup and database qualification
 
-Pending staging: verify managed PostgreSQL DNS/CA chain and separate API/worker/migration grants; reject wrong CA/hostname and excessive runtime authority. Rehearse migration ownership, competing migration rejection, failure rollback and exact-schema readiness. Confirm proxy trust/HTTPS, Vault MFA reader, complete OCI/mail task registration, queue TLS and one slot per worker. Exercise SIGTERM API/worker drain under load, bounded DB/network outage handling, restore and schema-changing release sequencing. Source-only disposable TLS tests are not deployed evidence. See [startup contract](hosted-startup.md).
+Pending staging: verify managed PostgreSQL DNS/CA chain and separate API/worker/migration grants; reject wrong CA/hostname and excessive runtime authority. Rehearse migration ownership, competing migration rejection, failure rollback and exact-schema readiness. Verify the migration role can apply migration 0030, including use of the supported `pg_trgm` extension and creation of the OCID search index, while API and worker roles remain restricted. Confirm proxy trust/HTTPS, Vault MFA reader, complete OCI/mail task registration, queue TLS and one slot per worker. Exercise SIGTERM API/worker drain under load, bounded DB/network outage handling, restore and schema-changing release sequencing. Source-only disposable TLS tests are not deployed evidence. See [startup contract](hosted-startup.md).
 
 
 ## Vault retrieval and OKE identity

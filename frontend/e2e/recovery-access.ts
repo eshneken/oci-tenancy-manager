@@ -52,9 +52,12 @@ export async function recoveryAccess(page:Page){
  await progress.getByRole("link",{name:"Open tenancy",exact:true}).click();await expect(launcher).toBeVisible();
  await expect.poll(async()=>{const detail=await(await page.request.get("/api/operations/"+operationId)).json();return detail.notifications?.some((notice:{event:string;state:string})=>notice.event==="recovery_password_requested"&&notice.state==="sent");},{timeout:10000}).toBe(true);
  await page.getByRole("link",{name:"Audit history",exact:true}).click();
- // Filter delivery traffic so pagination cannot hide the recovery-request event.
- await page.getByRole("combobox",{name:"Category",exact:true}).selectOption("operations");
- await expect(page.getByRole("table").getByText("Recovery password requested",{exact:true}).first()).toBeVisible();
+ // The dedicated audit view lists both requests and links them to the one rotation.
+ await page.getByRole("combobox",{name:"Category",exact:true}).selectOption("recovery_access");
+ const requests=page.getByRole("row").filter({has:page.getByText("Recovery password requested",{exact:true})});
+ await expect(requests).toHaveCount(2);
+ await expect(requests.getByRole("link",{name:operationId,exact:true})).toHaveCount(2);
+ await expect(requests.getByRole("link",{name:operationId,exact:true}).first()).toHaveAttribute("href",new RegExp("/operations/"+operationId));
  // An actual open recovery window delays native signing work without blocking ordinary cost reads.
  await page.goto(tenancyUrl);
  const signing=page.getByRole("region",{name:"Automatic key rotation"});

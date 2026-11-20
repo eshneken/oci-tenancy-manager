@@ -4,7 +4,7 @@ mock_provider "oci" {
   mock_resource "oci_containerengine_cluster" { defaults = { id = "cluster-synthetic" } }
   mock_resource "oci_containerengine_node_pool" { defaults = { id = "pool-synthetic", ssh_public_key = "" } }
   mock_data "oci_containerengine_cluster_option" {
-    defaults = { kubernetes_versions = ["v1.37.0"], cluster_pod_network_options = [{ cni_type = "OCI_VCN_IP_NATIVE" }] }
+    defaults = { kubernetes_versions = ["v1.37.1"], cluster_pod_network_options = [{ cni_type = "OCI_VCN_IP_NATIVE" }] }
   }
   mock_data "oci_containerengine_node_pool_option" {
     defaults = { shapes = ["VM.Standard.A1.Flex"], sources = [{ image_id = "ocid1.image.oc1.iad.syntheticarmimage", source_name = "Synthetic ARM image", source_type = "IMAGE" }] }
@@ -37,7 +37,7 @@ variables {
     nsg_ids = { api = "nsg-api", nodes = "nsg-nodes", pods = "nsg-pods", deployment = "nsg-deployment" }
   }
   oke = {
-    kubernetes_version   = "v1.37.0"
+    kubernetes_version   = "v1.37.1"
     availability_domains = ["synthetic:AD-1", "synthetic:AD-2", "synthetic:AD-3"]
   }
 }
@@ -78,10 +78,10 @@ run "launch_security_and_reviewed_pins" {
       length(oci_containerengine_node_pool.workers.node_metadata) == 2 &&
       oci_containerengine_node_pool.workers.ssh_public_key == "" &&
       oci_containerengine_node_pool.workers.node_config_details[0].is_pv_encryption_in_transit_enabled &&
-      oci_containerengine_cluster.app.kubernetes_version == "v1.37.0" && oci_containerengine_node_pool.workers.kubernetes_version == "v1.37.0" &&
+      oci_containerengine_cluster.app.kubernetes_version == "v1.37.1" && oci_containerengine_node_pool.workers.kubernetes_version == "v1.37.1" &&
       oci_containerengine_node_pool.workers.node_source_details[0].image_id == "ocid1.image.oc1.iad.syntheticarmimage" &&
       data.oci_containerengine_node_pool_option.supported.node_pool_os_arch == "AARCH64" &&
-      data.oci_containerengine_node_pool_option.supported.node_pool_k8s_version == "v1.37.0"
+      data.oci_containerengine_node_pool_option.supported.node_pool_k8s_version == "v1.37.1"
     )
     error_message = "Disable IMDSv1 at launch, omit human SSH keys, encrypt attachments and use only the exact ARM/version pins."
   }
@@ -139,7 +139,7 @@ run "reject_unavailable_patch" {
   command = plan
   override_data {
     target = data.oci_containerengine_cluster_option.supported
-    values = { kubernetes_versions = ["v1.35.2"], cluster_pod_network_options = [{ cni_type = "OCI_VCN_IP_NATIVE" }] }
+    values = { kubernetes_versions = ["v1.37.0"], cluster_pod_network_options = [{ cni_type = "OCI_VCN_IP_NATIVE" }] }
   }
   expect_failures = [data.oci_containerengine_cluster_option.supported]
 }
@@ -147,7 +147,7 @@ run "reject_unavailable_native_cni" {
   command = plan
   override_data {
     target = data.oci_containerengine_cluster_option.supported
-    values = { kubernetes_versions = ["v1.37.0"], cluster_pod_network_options = [{ cni_type = "FLANNEL_OVERLAY" }] }
+    values = { kubernetes_versions = ["v1.37.1"], cluster_pod_network_options = [{ cni_type = "FLANNEL_OVERLAY" }] }
   }
   expect_failures = [data.oci_containerengine_cluster_option.supported]
 }

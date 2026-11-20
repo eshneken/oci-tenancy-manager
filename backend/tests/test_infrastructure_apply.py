@@ -42,7 +42,7 @@ def report(environment="staging", component="security"):
 def selection():
     return {
         "image_ocid": "ocid1.image.oc1.iad.synthetic",
-        "kubernetes_version": "v1.37.0",
+        "kubernetes_version": "v1.37.1",
         "architecture": "AARCH64",
         "os_major": "9",
     }
@@ -74,7 +74,7 @@ def native_plan():
     values = {
         "oke": {"availability_domains": ["tenant:AD1"], "ocpus": 2},
         "database": {"ocpus": 2, "backup_start_utc": "02:00"},
-        "oke_kubernetes_version": "v1.37.0",
+        "oke_kubernetes_version": "v1.37.1",
         "postgresql_version": "16",
         "caddy_ingress_enabled": True,
         "qualified_node_image": selection(),

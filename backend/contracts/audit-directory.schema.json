@@ -65,7 +65,8 @@
             "administration",
             "operations",
             "organization",
-            "email_delivery"
+            "email_delivery",
+            "recovery_access"
           ],
           "title": "Category",
           "type": "string"

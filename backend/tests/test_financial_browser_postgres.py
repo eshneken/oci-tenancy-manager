@@ -58,5 +58,9 @@ def test_cost_collection_native_browser(runtime):
     )
     prepared = SimpleNamespace(store=store, principal=c.principal, workflow=workflow, worker=worker)
     identifier = children(prepared, 1)[0]
-    name = workflow.tenancy_detail(c.principal, identifier).tenancy.name
-    run_browser_runtime(c, "e2e/financial-costs.spec.ts", {"OTM_E2E_TENANCY_NAME": name})
+    tenant = workflow.tenancy_detail(c.principal, identifier).tenancy
+    run_browser_runtime(
+        c,
+        "e2e/financial-costs.spec.ts",
+        {"OTM_E2E_TENANCY_NAME": tenant.name, "OTM_E2E_TENANCY_OCID": tenant.tenancy_ocid},
+    )

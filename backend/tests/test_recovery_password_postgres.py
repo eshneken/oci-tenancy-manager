@@ -1,6 +1,8 @@
 """Real onboarding, original exposure windows, scoped SQL guards and one-shot rotations."""
 
+import csv
 from datetime import timedelta
+from io import StringIO
 from unittest.mock import Mock, patch
 from uuid import UUID, uuid4
 
@@ -12,6 +14,7 @@ from test_organization_storage_postgres import factors, login_case, organization
 from test_organization_workflows_postgres import action, complete_setup, workflow_case
 from test_recovery_console_checks_postgres import POLICY, refresh
 
+from otm.audit.contracts import AuditExportQuery, AuditQuery
 from otm.auth.service import SessionFailure
 from otm.email_policy import MailPolicy
 from otm.notifications.service import LifecycleNotifier
@@ -21,6 +24,8 @@ from otm.providers.presence_simulator import simulated_presence_inspection
 from otm.providers.recovery_console_simulator import simulated_console_inspection
 from otm.providers.recovery_password_simulator import SimulatedRecoveryPasswords
 from otm.storage.administrators import SqlAdministratorStore
+from otm.storage.audit_directory import SqlAuditDirectory
+from otm.storage.audit_export import SqlAuditExport
 from otm.storage.enqueue import (
     PRESENCE_TASK,
     RECOVERY_PASSWORD_TASK,
@@ -188,6 +193,22 @@ def test_original_window_rotation_and_retained_history(password_pg):
             .all()
         )
         assert jobs and all(set(j) == {"operation_id"} for j in jobs)
+    audit = SqlAuditDirectory(c.engine)
+    recovery = audit.directory(c.policy.workspace_id, AuditQuery(category="recovery_access"))
+    assert recovery.total == 2
+    assert all(
+        item.kind == "recovery_password_disclosed"
+        and item.actor_name == c.principal.actor.display_name
+        and item.operation_id == before["rotation_operation_id"]
+        and any(resource.id == c.child.id for resource in item.resources)
+        for item in recovery.items
+    )
+    content = SqlAuditExport(c.engine, c.clock).export(
+        c.principal, AuditExportQuery(category="recovery_access")
+    )
+    exported = list(csv.DictReader(StringIO(content.decode("utf-8-sig"))))
+    assert [row["id"] for row in exported] == [str(item.id) for item in recovery.items]
+    assert {row["category"] for row in exported} == {"recovery_access"}
     c.rotation.run(before["rotation_operation_id"])
     assert records(c, heads)[0] == before
     c.clock.return_value = before["rotation_due_at"]
@@ -197,6 +218,9 @@ def test_original_window_rotation_and_retained_history(password_pg):
     assert after["state"] == "usable" and after["generation"] == 2
     assert after["first_disclosure_at"] is None and after["rotation_due_at"] is None
     assert len(records(c, versions)) == 2 and len(records(c, grants)) == 2
+    operations = audit.directory(c.policy.workspace_id, AuditQuery(category="operations"))
+    assert any(item.kind == "recovery_password_outcome" for item in operations.items)
+    assert all(item.kind != "recovery_password_disclosed" for item in operations.items)
     assert c.vault.current(location_of(after)).password.get_secret_value() != first["password"]
 
     assert all(

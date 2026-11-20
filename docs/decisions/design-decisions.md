@@ -1192,3 +1192,12 @@ state-repair authority. No live OCI, application deployment or saved Atlas chang
 
 [Exact apply/parity contract](../reference/infrastructure-plans.md#reviewed-plan-apply-contract) ·
 [Operator procedure](../how-to/infrastructure-plans.md#apply-staging-test-explicitly-then-review-production).
+
+## 20 November 2026 — OKE 1.37.1 deployment target
+
+The owner selected exact OKE `v1.37.1` for both staging and production, superseding the
+preview patch in the 13 November decision. PostgreSQL remains pinned to major `16`.
+Set the patch through each protected GitHub Environment. Confirm regional availability in
+`us-ashburn-1` and accept the resolved ARM64 image in staging before supplying that image
+selection to the separately reviewed production plan. See the [platform version guide](../how-to/platform-versions.md)
+and [live qualification checklist](../how-to/real-oci-test-manifest.md#selected-oke-1371-qualification).

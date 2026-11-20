@@ -29,7 +29,7 @@
     },
     "query": {
       "default": "",
-      "maxLength": 128,
+      "maxLength": 256,
       "title": "Query",
       "type": "string"
     },

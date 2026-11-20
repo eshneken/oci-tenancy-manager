@@ -23,6 +23,7 @@ from otm.tenancies.contracts import (
 from otm.tenancies.directory import (
     RegistryState,
     association_view,
+    matching_tenancy_ocids,
     person_workflow,
     review_directory,
     tenancy_directory,
@@ -214,6 +215,27 @@ def test_registry_projection_and_role_choices(registry):
     assert s.option(vanished).name == "historical@example.test"
     with pytest.raises(OrganizationConflict):
         s.option(uuid4())
+
+
+# OCID hits obey the same visibility and shared-only rules as name matches.
+def test_inventory_combines_ocid_matches_with_existing_filters(registry):
+    row, _ = attach(registry, person(registry))
+    query = TenancyQuery(query="ocid1.tenancy.oc1.." + "x" * 230, page=3)
+    connection = Mock()
+    connection.scalars.return_value = [row["id"]]
+    matches = matching_tenancy_ocids(connection, registry.workspace, query.query)
+    result = tenancy_directory(registry, query, ocid_matches=matches)
+    assert [item.id for item in result.items] == [row["id"]]
+    assert result.page == 1 and result.total_tenancies == 1
+    assert not tenancy_directory(
+        registry, query.model_copy(update={"shared_only": True}), ocid_matches=matches
+    ).items
+    row["status"] = "terminated"
+    assert not tenancy_directory(registry, query, ocid_matches=matches).items
+    connection.reset_mock()
+    assert not matching_tenancy_ocids(connection, registry.workspace, "")
+    assert not matching_tenancy_ocids(connection, registry.workspace, "invalid\x00text")
+    connection.scalars.assert_not_called()
 
 
 # Review filtering separates history and actionable counts and must honor each advertised sort

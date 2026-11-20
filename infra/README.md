@@ -113,6 +113,7 @@ Review the [complete OKE inputs/bootstrap procedure](../docs/how-to/oke-foundati
 ## Protected platform version inputs
 
 `OTM_OKE_KUBERNETES_VERSION` and `OTM_POSTGRESQL_VERSION` are staging/production Actions variables.
+The deployment plan sets both environments to OKE `v1.37.1` and PostgreSQL `16`.
 The [version renderer and selection guide](../docs/how-to/platform-versions.md) supply the required
 flat `oke_kubernetes_version` and `postgresql_version` inputs through private tfvars. OKE derives its
 unique newest compatible image from exact version/ARM options and A1/OS image metadata. Production
@@ -132,7 +133,9 @@ Create each environment's [security root](../docs/how-to/vault-foundation.md) af
 
 The required [hosting compartment Actions input](../docs/how-to/hosting-compartment.md) is rendered privately from `OTM_HOSTING_COMPARTMENT_OCID`; no live target value is configured until the real tenancy is available.
 
-Application workload source is separate from Terraform ownership: see the [disabled Kubernetes bundle](../docs/how-to/kubernetes-workloads.md). It has no apply/cloud authority and cannot start the current laptop-only runtime in OKE.
+The [Kubernetes workload bundle](../docs/how-to/kubernetes-workloads.md) is separate from
+Terraform. It keeps workloads disabled until the existing [hosted startup foundation](../docs/how-to/hosted-startup.md)
+is composed with Vault and OCI and qualified in staging.
 
 
 ## Laptop development custody

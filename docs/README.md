@@ -39,11 +39,11 @@ Earlier dated preservation receipts remain historical evidence.
 | Hosting compartment | [Protected environment input and single-compartment placement](how-to/hosting-compartment.md) — required reference in all infrastructure roots; live tenancy value pending |
 | Vault custody foundation | [Single-compartment Vaults, HSM keys and scoped database-reader IAM](how-to/vault-foundation.md) — source implemented; ingestion/effective permissions and live qualification pending |
 | Managed PostgreSQL foundation | [Private database, credentials, backups and upgrade safeguards](how-to/managed-postgresql.md) — source implemented; live recovery/HA/TLS qualification pending |
-| OKE/PostgreSQL versions and node image resolution | [Protected variables and staging-qualified image promotion](how-to/platform-versions.md) — OKE resolver and private operator handoff implemented; managed database consumption implemented; live qualification pending |
+| OKE/PostgreSQL versions and node image resolution | [Protected variables and staging-qualified image promotion](how-to/platform-versions.md) — OKE `v1.37.1` and PostgreSQL `16` in both environments; live qualification pending |
 | App ingress and recovery-console source restrictions | [Shared allowlist contract](engineering-design/06-platform-and-delivery.md#shared-inbound-source-allowlist--13-november-2026) — one private environment input; live enforcement pending |
 | Create/import bootstrap handoff and copy fields | [Public bootstrap handoff](reference/tenancy-onboarding.md#public-bootstrap-handoff--12-november-2026), [complete action and field dictionary](reference/tenancy-onboarding.md#complete-contract-field-dictionary) |
 | Maintained container base, isolated qualification and security gate | [Container development](how-to/container-development.md) |
-| Run the application | [Local HTTPS setup](reference/local-application.md) |
+| Run the application | [Local HTTPS setup](reference/local-application.md) — saved preview through migration 0030 |
 | Manual required-user presence checks | [Current check fields, authority and ER](reference/user-presence-checks.md) |
 | Presence-only connection foundation | [Current fields, ER and qualification boundary](reference/user-presence-connections.md) |
 | Compact required-user inventory summary | [Fields and state rules](reference/required-users-summary.md) — [local qualification/main update](history/required-users-summary-checkpoint-2026-11-06.md) |
@@ -139,6 +139,8 @@ Root manager naming and paired settings controls are specified in the
 [implemented Organization Mapping guide](reference/organization-mapping.md#root-manager-display-name).
 
 Current directory-return and destructive-consent qualification: [6 November checkpoint](history/employee-restoration-consent-checkpoint-2026-11-06.md).
+
+Tenancies dashboard: [Search by OCID](reference/organization-workflows.md#tenancy-inventory-search).
 
 Normal-directory onboarding without provisioning: [Keep in organization without a tenancy](reference/organization-workflows.md#keep-in-organization-without-a-tenancy).
 
@@ -248,3 +250,5 @@ The [recovery-network repair source subset](reference/recovery-network-repair.md
   plan/review/apply workflows, short-lived federation, private plan custody and permanent single-attempt
   markers; production requires successful staging apply plus manual test confirmation. Live
   trust/IAM/state/storage/apply qualification remains Pending.
+
+[Recovery access audit](reference/audit-history.md#recovery-access-audit) covers password requests and their rotation links.

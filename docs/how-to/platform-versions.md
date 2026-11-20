@@ -12,13 +12,13 @@ silently change an approved application promotion.
 | `OTM_POSTGRESQL_VERSION` | `postgresql_version` | Required two-digit PostgreSQL major string, such as `16`; no minor/patch suffix or floating value |
 
 Both variables are configured separately in the existing staging and production GitHub Environments.
-The owner selected initial targets `v1.37.0` and `16` on13November2026. Oracle currently labels
-OKE1.37.0 a **preview**; this source target is not live Ashburn or production qualification. Record
-its support status in the normal deployment approval and verify regional catalog/image/add-on
-availability before apply. PostgreSQL16 matches the disposable test baseline. Both environments
-must use the same exact qualified versions and topology. Future upgrades target the latest suitable
-production-supported release through explicit staged qualification, never a floating latest selector.
-See [Oracle's release table](https://docs.oracle.com/en-us/iaas/Content/ContEng/Concepts/contengaboutk8sversions.htm).
+For initial deployment, set `OTM_OKE_KUBERNETES_VERSION=v1.37.1` and
+`OTM_POSTGRESQL_VERSION=16` in both protected GitHub Environments. Oracle
+[announced OKE support for Kubernetes 1.37.1 on 17 November 2026](https://docs.oracle.com/en-us/iaas/releasenotes/conteng/conteng-K8s-1-37-1-support.htm).
+Before the first staging apply, verify the version, ARM64 node image and add-ons in the
+`us-ashburn-1` service catalog. Carry the accepted staging image selection into the separately
+reviewed production plan. Both environments use the same qualified versions and topology.
+Future upgrades use a new exact patch pin and staged qualification.
 
 The OKE root injects the flat version into the module; remove the old nested version and manual
 `node_image_ocid` from private target files. Version inputs belong in the separate rendered candidate,
@@ -35,8 +35,9 @@ uv run --project backend python -m otm.platform_version_release \
 The offline renderer validates syntax and exclusively creates an owner-only `0600` file containing
 the two string inputs. It does not authenticate, look up versions, create resources or upgrade
 services. Existing files/symlinks are refused and diagnostics are fixed/non-disclosing. Its receipt
-contains a digest. The actual protected infrastructure workflow is still a subsequent slice; its
-binding will pass these values as data, not interpolate them into shell code:
+contains a digest. The [protected plan and apply workflows](infrastructure-plans.md) are
+implemented and remain disabled until OCI qualification. They pass the variables as data
+through the job environment:
 
 ```yaml
 # Protected-environment infrastructure-job fragment; not a deployed workflow.
