@@ -9,16 +9,20 @@ silently change an approved application promotion.
 | GitHub Actions variable | Terraform input | Meaning |
 | --- | --- | --- |
 | `OTM_OKE_KUBERNETES_VERSION` | `oke_kubernetes_version` | Required exact canonical `vMAJOR.MINOR.PATCH`, at most 32 characters; no floating latest/minor-only value |
-| `OTM_POSTGRESQL_VERSION` | `postgresql_version` | Required two-digit PostgreSQL major string, such as `16`; no minor/patch suffix or floating value |
+| `OTM_POSTGRESQL_VERSION` | `postgresql_version` | Required two-digit PostgreSQL major string, such as `18`; no minor/patch suffix or floating value |
 
 Both variables are configured separately in the existing staging and production GitHub Environments.
 For initial deployment, set `OTM_OKE_KUBERNETES_VERSION=v1.37.1` and
-`OTM_POSTGRESQL_VERSION=16` in both protected GitHub Environments. Oracle
+`OTM_POSTGRESQL_VERSION=18` in both protected GitHub Environments. Oracle
 [announced OKE support for Kubernetes 1.37.1 on 17 November 2026](https://docs.oracle.com/en-us/iaas/releasenotes/conteng/conteng-K8s-1-37-1-support.htm).
 Before the first staging apply, verify the version, ARM64 node image and add-ons in the
 `us-ashburn-1` service catalog. Carry the accepted staging image selection into the separately
 reviewed production plan. Both environments use the same qualified versions and topology.
-Future upgrades use a new exact patch pin and staged qualification.
+Future upgrades use an exact version input and staged qualification. Oracle added support for
+[PostgreSQL 18 database creation](https://docs.oracle.com/en-us/iaas/releasenotes/postgresql/support-postgresql-18.htm)
+on 15 October 2026. The disposable integration suite and 16-to-18 logical restore rehearsal qualified
+PostgreSQL 18.7 locally. Verify the managed database configuration and existing database upgrade path
+in each OCI environment before applying a plan.
 
 The OKE root injects the flat version into the module; remove the old nested version and manual
 `node_image_ocid` from private target files. Version inputs belong in the separate rendered candidate,
@@ -149,10 +153,10 @@ source validation. Major changes require an explicit reviewed upgrade opt-in and
 procedure; managed minor/security patch maintenance remains separate.
 
 Before increasing the major, qualify application drivers, migrations, native Procrastinate schema,
-extensions and recovery on that major. The current local/CI PostgreSQL16 image is unchanged by this
-variable; update/test the supported CI baseline deliberately alongside a future managed upgrade.
-Production receives the staged, approved version change through its reviewed infrastructure plan,
-not an automatic cascade from a staging variable edit.
+extensions and recovery on that major. The saved local Atlas instance now runs PostgreSQL 18.7.
+Disposable CI and fresh local installs pin the same PostgreSQL 18.7 Docker image by digest.
+The OCI build input specifies major 18. OCI manages minor versions separately. Production receives its
+version change through a separately reviewed infrastructure plan after staging qualification.
 
 ## Prior version/image source verification — 13 November 2026
 

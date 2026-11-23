@@ -17,7 +17,7 @@ from process_groups import run_python_group
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ROOT = PROJECT_ROOT / "backend"
-IMAGE = "postgres:16@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d"
+IMAGE = "postgres:18.7@sha256:eb63372c1e05c755f55fa30cbd07aecc443676fc6c0fa90b9002d01537841e1a"
 
 
 # Expose bounded source-style identifiers; parameters, failures, SQL and credentials stay private.
@@ -242,7 +242,7 @@ def main() -> int:
             "pytest_exit": result.returncode,
             "timed_out": result.timed_out,
             "valid_test_evidence": evidence_valid and bool(cases),
-            "database": "disposable Docker PostgreSQL16",
+            "database": "disposable Docker PostgreSQL 18.7",
             "persistent_database_used": False,
             "frontend_built_from_current_source": True,
             "browser_integration_included": True,

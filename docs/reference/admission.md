@@ -132,7 +132,7 @@ uv run --project backend python scripts/export_backend_contracts.py --check
 uv build --project backend --no-sources
 ```
 
-The database driver owns a fresh pinned PostgreSQL 16 Docker container, a random loopback port and
+The database driver owns a fresh pinned PostgreSQL 18.7 Docker container, a random loopback port and
 throwaway credentials, then removes only that container. It never uses the saved prototype database.
 Tests verify real same-transaction IDs, concurrency, replay, authorization loss, conflicting input,
 post-enqueue rollback, native insertion failure, COMMIT-time rejection, unsupported actual transaction

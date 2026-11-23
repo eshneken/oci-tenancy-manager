@@ -26,7 +26,7 @@ from otm.maintenance import maintenance_engine
 from otm.secrets.directory import DirectorySecrets
 from otm.settings import load_settings
 
-IMAGE = "postgres:16@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d"
+IMAGE = "postgres:18.7@sha256:eb63372c1e05c755f55fa30cbd07aecc443676fc6c0fa90b9002d01537841e1a"
 
 
 # Keep generated operator/API credentials private and masked in object representations.

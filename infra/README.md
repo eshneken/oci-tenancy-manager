@@ -113,7 +113,7 @@ Review the [complete OKE inputs/bootstrap procedure](../docs/how-to/oke-foundati
 ## Protected platform version inputs
 
 `OTM_OKE_KUBERNETES_VERSION` and `OTM_POSTGRESQL_VERSION` are staging/production Actions variables.
-The deployment plan sets both environments to OKE `v1.37.1` and PostgreSQL `16`.
+The deployment plan sets both environments to OKE `v1.37.1` and PostgreSQL `18`.
 The [version renderer and selection guide](../docs/how-to/platform-versions.md) supply the required
 flat `oke_kubernetes_version` and `postgresql_version` inputs through private tfvars. OKE derives its
 unique newest compatible image from exact version/ARM options and A1/OS image metadata. Production

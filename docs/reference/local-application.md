@@ -1,10 +1,14 @@
 # Run the local application
 
-30 October 2026 foundation · Current operating pointers reconciled 20 November 2026
+30 October 2026 foundation · Current operating pointers reconciled 23 November 2026
 
 The saved local instance on 8443 uses migration 0030 and serves the OCID search and
 Recovery access audit filter. Its update used matching private API, worker and asset
 snapshots. The migration was preceded by a private backup and preservation checks.
+The saved database runs PostgreSQL 18.7 after a verified logical restore from 16.15.
+The pre-cutover archive and stopped PostgreSQL 16 container provide a rollback point.
+If rollback is needed after new writes, pause the API and worker first and reconcile
+changes made after cutover before returning to the PostgreSQL 16 snapshot.
 The retired 8444 instructions and dated qualification records below are historical.
 
 ## Saved shared-import adoption publication — 17 November 2026
@@ -51,7 +55,7 @@ uv run --project backend otm-local setup
 
 Setup creates a private installation under `.local-dev/application/`. It generates a persistent
 installation UUID, separate database-owner/API/worker passwords and an installation-local issuer.
-It starts an instance-labeled PostgreSQL 16 container from the source-pinned image digest, exposes
+It starts an instance-labeled PostgreSQL 18.7 container from the source-pinned image digest, exposes
 its database port only on `127.0.0.1`, applies reviewed migrations through the current Alembic head and provisions a restricted local
 API role. Migration 0030 adds the OCID search index. It creates no application administrator or default password. Explicit setup upgrades legacy state
 with missing worker custody and adds a separate worker role while preserving existing owner/API
@@ -61,7 +65,8 @@ The private directory must be owned by the current user with mode `0700`; genera
 secret files use `0600`. Setup validates its own container ownership label rather than adopting
 another database, and does not use a saved organizational-lab DSN. Repeated setup preserves the
 installation identity, credentials and existing `application.toml` edits. It can restart its stopped
-owned database container. It does not erase data or reset an existing administrator.
+owned database container. The image pin applies to new containers. Existing PostgreSQL 16
+installations require a verified backup and restore into a separate PostgreSQL 18 container. It does not erase data or reset an existing administrator.
 
 The directory contains:
 
