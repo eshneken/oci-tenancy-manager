@@ -29,7 +29,7 @@ is in [the engineering chapters](../engineering-design/README.md).
 - [Required-user presence boundary and responsive tenancy cards](required-user-presence.md)
 - [Internal tenancy inspection](inspection.md)
 - [Lifecycle email and environment contact routing](lifecycle-email.md), including [all supported lifecycle action/failure notices](lifecycle-email.md#lifecycle-notice-parity--6-november-2026)
-- [Run the local application](local-application.md) — saved preview through migration 0030
+- [Run the local application](local-application.md) — saved preview and fresh installs on PostgreSQL 18.7
 - [Local recovery authentication](local-authentication.md)
 - [Read-only Operations list and detail](operations.md)
 - [Organization intake and reconciliation domain](organization-domain.md)

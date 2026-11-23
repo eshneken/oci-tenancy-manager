@@ -10,7 +10,7 @@ mock_provider "oci" {
   }
   mock_data "oci_psql_default_configurations" {
     defaults = { default_configuration_collection = [{ items = [{
-      id    = "configuration-synthetic", db_version = "16", state = "ACTIVE", is_flexible = true,
+      id    = "configuration-synthetic", db_version = "18", state = "ACTIVE", is_flexible = true,
       shape = "PostgreSQL", compatible_shapes = ["PostgreSQL.VM.Standard.E5.Flex"]
     }] }] }
   }
@@ -21,7 +21,7 @@ mock_provider "oci" {
 variables {
   environment        = "staging"
   compartment_ocid   = "ocid1.compartment.oc1..synthetichosting"
-  postgresql_version = "16"
+  postgresql_version = "18"
   network            = { environment = "staging", subnets = { database = { id = "subnet-database" } }, nsg_ids = { database = "nsg-database" } }
   administrator      = { username = "otm_provisioner", secret_ocid = "ocid1.vaultsecret.oc1.iad.synthetic", secret_version = "1" }
   database           = { backup_start_utc = "02:00", maintenance_start_utc = "SUN 04:00" }
@@ -30,7 +30,7 @@ run "private_ha_backup_and_vault_reference" {
   command = plan
   assert {
     condition = (
-      oci_psql_db_system.app.db_version == "16" && oci_psql_db_system.app.instance_count == 2 &&
+      oci_psql_db_system.app.db_version == "18" && oci_psql_db_system.app.instance_count == 2 &&
       oci_psql_db_system.app.instance_ocpu_count == 1 && oci_psql_db_system.app.instance_memory_size_in_gbs == 16 &&
       oci_psql_db_system.app.config_id == "configuration-synthetic" && !oci_psql_db_system.app.allow_major_version_upgrade &&
       oci_psql_db_system.app.network_details[0].subnet_id == "subnet-database" &&
@@ -135,8 +135,8 @@ run "reject_ambiguous_configuration" {
   override_data {
     target = data.oci_psql_default_configurations.available
     values = { default_configuration_collection = [{ items = [
-      { id = "configuration-one", db_version = "16", state = "ACTIVE", is_flexible = true, shape = "PostgreSQL", compatible_shapes = ["PostgreSQL.VM.Standard.E5.Flex"] },
-      { id = "configuration-two", db_version = "16", state = "ACTIVE", is_flexible = true, shape = "PostgreSQL", compatible_shapes = ["PostgreSQL.VM.Standard.E5.Flex"] }
+      { id = "configuration-one", db_version = "18", state = "ACTIVE", is_flexible = true, shape = "PostgreSQL", compatible_shapes = ["PostgreSQL.VM.Standard.E5.Flex"] },
+      { id = "configuration-two", db_version = "18", state = "ACTIVE", is_flexible = true, shape = "PostgreSQL", compatible_shapes = ["PostgreSQL.VM.Standard.E5.Flex"] }
     ] }] }
   }
   expect_failures = [oci_psql_db_system.app]

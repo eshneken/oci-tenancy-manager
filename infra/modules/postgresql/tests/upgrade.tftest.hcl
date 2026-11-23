@@ -30,15 +30,15 @@ run "seed_mock_upgrade" { command = apply }
 run "reviewed_major_upgrade_inputs" {
   command = plan
   variables {
-    postgresql_version = "17"
+    postgresql_version = "18"
     database           = { backup_start_utc = "02:00", maintenance_start_utc = "SUN 04:00", allow_major_version_upgrade = true }
   }
   override_data {
     target = data.oci_psql_default_configurations.available
-    values = { default_configuration_collection = [{ items = [{ id = "configuration-next", db_version = "17", state = "ACTIVE", is_flexible = true, shape = "PostgreSQL", compatible_shapes = ["PostgreSQL.VM.Standard.E5.Flex"] }] }] }
+    values = { default_configuration_collection = [{ items = [{ id = "configuration-next", db_version = "18", state = "ACTIVE", is_flexible = true, shape = "PostgreSQL", compatible_shapes = ["PostgreSQL.VM.Standard.E5.Flex"] }] }] }
   }
   assert {
-    condition     = oci_psql_db_system.app.db_version == "17" && oci_psql_db_system.app.config_id == "configuration-next" && oci_psql_db_system.app.allow_major_version_upgrade
+    condition     = oci_psql_db_system.app.db_version == "18" && oci_psql_db_system.app.config_id == "configuration-next" && oci_psql_db_system.app.allow_major_version_upgrade
     error_message = "Explicit upgrade request must include the selected target configuration and opt-in."
   }
 }

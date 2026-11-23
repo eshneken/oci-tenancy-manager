@@ -59,7 +59,7 @@ variable "oke_kubernetes_version" {
 
 # Required OCI-managed PostgreSQL major; changes are reviewed infrastructure maintenance.
 variable "postgresql_version" {
-  description = "OTM_POSTGRESQL_VERSION: two-digit major string, such as16; not a minor patch or an upgrade approval."
+  description = "OTM_POSTGRESQL_VERSION: two-digit major string, such as 18. Minor versions and upgrade approval are separate."
   type        = string
   validation {
     condition     = can(regex("^[1-9][0-9]$", var.postgresql_version))

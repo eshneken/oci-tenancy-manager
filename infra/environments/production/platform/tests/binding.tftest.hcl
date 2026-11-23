@@ -26,7 +26,7 @@ mock_provider "oci" {
   }
   mock_data "oci_psql_default_configurations" {
     defaults = { default_configuration_collection = [{ items = [{
-      id    = "configuration-synthetic", db_version = "16", state = "ACTIVE", is_flexible = true,
+      id    = "configuration-synthetic", db_version = "18", state = "ACTIVE", is_flexible = true,
       shape = "PostgreSQL", compatible_shapes = ["PostgreSQL.VM.Standard.E5.Flex"]
     }] }] }
   }
@@ -45,7 +45,7 @@ variables {
   database_administrator   = { username = "otm_provisioner", secret_ocid = "ocid1.vaultsecret.oc1.iad.synthetic", secret_version = "1" }
   database                 = { backup_start_utc = "02:00", maintenance_start_utc = "SUN 04:00" }
   oke_kubernetes_version   = "v1.37.1"
-  postgresql_version       = "16"
+  postgresql_version       = "18"
   qualified_node_image     = { image_ocid = "ocid1.image.oc1.iad.syntheticarmimage", kubernetes_version = "v1.37.1", architecture = "AARCH64", os_major = "8" }
   worker_cloud_init        = "#!/bin/bash\n# Synthetic only; no live installation.\ntrue\n"
   target = {
@@ -106,7 +106,7 @@ run "reject_floating_actions_oke_version" {
 }
 run "reject_postgres_patch_instead_of_major" {
   command = plan
-  variables { postgresql_version = "16.4" }
+  variables { postgresql_version = "18.7" }
   expect_failures = [var.postgresql_version]
 }
 run "reject_floating_postgres_version" {

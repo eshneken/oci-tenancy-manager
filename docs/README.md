@@ -38,12 +38,12 @@ Earlier dated preservation receipts remain historical evidence.
 | Enhanced OKE, worker initialization and sensor | [Cluster/pool fields and private cloud-init procedure](how-to/oke-foundation.md), [NSG traffic matrix](how-to/oke-network-traffic.md) — live ARM64 sensor, deployment and connectivity qualification pending |
 | Hosting compartment | [Protected environment input and single-compartment placement](how-to/hosting-compartment.md) — required reference in all infrastructure roots; live tenancy value pending |
 | Vault custody foundation | [Single-compartment Vaults, HSM keys and scoped database-reader IAM](how-to/vault-foundation.md) — source implemented; ingestion/effective permissions and live qualification pending |
-| Managed PostgreSQL foundation | [Private database, credentials, backups and upgrade safeguards](how-to/managed-postgresql.md) — source implemented; live recovery/HA/TLS qualification pending |
-| OKE/PostgreSQL versions and node image resolution | [Protected variables and staging-qualified image promotion](how-to/platform-versions.md) — OKE `v1.37.1` and PostgreSQL `16` in both environments; live qualification pending |
+| Managed PostgreSQL foundation | [Private database, credentials, backups and upgrade safeguards](how-to/managed-postgresql.md) — PostgreSQL 18 build target; live recovery/HA/TLS qualification pending |
+| OKE/PostgreSQL versions and node image resolution | [Protected variables and staging-qualified image promotion](how-to/platform-versions.md) — OKE `v1.37.1` and PostgreSQL `18` in both environments; live qualification pending |
 | App ingress and recovery-console source restrictions | [Shared allowlist contract](engineering-design/06-platform-and-delivery.md#shared-inbound-source-allowlist--13-november-2026) — one private environment input; live enforcement pending |
 | Create/import bootstrap handoff and copy fields | [Public bootstrap handoff](reference/tenancy-onboarding.md#public-bootstrap-handoff--12-november-2026), [complete action and field dictionary](reference/tenancy-onboarding.md#complete-contract-field-dictionary) |
 | Maintained container base, isolated qualification and security gate | [Container development](how-to/container-development.md) |
-| Run the application | [Local HTTPS setup](reference/local-application.md) — saved preview through migration 0030 |
+| Run the application | [Local HTTPS setup](reference/local-application.md) — saved PostgreSQL 18.7 preview through migration 0030 |
 | Manual required-user presence checks | [Current check fields, authority and ER](reference/user-presence-checks.md) |
 | Presence-only connection foundation | [Current fields, ER and qualification boundary](reference/user-presence-connections.md) |
 | Compact required-user inventory summary | [Fields and state rules](reference/required-users-summary.md) — [local qualification/main update](history/required-users-summary-checkpoint-2026-11-06.md) |

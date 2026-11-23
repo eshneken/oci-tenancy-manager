@@ -30,7 +30,7 @@ from otm.storage.local_auth import SqlLocalAuth
 
 pytestmark = pytest.mark.postgres
 __all__ = ["factors"]
-IMAGE = "postgres:16@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d"
+IMAGE = "postgres:18.7@sha256:eb63372c1e05c755f55fa30cbd07aecc443676fc6c0fa90b9002d01537841e1a"
 HOST = "otm-db.example.test"
 
 
