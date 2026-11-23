@@ -1,5 +1,7 @@
 # OCI Tenancy Manager
 
+Make the final reply stand on its own. Lead with the outcome, then surface any decision or approval I need to give and what you recommend. Link the evidence behind consequential claims and flag any inference or verification gap that could change the conclusion.
+
 Use `otm` / `OTM` for project identifiers. The production Python package is `backend/src/otm`; the preserved lab is
 `prototype/backend/otm`. Use their separate environments and explicit `uv --project` commands;
 production code must not import the lab package. The shared coverage gate lives in
