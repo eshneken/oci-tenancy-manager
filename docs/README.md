@@ -29,7 +29,7 @@ Earlier dated preservation receipts remain historical evidence.
 | Recovery-window wait before key replacement | [Targeted correction qualified; saved republication PASS](reference/signing-key-rotation.md#recovery-window-waiting) |
 | Signer setup authority and rotation regression scope | [Current authority checks](reference/signing-key-rotation.md#setup-authority-and-ship-regression-checks--10-november-2026) |
 | Worker deployment sizing | [Staging/production targets and qualification](engineering-design/06-platform-and-delivery.md#accepted-initial-worker-sizing--10-november-2026) |
-| Development OCI custody | [Laptop profile, state bootstrap and GitHub Actions](how-to/laptop-oci-development.md#development-custody-through-github-actions) |
+| Development OCI custody | [Laptop profile, state and IAM bootstrap, and GitHub Actions](how-to/laptop-oci-development.md#development-custody-through-github-actions) |
 | Paid OCI platform and candidate capacity | [Enhanced OKE, ARM nodes and managed PostgreSQL](engineering-design/06-platform-and-delivery.md#paid-tenancy-platform-direction-and-candidate-sizing--13-november-2026) |
 | Ashburn backups and restore qualification | [V1 backup policy, sizing and regional boundary](engineering-design/06-platform-and-delivery.md#ashburn-v1-backup-policy-proposal--13-november-2026) |
 | Staging, production and release promotion | [Isolated tenancies and build-once delivery](engineering-design/24-environments-and-promotion.md) |

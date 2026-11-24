@@ -35,3 +35,23 @@ variable "hosting_compartment_ocid" {
     error_message = "Provide the selected environment's existing hosting compartment OCID, at most 255 characters."
   }
 }
+
+# Every policy statement matches this non-production identity-domain OCID (at most 255 characters).
+# Verify the domain against the GitHub trust and tenancy before supplying this private identifier.
+variable "github_identity_domain_ocid" {
+  type = string
+  validation {
+    condition     = length(var.github_identity_domain_ocid) <= 255 && can(regex("^ocid1[.]domain[.]oc1[.][a-z0-9-]*[.][a-z0-9]+$", var.github_identity_domain_ocid))
+    error_message = "Provide the verified OCI identity domain OCID, at most 255 characters."
+  }
+}
+
+# GitHub owner/repository (at most 140 characters) used to bind IAM to the master workflow.
+# Limit it to GitHub name characters so the value cannot alter the policy expression.
+variable "github_repository" {
+  type = string
+  validation {
+    condition     = can(regex("^[A-Za-z0-9-]{1,39}/[A-Za-z0-9_.-]{1,100}$", var.github_repository))
+    error_message = "Provide the workflow's GitHub owner/repository without a URL, ref, or wildcard."
+  }
+}

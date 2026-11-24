@@ -90,7 +90,10 @@ bootstrap. The development custody workflow uses temporary federated credentials
    `infra/environments/development/bootstrap` with an explicit absolute owner-only local backend
    path and private tfvars. Supply `oci_profile`, `hosting_compartment_ocid`, and a `target` object
    containing `environment = "development"`, `tenancy_ocid`, `object_storage_namespace` and
-   `region`. Bootstrap checks the compartment name, active state and root parent before bucket creation.
+   `region`. Supply `github_identity_domain_ocid` and `github_repository` in a separate private
+   `github-policy.tfvars.json` after verifying the domain, tenancy, and GitHub owner/repository
+   against the trust.
+   Bootstrap checks the compartment name, active state and root parent before bucket creation.
    Preserve the bootstrap state privately. With `OTM_DEV_BOOTSTRAP_DIR` set to the absolute,
    owner-only directory containing the private `bootstrap.tfvars.json`, prepare and inspect a plan
    from the repo root:
@@ -100,29 +103,40 @@ bootstrap. The development custody workflow uses temporary federated credentials
      -backend-config="path=${OTM_DEV_BOOTSTRAP_DIR}/bootstrap.tfstate"
    terraform -chdir=infra/environments/development/bootstrap plan \
      -var-file="${OTM_DEV_BOOTSTRAP_DIR}/bootstrap.tfvars.json" \
+     -var-file="${OTM_DEV_BOOTSTRAP_DIR}/github-policy.tfvars.json" \
      -out="${OTM_DEV_BOOTSTRAP_DIR}/bootstrap.tfplan"
    terraform -chdir=infra/environments/development/bootstrap show \
      "${OTM_DEV_BOOTSTRAP_DIR}/bootstrap.tfplan"
    ```
 
-   The expected result is a private, versioned Standard bucket named `otm-development-tfstate`. Custody uses
-   `custody/development/terraform.tfstate`. If custody was ever applied with the older local
-   backend, stop and review state migration before initializing the new backend.
+   A fresh bootstrap plan includes a private, versioned Standard bucket named
+   `otm-development-tfstate` and the scoped GitHub IAM policy. Review both before approving any
+   creates. The custody workflow uses `custody/development/terraform.tfstate`. If custody was ever applied with the older local
+   backend, stop and review state migration before initializing the new backend. Bootstrap also
+   owns the `otm-development-github-infrastructure` policy as `oci_identity_policy.github_infrastructure`. To adopt an existing
+   policy, verify its identity and statements, back up the current private local state, then run
+   `terraform import` against the initialized bootstrap backend with both private variable files
+   and the existing policy OCID. Require a zero-change plan once the imported policy's live
+   statements match the source. Review and approve any scope correction as a separate IAM update.
+   OCI policy names are immutable. Replacing a policy requires separate approval.
 3. **Configure the protected `development` GitHub Environment.** Both dispatches require
    human review. Allow only protected `master` and disable administrator bypass. Qualify one
    restricted token-exchange client and exact OIDC claims for this environment and workflow,
-   with audience `otm-infrastructure-development`. Use the named laptop key only on the laptop.
+   with audience `otm-infrastructure-development`. Configure propagation of `ext_workflow_ref`
+   and `ext_environment` from the signed GitHub claims so IAM can match the exact job using
+   OCI's `identityfederateddomainapp` principal type. During plan qualification, verify that the
+   exchanged credentials resolve to the intended domain and workflow and can read the designated
+   private bucket. Use the named laptop key only on the laptop.
 4. **Store the scoped configuration in the environment.** Set
    `OTM_INFRA_IDENTITY_DOMAIN_URL`, `OTM_INFRA_CLIENT_ID`, `OTM_INFRA_CLIENT_SECRET`,
    `OTM_HOSTING_COMPARTMENT_OCID` and `OTM_CUSTODY_INPUTS_JSON` as environment secrets.
-   The JSON has only the `target` object from step 2. Qualify the first plan with Vault/key discovery
-   access and the needed development state, lock and plan-object permissions. After reviewing
-   the exact first saved plan in step 5, separately approve any Vault/key mutation grants and
-   limit them to development custody. Once granted, OCI sees the same principal for both operations. GitHub review, the explicit
-   apply switch, and the exact saved-plan check govern apply. Deny application secret access,
-   cross-environment access and trust administration. Set `OTM_INFRASTRUCTURE_ENABLED=true`
-   only after approval and setup validation. Leave `OTM_INFRASTRUCTURE_APPLY_ENABLED` off until
-   apply authority and the first apply have been separately approved.
+   The JSON has only the `target` object from step 2. The approved policy includes initial Vault
+   and key creation in development. Both dispatches share that OCI authority. The planning command
+   does not apply the plan. GitHub review, separate apply enablement, and the exact saved-plan check
+   govern apply. This policy grants no application-secret, cross-environment, or trust-administration
+   access. Verify that effective access is denied. Set `OTM_INFRASTRUCTURE_ENABLED=true` only after
+   approval and setup validation.
+   Leave `OTM_INFRASTRUCTURE_APPLY_ENABLED` off until the first apply is separately approved.
 5. **Review the exact plan privately.** In **Actions → Development infrastructure** on `master`,
    select `plan`. The plan can write a lock and a saved plan object in the development bucket.
    Approve the live dispatch separately. For the retired development HSM key, the Terraform
