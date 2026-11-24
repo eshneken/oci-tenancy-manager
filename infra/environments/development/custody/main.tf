@@ -1,17 +1,17 @@
-# API-key profile is explicit; never inherit the DEFAULT or hosted workload identity.
+# Custody uses the approved non-production binding and CI's ephemeral identity.
 provider "oci" {
-  auth                = "APIKey"
-  config_file_profile = var.oci_profile
-  region              = var.region
-  tenancy_ocid        = var.tenancy_ocid
+  auth         = var.oci_auth
+  region       = var.target.region
+  tenancy_ocid = var.target.tenancy_ocid
 }
 
 # Laptop PostgreSQL needs no managed-DB provisioning Vault, OKE, network or second cloud database.
+# Use hyphenated free-form tag keys because OCI rejects periods and spaces.
 resource "oci_kms_vault" "application" {
   compartment_id = var.hosting_compartment_ocid
   display_name   = "otm-development-application-secrets"
   vault_type     = "DEFAULT"
-  freeform_tags  = { "otm.environment" = "development", "otm.component" = "application-secrets" }
+  freeform_tags  = { "otm-environment" = "development", "otm-component" = "application-secrets" }
   lifecycle { prevent_destroy = true }
 }
 
@@ -26,7 +26,7 @@ resource "oci_kms_key" "application" {
     algorithm = "AES"
     length    = 32
   }
-  freeform_tags = { "otm.environment" = "development", "otm.component" = "application-secrets" }
+  freeform_tags = { "otm-environment" = "development", "otm-component" = "application-secrets" }
   lifecycle { prevent_destroy = true }
 }
 

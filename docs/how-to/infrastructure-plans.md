@@ -10,7 +10,12 @@ changes infrastructure using exactly one reviewed saved plan; it never rebuilds 
 Do not enable it merely to try the workflow before tenancy access is available. Local source tests
 need no OCI credentials; a real dispatch needs its own approved environment, trust, IAM and bucket.
 
-## One-time setup in each environment
+Development uses the same private plan and reviewed-apply tooling with its own fixed custody root,
+state, and one protected GitHub Environment for planning and applying. Follow the
+[development-specific setup](laptop-oci-development.md#development-custody-through-github-actions).
+The setup below covers hosted staging and production.
+
+## One-time setup in each hosted environment
 
 1. Complete the separately reviewed [state bootstrap](terraform-state-bootstrap.md). Preserve its
    private operator state. The expected versioned, private state bucket must already exist in the

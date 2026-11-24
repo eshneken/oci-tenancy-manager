@@ -181,7 +181,7 @@ def trusted_report(run_id, environment, status, values):
         or report.get("source_sha") != source
         or report.get("run_id") != run_id
         or report.get("attempt") != str(attempt)
-        or report.get("component") not in planning.COMPONENT_FIELDS
+        or report.get("component") not in planning.ENVIRONMENT_COMPONENTS[environment]
         or report.get("applied") is not (status == "applied")
         or any(
             not isinstance(report.get(key), str) or HASH.fullmatch(report[key]) is None
@@ -203,9 +203,9 @@ def trusted_report(run_id, environment, status, values):
                 or HASH.fullmatch(report["node_image_sha256"]) is None
             )
         )
-        or (report["component"] == "security" and report.get("node_image_sha256") is not None)
+        or (report["component"] != "platform" and report.get("node_image_sha256") is not None)
         or (
-            environment == "staging"
+            environment != "production"
             and (
                 report.get("staging_apply_run_id") is not None
                 or report.get("staging_tests_confirmed") is not False
@@ -262,7 +262,7 @@ def unpack_plan(content, directory, report):
 
 # Hash effective shared sizing/version behavior; tenancy references remain environment-specific.
 def parity(plan, component):
-    if component == "security":
+    if component != "platform":
         common = {"component": component}
     else:
         variables = plan["variables"]
@@ -396,6 +396,11 @@ def apply_plan(
         raise ValueError("INFRASTRUCTURE_APPLY_HELD")
     report = trusted_report(plan_run_id, environment, "planned", values)
     reviewed_plan(report, component, reviewed_hash)
+    # Development is limited to additive/in-place custody changes. Stop before signing or claiming.
+    if environment == "development" and (
+        report["changes"]["delete"] or report["changes"]["replace"]
+    ):
+        raise ValueError("DESTRUCTIVE_DEVELOPMENT_PLAN_REJECTED")
     staging = None
     if environment == "production":
         if staging_tests_confirmed is not True:
@@ -523,7 +528,9 @@ def apply_plan(
 # output.
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--environment", choices=("staging", "production"), required=True)
+    parser.add_argument(
+        "--environment", choices=tuple(planning.ENVIRONMENT_COMPONENTS), required=True
+    )
     parser.add_argument("--component", choices=tuple(planning.COMPONENT_FIELDS), required=True)
     parser.add_argument("--plan-run-id", required=True)
     parser.add_argument("--reviewed-plan-sha256", required=True)

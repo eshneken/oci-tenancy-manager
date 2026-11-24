@@ -29,7 +29,13 @@ ROOT = Path(__file__).resolve().parents[3]
 # Standard exchange protocol identifiers are metadata, never token or credential values.
 RPST_TYPE_URN = "urn:oci:token-type:oci-rpst"
 JWT_TYPE = "jwt"
+ENVIRONMENT_COMPONENTS = {
+    "development": {"custody"},
+    "staging": {"security", "platform"},
+    "production": {"security", "platform"},
+}
 COMPONENT_FIELDS = {
+    "custody": {"target"},
     "security": {"target", "database_provisioner_group_ocid"},
     "platform": {
         "target",
@@ -84,7 +90,7 @@ def canonical(value):
 # Require the fixed workflow/environment and explicit enablement before generating or fetching
 # secrets.
 def context(environment, component, values):
-    if environment not in {"staging", "production"} or component not in COMPONENT_FIELDS:
+    if component not in ENVIRONMENT_COMPONENTS.get(environment, ()):
         raise ValueError("FIXED_INFRASTRUCTURE_TARGET_REQUIRED")
     repository = values.get("GITHUB_REPOSITORY", "")
     source = values.get("GITHUB_SHA", "")
@@ -442,6 +448,14 @@ def prepare_plan(environment, component, values):
             directory = Path(temporary)
             files, digest = render_inputs(directory, inputs, component, values)
             credentials = federate(directory, inputs["target"], environment, values)
+            # Check development bucket placement and privacy before Terraform can create a lock.
+            if environment == "development":
+                plan_storage(
+                    credentials,
+                    inputs["target"],
+                    environment,
+                    values["OTM_HOSTING_COMPARTMENT_OCID"],
+                )
             deadline = time.monotonic() + 1200
             child_env = initialize_terraform(
                 directory, root, command, inputs, environment, credentials, values, deadline
@@ -510,7 +524,7 @@ def prepare_plan(environment, component, values):
 # errors.
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--environment", choices=("staging", "production"), required=True)
+    parser.add_argument("--environment", choices=tuple(ENVIRONMENT_COMPONENTS), required=True)
     parser.add_argument("--component", choices=tuple(COMPONENT_FIELDS), required=True)
     options = parser.parse_args(argv)
     try:

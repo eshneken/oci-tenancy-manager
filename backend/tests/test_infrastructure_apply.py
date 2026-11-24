@@ -401,8 +401,8 @@ def test_claim_once():
 # External effects are replaced; real input rendering, saved-plan checks, parity and orchestration
 # run.
 @pytest.fixture
-def harness(tmp_path, monkeypatch):
-    component, environment = "platform", "staging"
+def harness(tmp_path, monkeypatch, request):
+    environment, component = getattr(request, "param", ("staging", "platform"))
     state = SimpleNamespace(
         values=environment_values(environment, component),
         receipt=report(environment, component),
@@ -749,3 +749,34 @@ def test_uncertain_marker_response(harness, monkeypatch):
             {**state.values, "GITHUB_RUN_ID": "999"},
         )
     assert not any(call[0] == "apply" for call in state.calls)
+
+
+# Development refuses delete/replacement receipts before accessing OCI, even with a reviewed hash.
+@pytest.mark.parametrize("destructive", ["delete", "replace"])
+def test_development_refuses_destructive_plan(monkeypatch, destructive):
+    values = environment_values("development", "custody")
+    values["OTM_INFRASTRUCTURE_APPLY_ENABLED"] = "true"
+    receipt = report("development", "custody")
+    receipt["changes"][destructive] = 1
+    monkeypatch.setattr(planning, "checked_source", Mock(return_value="/bin/terraform"))
+    monkeypatch.setattr(module, "trusted_report", Mock(return_value=receipt))
+    federation = Mock()
+    monkeypatch.setattr(planning, "federate", federation)
+    with pytest.raises(ValueError, match="DESTRUCTIVE_DEVELOPMENT_PLAN_REJECTED"):
+        module.apply_plan(
+            "development", "custody", receipt["run_id"], receipt["plan_sha256"], values
+        )
+    federation.assert_not_called()
+
+
+# Development applies exactly its reviewed custody plan with no cluster or staging dependency.
+@pytest.mark.parametrize("harness", [("development", "custody")], indirect=True)
+def test_development_applies_reviewed_custody(harness):
+    state = harness
+    result = module.apply_plan(
+        "development", "custody", "123", state.receipt["plan_sha256"], state.values
+    )
+    assert result["status"] == "applied" and result["node_image_sha256"] is None
+    assert result["staging_apply_run_id"] is None
+    assert [call[0] for call in state.calls] == ["show", "apply"]
+    assert len(state.objects) == 1

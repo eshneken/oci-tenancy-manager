@@ -6,10 +6,14 @@ mock_provider "oci" {
   }
 }
 variables {
-  oci_profile              = "ATLAS_DEV"
-  tenancy_ocid             = "ocid1.tenancy.oc1..synthetic"
+  oci_auth                 = "ResourcePrincipal"
   hosting_compartment_ocid = "ocid1.compartment.oc1..development"
-  region                   = "us-ashburn-1"
+  target = {
+    environment              = "development"
+    tenancy_ocid             = "ocid1.tenancy.oc1..synthetic"
+    object_storage_namespace = "syntheticnamespace"
+    region                   = "us-ashburn-1"
+  }
 }
 run "seed_mock_vault" { command = apply }
 run "reject_vault_replacement" {
