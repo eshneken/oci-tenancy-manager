@@ -15,20 +15,13 @@ resource "oci_kms_vault" "application" {
   lifecycle { prevent_destroy = true }
 }
 
-# Retain the enrolled HSM key at its existing address until the software key is verified and
-# the operator retires it. OCI cannot change an existing key's protection mode.
-resource "oci_kms_key" "application" {
-  compartment_id           = var.hosting_compartment_ocid
-  management_endpoint      = oci_kms_vault.application.management_endpoint
-  display_name             = "otm-development-application-secrets"
-  protection_mode          = "HSM"
-  is_auto_rotation_enabled = false
-  key_shape {
-    algorithm = "AES"
-    length    = 32
+# OCI already scheduled this key for deletion. Drop its tracking record without a provider delete.
+removed {
+  from = oci_kms_key.application
+
+  lifecycle {
+    destroy = false
   }
-  freeform_tags = { "otm-environment" = "development", "otm-component" = "application-secrets" }
-  lifecycle { prevent_destroy = true }
 }
 
 # New application secrets use the software-protected AES-256 key in the existing Vault.

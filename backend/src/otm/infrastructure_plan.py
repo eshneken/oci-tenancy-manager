@@ -352,8 +352,8 @@ def terraform(command, arguments, root, environment, directory, deadline):
 
 
 # Emit only action counts; all resource names, IDs, attributes and provider diagnostics stay
-# private.
-def change_counts(plan):
+# private. Report the retired development key state removal separately from cloud mutations.
+def change_counts(plan, *, allow_retired_development_key=False):
     if (
         not isinstance(plan, dict)
         or plan.get("errored") is True
@@ -362,8 +362,22 @@ def change_counts(plan):
         raise ValueError("TERRAFORM_PLAN_JSON_REQUIRED")
     result = {"create": 0, "update": 0, "delete": 0, "replace": 0}
     for resource in plan.get("resource_changes", []):
-        actions = resource["change"]["actions"]
-        if actions in (["create", "delete"], ["delete", "create"]):
+        change = resource["change"]
+        actions = change["actions"]
+        if (
+            actions == ["forget"]
+            and allow_retired_development_key
+            and "forget" not in result
+            and resource.get("address") == "oci_kms_key.application"
+            and resource.get("mode") == "managed"
+            and resource.get("type") == "oci_kms_key"
+            and resource.get("deposed") is None
+            and (change.get("before") or {}).get("protection_mode") == "HSM"
+            and "after" in change
+            and change["after"] is None
+        ):
+            result["forget"] = 1
+        elif actions in (["create", "delete"], ["delete", "create"]):
             result["replace"] += 1
         elif actions in (["create"], ["update"], ["delete"]):
             result[actions[0]] += 1
@@ -531,7 +545,11 @@ def prepare_plan(environment, component, values):
                 "attempt": values["GITHUB_RUN_ATTEMPT"],
                 "inputs_sha256": digest,
                 "plan_sha256": hashlib.sha256((directory / "plan.tfplan").read_bytes()).hexdigest(),
-                "changes": change_counts(plan),
+                "changes": change_counts(
+                    plan,
+                    allow_retired_development_key=(environment, component)
+                    == ("development", "custody"),
+                ),
             }
             key = (
                 f"infrastructure-plans/{environment}/{component}/"

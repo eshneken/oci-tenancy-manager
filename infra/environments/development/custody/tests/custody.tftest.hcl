@@ -7,11 +7,6 @@ override_resource {
   target          = oci_kms_key.application_software
   values          = { id = "ocid1.key.oc1.iad.syntheticsoftware" }
 }
-override_resource {
-  override_during = plan
-  target          = oci_kms_key.application
-  values          = { id = "ocid1.key.oc1.iad.synthetichsm" }
-}
 variables {
   oci_auth                 = "ResourcePrincipal"
   hosting_compartment_ocid = "ocid1.compartment.oc1..development"
@@ -33,15 +28,15 @@ run "isolated_development_custody" {
     error_message = "Use the shared Vault and software-protected AES-256 policy without unsupported automatic rotation."
   }
   assert {
-    condition     = output.custody.key_ocid == oci_kms_key.application_software.id && oci_kms_key.application.protection_mode == "HSM"
-    error_message = "Select the new software key for custody and preserve the existing key during rollout."
+    condition     = output.custody.key_ocid == oci_kms_key.application_software.id
+    error_message = "Select the software-protected key for application custody."
   }
   assert {
     condition     = oci_kms_vault.application.freeform_tags["otm-environment"] == "development"
     error_message = "Development must not be labeled staging."
   }
   assert {
-    condition     = alltrue([for key in concat(keys(oci_kms_vault.application.freeform_tags), keys(oci_kms_key.application.freeform_tags), keys(oci_kms_key.application_software.freeform_tags)) : can(regex("^[A-Za-z0-9-]+$", key))])
+    condition     = alltrue([for key in concat(keys(oci_kms_vault.application.freeform_tags), keys(oci_kms_key.application_software.freeform_tags)) : can(regex("^[A-Za-z0-9-]+$", key))])
     error_message = "Vault and key tag keys must use OCI-compatible names."
   }
 }

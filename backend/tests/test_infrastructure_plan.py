@@ -502,6 +502,38 @@ def test_change_counts():
             module.change_counts(invalid)
 
 
+# Count the one permitted development state removal. Other forget actions fail closed.
+@pytest.mark.parametrize(
+    "fault", [None, "scope", "address", "mode", "type", "deposed", "software", "after", "duplicate"]
+)
+def test_retired_key_state_removal_counts(fault):
+    change = {
+        "actions": ["forget"],
+        "before": {"protection_mode": "SOFTWARE" if fault == "software" else "HSM"},
+        "after": {"protection_mode": "SOFTWARE"} if fault == "after" else None,
+    }
+    removal = {
+        "address": "oci_kms_key.other" if fault == "address" else "oci_kms_key.application",
+        "mode": "data" if fault == "mode" else "managed",
+        "type": "oci_kms_vault" if fault == "type" else "oci_kms_key",
+        "change": change,
+    }
+    if fault == "deposed":
+        removal["deposed"] = "old"
+    plan = {"resource_changes": [removal] * (2 if fault == "duplicate" else 1)}
+    if fault:
+        with pytest.raises(ValueError, match="UNKNOWN_TERRAFORM_PLAN_ACTION"):
+            module.change_counts(plan, allow_retired_development_key=fault != "scope")
+    else:
+        assert module.change_counts(plan, allow_retired_development_key=True) == {
+            "create": 0,
+            "update": 0,
+            "delete": 0,
+            "replace": 0,
+            "forget": 1,
+        }
+
+
 # Private bucket checks and conditional object creation prevent public, cross-compartment or
 # overwrite custody.
 @pytest.mark.parametrize("fault", [None, "compartment", "public", "versioning", "upload"])

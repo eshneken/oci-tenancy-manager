@@ -726,6 +726,19 @@ def test_reviewed_changes_rejected(changes):
         module.reviewed_plan(receipt, "security", receipt["plan_sha256"])
 
 
+# A plan that forgets the retired key remains plan-only even with a matching digest.
+def test_development_state_removal_receipt_rejected_for_apply():
+    receipt = report()
+    receipt.update(
+        environment="development",
+        component="custody",
+        object_key="infrastructure-plans/development/custody/123/1/plan.tar",
+    )
+    receipt["changes"]["forget"] = 1
+    with pytest.raises(ValueError, match="EXACT_REVIEWED_PLAN_REQUIRED"):
+        module.reviewed_plan(receipt, "custody", receipt["plan_sha256"])
+
+
 # A remotely committed marker with a lost response forbids both apply and any later consumer replay.
 def test_uncertain_marker_response(harness, monkeypatch):
     state = harness
