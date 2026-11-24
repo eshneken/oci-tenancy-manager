@@ -125,13 +125,13 @@ bootstrap. The development custody workflow uses temporary federated credentials
    apply authority and the first apply have been separately approved.
 5. **Review the exact plan privately.** In **Actions → Development infrastructure** on `master`,
    select `plan`. The plan can write a lock and a saved plan object in the development bucket.
-   Approve the live dispatch separately. For the development key transition, require exactly one
-   software-protected AES-256 key creation in the existing Vault and no change to the HSM key.
-   Verify the new key and the custody output. Before separately approved retirement, verify that no
-   secret version or other consumer uses the former key. While its declaration is retained, stop
-   any plan proposing another HSM key. Remove the legacy declaration in coordination with OCI
-   retirement and verify it will disappear from state on refresh without any proposed create or
-   delete. An empty-state development bootstrap must wait for the legacy declaration to be removed.
+   Approve the live dispatch separately. For the retired development HSM key, the Terraform
+   `removed` block prevents recreation and uses `destroy = false` so it leaves the OCI deletion
+   schedule in effect. While the old address is still in state, require one state-only `forget`
+   with zero creates, updates, deletes, or replacements. If the old address is already absent,
+   require a no-op plan. Check that the Vault and software key both have no-op actions.
+   The existing reviewed-apply command rejects receipts containing `forget`. Keep apply held
+   and reconcile that state entry separately before a future deployment if it remains tracked.
    Terraform does not write application secret values. The separate
    apply dispatch takes the successful plan run ID and reviewed SHA-256 and rejects any delete
    or replacement. Confirm the exact reviewed effects before approving apply. An interrupted
