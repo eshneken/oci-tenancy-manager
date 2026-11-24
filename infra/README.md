@@ -6,11 +6,11 @@ and production use separate roots and separate tenancies. Optional [held Caddy/N
 | Directory | Responsibility |
 | --- | --- |
 | `environments/development/bootstrap/` | Named laptop profile and local operator state for the dedicated development bucket |
-| `environments/development/custody/` | Fixed remote state and ephemeral CI principal for one Vault and HSM key |
+| `environments/development/custody/` | Fixed remote state and ephemeral CI principal for one Vault with software-protected application custody |
 | `modules/state-bootstrap/` | One private, versioned Standard Object Storage bucket, with a namespace check and replacement/destruction guard |
 | `environments/staging/bootstrap/` | Fixed staging binding and explicit operator authentication |
 | `environments/production/bootstrap/` | Fixed production binding and explicit operator authentication |
-| `modules/secret-foundation/` | Two Vaults/HSM AES256 keys in the existing hosting compartment and exact Vault-ID reader policy |
+| `modules/secret-foundation/` | Two Vaults and software-protected AES-256 keys in the existing hosting compartment and exact Vault-ID reader policy |
 | `environments/staging/security/` | Fixed staging security root, separate remote state key; run before platform and secret ingestion |
 | `environments/production/security/` | Fixed production security root and private state, no staging resource reuse |
 | `modules/postgresql/` | Private two-node managed PostgreSQL, pinned Vault provisioning references, backup/PITR intent and replacement guard |
@@ -145,7 +145,7 @@ is composed with Vault and OCI and qualified in staging.
 `environments/development/bootstrap/` uses a named laptop API-key profile and private local
 state to create the dedicated state bucket. `environments/development/custody/` uses that remote
 backend and a short-lived GitHub Actions principal to plan and apply one application Vault and
-HSM key in the existing development compartment. Compartments and IAM are administrator
+software-protected AES-256 key in the existing development compartment. Compartments and IAM are administrator
 prerequisites. The [development runbook](../docs/how-to/laptop-oci-development.md#development-custody-through-github-actions)
 records the completed bucket bootstrap and the pending live custody qualification.
 

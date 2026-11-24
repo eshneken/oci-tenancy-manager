@@ -260,7 +260,7 @@ The owner selected explicit named API-key profiles in `~/.oci/config`, not brows
 laptop OCI development. [The implementation/runbook](../how-to/laptop-oci-development.md) separates
 execution location, simulated/OCI provider mode and platform authentication. Staging/production
 remain workload-identity-only. Development uses a sibling compartment and its own application Vault
-and HSM key, while application/PostgreSQL remain local. No third OKE/managed DB stack is required.
+and software-protected AES-256 key, while application/PostgreSQL remain local. No third OKE/managed DB stack is required.
 Development and staging share the non-production parent but own independent child inventories in
 their PostgreSQL databases. No global registry, new collision service or cross-environment baseline
 coordinator is added. Existing target and credential guards remain in force. Terraform state,

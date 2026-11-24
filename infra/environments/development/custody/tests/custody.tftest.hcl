@@ -1,5 +1,17 @@
 # Mock-only plans; no local OCI profile, cloud identity, remote backend or API is used.
-mock_provider "oci" {}
+mock_provider "oci" {
+  override_during = plan
+}
+override_resource {
+  override_during = plan
+  target          = oci_kms_key.application_software
+  values          = { id = "ocid1.key.oc1.iad.syntheticsoftware" }
+}
+override_resource {
+  override_during = plan
+  target          = oci_kms_key.application
+  values          = { id = "ocid1.key.oc1.iad.synthetichsm" }
+}
 variables {
   oci_auth                 = "ResourcePrincipal"
   hosting_compartment_ocid = "ocid1.compartment.oc1..development"
@@ -13,19 +25,23 @@ variables {
 run "isolated_development_custody" {
   command = plan
   assert {
-    condition     = oci_kms_vault.application.compartment_id == var.hosting_compartment_ocid && oci_kms_key.application.compartment_id == var.hosting_compartment_ocid
+    condition     = oci_kms_vault.application.compartment_id == var.hosting_compartment_ocid && oci_kms_key.application_software.compartment_id == var.hosting_compartment_ocid
     error_message = "Development custody must use only its explicit compartment."
   }
   assert {
-    condition     = oci_kms_vault.application.vault_type == "DEFAULT" && oci_kms_key.application.protection_mode == "HSM" && oci_kms_key.application.key_shape[0].length == 32 && !oci_kms_key.application.is_auto_rotation_enabled
-    error_message = "Use the shared Vault/HSM AES256 policy without unsupported automatic rotation."
+    condition     = oci_kms_vault.application.vault_type == "DEFAULT" && oci_kms_key.application_software.protection_mode == "SOFTWARE" && oci_kms_key.application_software.key_shape[0].algorithm == "AES" && oci_kms_key.application_software.key_shape[0].length == 32 && !oci_kms_key.application_software.is_auto_rotation_enabled
+    error_message = "Use the shared Vault and software-protected AES-256 policy without unsupported automatic rotation."
+  }
+  assert {
+    condition     = output.custody.key_ocid == oci_kms_key.application_software.id && oci_kms_key.application.protection_mode == "HSM"
+    error_message = "Select the new software key for custody and preserve the existing key during rollout."
   }
   assert {
     condition     = oci_kms_vault.application.freeform_tags["otm-environment"] == "development"
     error_message = "Development must not be labeled staging."
   }
   assert {
-    condition     = alltrue([for key in concat(keys(oci_kms_vault.application.freeform_tags), keys(oci_kms_key.application.freeform_tags)) : can(regex("^[A-Za-z0-9-]+$", key))])
+    condition     = alltrue([for key in concat(keys(oci_kms_vault.application.freeform_tags), keys(oci_kms_key.application.freeform_tags), keys(oci_kms_key.application_software.freeform_tags)) : can(regex("^[A-Za-z0-9-]+$", key))])
     error_message = "Vault and key tag keys must use OCI-compatible names."
   }
 }
