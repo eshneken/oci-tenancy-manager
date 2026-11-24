@@ -11,7 +11,7 @@ import tempfile
 from pathlib import Path
 from uuid import uuid4
 
-from run_container_smoke import remove_owned
+from docker_test_resources import remove_owned
 
 from otm.kubernetes_release import hosted_bundle
 

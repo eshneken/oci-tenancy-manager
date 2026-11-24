@@ -1,6 +1,5 @@
 """Owned disposable local-runtime qualification using actual installer roles and native worker."""
 
-import json
 import os
 import secrets
 import subprocess
@@ -12,6 +11,7 @@ from uuid import uuid4
 
 import pyotp
 import pytest
+from docker_test_resources import remove_owned
 from pydantic import SecretStr
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
@@ -120,12 +120,7 @@ def runtime(tmp_path_factory):
         if (root / "state.json").exists():
             state = read_state(root)
             name = "otm-local-" + state.instance_id.hex[:12]
-            client = docker()
-            inspected = subprocess.run([client, "inspect", name], capture_output=True, text=True)
-            if inspected.returncode == 0:
-                labels = json.loads(inspected.stdout)[0]["Config"]["Labels"]
-                assert labels.get("otm.local.instance") == str(state.instance_id)
-                subprocess.run([client, "rm", "--force", name], check=True, capture_output=True)
+            remove_owned(docker(), name, "otm.local.instance", str(state.instance_id))
 
 
 # The browser access journey requires real durable notices and an owned non-relaying SMTP capture.

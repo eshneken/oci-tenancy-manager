@@ -112,8 +112,11 @@ The schema gate now requires 60 resources:8+8+14 in each of two environments, pl
 invalid-field rejection control. The Caddy gate builds the pinned separate image and uses a local
 isolated Pebble CA, synthetic backend and private disposable volume. Native HTTP-01 issuance,
 verified TLS, spoofed-header replacement, HTTP 404/no redirect/no upstream access, process restart
-with persisted certificate and short-lived-certificate renewal have passed. This does not qualify
-Let's Encrypt issuance, OCI DNS/NLB/IAM/CSI behavior or public reachability.
+with persisted certificate and short-lived-certificate renewal have passed. The script retains
+logs and the `scan/` report under ignored `.local-dev/quality/caddy-*` and deletes the scanner cache and
+exported image archive after the scanner is removed, even if the scan failed. If Docker cannot
+confirm removal, the script leaves those files in place. Let's Encrypt issuance, OCI
+DNS/NLB/IAM/CSI behavior and public reachability require separate qualification.
 
 On 15 November, the owner accepted the two exact DoS findings in the latest verified official
 Caddy 2.11.9 binary: CVE-2026-116587/go-jose/v3 v3.0.5 and CVE-2026-78661/x/net v0.60.0, only at

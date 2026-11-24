@@ -13,6 +13,7 @@ from xml.etree.ElementTree import ParseError
 
 from defusedxml import ElementTree
 from defusedxml.common import DefusedXmlException
+from docker_test_resources import remove_owned
 from process_groups import run_python_group
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -108,13 +109,15 @@ def main() -> int:
     artifacts = PROJECT_ROOT / ".local-dev/quality"
     artifacts.mkdir(parents=True, exist_ok=True)
     directory = Path(tempfile.mkdtemp(prefix="backend-postgres-", dir=artifacts))
-    name = "otm-backend-test-" + uuid4().hex[:12]
+    owner = uuid4().hex
+    name = "otm-backend-test-" + owner[:12]
+    label = "otm.test.postgres"
     password = secrets.token_hex(24)
     # Explicit connection values plus removal of inherited libpq overrides protect the target.
     env = {key: value for key, value in os.environ.items() if not key.startswith("PG")}
     env.pop("PYTEST_ADDOPTS", None)
     env["POSTGRES_PASSWORD"] = password
-    created = False
+    launch_attempted = False
     try:
         # Rebuild the exact locked frontend so browser tests cannot pass against stale assets.
         build_environment = {
@@ -145,6 +148,7 @@ def main() -> int:
                     (directory / "summary.json").write_text(json.dumps(summary) + "\n")
                     print(json.dumps(summary))
                     return 1
+        launch_attempted = True
         subprocess.run(
             [
                 "docker",
@@ -153,6 +157,8 @@ def main() -> int:
                 "--rm",
                 "--name",
                 name,
+                "--label",
+                label + "=" + owner,
                 "--env",
                 "POSTGRES_PASSWORD",
                 "--env",
@@ -167,7 +173,6 @@ def main() -> int:
             check=True,
             capture_output=True,
         )
-        created = True
         for _ in range(60):
             ready = subprocess.run(
                 [
@@ -248,9 +253,6 @@ def main() -> int:
             "browser_integration_included": True,
             "artifacts": str(directory.relative_to(PROJECT_ROOT)),
         }
-        (directory / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
-        print(json.dumps(summary))
-        return 0 if passed else 1
     finally:
         try:
             # Scrub all owned disposable runtime credentials, including installer qualification DBs.
@@ -276,10 +278,11 @@ def main() -> int:
                     path.write_text(content)
         finally:
             # Report cleanup must never prevent removal of the container owned by this run.
-            if created:
-                subprocess.run(
-                    ["docker", "stop", name], check=True, capture_output=True
-                )
+            if launch_attempted:
+                remove_owned("docker", name, label, owner)
+    (directory / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+    print(json.dumps(summary))
+    return 0 if passed else 1
 
 
 if __name__ == "__main__":

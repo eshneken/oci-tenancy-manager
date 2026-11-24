@@ -94,26 +94,70 @@ def test_cleanup_removes_owned_container(monkeypatch):
     def run(arguments, **kwargs):
         calls.append((arguments, kwargs))
         return subprocess.CompletedProcess(
-            arguments, 0, json.dumps([{"Config": {"Labels": {"owner": "expected"}}}]), ""
+            arguments,
+            0,
+            json.dumps([{"Id": "a" * 64, "Config": {"Labels": {"owner": "expected"}}}]),
+            "",
         )
 
     monkeypatch.setattr(MODULE.subprocess, "run", run)
     MODULE.remove_owned("docker", "candidate", "owner", "expected")
-    assert calls[1][0] == ["docker", "rm", "--force", "candidate"]
+    assert calls[1][0] == ["docker", "rm", "--force", "--volumes", "a" * 64]
     assert all(call[1]["timeout"] == 30 for call in calls)
 
 
+# A logs failure keeps diagnostics and still removes the exact inspected container ID.
+def test_cleanup_reports_log_failure_but_removes_owned_container(monkeypatch, tmp_path):
+    from unittest.mock import Mock
+
+    container_id = "a" * 64
+    inspect = json.dumps([{"Id": container_id, "Config": {"Labels": {"owner": "expected"}}}])
+    run = Mock(
+        side_effect=[
+            subprocess.CompletedProcess([], 0, inspect, ""),
+            subprocess.CompletedProcess([], 1, b"", b"logs unavailable"),
+            subprocess.CompletedProcess([], 0, b"", b""),
+        ]
+    )
+    monkeypatch.setattr(MODULE.subprocess, "run", run)
+    log = tmp_path / "diagnostic.log"
+    assert not MODULE.remove_owned("docker", "candidate", "owner", "expected", log_path=log)
+    assert log.read_bytes() == b"logs unavailable"
+    assert run.call_args_list[1].args[0] == ["docker", "logs", container_id]
+    assert run.call_args_list[2].args[0] == ["docker", "rm", "--force", "--volumes", container_id]
+
+
+# Scanner output indirection cannot cause the host to read files outside the dedicated mount.
+def test_scan_report_refuses_symlink(tmp_path):
+    scan = tmp_path / "scan"
+    scan.mkdir()
+    outside = tmp_path / "outside.json"
+    outside.write_text('{"Results": []}')
+    (scan / "image-scan.json").symlink_to(outside)
+    with pytest.raises(ValueError, match="IMAGE_SCAN_REPORT_REQUIRED"):
+        MODULE.read_scan_report(scan)
+
+
 # An already absent owned test name is harmless and must not trigger a removal command.
-def test_cleanup_tolerates_missing_container(monkeypatch):
+@pytest.mark.parametrize(
+    "kind,error",
+    [
+        ("container", "no such object: candidate"),
+        ("image", "no such image: candidate:latest"),
+        ("network", "network candidate not found"),
+        ("volume", "get candidate: no such volume"),
+    ],
+)
+def test_cleanup_tolerates_missing_resource(monkeypatch, kind, error):
     calls = []
 
     # Mimic Docker's specific not-found result without converting general failures into success.
     def run(arguments, **kwargs):
         calls.append(arguments)
-        return subprocess.CompletedProcess(arguments, 1, "[]", "error: no such object: candidate")
+        return subprocess.CompletedProcess(arguments, 1, "[]", "Error: " + error)
 
     monkeypatch.setattr(MODULE.subprocess, "run", run)
-    MODULE.remove_owned("docker", "candidate", "owner", "expected")
+    MODULE.remove_owned("docker", "candidate", "owner", "expected", kind=kind)
     assert len(calls) == 1
 
 
@@ -164,21 +208,22 @@ def smoke_boundary(tmp_path, monkeypatch):
             nonlocal scanned
             calls.append(arguments)
             code, stdout, stderr = 0, b"", b""
-            if arguments[1] == "inspect" or arguments[1:3] == ["image", "inspect"]:
+            if arguments[1] == "inspect":
                 owner = (
                     "foreign"
-                    if fault == "foreign_image" and arguments[1] == "image"
+                    if fault == "foreign_image" and arguments[3] == "image"
                     else identity.hex
                 )
                 stdout = json.dumps(
                     [
                         {
+                            "Id": ("b" if arguments[-1].startswith("otm-local-") else "a") * 64,
                             "Config": {
                                 "Labels": {
                                     "otm.container.smoke": owner,
                                     "otm.local.instance": str(identity),
                                 }
-                            }
+                            },
                         }
                     ]
                 ).encode()
@@ -194,6 +239,8 @@ def smoke_boundary(tmp_path, monkeypatch):
                     path = output / name
                     path.parent.mkdir(parents=True, exist_ok=True)
                     path.write_text("synthetic filtered input")
+            elif arguments[1] == "save":
+                Path(arguments[arguments.index("--output") + 1]).write_bytes(b"image")
             elif arguments[1] == "run":
                 if MODULE.SCANNER in arguments:
                     scanned = True
@@ -202,12 +249,16 @@ def smoke_boundary(tmp_path, monkeypatch):
                         report["Results"] = [{"Class": "lang-pkgs"}]
                     elif fault == "missing_language":
                         report["Results"] = [{"Class": "os-pkgs"}]
-                    directory = next((project / ".local-dev/quality").glob("container-*"))
+                    directory = next((project / ".local-dev/quality").glob("container-*")) / "scan"
+                    assert f"type=bind,src={directory},dst=/scan" in arguments
+                    (directory / "cache").mkdir()
+                    (directory / "cache/db").write_bytes(b"scanner database")
                     if fault != "missing_report":
                         (directory / "image-scan.json").write_text(
                             "invalid json" if fault == "malformed_report" else json.dumps(report)
                         )
                     code = 1 if fault == "scanner_exit" else 0
+                    stdout = b"scanner diagnostic"
                 elif "/probe.py" in arguments or "/runtime_probe.py" in arguments:
                     failed = (fault == "installed_probe" and "/probe.py" in arguments) or (
                         fault == "native_probe" and "/runtime_probe.py" in arguments
@@ -217,7 +268,12 @@ def smoke_boundary(tmp_path, monkeypatch):
                     stdout = b'{"deleted":0,"batches":1,"batch_limit_reached":false}'
                 else:
                     code, stderr = 1, b"KeyError: 'OTM_APPLICATION_CONFIG'"
-            elif arguments[1] == "rm" and scanned and fault == "cleanup_failure":
+            elif (
+                arguments[1] == "rm"
+                and arguments[-1] == "a" * 64
+                and scanned
+                and fault == "cleanup_failure"
+            ):
                 raise subprocess.CalledProcessError(1, arguments)
             if kwargs.get("text"):
                 stdout, stderr = stdout.decode(), stderr.decode()
@@ -236,9 +292,15 @@ def smoke_boundary(tmp_path, monkeypatch):
         result = MODULE.main()
         directory = next((project / ".local-dev/quality").glob("container-*"))
         summary = json.loads((directory / "summary.json").read_text())
-        assert result == 1 and summary["status"] == "fail"
+        expected = "pass" if fault == "scan_success" else "fail"
+        assert result == (0 if expected == "pass" else 1) and summary["status"] == expected
         assert summary["saved_instance_used"] is False
         assert any(command[1] == "inspect" for command in calls)
+        for name in ("cache", "image.tar"):
+            assert (directory / "scan" / name).exists() == (fault == "cleanup_failure")
+        if scanned:
+            assert (directory / "scan/image-scan.json").is_file() == (fault != "missing_report")
+            assert any(b"scanner diagnostic" in log.read_bytes() for log in directory.glob("*.log"))
         return summary, calls
 
     try:
@@ -255,6 +317,12 @@ def test_qualification_rejects_unavailable_assets(smoke_boundary, fault):
     summary, calls = smoke_boundary(fault)
     assert summary["stage"] == "installed-image"
     assert not any(MODULE.SCANNER in command for command in calls)
+
+
+# Successful scans leave their reports and logs in the private run directory.
+def test_qualification_cleans_successful_scan_inputs(smoke_boundary):
+    summary, _ = smoke_boundary("scan_success")
+    assert summary["stage"] == "complete"
 
 
 # Value: protects=scan failures and incomplete evidence cannot qualify an image;
@@ -304,4 +372,4 @@ def test_qualification_rejects_cleanup_failure(smoke_boundary, fault):
     summary, calls = smoke_boundary(fault)
     assert summary["stage"] == "cleanup"
     assert any(MODULE.SCANNER in command for command in calls)
-    assert not any(command[1:3] == ["image", "rm"] for command in calls)
+    assert any(command[1:3] == ["image", "rm"] for command in calls) == (fault == "cleanup_failure")

@@ -76,7 +76,10 @@ def test_native_check_creates_artifact_parent(tmp_path, monkeypatch):
 
 
 # Linux bind mounts retain runner ownership; fixture consumers must not depend on root DAC bypass.
-def test_fixture_containers_use_runner_identity_without_relaxing_permissions(tmp_path, monkeypatch):
+@pytest.mark.parametrize("cleanup_fails", [False, True])
+def test_fixture_containers_use_runner_identity_without_relaxing_permissions(
+    tmp_path, monkeypatch, cleanup_fails
+):
     from types import SimpleNamespace
 
     original_root = MODULE.ROOT
@@ -87,7 +90,16 @@ def test_fixture_containers_use_runner_identity_without_relaxing_permissions(tmp
     monkeypatch.setattr(MODULE, "ROOT", tmp_path)
     monkeypatch.setattr(MODULE, "docker", lambda: "docker")
     monkeypatch.setattr(MODULE, "check_latest", lambda: "v2.11.9")
-    monkeypatch.setattr(MODULE, "remove_owned", lambda *args: True)
+    removed = []
+
+    # A failed first container removal still allows the other ownership checks and cleanup.
+    def remove_owned(client, name, label, owner, *, kind="container", log_path=None):
+        removed.append(kind)
+        if cleanup_fails and len(removed) == 1:
+            raise RuntimeError("SIMULATED_DOCKER_CLEANUP_FAILURE")
+        return True
+
+    monkeypatch.setattr(MODULE, "remove_owned", remove_owned)
     monkeypatch.setattr(MODULE.os, "getuid", lambda: 1001)
     monkeypatch.setattr(MODULE.os, "getgid", lambda: 1001)
     calls = []
@@ -133,5 +145,6 @@ def test_fixture_containers_use_runner_identity_without_relaxing_permissions(tmp
         assert "--read-only" in arguments
         assert "no-new-privileges" in arguments
     directory = next((tmp_path / ".local-dev/quality").iterdir())
+    assert removed == ["container", "container", "volume", "network", "image"]
     assert directory.stat().st_mode & 0o777 == 0o700
     assert (directory / "server.key").stat().st_mode & 0o777 == 0o600
