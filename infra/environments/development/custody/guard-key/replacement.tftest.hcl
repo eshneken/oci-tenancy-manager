@@ -18,5 +18,5 @@ variables {
 run "seed_mock_key" { command = apply }
 run "reject_key_replacement" {
   command = plan
-  plan_options { replace = [oci_kms_key.application] }
+  plan_options { replace = [oci_kms_key.application_software] }
 }

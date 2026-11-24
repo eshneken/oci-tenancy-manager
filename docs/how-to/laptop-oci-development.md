@@ -9,7 +9,7 @@ development. These are explicit selections, not fallback authentication methods.
 
 The non-production tenancy has sibling **development** and **staging** compartments. Each environment
 keeps one compartment, without further application subcompartments. Development needs only its own
-application Vault/HSM key and managed test children; its database/queue, MFA custody and application
+application Vault and software-protected key and managed test children; its database/queue, MFA custody and application
 processes remain local. Staging retains the full OKE/managed PostgreSQL platform and its separate
 application and database-provisioning Vaults. Production remains in a separate tenancy.
 
@@ -125,8 +125,14 @@ bootstrap. The development custody workflow uses temporary federated credentials
    apply authority and the first apply have been separately approved.
 5. **Review the exact plan privately.** In **Actions → Development infrastructure** on `master`,
    select `plan`. The plan can write a lock and a saved plan object in the development bucket.
-   Approve its first live dispatch separately. The expected initial resource changes are one Vault
-   and one HSM AES256 key. Terraform does not write application secret values. The separate
+   Approve the live dispatch separately. For the development key transition, require exactly one
+   software-protected AES-256 key creation in the existing Vault and no change to the HSM key.
+   Verify the new key and the custody output. Before separately approved retirement, verify that no
+   secret version or other consumer uses the former key. While its declaration is retained, stop
+   any plan proposing another HSM key. Remove the legacy declaration in coordination with OCI
+   retirement and verify it will disappear from state on refresh without any proposed create or
+   delete. An empty-state development bootstrap must wait for the legacy declaration to be removed.
+   Terraform does not write application secret values. The separate
    apply dispatch takes the successful plan run ID and reviewed SHA-256 and rejects any delete
    or replacement. Confirm the exact reviewed effects before approving apply. An interrupted
    apply requires state reconciliation and a fresh plan.

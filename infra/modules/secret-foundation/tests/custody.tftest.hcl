@@ -10,15 +10,15 @@ variables {
   hosting_compartment_ocid        = "ocid1.compartment.oc1..synthetichosting"
   database_provisioner_group_ocid = "ocid1.group.oc1..syntheticprovisioners"
 }
-run "separate_shared_hsm_custody_domains" {
+run "separate_shared_software_custody_domains" {
   command = apply
   assert {
     condition = (
       oci_kms_vault.domain["database-provisioning"].id != oci_kms_vault.domain["application-secrets"].id && length(oci_kms_vault.domain) == 2 && length(oci_kms_key.domain) == 2 &&
       alltrue([for domain, vault in oci_kms_vault.domain : vault.vault_type == "DEFAULT" && vault.compartment_id == var.hosting_compartment_ocid]) &&
-      alltrue([for domain, key in oci_kms_key.domain : key.compartment_id == var.hosting_compartment_ocid && key.management_endpoint == oci_kms_vault.domain[domain].management_endpoint && key.protection_mode == "HSM" && key.key_shape[0].algorithm == "AES" && key.key_shape[0].length == 32 && !key.is_auto_rotation_enabled])
+      alltrue([for domain, key in oci_kms_key.domain : key.compartment_id == var.hosting_compartment_ocid && key.management_endpoint == oci_kms_vault.domain[domain].management_endpoint && key.protection_mode == "SOFTWARE" && key.key_shape[0].algorithm == "AES" && key.key_shape[0].length == 32 && !key.is_auto_rotation_enabled])
     )
-    error_message = "Keep distinct shared Vaults and HSM AES256 keys in the single existing compartment, with no exported secrets."
+    error_message = "Keep distinct shared Vaults and software-protected AES-256 keys in the single existing compartment, with no exported secrets."
   }
 }
 run "credential_read_policy_is_exactly_database_scoped" {

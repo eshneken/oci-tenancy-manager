@@ -52,7 +52,7 @@ includes replacement verification, identity retention/removal and manual resourc
 
 - [Managed PostgreSQL foundation](managed-postgresql.md) — private two-node service, provisioning references, recovery policy and upgrade safeguards; live qualification pending
 
-- [Vault custody foundation](vault-foundation.md) — separate security roots, shared Vault/HSM keys, private ingestion handoff and database-reader IAM
+- [Vault custody foundation](vault-foundation.md) — separate security roots, shared Vaults and software-protected keys, private ingestion handoff and database-reader IAM
 
 - [Hosting compartment input](hosting-compartment.md) — required per-environment Actions Secret, private renderer and one-compartment placement across infrastructure roots
 

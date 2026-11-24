@@ -26,7 +26,7 @@ remain separate tenancies, Vaults and credentials. See the [Vault foundation](..
 OTM stores its local recovery-administrator password hash in PostgreSQL, not retrievable plaintext.
 Owner/member console passwords and their MFA seeds are not OTM-managed secrets. Public PEMs, UUIDs,
 secret OCIDs, fingerprints and client IDs are references/public material, not credential contents.
-KMS HSM master-key versions have their own custody/rotation procedure; they are not secret versions
+KMS master-key versions have their own custody/rotation procedure; they are not secret versions
 and must never be pruned by this cleanup policy. GitHub/OKE short-lived identity tokens avoid static
 keys where qualified; OCI federation does not automatically provide Docker-registry authentication.
 

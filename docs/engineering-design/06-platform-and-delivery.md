@@ -613,7 +613,7 @@ The [managed database source guide](../how-to/managed-postgresql.md) records the
 
 ### Vault custody source follow-up — 13 November 2026
 
-The [Vault/IAM foundation](../how-to/vault-foundation.md) creates separate database-provisioning/application Vaults and HSM AES256 keys in one existing hosting compartment in separate environment security roots. Initial secret ingestion remains outside Terraform; an approved existing provisioning group gains only exact-Vault-conditioned database-secret/Vault reads. Runtime workloads, federation, effective IAM, key rotation and service recovery still require their own qualification.
+The [Vault/IAM foundation](../how-to/vault-foundation.md) creates separate database-provisioning/application Vaults and software-protected AES-256 keys in one existing hosting compartment in separate environment security roots. Initial secret ingestion remains outside Terraform; an approved existing provisioning group gains only exact-Vault-conditioned database-secret/Vault reads. Runtime workloads, federation, effective IAM, key rotation and service recovery still require their own qualification.
 
 
 ## V1 network simplification — 14 November 2026

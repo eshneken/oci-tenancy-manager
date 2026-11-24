@@ -530,7 +530,7 @@ Status: **Pending**. [Implemented security roots](vault-foundation.md) use mocke
 
 - Verify independent staging/production tenancy, hosting ancestry, actual group membership/principal,
   state key/bucket grants and IAM propagation; no inherited policy may unintentionally bridge domains.
-- Verify no child compartments are created; both DEFAULT shared Vaults and enabled HSM AES256 keys use the selected existing hosting compartment; no
+- Verify no child compartments are created; both DEFAULT shared Vaults and enabled software-protected AES-256 keys use the selected existing hosting compartment; no
   secret payload enters Terraform input, state, plan, GitHub logs/artifacts or public source.
 - Through the approved custodian, ingest a strong initial database password into its exact DB Vault/key in the selected hosting compartment. Retain only private OCID/version references and verify real DB provisioning
   using the intended requester read grants; add no speculative broad service/tenancy fallback.
