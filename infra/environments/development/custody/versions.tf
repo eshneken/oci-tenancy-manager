@@ -7,6 +7,9 @@ terraform {
       version = "= 9.13.0"
     }
   }
-  # Set an absolute private path with -backend-config before applying; never use staging state.
-  backend "local" {}
+  # The development bucket is bootstrapped separately. The custody state key is fixed.
+  backend "oci" {
+    key  = "custody/development/terraform.tfstate"
+    auth = "ResourcePrincipal"
+  }
 }

@@ -63,7 +63,7 @@ An optional `pass_phrase` supports an encrypted PEM. It must not rely on credent
 Use an absolute or `~/` path to the config and private key. Files must be current-user-owned,
 regular, nonempty, no larger than 64 KiB, single-linked, and inaccessible to group/others; use mode
 0600. Symlink leaves, relative paths and `..` traversal are rejected. Atlas never writes or fixes
-permissions on these files. No real `~/.oci` file was needed or inspected during implementation.
+permissions on these files. The 14 November source checkpoint used synthetic profiles.
 
 `platform_identity(settings)` validates the complete application profile, selects the exact named
 section, checks its tenancy and region, and constructs a real SDK API-key signer. Only known signer
@@ -76,26 +76,68 @@ OKE. Vault region must agree before private files are read. The local platform p
 approved Vault/parent operations; child calls still use each registered child's automation credential.
 An application admin login and a platform SDK identity are separate authorities.
 
-## Minimal development custody with Terraform
+## Development custody through GitHub Actions
 
-`infra/environments/development/custody` creates one shared Vault and HSM AES256 key in the explicit
-existing development compartment. It creates no OKE, managed database, network, compartments,
-secret contents, IAM grants or hosted GitHub deployment environment. Vault/key replacement is guarded.
-The root is local-operator-only with explicit `APIKey` and a named profile from `~/.oci/config`.
+The approved development target is a compartment named `otm-development`, directly under the non-production
+tenancy. The laptop profile remains private and is used for laptop SDK calls and approved operator
+bootstrap. The development custody workflow uses temporary federated credentials.
 
-Before applying, verify the intended principal, tenancy and compartment and effective IAM grants.
-Supply private variables `oci_profile`, `tenancy_ocid`, `hosting_compartment_ocid` and `region`.
-Initialize the local backend with an explicit absolute private state path through `-backend-config`;
-never reuse staging state or use a shared/default state location. Review the plan before applying.
-Keep state/backups outside the checkout with owner-only permissions. This is not a workflow invocation
-or authorization to provision cloud resources now. The Terraform provider uses its own profile loader;
-Atlas's additional private-file/profile checks are not claimed for Terraform.
+1. **Verify the target before requesting approval.** Independently check the named profile's
+   principal, tenancy, region, namespace, and the exact compartment name, OCID and parent. Create
+   the compartment only after approval. The shared Actions renderer currently accepts
+   `us-ashburn-1`; verify the selected deployment region before configuring trust.
+2. **Bootstrap state with separately approved operator authority.** Use
+   `infra/environments/development/bootstrap` with an explicit absolute owner-only local backend
+   path and private tfvars. Supply `oci_profile`, `hosting_compartment_ocid`, and a `target` object
+   containing `environment = "development"`, `tenancy_ocid`, `object_storage_namespace` and
+   `region`. Bootstrap checks the compartment name, active state and root parent before bucket creation.
+   Preserve the bootstrap state privately. With `OTM_DEV_BOOTSTRAP_DIR` set to the absolute,
+   owner-only directory containing the private `bootstrap.tfvars.json`, prepare and inspect a plan
+   from the repo root:
+
+   ```sh
+   terraform -chdir=infra/environments/development/bootstrap init \
+     -backend-config="path=${OTM_DEV_BOOTSTRAP_DIR}/bootstrap.tfstate"
+   terraform -chdir=infra/environments/development/bootstrap plan \
+     -var-file="${OTM_DEV_BOOTSTRAP_DIR}/bootstrap.tfvars.json" \
+     -out="${OTM_DEV_BOOTSTRAP_DIR}/bootstrap.tfplan"
+   terraform -chdir=infra/environments/development/bootstrap show \
+     "${OTM_DEV_BOOTSTRAP_DIR}/bootstrap.tfplan"
+   ```
+
+   The expected result is a private, versioned Standard bucket named `otm-development-tfstate`. Custody uses
+   `custody/development/terraform.tfstate`. If custody was ever applied with the older local
+   backend, stop and review state migration before initializing the new backend.
+3. **Configure the protected `development` GitHub Environment.** Both dispatches require
+   human review. Allow only protected `master` and disable administrator bypass. Qualify one
+   restricted token-exchange client and exact OIDC claims for this environment and workflow,
+   with audience `otm-infrastructure-development`. Use the named laptop key only on the laptop.
+4. **Store the scoped configuration in the environment.** Set
+   `OTM_INFRA_IDENTITY_DOMAIN_URL`, `OTM_INFRA_CLIENT_ID`, `OTM_INFRA_CLIENT_SECRET`,
+   `OTM_HOSTING_COMPARTMENT_OCID` and `OTM_CUSTODY_INPUTS_JSON` as environment secrets.
+   The JSON has only the `target` object from step 2. Qualify the first plan with Vault/key discovery
+   access and the needed development state, lock and plan-object permissions. After reviewing
+   the exact first saved plan in step 5, separately approve any Vault/key mutation grants and
+   limit them to development custody. Once granted, OCI sees the same principal for both operations. GitHub review, the explicit
+   apply switch, and the exact saved-plan check govern apply. Deny application secret access,
+   cross-environment access and trust administration. Set `OTM_INFRASTRUCTURE_ENABLED=true`
+   only after approval and setup validation. Leave `OTM_INFRASTRUCTURE_APPLY_ENABLED` off until
+   apply authority and the first apply have been separately approved.
+5. **Review the exact plan privately.** In **Actions → Development infrastructure** on `master`,
+   select `plan`. The plan can write a lock and a saved plan object in the development bucket.
+   Approve its first live dispatch separately. The expected initial resource changes are one Vault
+   and one HSM AES256 key. Terraform does not write application secret values. The separate
+   apply dispatch takes the successful plan run ID and reviewed SHA-256 and rejects any delete
+   or replacement. Confirm the exact reviewed effects before approving apply. An interrupted
+   apply requires state reconciliation and a fresh plan.
+
+See the [shared plan and apply procedure](infrastructure-plans.md) for saved-plan custody and
+recovery. Development creates no hosted network, compute, database, or child tenancy.
 
 ## What is implemented and what comes next
 
 Implemented: strict settings, named API-key signer, OKE selection, shared Vault-reader composition,
-synthetic regressions and mock-tested minimal development custody source. No real profile, OCIDs,
-private keys or resources are configured. The existing simulator API/worker launchers explicitly
+synthetic regressions and mock-tested minimal development custody source. Actual private target settings and live resources are maintained outside this source. The existing simulator API/worker launchers explicitly
 refuse OCI mode rather than silently running simulated mutations under a real-OCI profile.
 
 Next: compose the full live OCI service adapters and laptop launcher, provide private Vault references
@@ -121,3 +163,23 @@ passed. Independent documentation/security reviews passed. No UI changed; the fu
 Playwright suite remains a milestone/PR gate. No saved 8443 code/configuration was published or
 changed for this slice, and its health endpoint remained successful. Actual OCI IAM/profile and
 full live service composition remain pending.
+
+## Development custody workflow validation
+
+The development workflow and bootstrap source passed independent documentation and security
+review. The security review identified the need to verify exact compartment placement. The
+bootstrap now requires OCI readback of the active compartment name and its direct root parent
+before planning the bucket, and the reviewer verified the guard and its negative mock test.
+
+The targeted infrastructure workflow tests passed 201 cases. The complete backend unit gate
+passed 3,321 cases at 95.0685% line coverage. Terraform passed 168 mock cases and eight expected
+replacement rejections. GitHub environment activation, live federation, remote state locking,
+and Vault/key apply remain pending separate qualification and approval.
+
+The first approved bucket apply was rejected because OCI free-form tag keys cannot contain
+periods. A read-only bucket lookup and the local Terraform state confirmed that no bucket was
+created. The state module and development Vault and key now use hyphenated tag keys. The revised
+plan contained only one private versioned bucket creation. On 24 November 2026, the approved
+laptop apply succeeded. OCI readback confirmed the Standard bucket in the intended development
+compartment, with public access disabled and versioning enabled. The owner-only local bootstrap
+state contains exactly that bucket.

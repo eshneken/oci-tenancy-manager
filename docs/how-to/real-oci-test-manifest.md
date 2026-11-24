@@ -632,8 +632,15 @@ Pending: deploy explicit service-account token/CA mounts and workload IAM scoped
 
 ## Laptop API-key development
 
-Pending tenancy access: register a dedicated development API key/profile and verify intended principal/region/tenancy, least-privilege development Vault and parent authority, denial for staging Vault access, real SDK signature verification and revoked-key errors. Qualify all OCI-triggered activation/owner emails go to the configured test address. Confirm laptop/local database and hosted staging manage independent child inventories without sharing credentials or state. Apply/review the minimal development custody Terraform root only with private inputs/state and verify Vault/key guards/effective IAM. Full live service/launcher composition remains pending; synthetic profile tests do not prove live permissions. [Runbook and source boundary](laptop-oci-development.md).
+The non-production tenancy and named profile support signed reads. Pending: qualify the dedicated development principal’s least-privilege Vault and parent authority, denial for staging Vault access, and revoked-key errors. Qualify all OCI-triggered activation/owner emails go to the configured test address. Confirm laptop/local database and hosted staging manage independent child inventories without sharing credentials or state. Review development custody plans privately and verify Vault/key guards and effective IAM. Full live service/launcher composition remains pending; synthetic profile tests do not prove live permissions. [Runbook and source boundary](laptop-oci-development.md).
 
+
+The development state-bucket bootstrap passed on 24 November 2026. Development custody still requires qualification of exact
+workflow claims for the protected `development` environment, private state and lock behavior,
+and one approved Vault/key apply. Qualify the first plan before granting Vault/key mutation
+permissions. After that grant, both dispatches share the same OCI principal. Verify that GitHub
+approval, the separate apply enablement and exact-plan review are enforced. Keep all cases
+Pending until evidenced.
 
 ## Hosted workload Vault identity
 

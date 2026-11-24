@@ -1,32 +1,37 @@
-# Named ~/.oci/config profile used by the local Terraform operator; no browser authentication.
-variable "oci_profile" {
-  type = string
+# A fixed root rejects a target record labeled for the other environment.
+variable "target" {
+  description = "Approved development target references; never include credentials."
+  type = object({
+    # Fixed environment label for this root.
+    environment = string
+    # Non-production root tenancy expected by the operator or federated identity.
+    tenancy_ocid = string
+    # Object Storage namespace checked against the tenancy during bootstrap.
+    object_storage_namespace = string
+    # Explicit OCI region for resources and their state bucket.
+    region = string
+  })
   validation {
-    condition     = can(regex("^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$", var.oci_profile)) && lower(var.oci_profile) != "default"
-    error_message = "Select an explicit named development API-key profile, never DEFAULT."
+    condition     = var.target.environment == "development"
+    error_message = "This root accepts only the development environment target record."
   }
 }
-# Existing non-production platform tenancy; staging may share this parent but not this state/Vault.
-variable "tenancy_ocid" {
+
+# CI receives an ephemeral resource principal for both the provider and state backend.
+variable "oci_auth" {
   type = string
   validation {
-    condition     = can(regex("^ocid1[.]tenancy[.]oc[0-9]+[.][a-z0-9.-]{1,220}$", var.tenancy_ocid))
-    error_message = "Provide the intended non-production tenancy OCID."
+    condition     = var.oci_auth == "ResourcePrincipal"
+    error_message = "Development custody CI requires ResourcePrincipal."
   }
 }
-# Existing development compartment, a sibling of staging; do not install into staging's compartment.
+
+# Required OTM_HOSTING_COMPARTMENT_OCID from this environment; one existing compartment, no children.
+# Syntax does not establish tenancy ownership or permission; independently verify both before apply.
 variable "hosting_compartment_ocid" {
   type = string
   validation {
-    condition     = can(regex("^ocid1[.]compartment[.]oc[0-9]+[.][a-z0-9.-]{1,220}$", var.hosting_compartment_ocid))
-    error_message = "Provide the existing development compartment OCID."
-  }
-}
-# Full region name, explicit to avoid a default-location lookup or wrong-region Vault creation.
-variable "region" {
-  type = string
-  validation {
-    condition     = can(regex("^[a-z][a-z0-9-]{1,61}[0-9]$", var.region))
-    error_message = "Provide an OCI region name."
+    condition     = length(var.hosting_compartment_ocid) <= 255 && can(regex("^ocid1[.]compartment[.][a-z0-9]+[.][a-z0-9-]*[.][a-z0-9]+$", var.hosting_compartment_ocid))
+    error_message = "Provide the selected environment's existing hosting compartment OCID, at most 255 characters."
   }
 }

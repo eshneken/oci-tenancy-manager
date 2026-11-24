@@ -27,8 +27,12 @@ run "private_recoverable_standard_bucket" {
     error_message = "Active state and lock objects cannot depend on archive retrieval."
   }
   assert {
-    condition     = oci_objectstorage_bucket.state.compartment_id == var.target.compartment_ocid && oci_objectstorage_bucket.state.freeform_tags["otm.environment"] == "staging"
+    condition     = oci_objectstorage_bucket.state.compartment_id == var.target.compartment_ocid && oci_objectstorage_bucket.state.freeform_tags["otm-environment"] == "staging"
     error_message = "The bucket must stay bound to the reviewed compartment/environment."
+  }
+  assert {
+    condition     = alltrue([for key in keys(oci_objectstorage_bucket.state.freeform_tags) : can(regex("^[A-Za-z0-9-]+$", key))])
+    error_message = "Bucket tag keys must use OCI-compatible names."
   }
 }
 

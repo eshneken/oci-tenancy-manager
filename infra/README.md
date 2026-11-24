@@ -5,6 +5,8 @@ and production use separate roots and separate tenancies. Optional [held Caddy/N
 
 | Directory | Responsibility |
 | --- | --- |
+| `environments/development/bootstrap/` | Named laptop profile and local operator state for the dedicated development bucket |
+| `environments/development/custody/` | Fixed remote state and ephemeral CI principal for one Vault and HSM key |
 | `modules/state-bootstrap/` | One private, versioned Standard Object Storage bucket, with a namespace check and replacement/destruction guard |
 | `environments/staging/bootstrap/` | Fixed staging binding and explicit operator authentication |
 | `environments/production/bootstrap/` | Fixed production binding and explicit operator authentication |
@@ -31,7 +33,7 @@ bash scripts/check_infrastructure.sh
 ```
 
 The script checks formatting, initializes with `-backend=false -lockfile=readonly`, validates all
-thirteen configurations and runs native Terraform provider mocks. It needs network access to install
+fourteen configurations and runs native Terraform provider mocks. It needs network access to install
 the locked provider, but no OCI credentials and no OCI API calls. The suites cover all modules and
 both environments' bootstrap/platform roots. Negative journeys also verify cluster and state-bucket replacement guards. A separate negative journey performs a mocked apply followed by a blocked replacement
 plan; the script requires that precise lifecycle rejection, rather than accepting an arbitrary failure.
@@ -140,7 +142,12 @@ is composed with Vault and OCI and qualified in staging.
 
 ## Laptop development custody
 
-`environments/development/custody/` creates only an independent shared application Vault and HSM key in an explicit existing development compartment. It uses a named API-key profile and separate private local state; it does not duplicate the staging OKE/PostgreSQL stack, create compartments or grant IAM. See [the development runbook](../docs/how-to/laptop-oci-development.md#minimal-development-custody-with-terraform). Native mock tests are included in `scripts/check_infrastructure.sh`; live apply is not part of source validation.
+`environments/development/bootstrap/` uses a named laptop API-key profile and private local
+state to create the dedicated state bucket. `environments/development/custody/` uses that remote
+backend and a short-lived GitHub Actions principal to plan and apply one application Vault and
+HSM key in the existing development compartment. Compartments and IAM are administrator
+prerequisites. The [development runbook](../docs/how-to/laptop-oci-development.md#development-custody-through-github-actions)
+records the completed bucket bootstrap and the pending live custody qualification.
 
 
 ## Hosted workload Vault reads

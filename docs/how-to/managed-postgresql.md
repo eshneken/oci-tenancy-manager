@@ -119,7 +119,7 @@ not add an application-owned backup engine, recovery journal or cross-region DR 
 
 ## Offline checks and remaining boundaries
 
-Run `bash scripts/check_infrastructure.sh`. All thirteen configurations use provider mocks and
+Run `bash scripts/check_infrastructure.sh`. All configurations use provider mocks and
 `init -backend=false`; no OCI authentication, live state backend or database connection is involved.
 The module tests cover private subnet/NSG bindings, provisioning references, HA sizing, UTC windows,
 backup/PITR intent, discovery failure/ambiguity and explicit upgrade-request fields. A mock apply then

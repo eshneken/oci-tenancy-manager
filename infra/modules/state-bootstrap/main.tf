@@ -18,9 +18,10 @@ resource "oci_objectstorage_bucket" "state" {
   access_type    = "NoPublicAccess"
   storage_tier   = "Standard"
   versioning     = "Enabled"
+  # OCI free-form tag keys cannot contain periods or spaces.
   freeform_tags = {
-    "otm.environment" = var.expected_environment
-    "otm.component"   = "terraform-state"
+    "otm-environment" = var.expected_environment
+    "otm-component"   = "terraform-state"
   }
   lifecycle {
     prevent_destroy = true

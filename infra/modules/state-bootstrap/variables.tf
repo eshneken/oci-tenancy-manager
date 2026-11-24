@@ -1,10 +1,10 @@
 # This label is fixed by the environment root, not a substitute for IAM authorization.
 variable "expected_environment" {
   type        = string
-  description = "Fixed staging or production label selected by the calling root."
+  description = "Fixed development, staging or production label selected by the calling root."
   validation {
-    condition     = contains(["staging", "production"], var.expected_environment)
-    error_message = "The environment must be staging or production."
+    condition     = contains(["development", "staging", "production"], var.expected_environment)
+    error_message = "The environment must be development, staging or production."
   }
 }
 

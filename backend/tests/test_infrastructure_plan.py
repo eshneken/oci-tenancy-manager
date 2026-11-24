@@ -33,6 +33,8 @@ def environment_values(environment="staging", component="security"):
         "object_storage_namespace": "synthetic",
     }
     inputs = {"target": target, "database_provisioner_group_ocid": "ocid1.group.oc1..synthetic"}
+    if component == "custody":
+        inputs = {"target": target}
     if component == "platform":
         inputs = {
             "target": target,
@@ -123,7 +125,13 @@ def test_context_rejects_unapproved_job(key, value):
 # contract.
 @pytest.mark.parametrize(
     "environment,component",
-    [("development", "security"), ("staging", "../platform"), ("production", "bootstrap")],
+    [
+        ("development", "security"),
+        ("staging", "custody"),
+        ("production", "custody"),
+        ("staging", "../platform"),
+        ("production", "bootstrap"),
+    ],
 )
 def test_context_fixed_roots(environment, component):
     with pytest.raises(ValueError, match="FIXED_INFRASTRUCTURE_TARGET_REQUIRED"):
@@ -182,7 +190,7 @@ def test_render_inputs(tmp_path, environment, component):
     values = environment_values(environment, component)
     inputs = module.context(environment, component, values)
     files, digest = module.render_inputs(tmp_path, inputs, component, values)
-    assert len(files) == (2 if component == "security" else 5)
+    assert len(files) == (5 if component == "platform" else 2)
     assert len(digest) == 64
     assert (
         json.loads((tmp_path / "inputs.tfvars.json").read_text())["oci_auth"] == "ResourcePrincipal"
@@ -533,8 +541,16 @@ def test_private_plan_upload(tmp_path, monkeypatch, fault):
 
 # Drive actual rendering, federation/file custody, tar creation and cleanup with only remote effects
 # mocked.
-@pytest.mark.parametrize("environment", ["staging", "production"])
-@pytest.mark.parametrize("component", ["security", "platform"])
+@pytest.mark.parametrize(
+    "environment,component",
+    [
+        ("development", "custody"),
+        ("staging", "security"),
+        ("staging", "platform"),
+        ("production", "security"),
+        ("production", "platform"),
+    ],
+)
 @pytest.mark.parametrize("fault", [None, "version", "plan", "upload"])
 def test_prepare_full_plan(monkeypatch, environment, component, fault):
     values = environment_values(environment, component)
@@ -545,6 +561,8 @@ def test_prepare_full_plan(monkeypatch, environment, component, fault):
     )
     monkeypatch.setattr(module, "signing_pair", lambda: (b"private-synthetic", b"public-synthetic"))
     calls, directories = [], []
+    bucket_preflight = Mock()
+    monkeypatch.setattr(module, "plan_storage", bucket_preflight)
 
     # Assert the real orchestration's command arguments and create only a synthetic binary plan.
     def fake_terraform(executable, arguments, root, child_env, directory, deadline):
@@ -561,6 +579,7 @@ def test_prepare_full_plan(monkeypatch, environment, component, fault):
         calls.append(arguments)
         directories.append(directory)
         if arguments[0] == "version":
+            assert bucket_preflight.call_count == (1 if environment == "development" else 0)
             return json.dumps(
                 {"terraform_version": "1.0.0" if fault == "version" else "1.15.5"}
             ).encode()
@@ -599,7 +618,7 @@ def test_prepare_full_plan(monkeypatch, environment, component, fault):
             assert [args[0] for args in calls] == ["version", "init", "validate", "plan", "show"]
             assert "-lockfile=readonly" in calls[1] and "-lock-timeout=60s" in calls[3]
             assert len([arg for arg in calls[3] if arg.startswith("-var-file=")]) == (
-                2 if component == "security" else 5
+                5 if component == "platform" else 2
             )
         assert os.umask(0o027) == 0o027
     finally:
@@ -744,3 +763,25 @@ def test_federation_bounded_apply_lifetime(tmp_path, monkeypatch, minutes, expir
         module.federate(tmp_path, target, "staging", values, lifetime_minutes=minutes)
         payload = module.urllib.parse.parse_qs(request.call_args.args[2].decode())
         assert payload["rpst_exp"] == ["120"]
+
+
+# Both custody dispatch modes use the same protected environment with independent apply enablement.
+def test_development_workflow_contract():
+    workflow = yaml.safe_load((module.ROOT / ".github/workflows/infra-development.yml").read_text())
+    inputs = workflow[True]["workflow_dispatch"]["inputs"]
+    assert set(workflow[True]) == {"workflow_dispatch"}
+    assert set(inputs) == {"operation", "plan_run_id", "reviewed_plan_sha256"}
+    assert inputs["operation"]["default"] == "plan"
+    job = workflow["jobs"]["infrastructure"]
+    assert job["if"] == "github.ref == 'refs/heads/master'"
+    assert job["environment"] == "development"
+    assert job["steps"][-1]["env"]["OTM_INFRASTRUCTURE_APPLY_ENABLED"] == (
+        "${{ vars.OTM_INFRASTRUCTURE_APPLY_ENABLED || 'false' }}"
+    )
+    assert workflow["concurrency"] == {
+        "group": "otm-environment-development",
+        "cancel-in-progress": False,
+    }
+    assert job["steps"][-1]["run"].count("--environment development --component custody") == 2
+    assert "upload-artifact" not in str(workflow)
+    assert "OCI_PROFILE" not in str(workflow)

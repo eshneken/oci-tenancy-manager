@@ -7,6 +7,7 @@ cd "$repo_dir"
 
 terraform fmt -check -recursive infra
 for root in \
+  infra/environments/development/bootstrap \
   infra/environments/development/custody \
   infra/modules/state-bootstrap \
   infra/environments/staging/bootstrap \

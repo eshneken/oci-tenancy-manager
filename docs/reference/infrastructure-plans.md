@@ -30,6 +30,11 @@ shared-input parity and explicit manual staging-test confirmation. These are imp
 not evidence of configured production approval or an exercised OCI apply. Terraform retains native
 state locking/stale-plan checks; an obsolete plan must be regenerated and reviewed.
 
+Development uses the fixed `custody` root, its own private bucket and state key, and one
+protected GitHub Environment and federated principal. Every dispatch requires approval, and
+apply also requires explicit enablement and an exact reviewed plan without deletion or replacement.
+Once apply permissions are granted, both dispatches use that principal's effective OCI permissions. See the [development setup](../how-to/laptop-oci-development.md#development-custody-through-github-actions).
+
 ## Federation contract
 
 The owner selected GitHub-hosted runners with a separate restricted OAuth client secret in each
@@ -39,7 +44,8 @@ never enters this workflow. This is federation without persistent OCI user signi
 fully secretless authentication**.
 
 Each approved job requests a GitHub JWT with audience `otm-infrastructure-staging` or
-`otm-infrastructure-production`. It generates a fresh RSA 2048 pair through a fixed, shell-free
+`otm-infrastructure-production` for those hosted environments. Development uses
+`otm-infrastructure-development`. It generates a fresh RSA 2048 pair through a fixed, shell-free
 OpenSSL invocation with no inherited credential/configuration environment. The private key is
 never sent to GitHub or OCI. Only the public key and GitHub JWT enter the verified identity-domain
 `/oauth2/v1/token` request. Both HTTP paths reject redirects and use verified TLS, a 25-second
