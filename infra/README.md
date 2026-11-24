@@ -5,7 +5,7 @@ and production use separate roots and separate tenancies. Optional [held Caddy/N
 
 | Directory | Responsibility |
 | --- | --- |
-| `environments/development/bootstrap/` | Named laptop profile and local operator state for the dedicated development bucket |
+| `environments/development/bootstrap/` | Named laptop profile and private local state for the development bucket and GitHub IAM policy |
 | `environments/development/custody/` | Fixed remote state and ephemeral CI principal for one Vault and HSM key |
 | `modules/state-bootstrap/` | One private, versioned Standard Object Storage bucket, with a namespace check and replacement/destruction guard |
 | `environments/staging/bootstrap/` | Fixed staging binding and explicit operator authentication |
@@ -143,10 +143,11 @@ is composed with Vault and OCI and qualified in staging.
 ## Laptop development custody
 
 `environments/development/bootstrap/` uses a named laptop API-key profile and private local
-state to create the dedicated state bucket. `environments/development/custody/` uses that remote
+state to manage the dedicated state bucket and scoped GitHub IAM policy.
+`environments/development/custody/` uses that remote
 backend and a short-lived GitHub Actions principal to plan and apply one application Vault and
-HSM key in the existing development compartment. Compartments and IAM are administrator
-prerequisites. The [development runbook](../docs/how-to/laptop-oci-development.md#development-custody-through-github-actions)
+HSM key in the existing development compartment. Compartment creation and identity-domain trust
+setup are administrator prerequisites. The [development runbook](../docs/how-to/laptop-oci-development.md#development-custody-through-github-actions)
 records the completed bucket bootstrap and the pending live custody qualification.
 
 

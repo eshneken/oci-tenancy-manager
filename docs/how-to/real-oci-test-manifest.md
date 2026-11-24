@@ -637,10 +637,10 @@ The non-production tenancy and named profile support signed reads. Pending: qual
 
 The development state-bucket bootstrap passed on 24 November 2026. Development custody still requires qualification of exact
 workflow claims for the protected `development` environment, private state and lock behavior,
-and one approved Vault/key apply. Qualify the first plan before granting Vault/key mutation
-permissions. After that grant, both dispatches share the same OCI principal. Verify that GitHub
-approval, the separate apply enablement and exact-plan review are enforced. Keep all cases
-Pending until evidenced.
+and one approved Vault/key apply. The operator bootstrap manages the existing GitHub IAM policy,
+which grants the shared OCI principal initial Vault/key creation. Verify the first plan has no
+Vault/key effects. Verify that GitHub approval, separate apply enablement and exact-plan review
+are enforced. Keep all live qualification cases Pending until evidenced.
 
 ## Hosted workload Vault identity
 
