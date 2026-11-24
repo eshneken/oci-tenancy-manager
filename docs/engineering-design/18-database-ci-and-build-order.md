@@ -133,7 +133,7 @@ are implementation proposals; once configured, make them required for protected 
 | `backend-unit` | All backend unit tests pass; complete first-party backend source, including unimported files, reaches at least 95% unit-only line coverage |
 | `frontend-unit` | All frontend unit tests pass; complete first-party frontend source reaches at least 95% unit-only line coverage; do not silently omit existing/reused application JS |
 | `postgres-integration` | Fresh disposable Docker PostgreSQL, migrations and real repository/transaction/constraint/runner scenarios all pass; missing DB means failure |
-| `playwright-ui` | Built application plus isolated prototype/backend/database and simulator; required real browser journeys pass, including desktop/mobile and failure behavior |
+| `playwright-ui` | Built application plus isolated backend/database and simulator; required real browser journeys pass, including desktop/mobile and failure behavior |
 | `security` | Required secret/static/resolved dependency checks; applicable built-image/IaC checks; scan failure, unavailable/missing/skipped required results block merge. Independent slice review and pre-first-push PII publication review follow [D56](../security-review-policy.md) |
 | `required-ci` | Fail-closed aggregate: every required job actually ran and succeeded, required coverage reports exist and meet thresholds, and results match the current candidate |
 

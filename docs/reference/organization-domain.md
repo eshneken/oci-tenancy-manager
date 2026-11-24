@@ -4,7 +4,7 @@
 
 [Production data model](../engineering-design/11-production-data-model.md) ·
 [Domain and journeys](../engineering-design/01-domain-and-journeys.md) ·
-[Preserved prototype](../../prototype/README.md)
+[Implemented storage](organization-storage.md)
 
 The subsequent [authorized storage slice](organization-storage.md) now persists these domain
 results. This guide describes the pure functions; storage transactions, guards and source maps
@@ -15,7 +15,7 @@ are documented separately. CSV/screens are integrated; durable review/associatio
 `backend/src/otm/organization` contains the production copies of the reusable organization-domain
 logic: canonical contracts, strict CSV intake, pure graph reconciliation and review-condition
 fingerprints. The code and tests do not import the prototype package, private feeds, local actors,
-local web server, persistence adapters or simulated tenancy-success actions. The original pure extraction added no database migration, HTTP route, CLI command, permission grant or OCI call. Subsequent authorized storage/screens and the current parity coordination are separate from these pure functions. The separate prototype remains available for existing demonstrations.
+local web server, persistence adapters or simulated tenancy-success actions. The original pure extraction added no database migration, HTTP route, CLI command, permission grant or OCI call. Subsequent authorized storage/screens and the current parity coordination are separate from these pure functions. The earlier prototype has been retired; use the current application for demonstrations.
 
 The extraction preserves the accepted behavior rather than introducing another organization model.
 Prototype-only review simulation fields and unused local registry initialization/onboarding flags

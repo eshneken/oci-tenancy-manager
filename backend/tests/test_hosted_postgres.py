@@ -1,6 +1,5 @@
 """Hosted TLS, schema ownership, real authentication and native queue execution on disposable PG."""
 
-import json
 import os
 import secrets
 import shutil
@@ -15,6 +14,7 @@ from uuid import uuid4
 import procrastinate
 import pyotp
 import pytest
+from docker_test_resources import remove_owned
 from fastapi.testclient import TestClient
 from psycopg import sql
 from psycopg.conninfo import make_conninfo
@@ -264,16 +264,7 @@ def tls_database(tmp_path_factory):
         for engine in engines:
             engine.dispose()
         # Verify exact ownership before removing a container, even after partial fixture failure.
-        inspected = subprocess.run(
-            [client, "inspect", name], check=False, capture_output=True, timeout=30
-        )
-        if inspected.returncode == 0:
-            assert (
-                json.loads(inspected.stdout)[0]["Config"]["Labels"].get("otm.hosted.tls") == owner
-            )
-            tool([client, "rm", "--force", name])
-        else:
-            assert "no such" in inspected.stderr.decode().lower()
+        remove_owned(client, name, "otm.hosted.tls", owner)
 
 
 # Every runtime test obtains a fresh pool through the actual hosted verifier and TLS configuration.

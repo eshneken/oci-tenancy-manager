@@ -117,7 +117,7 @@ It needs no access to identity/hash columns, credential updates, audit, DDL or a
 Managed PostgreSQL role/TLS qualification remains part of deployment. A real Docker regression
 sets a restricted NOLOGIN role and verifies the same repository query works while identity reads,
 credential/revocation changes and audit access are denied.
-Do not run this command against the preserved organization lab database.
+Run this command only against the explicitly selected current application database.
 
 ## Daily OKE job
 

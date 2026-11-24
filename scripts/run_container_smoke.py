@@ -12,6 +12,7 @@ import tomllib
 from pathlib import Path, PurePosixPath
 from uuid import uuid4
 
+from docker_test_resources import remove_owned
 from psycopg import sql
 from sqlalchemy.engine import make_url
 
@@ -41,6 +42,14 @@ def scanner_image(manifest):
 SCANNER = scanner_image(ROOT / "tools/trivy/Dockerfile")
 
 
+# Read only the regular report emitted inside the scanner's dedicated mount.
+def read_scan_report(directory):
+    report = directory / "image-scan.json"
+    if report.is_symlink() or not report.is_file():
+        raise ValueError("IMAGE_SCAN_REPORT_REQUIRED")
+    return json.loads(report.read_text())
+
+
 # Reject asset paths outside their declared source/package trees before reading checkout content.
 def expected_assets(root):
     project = tomllib.loads((root / "backend/pyproject.toml").read_text())
@@ -60,19 +69,15 @@ def expected_assets(root):
     return result
 
 
-# A stale or foreign container name can never authorize destructive cleanup.
-def remove_owned(client, name, label, owner):
-    inspected = subprocess.run(
-        [client, "inspect", name], capture_output=True, text=True, timeout=30
-    )
-    if inspected.returncode:
-        if "no such" in inspected.stderr.lower():
-            return
-        raise RuntimeError("CONTAINER_INSPECTION_FAILED")
-    records = json.loads(inspected.stdout)
-    if len(records) != 1 or records[0]["Config"]["Labels"].get(label) != owner:
-        raise ValueError("CONTAINER_OWNERSHIP_MISMATCH")
-    subprocess.run([client, "rm", "--force", name], check=True, capture_output=True, timeout=30)
+# Drop the scratch files in this run's private directory after the scanner is gone.
+def remove_scan_inputs(directory):
+    try:
+        (directory / "image.tar").unlink(missing_ok=True)
+    finally:
+        try:
+            shutil.rmtree(directory / "cache")
+        except FileNotFoundError:
+            pass
 
 
 # Test Docker's actual context filtering, including nested canaries, without copying private data.
@@ -134,7 +139,8 @@ def main():
     deadline = time.monotonic() + 600
     stage = "build-context"
     state = None
-    image_created = False
+    scan = directory / "scan"
+    build_attempted = False
     passed = False
     try:
         # Commands own bounded logs; stdin/env carry only synthetic temporary test credentials.
@@ -153,6 +159,7 @@ def main():
 
         context_check(client, directory, command)
         stage = "image-build"
+        build_attempted = True
         command(
             [
                 client,
@@ -166,7 +173,6 @@ def main():
                 str(ROOT),
             ]
         )
-        image_created = True
         stage = "installed-image"
         flags = [
             client,
@@ -211,8 +217,12 @@ def main():
         remove_owned(client, container, "otm.container.smoke", owner)
         stage = "disposable-database"
         root = directory / "application"
-        setup(ROOT, root)
-        state = read_state(root)
+        try:
+            setup(ROOT, root)
+        finally:
+            # Capture the disposable identity before running any image probes or scanner.
+            if (root / "state.json").is_file():
+                state = read_state(root)
         name = "otm-local-" + state.instance_id.hex[:12]
         # Housekeeping uses a dedicated least-privilege login, never the API or database owner.
         engine = maintenance_engine(database_url(state, owner=True), None)
@@ -308,7 +318,9 @@ def main():
             raise RuntimeError("NATIVE_RUNTIME_PROBE_FAILED")
         remove_owned(client, container, "otm.container.smoke", owner)
         stage = "image-security"
-        archive = directory / "image.tar"
+        # Give the scanner write access only to its own inputs and outputs.
+        scan.mkdir()
+        archive = scan / "image.tar"
         command([client, "save", "--output", str(archive), image])
         command(
             [
@@ -328,7 +340,7 @@ def main():
                 "--tmpfs",
                 "/tmp:mode=1777",
                 "--mount",
-                "type=bind,src=" + str(directory) + ",dst=/scan",
+                "type=bind,src=" + str(scan) + ",dst=/scan",
                 SCANNER,
                 "image",
                 "--cache-dir",
@@ -347,7 +359,7 @@ def main():
                 "/scan/image.tar",
             ]
         )
-        report = json.loads((directory / "image-scan.json").read_text())
+        report = read_scan_report(scan)
         targets = {item.get("Class") for item in report.get("Results", [])}
         if not {"os-pkgs", "lang-pkgs"}.issubset(targets):
             raise RuntimeError("IMAGE_SCAN_COVERAGE_MISSING")
@@ -355,35 +367,33 @@ def main():
     except Exception:
         pass
     finally:
-        # A setup failure can leave its owned database before returning state.
+        scanner_stopped = False
         try:
             remove_owned(client, container, "otm.container.smoke", owner)
-            if (directory / "application/state.json").exists():
-                state = read_state(directory / "application")
+            scanner_stopped = True
+        except Exception:
+            stage, passed = "cleanup", False
+        # Setup can leave an owned database even if provisioning failed.
+        try:
+            if state is not None:
                 remove_owned(
                     client,
                     "otm-local-" + state.instance_id.hex[:12],
                     "otm.local.instance",
                     str(state.instance_id),
                 )
-            if image_created:
-                inspected = subprocess.run(
-                    [client, "image", "inspect", image],
-                    capture_output=True,
-                    text=True,
-                    check=True,
-                    timeout=30,
-                )
-                if (
-                    json.loads(inspected.stdout)[0]["Config"]["Labels"].get("otm.container.smoke")
-                    != owner
-                ):
-                    raise ValueError("IMAGE_OWNERSHIP_MISMATCH")
-                subprocess.run(
-                    [client, "image", "rm", image], capture_output=True, check=True, timeout=30
-                )
         except Exception:
             stage, passed = "cleanup", False
+        try:
+            if build_attempted:
+                remove_owned(client, image, "otm.container.smoke", owner, kind="image")
+        except Exception:
+            stage, passed = "cleanup", False
+        if scanner_stopped:
+            try:
+                remove_scan_inputs(scan)
+            except OSError:
+                stage, passed = "cleanup", False
     result = {
         "status": "pass" if passed else "fail",
         "stage": "complete" if passed else stage,

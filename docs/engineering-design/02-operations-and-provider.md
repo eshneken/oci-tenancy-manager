@@ -168,7 +168,7 @@ crash recovery and atomic runner integration remain subsequent slices.
 
 ## Native runner transaction/worker qualification
 
-The [isolated runner experiment](../../prototype/experiments/runner/README.md) now proves the
+The original isolated runner experiment established the
 accepted psycopg 3 / SQLAlchemy 2.0 path with Procrastinate's supported native connection hook.
 Operation/audit/job fixture rows share a PostgreSQL transaction; real commit rejection and
 pre/post-commit process death preserve all-or-none acceptance. Native retries, operation locks,
@@ -225,8 +225,7 @@ erDiagram
 This conceptual ER does not specify exact FK directions/columns, all workspace constraints or the
 complete production model. The many-to-many association effect is conceptual, not a commitment to
 an extra join table. Affected association IDs/roles are recorded in immutable intent/step targets;
-exact normalized/reference constraints need physical review. The [implemented ten-table ER](../../prototype/docs/organization-er-diagram.md) remains the
-truth for the running prototype; no new table has been created by this document.
+exact normalized/reference constraints need physical review. The original checkpoint’s ten-table prototype schema is retired; use the [current implemented schema](../architecture/implemented-database.md). This proposal alone creates no tables.
 
 ### Transaction and execution boundaries
 

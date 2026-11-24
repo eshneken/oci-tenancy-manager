@@ -72,9 +72,8 @@ There is no new auto-retry scheduler, manual-resume UI, notification outbox or g
 ## Actual schema and field map
 
 Migration `0002_inspection_worker` adds the third production application table,
-`public.otm_operation_step`. The separate prototype schema still has ten tables; the full proposed
-application inventory is 30. These are staged implementations of existing approved entities,
-not a new parallel operation or observation model.
+`public.otm_operation_step`. This is a staged implementation of an existing approved entity in
+the 30-table design inventory.
 
 ```mermaid
 erDiagram

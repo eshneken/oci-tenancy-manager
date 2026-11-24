@@ -3,7 +3,7 @@
 21 October 2026 | D34 accepted | Design source map, not a second application
 
 The current React application and linked implementation references are authoritative for implemented
-screen behavior. The retained prototype characterizes earlier approved business semantics; static
+screen behavior. The earlier prototype is retired; static
 walkthroughs illustrate their declared design subset and must not override working application
 contracts. Preserve the distinction between implementation, historical reference and future OCI
 qualification when updating page bodies or navigation.
@@ -14,7 +14,7 @@ qualification when updating page bodies or navigation.
 A2. [DESIGN.md](../DESIGN.md) supplies the current navy/cobalt/cool-light visual system and crisp
 3px geometry. The source table below continues to identify approved fields, behavior and flows;
 older teal screens remain interaction references while their appearance is aligned. Keep the
-retained prototype semantics as characterization evidence; current screen fields follow the implemented contracts.
+approved interaction semantics; current screen fields follow the implemented contracts.
 
 ## Screen authority
 
@@ -34,8 +34,7 @@ retained prototype semantics as characterization evidence; current screen fields
 | Onboarding and lifecycle actions | [React setup](../frontend/src/Onboarding.tsx), [guided onboarding](reference/tenancy-onboarding.md), [deletion](reference/tenancy-deletion.md) | Durable queued local simulation, manual handoff and guarded continuation; accepted work is distinct from verified effects. Static walkthroughs also preserve future provider design. |
 
 Older wireframes, static captures and decks remain historical evidence. A new illustrative screen
-must explicitly identify its scope and cannot silently replace an approved reference. The retained
-prototype remains separate from the current application.
+must explicitly identify its scope and cannot silently replace an approved reference. The earlier prototype is retired.
 
 ## Accepted tenancy information, consolidated by D44
 
@@ -75,7 +74,7 @@ data, zero pending work or approval of a new layout. Other menu links open exist
 
 ## Consistency rules for further design
 
-- Reuse the approved prototype's directory/review components and states when integrating them.
+- Preserve the current application’s approved directory/review components and states.
   Preserve actionable versus informational/history separation, sorting, filtering, paging,
   associations, review actions and truthful loading/error/empty states.
 - Reuse the tokens and interaction patterns in [DESIGN.md](../DESIGN.md) across new pages. Keep

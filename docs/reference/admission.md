@@ -48,7 +48,7 @@ erDiagram
 These are **two production admission tables**; the [worker migration](worker.md) now adds the third
 application table, `otm_operation_step`. The subsequent [session migration](authentication.md) adds
 the fourth, `otm_admin_session`. The [administrator foundation](administrators.md) adds the grant and
-reserved credential tables, for six application tables plus runner-owned tables and Alembic's version table. The preserved organization prototype has its separate ten-table schema; chapter 11's
+reserved credential tables, for six application tables plus runner-owned tables and Alembic's version table. The earlier prototype’s ten-table schema is retired; chapter 11's
 30-table inventory remains the full proposed target. Neither that complete inventory nor the toy
 runner experiment is silently created by this migration.
 

@@ -114,6 +114,7 @@ packages = ["src/otm"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["../scripts"]
 markers = ["postgres: requires a disposable local PostgreSQL database"]
 
 [tool.ruff]

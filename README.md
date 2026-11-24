@@ -118,7 +118,6 @@ feature branches and protected-master pull requests, with required tests and ind
 | [backend/](backend/README.md) | Python application, contracts and frozen migrations |
 | [frontend/](frontend/README.md) | React application and generated TypeScript contracts |
 | [docs/](docs/README.md) | Current design, implemented references, procedures and historical checkpoints |
-| [prototype/](prototype/README.md) | Retained organization lab; separate from the current runtime |
 
 Follow the [test/merge policy](docs/engineering-test-plan.md), [security review policy](docs/security-review-policy.md),
 [code documentation convention](docs/code-documentation-policy.md) and [UI baseline](DESIGN.md).
@@ -220,12 +219,6 @@ separate CSS component framework. HTML/CSS are web standards rather than additio
 
 Project-owned publication, secret, contract, documentation and code-comment checks supplement these
 tools. The main [documentation index](docs/README.md) links to their policies and operating guides.
-
-### Retained organization prototype
-
-The separate [prototype](prototype/README.md) reuses several Python tools above and adds
-[openpyxl](https://openpyxl.readthedocs.io/) for historical XLSX feed experiments. It is not
-installed in the production application image; current application intake uses CSV.
 
 ### Hosted services and planned infrastructure
 

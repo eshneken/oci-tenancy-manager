@@ -42,10 +42,6 @@
     "docs/screenshots/atlas-organization.png": "c1ac5e190d24461fe98c6cacce3b10e7bc78a1cc95fd3b400951389f26b20529",
     "docs/screenshots/atlas-tenancies.png": "37304e5a4146ffdc14ed5d63ca1688ec071e1527ff2f4d838fdf05ac670331d5",
     "frontend/public/branding-assets/atlas-icon.png": "cf79cc6ce53ccdcb5a8d92857314465eb3a3034cf58c6fc3f0c9294d5e7b1549",
-    "frontend/public/branding-assets/atlas-wordmark.png": "90e800600be9bcba65a334776269c9a31c02911066554fbf82c36c85d806fbe2",
-    "prototype/backend/tests/fixtures/synthetic_organization.csv": "d78fe5f60fe18bf45fb3aa8088dfd0f2369dce58ba6a554de8d45c0b44b0723a",
-    "prototype/diagrams/organization-schema.excalidraw": "538a283defbf5aee0f0d3e974860905067822a73fd0f6dc9ec62b5a08bde6001",
-    "prototype/diagrams/organization-schema.png": "6575c69a4d41bca65d92b1bb51c917278f82755015636bf2a390b0102f99b115",
-    "prototype/diagrams/organization-schema.svg": "5e01d333625fab6710b6ccb3e295d5b169b2ccd1a6485b316469ca69ca029392"
+    "frontend/public/branding-assets/atlas-wordmark.png": "90e800600be9bcba65a334776269c9a31c02911066554fbf82c36c85d806fbe2"
   }
 }

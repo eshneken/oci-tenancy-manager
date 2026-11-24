@@ -12,7 +12,8 @@ from pathlib import Path
 from uuid import uuid4
 
 from caddy_image_policy import check_latest, evaluate
-from run_container_smoke import SCANNER, remove_owned
+from docker_test_resources import remove_owned
+from run_container_smoke import SCANNER, read_scan_report, remove_scan_inputs
 
 from otm.caddy_ingress import caddyfile
 from otm.local_development import docker
@@ -74,12 +75,14 @@ def main():
     artifact_root = ROOT / ".local-dev/quality"
     artifact_root.mkdir(mode=0o700, parents=True, exist_ok=True)
     directory = Path(tempfile.mkdtemp(prefix="caddy-", dir=artifact_root))
+    scan = directory / "scan"
     owner = uuid4().hex
     client = docker()
     prefix = "otm-ingress-" + owner
     network, volume, image = prefix + "-net", prefix + "-state", "otm-caddy:" + owner
     names = {role: prefix + "-" + role for role in ("caddy", "ca", "backend", "scanner", "adapt")}
-    containers, owned_network, owned_volume, owned_image = [], False, False, False
+    scanner = names["scanner"]
+    containers, resources = [], []
     deadline = time.monotonic() + 300
     stage, passed = "latest-release", False
     latest_verified = None
@@ -178,6 +181,7 @@ def main():
                 raise ValueError("NATIVE_TLS_VERIFICATION_FAILED")
             return result["status"], result["body"].encode(), result["headers"]
 
+        resources.append(("image", image))
         command(
             [
                 client,
@@ -190,7 +194,7 @@ def main():
                 str(ROOT / "tools/caddy"),
             ]
         )
-        owned_image = True
+        resources.append(("network", network))
         command(
             [
                 client,
@@ -202,9 +206,8 @@ def main():
                 network,
             ]
         )
-        owned_network = True
+        resources.append(("volume", volume))
         command([client, "volume", "create", "--label", LABEL + "=" + owner, volume])
-        owned_volume = True
         python_image = re.findall(
             r"^FROM (python:[^ ]+)", (ROOT / "Dockerfile").read_text(), re.MULTILINE
         )[0]
@@ -459,9 +462,9 @@ def main():
         issued()
         protocol_passed = True
         stage = "image-scan"
-        archive = directory / "image.tar"
+        scan.mkdir()
+        archive = scan / "image.tar"
         command([client, "save", "--output", str(archive), image])
-        scanner = names["scanner"]
         containers.append(scanner)
         command(
             [
@@ -481,7 +484,7 @@ def main():
                 "--tmpfs",
                 "/tmp:mode=1777",
                 "--mount",
-                "type=bind,src=" + str(directory) + ",dst=/scan",
+                "type=bind,src=" + str(scan) + ",dst=/scan",
                 SCANNER,
                 "image",
                 "--cache-dir",
@@ -500,7 +503,7 @@ def main():
                 "/scan/image.tar",
             ]
         )
-        report = json.loads((directory / "image-scan.json").read_text())
+        report = read_scan_report(scan)
         # Scanner errors still fail command(); evaluate all returned findings without ignoring them.
         scan_policy = evaluate(report)
         assert not scan_policy["blocked"]
@@ -515,43 +518,37 @@ def main():
     ):
         pass
     finally:
-        # Capture private diagnostics, then verify ownership before deleting test resources.
+        image_scan_passed = passed
+        scanner_stopped = scanner not in containers
+        # A log or removal failure must not skip other independently owned resources.
         for name in reversed(containers):
-            result = subprocess.run(
-                [client, "logs", name], capture_output=True, check=False, timeout=10
-            )
-            (directory / (name + ".log")).write_bytes(result.stdout + result.stderr)
-            remove_owned(client, name, LABEL, owner)
-        for kind, name, owned in (
-            ("volume", volume, owned_volume),
-            ("network", network, owned_network),
-            ("image", image, owned_image),
-        ):
-            if owned:
-                record = json.loads(
-                    subprocess.run(
-                        [client, kind, "inspect", name],
-                        capture_output=True,
-                        check=True,
-                        timeout=15,
-                    ).stdout
-                )[0]
-                labels = record["Config"]["Labels"] if kind == "image" else record["Labels"]
-                if labels.get(LABEL) != owner:
-                    raise RuntimeError("CADDY_RESOURCE_OWNERSHIP_MISMATCH")
-                subprocess.run(
-                    [client, kind, "rm", name],
-                    capture_output=True,
-                    check=True,
-                    timeout=30,
+            try:
+                logs_ok = remove_owned(
+                    client, name, LABEL, owner, log_path=directory / (name + ".log")
                 )
+                if name == scanner:
+                    scanner_stopped = True
+                if not logs_ok:
+                    stage, passed = "cleanup", False
+            except (OSError, ValueError, RuntimeError, KeyError, subprocess.SubprocessError):
+                stage, passed = "cleanup", False
+        if scanner_stopped:
+            try:
+                remove_scan_inputs(scan)
+            except OSError:
+                stage, passed = "cleanup", False
+        for kind, name in reversed(resources):
+            try:
+                remove_owned(client, name, LABEL, owner, kind=kind)
+            except (OSError, ValueError, RuntimeError, KeyError, subprocess.SubprocessError):
+                stage, passed = "cleanup", False
     summary = {
         "status": "pass" if passed else "fail",
         "stage": "complete" if passed else stage,
         "artifacts": str(directory.relative_to(ROOT)),
         "saved_instance_used": False,
         "protocol_checks_passed": protocol_passed,
-        "image_scan_passed": passed,
+        "image_scan_passed": image_scan_passed,
         "image_findings": scan_policy,
         "latest_official_release": latest_verified,
     }

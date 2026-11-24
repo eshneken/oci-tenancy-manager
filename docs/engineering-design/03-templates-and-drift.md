@@ -56,11 +56,10 @@ Desired, applied and fully verified assignment remain separate states.
 
 ## Configuration navigation and issue resolution: D32
 
-D34 clarification: the working organization prototype remains authoritative for Organization and
-Organization drift page bodies. Their configuration-walkthrough samples are placeholders only.
-Organization menu entries are non-clickable in the current design shell; old direct routes show an
-explicit placeholder, not invented records or an empty-success queue. All current walkthroughs share
-the same menu structure. See [the authority map](../ui-screen-authority.md).
+At the D34 checkpoint, the organization prototype supplied the Organization and Organization drift
+page bodies. The configuration walkthrough used non-interactive menu entries and explicit
+placeholders for those pages. The [screen authority map](../ui-screen-authority.md) points to the
+current React implementation.
 
 D33 names the people area **Organization** and its review submenu **Organization drift**, matching
 **Configuration drift**. This is navigation terminology; actionable and informational review
@@ -429,7 +428,7 @@ production ER. It keeps baseline+overrides together per accepted tenancy revisio
 is a review proposal, not an accepted migration or a change to the ten-table prototype. Its
 observation/issue and plan/acceptance contracts make the screen semantics explicit.
 
-The current [ER model](../../prototype/docs/organization-er-diagram.md) remains ten implemented prototype tables.
+The original checkpoint described ten prototype tables. Use the [current implemented schema](../architecture/implemented-database.md) for application storage.
 Retain immutable baseline/override revisions, one current-for-new pointer, per-tenancy assignment
 and canonical managed-object bindings/observations. Full-list overrides store arrays and source/review
 baseline references, not one override row per quota numeric field. Tag key/default bindings remain

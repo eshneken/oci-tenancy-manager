@@ -3,15 +3,14 @@
 21 October 2026 full-model proposal; 0018 local subset qualified and installed, 3 November 2026
 
 [Design hub](README.md) · [Configuration behavior](03-templates-and-drift.md) ·
-[Implemented prototype ER](../../prototype/docs/organization-er-diagram.md) · [Screen authority](../ui-screen-authority.md)
+[Implemented ER](../architecture/implemented-database.md) · [Screen authority](../ui-screen-authority.md)
 
 ## Scope and authority
 
 This document catches the storage design up with accepted D30–D34 screens and behavior. It does
 not change the working prototype, its ten tables, UI, data, or OCI objects. Names, fields and
 constraints below are a **review proposal**. Existing behavior remains binding; a proposed table
-cannot weaken it. The [existing SQLAlchemy schema](../../prototype/backend/otm/organization/schema.py) is
-the authority for the retained prototype only. Current production-source tables are defined in
+cannot weaken it. The earlier prototype schema is retired. Current application tables are defined in
 [storage metadata](../../backend/src/otm/storage/tables.py); the exact implemented subset is mapped
 below and in the runtime guides. Existing operation/step/queue storage is reused, never recreated
 as another configuration engine.

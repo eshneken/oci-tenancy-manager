@@ -7,11 +7,11 @@ scheduler or independently running process is implied.
 
 ## Review scope
 
-Review every UI change against DESIGN.md, the working prototype and the whole affected flow.
+Review every UI change against DESIGN.md, the current application and the whole affected flow.
 Check shared effects on the employee directory, both exception categories and every affected
 dialog. Review the whole existing UI when first assigned and revisit it when shared styles or
 interaction patterns change. Keep production findings and verification evidence under ignored `docs/design-evidence/` or
-`frontend/.local-dev/`; reserve `prototype/evidence/` for the retained lab. Describe limitations accurately.
+`frontend/.local-dev/`. The earlier prototype evidence directory is retired. Describe limitations accurately.
 
 ## What the reviewer checks
 
@@ -20,7 +20,7 @@ interaction patterns change. Keep production findings and verification evidence 
   must align with their labels and must not inherit unrelated navigation styles.
 - Generic reusable guidance, validation errors, status messages, empty states and action names.
   Actual employee identities and configured organizational labels remain real data. Avoid
-  named-organization examples in interface instructions. Keep prototype limitations honest.
+  named-organization examples in interface instructions. Describe simulator limits accurately.
 - Clear action consequences, selection, confirmation, loading, success, failure and retry states.
   Do not conflate acknowledgment with completed infrastructure operations or review resolution.
   Prevent ambiguous/double submissions and preserve entered input after recoverable errors.
@@ -51,11 +51,10 @@ interaction patterns change. Keep production findings and verification evidence 
 ## Approved-source and global consistency check — D34
 
 Use [the screen authority map](ui-screen-authority.md) before accepting a page-body change. The
-working organization prototype is authoritative for Organization and Organization drift; placeholder
-pages in an engineering walkthrough cannot replace it. Check the shared menu across onboarding,
-operations, configuration and required access when its structure/styles change. Organization context labels remain
-non-interactive in design-only navigation until the approved pages are integrated. Preserve current
-workflow behavior and historical snapshots; do not treat navigation approval as layout approval.
+current React application is the implemented reference for Organization and Organization drift.
+Engineering walkthrough placeholders illustrate their own design scope. When the shared menu
+changes, check onboarding, operations, configuration and required access. Preserve approved
+page layouts and workflow behavior when reviewing navigation changes.
 
 ## Narrative, screenshot and model agreement
 

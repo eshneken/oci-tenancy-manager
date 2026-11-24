@@ -3,7 +3,7 @@
 28 October 2026 | Review candidate; whole-package approval pending
 
 [Application design hub](../engineering-design/README.md) · [Specification](../product/oci-tenancy-manager-spec.md) ·
-[Screen authority](../ui-screen-authority.md) · [Prototype guide](../../prototype/README.md)
+[Screen authority](../ui-screen-authority.md) · Prototype guide (retired prototype reference)
 
 The [local HTTPS application](../reference/local-application.md) now implements real password/TOTP
 sign-in, session/logout and administrator directory/revocation. This is an approved local development
@@ -35,15 +35,15 @@ The prototype remains intact for demonstrations and regression characterization 
 
 | Retained behavior | Prototype source / evidence | Application design authority |
 |---|---|---|
-| Current/proposed organization, immutable source evidence, coherent publication and automatic valid metadata | [Working model](../../prototype/docs/organization-working-model.md), [contracts](../../prototype/backend/otm/organization/contracts.py), [reconciliation](../../prototype/backend/otm/organization/reconcile.py) | [Domain](../engineering-design/01-domain-and-journeys.md), [production model](../engineering-design/11-production-data-model.md), accepted D5/D15–D17 |
-| Four-column CSV adapter; each upload is a new snapshot; qualified complete census alone permits absence inference | [CSV adapter](../../prototype/backend/otm/organization/csv_feed.py), [CSV/web tests](../../prototype/backend/tests/test_csv_web.py) | [Specification](../product/oci-tenancy-manager-spec.md), domain/source contracts; production transport and authority still require qualification |
-| Separate actionable and informational/history drift; persistent exception decisions; no automatic tenancy deletion | [Exception workflows](../../prototype/docs/exception-workflows.md), [review workflow](../../prototype/backend/otm/organization/review_workflow.py), [review tests](../../prototype/backend/tests/test_review_workflows.py) | Domain/journeys and immutable administrative action history |
-| Stable internal identity and explicit audited email/name merge preserving all tenancy associations | [Identity and association behavior](../../prototype/docs/tenancy-associations.md), [store](../../prototype/backend/otm/organization/store.py) | Domain and production person/association model; no automatic fuzzy identity matching |
-| Individual/shared ownership and multiple memberships; owner-inclusive distinct counts; shared ownership transfer | [Association implementation](../../prototype/backend/otm/organization/associations.py), [registry tests](../../prototype/backend/tests/test_tenancy_registry.py) | [Onboarding/member/transfer/offboarding journeys](../engineering-design/07-onboarding-journeys.md), production model |
-| Last-association cleanup hides a person from managed directory but preserves source/history; returning after qualified absence opens fresh onboarding; retained associations and exemptions require explicit decisions | [Association walkthrough](../../prototype/docs/tenancy-associations.md), registry/review tests | [Domain managed-directory section](../engineering-design/01-domain-and-journeys.md), [production model](../engineering-design/11-production-data-model.md) |
-| Search, sorting, pagination, clickable identity links, consistent action controls, generic copy and no Reason fields | [Prototype UI](../../prototype/backend/otm/organization/static/index.html), [client behavior](../../prototype/backend/otm/organization/static/app.js), evidence (private historical evidence; not distributed) | [DESIGN.md](../../DESIGN.md), screen authority and approved production walkthroughs; D16 pins organization revision |
+| Current/proposed organization, immutable source evidence, coherent publication and automatic valid metadata | Working model (retired prototype reference), contracts (retired prototype reference), reconciliation (retired prototype reference) | [Domain](../engineering-design/01-domain-and-journeys.md), [production model](../engineering-design/11-production-data-model.md), accepted D5/D15–D17 |
+| Four-column CSV adapter; each upload is a new snapshot; qualified complete census alone permits absence inference | CSV adapter (retired prototype reference), CSV/web tests (retired prototype reference) | [Specification](../product/oci-tenancy-manager-spec.md), domain/source contracts; production transport and authority still require qualification |
+| Separate actionable and informational/history drift; persistent exception decisions; no automatic tenancy deletion | Exception workflows (retired prototype reference), review workflow (retired prototype reference), review tests (retired prototype reference) | Domain/journeys and immutable administrative action history |
+| Stable internal identity and explicit audited email/name merge preserving all tenancy associations | Identity and association behavior (retired prototype reference), store (retired prototype reference) | Domain and production person/association model; no automatic fuzzy identity matching |
+| Individual/shared ownership and multiple memberships; owner-inclusive distinct counts; shared ownership transfer | Association implementation (retired prototype reference), registry tests (retired prototype reference) | [Onboarding/member/transfer/offboarding journeys](../engineering-design/07-onboarding-journeys.md), production model |
+| Last-association cleanup hides a person from managed directory but preserves source/history; returning after qualified absence opens fresh onboarding; retained associations and exemptions require explicit decisions | Association walkthrough (retired prototype reference), registry/review tests | [Domain managed-directory section](../engineering-design/01-domain-and-journeys.md), [production model](../engineering-design/11-production-data-model.md) |
+| Search, sorting, pagination, clickable identity links, consistent action controls, generic copy and no Reason fields | Prototype UI (retired prototype reference), client behavior (retired prototype reference), evidence (private historical evidence; not distributed) | [DESIGN.md](../../DESIGN.md), screen authority and approved production walkthroughs; D16 pins organization revision |
 
-The implemented organization/association ER lives in [prototype/diagrams](../../prototype/docs/organization-er-diagram.md).
+The implemented organization/association ER lives in prototype/diagrams (retired prototype reference).
 The proposed production ER lives in [chapter10](../engineering-design/10-configuration-data-model.md) and
 [chapter11](../engineering-design/11-production-data-model.md). There are ten implemented tables and
 eighteen proposed additions; the proposed diagrams are not executed migrations.
@@ -52,9 +52,9 @@ eighteen proposed additions; the proposed diagrams are not executed migrations.
 
 The [P0.3 decision checkpoint](development-progress.md#reusable-organization-decision-tests)
 adds 120 isolated scenarios in
-[registry decisions](../../prototype/backend/tests/test_registry_decisions.py),
-[review decisions](../../prototype/backend/tests/test_review_decisions.py) and
-[registry evidence](../../prototype/backend/tests/test_registry_evidence.py).
+registry decisions (retired prototype reference),
+review decisions (retired prototype reference) and
+registry evidence (retired prototype reference).
 Retain these alongside the existing PostgreSQL regressions when moving the business logic into
 production services. Adapt their persistence seams to the production repository interfaces;
 no simulated local success, local actor bypass or schema initializer becomes a production API.

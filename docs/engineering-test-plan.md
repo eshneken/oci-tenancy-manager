@@ -105,21 +105,14 @@ outer limit. Frontend unit/browser tooling and `scripts/run_backend_postgres_tes
 because the runner’s `npm ci` replaces shared `frontend/node_modules`; concurrent writes caused
 ENOTEMPTY install failures and worker exits. Backend-only units/docs can remain independent.
 
-### Prototype-to-production transition
+### Application coverage and historical transition
 
-The 95% merge gate applies to production application source from its first slice. Do not postpone
-it until feature completion. The retained prototype is a separate characterization/demo project;
-its current coverage shortfall remains visible as diagnostic evidence and does not block starting
-the separate production foundation. As logic or JavaScript is ported into production, include all
-of that application source and its meaningful tests in the appropriate production gate immediately.
-Do not import an unmeasured prototype package behind a production wrapper or combine reports to
-conceal a shortfall. Preserve the reusable domain scenarios and real-database regressions during
-extraction. Both Python projects use the same complete-source gate implementation.
-
-The [backend bootstrap](../backend/README.md) has its own isolated environment. A passing bootstrap
-only measures code already present there; it is not evidence of completed business workflows,
-frontend tests, database migrations, SSO or hosted merge enforcement. All required jobs/protection
-still need implementation and negative-enforcement qualification before normal feature PRs merge.
+The 95% merge gate applies to all current application source, including unimported modules, from
+its first slice. The earlier prototype and its separate diagnostic coverage project are retired.
+Keep the ported domain scenarios and real-database regressions in the current application tests;
+never exclude application modules or combine unit and integration reports to conceal a shortfall.
+Use the [backend environment](../backend/README.md) and separate frontend gate. Historical bootstrap
+results measure only the code present at that checkpoint and do not qualify later features.
 
 ### UI and database tests
 
@@ -333,7 +326,7 @@ These are planned assertions; this documentation update does not execute the wor
 
 ## Administrator interactions
 
-The local harness implements three organization read routes in [generated OpenAPI](../prototype/docs/contracts/organization-openapi.json). Other routes/layouts are not finalized; identify those screens by their specification names until the corresponding inventory is approved.
+Current organization routes and fields are documented in the [implemented screen contract](reference/organization-screens.md) and [workflow guide](reference/organization-workflows.md). Static walkthroughs remain design references for their stated scope.
 
 - Fleet/Organization: search, sort, pagination, hierarchy expansion, clickable person/tenancy details, incomplete ancestry and multiple simultaneous status indicators; D16 pinned organization navigation, new-head banner/Refresh and current action preview checks. AC49 applies to organization read context, not a frozen fleet inventory.
 - Owner review: inspect missing person's known manager/role and all associated tenancies; Start deletion opens the guarded per-tenancy flow. Shared-member review cannot delete the shared tenancy implicitly.

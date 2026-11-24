@@ -49,21 +49,16 @@ def missing_documentation(path: Path) -> list[str]:
     return failures
 
 
-# Check authored application, experiment, test and tool code without scanning environments.
+# Check authored application, test and tool code without scanning environments.
 def main() -> None:
     root = Path(__file__).resolve().parents[1]
     # Include nested helpers and tests; generated contracts and virtual environments are excluded.
     paths = sorted(
         path
         for folder in (
-            "prototype/experiments/runner/src",
-            "prototype/experiments/runner/tests",
-            "prototype/experiments/runner/scripts",
             "backend/migrations",
             "backend/src",
             "backend/tests",
-            "prototype/backend",
-            "prototype/scripts",
             "scripts",
         )
         for path in (root / folder).rglob("*.py")

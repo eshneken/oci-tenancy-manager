@@ -15,7 +15,9 @@ uv run --project backend python scripts/run_container_smoke.py
 The smoke command owns a uniquely labelled image and temporary containers. It creates a disposable
 PostgreSQL database, applies migrations only there and removes its labelled containers and image.
 It never reads the saved application's state or connection files. Private diagnostic evidence stays
-under ignored `.local-dev/quality/container-*`; do not upload these directories or image archives.
+under ignored `.local-dev/quality/container-*`, with the image scan report in `scan/`. After the scanner
+stops and its container is removed, the script deletes its cache and exported image archive even
+if the scan failed. If Docker cannot confirm removal, the script leaves those files in place.
 Build/run/scan Docker commands share a 600-second deadline; disposable setup and ownership-checked
 cleanup are separate. Any failed qualification or cleanup step fails the run. This is not an
 end-to-end process timeout. Initial network pulls may exceed the command budget; rerun after
