@@ -143,7 +143,8 @@ second apply occurs. Exclude attempt markers and unresolved recovery state from 
 
 ## Failure and retained custody
 
-The public fixed error intentionally omits raw Terraform/provider output and private configuration.
+Plan failure output includes a fixed stage and may include a numeric HTTP status from 400
+through 599. It omits raw Terraform and provider output, request URLs, credentials, and private configuration.
 Check the selected root/input format, environment protection, current client secret, exact trust
 claims, intended IAM grants and private state bucket with separately authorized operator tools.
 Do not print secrets, weaken TLS, add an API-key fallback, disable state locking or make the bucket

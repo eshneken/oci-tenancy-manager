@@ -13,8 +13,10 @@ import subprocess  # nosec B404
 import tarfile
 import tempfile
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
+from contextlib import contextmanager
 from pathlib import Path
 
 import certifi
@@ -49,6 +51,31 @@ COMPONENT_FIELDS = {
         "caddy_ingress_enabled",
     },
 }
+
+
+# Only code-defined stage names and normalized HTTP statuses may cross the log boundary.
+class PlanStageError(ValueError):
+    # Preserve the failure location without embedding the provider message or request details.
+    def __init__(self, stage, error):
+        super().__init__(stage)
+        self.stage = stage
+        status = None
+        if isinstance(error, urllib.error.HTTPError):
+            status = error.code
+        elif isinstance(error, oci.exceptions.ServiceError):
+            status = error.status
+        self.http_status = status if type(status) is int and 400 <= status <= 599 else None
+
+
+# Keep the innermost stage when a failure passes through shared plan setup.
+@contextmanager
+def plan_stage(stage):
+    try:
+        yield
+    except PlanStageError:
+        raise
+    except Exception as error:
+        raise PlanStageError(stage, error) from error
 
 
 # OAuth and GitHub bearer credentials may never be forwarded to a redirected endpoint.
@@ -135,7 +162,7 @@ def request_json(url, headers, body=None):
         return decode_json(response.read(131073))
 
 
-# Use a fresh standard RSA key pair; no persistent OCI user/signing key is created.
+# Generate a fresh RSA key pair with a PEM private key and base64 DER for OCI token exchange.
 def signing_pair():
     executable = shutil.which("openssl")
     if not executable or not os.path.isabs(executable):
@@ -149,7 +176,7 @@ def signing_pair():
         env={"OPENSSL_CONF": os.devnull},
     ).stdout
     public = subprocess.run(  # nosec B603
-        [executable, "pkey", "-pubout"],
+        [executable, "pkey", "-pubout", "-outform", "DER"],
         input=private,
         check=True,
         capture_output=True,
@@ -157,11 +184,10 @@ def signing_pair():
         shell=False,
         env={"OPENSSL_CONF": os.devnull},
     ).stdout
-    if not private.startswith(b"-----BEGIN PRIVATE KEY-----") or not public.startswith(
-        b"-----BEGIN PUBLIC KEY-----"
-    ):
+    # SubjectPublicKeyInfo DER from OpenSSL begins with an ASN.1 sequence tag.
+    if not private.startswith(b"-----BEGIN PRIVATE KEY-----") or not public.startswith(b"\x30"):
         raise ValueError("SIGNING_KEY_REQUIRED")
-    return private, public
+    return private, base64.b64encode(public)
 
 
 # OCI validates the signed GitHub claims; local checks do not substitute for the configured
@@ -201,10 +227,11 @@ def federate(directory, target, environment, values, *, lifetime_minutes=60):
     jwt_url = urllib.parse.urlunsplit(
         endpoint._replace(query=urllib.parse.urlencode(query + [("audience", audience)]))
     )
-    issued = request_json(jwt_url, {"Authorization": "Bearer " + bearer})
-    token = issued.get("value") if isinstance(issued, dict) else None
-    if not isinstance(token, str) or not 0 < len(token) <= 65536:
-        raise ValueError("GITHUB_ID_TOKEN_REQUIRED")
+    with plan_stage("github_oidc"):
+        issued = request_json(jwt_url, {"Authorization": "Bearer " + bearer})
+        token = issued.get("value") if isinstance(issued, dict) else None
+        if not isinstance(token, str) or not 0 < len(token) <= 65536:
+            raise ValueError("GITHUB_ID_TOKEN_REQUIRED")
     private, public = signing_pair()
     basic = base64.b64encode((client_id + ":" + client_secret).encode()).decode()
     body = urllib.parse.urlencode(
@@ -218,31 +245,33 @@ def federate(directory, target, environment, values, *, lifetime_minutes=60):
             "rpst_exp": str(lifetime_minutes),
         }
     ).encode()
-    exchanged = request_json(
-        domain + "/oauth2/v1/token",
-        {
-            "Authorization": "Basic " + basic,
-            "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body,
-    )
-    rpst = exchanged.get("token") if isinstance(exchanged, dict) else None
-    if not isinstance(rpst, str) or len(rpst) > 65536 or len(rpst.split(".")) != 3:
-        raise ValueError("OCI_SESSION_TOKEN_REQUIRED")
-    claims = decode_json(
-        base64.urlsafe_b64decode(rpst.split(".")[1] + "=" * (-len(rpst.split(".")[1]) % 4))
-    )
-    # The response came from verified OCI TLS; inspecting its claims only fences target/lifetime
-    # errors.
-    if (
-        not isinstance(claims, dict)
-        or claims.get("res_tenant") != target["tenancy_ocid"]
-        or type(claims.get("exp")) is not int
-        or not time.time() + (lifetime_minutes - 25) * 60
-        < claims["exp"]
-        <= time.time() + (lifetime_minutes + 10) * 60
-    ):
-        raise ValueError("OCI_SESSION_TARGET_OR_LIFETIME_REJECTED")
+    with plan_stage("oci_token_exchange"):
+        exchanged = request_json(
+            domain + "/oauth2/v1/token",
+            {
+                "Authorization": "Basic " + basic,
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body,
+        )
+    with plan_stage("oci_session_validation"):
+        rpst = exchanged.get("token") if isinstance(exchanged, dict) else None
+        if not isinstance(rpst, str) or len(rpst) > 65536 or len(rpst.split(".")) != 3:
+            raise ValueError("OCI_SESSION_TOKEN_REQUIRED")
+        claims = decode_json(
+            base64.urlsafe_b64decode(rpst.split(".")[1] + "=" * (-len(rpst.split(".")[1]) % 4))
+        )
+        # The response came from verified OCI TLS; inspecting its claims only fences target/lifetime
+        # errors.
+        if (
+            not isinstance(claims, dict)
+            or claims.get("res_tenant") != target["tenancy_ocid"]
+            or type(claims.get("exp")) is not int
+            or not time.time() + (lifetime_minutes - 25) * 60
+            < claims["exp"]
+            <= time.time() + (lifetime_minutes + 10) * 60
+        ):
+            raise ValueError("OCI_SESSION_TARGET_OR_LIFETIME_REJECTED")
     private_write(directory / "private.pem", private)
     private_write(directory / "rpst", rpst.encode())
     return {
@@ -439,17 +468,21 @@ def initialize_terraform(
 
 # Generate a plan without applying; shared setup does not introduce a mutable command selector.
 def prepare_plan(environment, component, values):
-    inputs = context(environment, component, values)
-    command = checked_source(values)
+    with plan_stage("workflow_preflight"):
+        inputs = context(environment, component, values)
+        command = checked_source(values)
     root = ROOT / "infra/environments" / environment / component
     previous_umask = os.umask(0o077)
+    stage = "protected_inputs"
     try:
         with tempfile.TemporaryDirectory(prefix="otm-infrastructure-") as temporary:
             directory = Path(temporary)
             files, digest = render_inputs(directory, inputs, component, values)
+            stage = "federation"
             credentials = federate(directory, inputs["target"], environment, values)
             # Check development bucket placement and privacy before Terraform can create a lock.
             if environment == "development":
+                stage = "state_bucket"
                 plan_storage(
                     credentials,
                     inputs["target"],
@@ -457,9 +490,11 @@ def prepare_plan(environment, component, values):
                     values["OTM_HOSTING_COMPARTMENT_OCID"],
                 )
             deadline = time.monotonic() + 1200
+            stage = "terraform_setup"
             child_env = initialize_terraform(
                 directory, root, command, inputs, environment, credentials, values, deadline
             )
+            stage = "terraform_plan"
             terraform(
                 command,
                 [
@@ -475,6 +510,7 @@ def prepare_plan(environment, component, values):
                 directory,
                 deadline,
             )
+            stage = "plan_receipt"
             plan = decode_json(
                 terraform(
                     command,
@@ -507,6 +543,7 @@ def prepare_plan(environment, component, values):
                 body = canonical(receipt)
                 member.size, member.mode = len(body), 0o600
                 archive.addfile(member, io.BytesIO(body))
+            stage = "plan_upload"
             upload_plan(
                 directory,
                 credentials,
@@ -516,6 +553,10 @@ def prepare_plan(environment, component, values):
                 key,
             )
             return {**receipt, "object_key": key, "applied": False}
+    except PlanStageError:
+        raise
+    except Exception as error:
+        raise PlanStageError(stage, error) from error
     finally:
         os.umask(previous_umask)
 
@@ -529,19 +570,16 @@ def main(argv=None):
     options = parser.parse_args(argv)
     try:
         result = prepare_plan(options.environment, options.component, dict(os.environ))
-    except Exception:
-        print(
-            json.dumps(
-                {
-                    "status": "fail",
-                    "code": "INFRASTRUCTURE_PLAN_FAILED",
-                    "guidance": (
-                        "Check protected inputs, federation trust/IAM and private state access; "
-                        "no infrastructure was applied by this command."
-                    ),
-                }
-            )
-        )
+    except Exception as error:
+        report = {
+            "status": "fail",
+            "code": "INFRASTRUCTURE_PLAN_FAILED",
+            "stage": error.stage if isinstance(error, PlanStageError) else "unknown",
+            "guidance": "Use the failure stage to troubleshoot. No infrastructure was applied.",
+        }
+        if isinstance(error, PlanStageError) and error.http_status is not None:
+            report["http_status"] = error.http_status
+        print(json.dumps(report))
         return 1
     print(json.dumps(result, sort_keys=True))
     return 0
