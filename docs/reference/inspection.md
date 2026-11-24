@@ -47,8 +47,7 @@ The internal version label remains `execution-1-draft`; this is not a stable pub
 OCI's [Tenancy model](https://docs.oracle.com/en-us/iaas/tools/python/latest/api/identity/models/oci.identity.models.Tenancy.html)
 returns a home-region key. This slice implements no region discovery/mapping or parentage SDK call;
 its synthetic fixtures explicitly supply facts. The read facade itself adds no registry. The subsequent [admission slice](admission.md) implements
-operation/audit tables; the [worker migration](worker.md) now adds a logical step table. The full proposed production inventory is 30 application
-tables; the separate prototype still has its ten existing tables.
+operation and audit tables. The [worker migration](worker.md) adds a logical step table.
 
 ## Outcomes and verification
 

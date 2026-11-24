@@ -12,10 +12,10 @@ sample. The inputs are independently invented, not anonymized copies of the real
 
 | Change | Evidence / retained behavior |
 |---|---|
-| Four-column CSV | [Synthetic fixture](../../prototype/backend/tests/fixtures/synthetic_organization.csv):242 unique fictional profiles, a root, six leaders, eighteen managers and217 engineers; all addresses use `example.test` |
-| Legacy workbook adapter | [Workbook regression](../../prototype/backend/tests/test_reconcile.py) creates281 rows in a temporary workbook, including20 missing manager profiles and34 empty territories; verifies exact missing-manager evidence without qualifying absences |
-| Full-hierarchy demo | [Synthetic demo](../../prototype/scripts/demo_synthetic_organization.py) reconciles242 people; explicitly non-authoritative and undated, so it cannot establish absence conclusions |
-| Disposable integration runner | [Runner](../../prototype/scripts/run_postgres_tests.py) now runs the synthetic demo instead of reading the private workbook/configuration |
+| Four-column CSV | Synthetic fixture (retired prototype reference):242 unique fictional profiles, a root, six leaders, eighteen managers and217 engineers; all addresses use `example.test` |
+| Legacy workbook adapter | Workbook regression (retired prototype reference) creates281 rows in a temporary workbook, including20 missing manager profiles and34 empty territories; verifies exact missing-manager evidence without qualifying absences |
+| Full-hierarchy demo | Synthetic demo (retired prototype reference) reconciles242 people; explicitly non-authoritative and undated, so it cannot establish absence conclusions |
+| Disposable integration runner | Runner (retired prototype reference) now runs the synthetic demo instead of reading the private workbook/configuration |
 | Directory labels | Missing source names use the observed name or email fallback; no hardcoded executive identity. Two API regressions cover root profile present/absent |
 | Local connection safety | Synthetic publication requires psycopg + loopback + exact `otm_org_test`; both demo and local Store reject query parameters that could override host/database/service. Eleven negative tests prove rejection before repository/engine access |
 
@@ -74,9 +74,9 @@ source scope. The working prototype continues to support demonstrations.
 
 | Reusable test suite | What it establishes |
 |---|---|
-| [Registry decisions](../../prototype/backend/tests/test_registry_decisions.py) — 64 cases | Context/workspace checks; employee eligibility; create/import/shared membership; tenancy naming and ownership restrictions; complete offboarding plans; last-link removal; transfer; return/re-onboarding; inventory action projection |
-| [Review decisions](../../prototype/backend/tests/test_review_decisions.py) — 30 cases | Allowed actions; episode-specific closure vs permanent exemptions; explicit email alias chains/cycle rejection; source/effective conflict fingerprints; stale/closed/informational case rejection; delegation to the same association coordinator |
-| [Registry evidence](../../prototype/backend/tests/test_registry_evidence.py) — 26 cases | Deterministic legacy state projection; conservative ambiguous deletion; qualified absence/return chronology; durable explicit exemptions; reference-only and cross-employee evidence isolation |
+| Registry decisions (retired prototype reference) — 64 cases | Context/workspace checks; employee eligibility; create/import/shared membership; tenancy naming and ownership restrictions; complete offboarding plans; last-link removal; transfer; return/re-onboarding; inventory action projection |
+| Review decisions (retired prototype reference) — 30 cases | Allowed actions; episode-specific closure vs permanent exemptions; explicit email alias chains/cycle rejection; source/effective conflict fingerprints; stale/closed/informational case rejection; delegation to the same association coordinator |
+| Registry evidence (retired prototype reference) — 26 cases | Deterministic legacy state projection; conservative ambiguous deletion; qualified absence/return chronology; durable explicit exemptions; reference-only and cross-employee evidence isolation |
 
 The tests invoke actual business decisions with synthetic domain models. Persistence and selected
 projection seams are stubbed; evidence tests supply already-fetched rows. They do not establish
@@ -169,7 +169,7 @@ and its last 285-test regression evidence are unchanged; they were not relabeled
 ## Native runner qualification
 
 **P0.6: candidate transaction and worker mechanics qualified locally; production integration pending.**
-The [isolated experiment](../../prototype/experiments/runner/README.md) keeps candidate Procrastinate
+The isolated experiment (retired prototype reference) keeps candidate Procrastinate
 3.10.0, SQLAlchemy 2.0.54 and psycopg 3.3.6 separate from both the production backend and the preserved
 organization demo. There is no custom connector, replacement dispatcher or new production table.
 

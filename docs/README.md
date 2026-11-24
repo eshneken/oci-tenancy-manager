@@ -99,7 +99,7 @@ models and validators generate backend/contracts/ and frontend types; exported s
 every cross-field or transaction rule. Reference guides explain these boundaries. Engineering chapters
 and accepted decisions also describe future OCI/hosting capabilities; a design approval is not runtime
 qualification. Static walkthroughs illustrate their declared design subset and do not override the
-current React implementation. The retained prototype has its own local-only authority and contracts.
+current React implementation. The earlier prototype and its operating guides are retired; use the current application references.
 
 Private evidence and HR inputs are intentionally not distributed. Public validation requirements
 must not depend on those files. The bounded [C5 static-contract receipt](contracts/receipts/c5-contract-checks-2026-10-28.json)

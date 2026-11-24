@@ -97,8 +97,8 @@ Do not enable real business routes by manually inserting sessions or installing 
 Migration `0003_admin_session` adds `public.otm_admin_session`, an existing proposed entity from
 chapter 11. It does not add another employee directory, role table, OAuth-state table or SSO provider.
 That migration established the fourth application table. The later [administrator foundation](administrators.md)
-adds grants and the reserved local credential shape, bringing current production to six tables. The
-prototype still has ten and the full proposed target is 30. Existing operation event rules remain intact.
+adds grants and the reserved local credential shape, bringing the application to six tables at
+that checkpoint. Existing operation event rules remain intact.
 
 ```mermaid
 erDiagram

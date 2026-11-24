@@ -3,7 +3,7 @@
 21 October 2026 | Full data-model catch-up | Review proposal, not a database migration
 
 [Design hub](README.md) · [Configuration field guide](10-configuration-data-model.md) ·
-[Implemented ten-table model](../../prototype/docs/organization-er-diagram.md) · [Approved UI authority](../ui-screen-authority.md)
+[Implemented schema](../architecture/implemented-database.md) · [Approved UI authority](../ui-screen-authority.md)
 
 ## Read this first
 
@@ -208,7 +208,7 @@ Root/LOB labels and designees derive from the pinned organization configuration.
 references and incomplete ancestry remain explicit. Ordinary valid metadata auto-applies. Email/name
 remap is explicit/audited; no stable employee ID is assumed. None of the OCI baseline/credential
 changes rewrites organizational identity or fabricates feed presence. Detailed existing fields and
-reconciliation cases remain in the [implemented field reference](../../prototype/docs/organization-field-reference.md).
+reconciliation cases are documented in the [organization domain reference](../reference/organization-domain.md) and [implemented field inventory](../architecture/implemented-database.md).
 
 ## Workspace control fields: `org_workspace`, proposed extensions
 
@@ -1054,7 +1054,7 @@ now names the fields/state/evidence to represent them rather than assuming succe
 
 The production proposal is deliberately split to remain readable:
 
-- [Existing organization ER](../../prototype/docs/organization-er-diagram.md): ten **implemented** tables.
+- [Current implemented schema](../architecture/implemented-database.md): physical tables and columns, distinct from the proposals below.
 - [Configuration ER](../architecture/diagrams/configuration-data-model-proposed.svg): explicit statement/budget/tag fields, overrides, object bindings and shared observations.
 - [Application-administrator ER source](../architecture/diagrams/application-administrators-proposed.mmd), rendered in [chapter19](19-administrator-provisioning.md#detailed-checkpoint-two-new-tables-existing-sessions-and-audit): grants, local credential, existing sessions and audit extension.
 - [Core/access ER](../architecture/diagrams/production-core-access-proposed.svg): tenancy identity, associations, operations, contexts, credentials, assignments, grants and sessions.

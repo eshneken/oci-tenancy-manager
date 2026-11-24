@@ -17,7 +17,7 @@ revision, revokes the target's sessions and appends immutable administrative evi
 The production model has six application tables: `otm_operation`, `otm_operation_step`,
 `audit_event`, `otm_admin_session`, `otm_administrator` and `otm_local_credential`.
 The last two are added here. Runner and migration infrastructure tables are outside that count.
-The preserved organization prototype and the larger proposed production inventory remain separate.
+The larger proposed production inventory remains distinct from the implemented schema.
 
 The [local authentication slice](local-authentication.md) now implements operator bootstrap/reset,
 Argon2id password and TOTP verification, immutable laptop secret custody, guarded local sign-in and

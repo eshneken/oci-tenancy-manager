@@ -31,9 +31,8 @@ apply. Existing historical results in other guides do not validate this new mile
 | `otm_tenancy` / `otm_tenancy_membership` | Registered simulated resources and owner/member obligations; owner is accountability, not a synonym for IAM privilege. |
 | `otm_operation` / steps / `audit_event` | Accepted intent, queue handoff and verified local simulated outcome; acceptance is not completion. |
 
-Production uses `otm_tenancy` and `otm_tenancy_membership`. The preserved prototype's separate
-`org_tenancy` and `org_tenancy_association` tables are reference implementations, not another live
-production registry. Future OCI fields extend this production authority; there must not be two
+Production uses `otm_tenancy` and `otm_tenancy_membership`. The earlier prototype’s `org_tenancy` and `org_tenancy_association` tables are retired,
+not another live registry. Future OCI fields extend this production authority; there must not be two
 independently writable ownership trees. The initial organization census is a baseline, not an
 assertion that every employee needs a new tenancy. No registry relationships are invented from old
 source rows or prototype simulation history.

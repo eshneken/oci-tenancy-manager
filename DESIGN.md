@@ -11,7 +11,7 @@ Selected capture (private historical evidence; not distributed) ·
 Comparison record (private historical evidence; not distributed)
 
 The token reference below is the visual authority for future application screens/components.
-Preserve the organization prototype's approved usability, D44–D46 dashboard fields/behavior,
+Preserve the approved organization usability, D44–D46 dashboard fields/behavior,
 accessibility and security. Older walkthroughs retain their accepted interaction contracts until
 visually aligned. This decision does not imply a completed application reskin or whole-package
 Git/publication approval.
@@ -21,7 +21,7 @@ Git/publication approval.
 - [Current React frontend](frontend/README.md): application screens and shared controls.
 - [Shared styles](frontend/src/styles.css): selected tokens, spacing and responsive behavior.
 - [Screen authority](docs/ui-screen-authority.md): implemented versus future design scope.
-- The retained prototype characterizes earlier business behavior; it is not current styling authority.
+- The earlier prototype is retired; historical screenshots are not current styling authority.
 
 ## Layout and visual language
 
@@ -146,7 +146,7 @@ The prototype simulates immediate successful completion and logs it honestly. Pr
 closure happens at durable workflow acceptance, with the person Offboarding until required
 operations succeed. Failures/retries remain in the linked tenancy operations workflow. There is
 no separate Resolve action after successful association cleanup. Follow the
-[association design](prototype/docs/tenancy-associations.md) for local persistence and ownership guards.
+[current workflow guide](docs/reference/organization-workflows.md) for local persistence and ownership guards.
 
 ## Fresh organization observations — 19 October 2026
 
@@ -193,7 +193,10 @@ that application's menu has not been renamed by this design-only checkpoint.
 
 ## Approved page bodies and shared menu — D34, 21 October 2026
 
-The working prototype remains authoritative for the Organization directory and Organization drift
+This dated checkpoint records the former prototype authority. The current React application and
+[screen authority map](docs/ui-screen-authority.md) now govern implemented organization screens.
+
+At that checkpoint, the working prototype was authoritative for the Organization directory and Organization drift
 review pages, including actionable/informational tabs, table controls and dialogs. Configuration
 walkthrough organization screens are placeholders and do not approve alternative layouts. Keep
 Organization and Organization drift non-clickable in the design menu until approved content is
@@ -301,7 +304,7 @@ cloud mark is the browser icon. Preserve natural aspect ratio; do not stretch/cr
 fill a box. Display-name text is the accessible identity and the fallback if an image is missing;
 never rely on the raster wordmark alone. Browser titles use the configured name. Custom names
 remain text, never markup. Branding is deployment configuration, not an administrator/profile edit.
-The preserved organization prototype and historical walkthrough captures are reference artifacts,
+The retired prototype’s historical walkthrough captures are reference artifacts,
 not another runtime instance requiring renaming.
 
 [Branding configuration and asset guidance](docs/reference/application-settings.md#instance-branding)

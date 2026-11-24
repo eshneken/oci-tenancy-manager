@@ -27,7 +27,7 @@ Primary references: [Procrastinate documentation](https://procrastinate.readthed
 
 ### Local runner qualification checkpoint
 
-The [isolated native-runner experiment](../../prototype/experiments/runner/README.md) now passes
+The isolated native-runner experiment (retired prototype reference) now passes
 29 cases: 17 real PostgreSQL/owned-process scenarios plus 12 target/process-cleanup controls.
 Candidate Procrastinate 3.10.0, SQLAlchemy 2.0.54 and psycopg 3.3.6 work through the supported native
 external-connection hook. The acceptance call receives SQLAlchemy's exact active psycopg connection;

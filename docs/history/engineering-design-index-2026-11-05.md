@@ -119,7 +119,7 @@ The 147-test clean synthetic export and earlier 134-test result are dated histor
 independence and connection-query guard correction. No private feed or persistent lab is needed
 for the suite; the rest of the repository still requires publication cleanup.
 It does not implement a durable runner, OCI/Vault, corporate SSO, React, CI/CD or production hosting.
-The existing ten-table [ER model](../../prototype/docs/organization-er-diagram.md) describes implemented storage;
+The existing ten-table ER model (retired prototype reference) describes implemented storage;
 new production entities must be distinguished from those tables until migrations are designed.
 
 A verified local asset checkpoint preserves 164 files with SHA-256 manifest under
@@ -926,7 +926,7 @@ baseline, override, bulk-review and drift behavior: eight C3 tables plus explici
 extensions, reusing the two C2 operation proposals. It includes field/key/index proposals,
 transaction boundaries, readable query projections, screen/API mappings and failure-test scenarios.
 The [separate proposed ER](../architecture/diagrams/configuration-data-model-proposed.svg) does not replace
-the [implemented ten-table ER](../../prototype/docs/organization-er-diagram.md).
+the implemented ten-table ER (retired prototype reference).
 
 Proposed simplification for review: one immutable per-tenancy configuration revision contains the
 baseline reference and complete override object; no separate override-head/assignment-history

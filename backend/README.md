@@ -1,7 +1,7 @@
 # OCI Tenancy Manager backend
 
-This is the separate production backend foundation. The preserved organization prototype remains
-under `prototype/`, with its own environment and executable regression evidence.
+This is the current application backend. The earlier organization prototype has been retired;
+current organization behavior and regression tests live in this package.
 
 The default application exposes `GET /health/live` for process liveness and
 `GET /health/ready`, which remains unavailable without an explicitly composed readiness check. [Session verification](../docs/reference/authentication.md) can be explicitly composed to add
@@ -40,10 +40,8 @@ No password or MFA seed belongs in chat. To serve the health-only application:
 uv run --project backend uvicorn otm.app:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
-Use the explicit project argument. Both environments use the `otm` import name; they must stay
-isolated. A test checks that production imports resolve to `backend/src/otm`, not the prototype.
-No production module imports prototype code. Later slices will extract the proven domain behavior,
-adapt its persistence boundaries and port its tests rather than rebuilding those decisions.
+Use the explicit project argument so imports and dependencies resolve to this application’s
+`backend/src/otm` package and locked environment.
 
 ## First provider capability
 
@@ -58,10 +56,9 @@ and qualified identifier fields; unknown mapping remains null.
 
 ## Runner integration prerequisite
 
-The [isolated native-runner qualification](../prototype/experiments/runner/README.md) proves the
-same-transaction enqueue path and controlled worker lifecycle against disposable PostgreSQL.
-The qualified dependency versions are now adopted by the production package; the toy tables and
-experiment code are not imported. [Internal operation admission](../docs/reference/admission.md) implements the
+The original isolated runner experiment established the same-transaction enqueue and worker
+lifecycle design. Current native-runner behavior is verified by the application’s disposable
+PostgreSQL integration tests. [Internal operation admission](../docs/reference/admission.md) implements the
 first production operation/audit migration and atomic native enqueue with required injected
 authorization. A [registered simulated read worker](../docs/reference/worker.md) now executes that capability;
 that initial checkpoint provided no permissive production authorizer, tenancy-management route or production deployment
@@ -71,7 +68,7 @@ Run real database tests with `uv run --project backend python scripts/run_backen
 This requires local Docker, Node/npm and the pinned Playwright Chromium browser (install with
 `npm --prefix frontend exec -- playwright install chromium`). The runner infrastructure-services/builds the locked frontend
 and creates/removes a fresh isolated PostgreSQL container; it does not
-change the preserved prototype database.
+use the saved application database.
 
 ## Application settings and cleanup
 
@@ -94,8 +91,7 @@ The current gate measures all production source files, including local compositi
 rules. Its denominator does not measure business features that have not been ported. A temporary
 unimported-file probe independently demonstrated failure at 11/12 lines despite all seven tests
 passing; the probe was removed. Every later production slice must meet the same gate from the start.
-The retained prototype's broader coverage report is diagnostic for extraction, not a passing
-production result or a reason to exclude imported production modules.
+Historical prototype coverage is not a current application result.
 
 The frontend has a separate complete-source 95% unit gate and browser integration tests. Current
 results belong in [development progress](../docs/history/development-progress.md); backend ASGI tests do not
@@ -120,7 +116,7 @@ use the same services through guarded directory/revocation HTTP routes; see the 
 The frontend derives public TypeScript contracts from authoritative backend models; Python validation remains authoritative. The current schema has 29 OTM application tables through migration 0028, excluding separately owned native job-queue tables. Generated contracts are checked against the current Python models; earlier checkpoint counts on this page are historical.
 
 The launcher owns separate persistent laptop state under ignored `.local-dev/application/`; the
-organization prototype is untouched. Database owner and runtime credentials are separate, but the
+earlier prototype is retired. Database owner and runtime credentials are separate, but the
 same OS user can read both from local private state. This is not production process isolation, OCI
 Vault custody or deployment qualification. Test/browser fixtures must remain separate from a human's
 persistent local administrator and data. No local launch authorizes Git check-in or publishing.
@@ -171,7 +167,7 @@ and independent-review evidence is recorded in development progress.
 
 [Organization intake and reconciliation](../docs/reference/organization-domain.md) now extracts the reusable
 CSV/parser, canonical models, graph reconciliation and review rules into production modules with
-synthetic regression tests. It does not import the prototype. [Authorized snapshot storage](../docs/reference/organization-storage.md)
+synthetic regression tests. It uses the current application package. [Authorized snapshot storage](../docs/reference/organization-storage.md)
 now persists received feeds and distinct proposed/applied versions with stable scoped people,
 sealing guards and automatic valid metadata publication. Authenticated Organization CSV/screens are integrated. The validated [workflow parity guide](../docs/reference/organization-workflows.md) maps durable reviews, stable-person managed controls and the registered simulated lifecycle handoff. See the [parity checkpoint](../docs/history/organization-parity-checkpoint.md) for completed qualification.
 

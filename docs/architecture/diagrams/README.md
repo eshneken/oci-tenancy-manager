@@ -53,7 +53,7 @@ those runtime/provider outcomes.
 - [production-finance-proposed](production-finance-proposed.mmd)
 
 Proposed fields and relationships require implementation/provider qualification before they become
-runtime guarantees. The retained prototype diagram remains separate in prototype/diagrams/.
+runtime guarantees. The earlier prototype diagrams are retired; use the current implemented diagrams above.
 
 Ownership retention/removal reuses the existing membership role/status/identity/cleanup fields and
 immutable operation JSON. Physical ER relationships are unchanged; [the exact additional DTO mapping](../../engineering-design/11-production-data-model.md#explicit-ownership-retentionremoval--7-november-2026)

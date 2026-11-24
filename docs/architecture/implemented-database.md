@@ -1,6 +1,6 @@
 # Implemented database: complete ER and table directory
 
-This reference describes the **implemented application schema**, not the retained prototype or the
+This reference describes the **implemented application schema**, not the retired prototype or the
 larger proposed production model. On 17 November 2026, the complete metadata was reflected using
 SQLAlchemy inspection of `public` in a newly created, empty disposable PostgreSQL database migrated
 through 0029, without seeding or reading row values. It confirms 34 tables, 439 columns, 89 declared

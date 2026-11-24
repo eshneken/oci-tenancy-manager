@@ -20,7 +20,7 @@ isolated synthetic fixtures; private enrollment factors do not belong in reports
   [pending real-OCI drift/repair tests and automated coverage](configuration-drift-runbook.md#pending-real-oci-manual-validation),
   plus [pending required-user presence cases](configuration-drift-runbook.md#pending-required-user-presence-qualification)
 - [Local review: lifecycle email and environment routing](lifecycle-email-runbook.md), including [additional lifecycle notices](lifecycle-email-runbook.md#additional-lifecycle-notices)
-- [Local quality checks](local-quality-checks.md)
+- [Local quality checks](local-quality-checks.md) — current backend/frontend gates and disposable integration
 - [Organization Mapping — manual test runbook](organization-mapping-runbook.md), including [return/consent correction checks](organization-mapping-runbook.md#return-and-destructive-consent-correction-review-after-installation) after deliberate installation
 - [Retired parallel Atlas Test instance](parallel-local-instance.md) — historical instructions only; current local use is8443 only, with no new instance creation
 - [Manual review: administrator responsibility takeover](responsibility-runbook.md)

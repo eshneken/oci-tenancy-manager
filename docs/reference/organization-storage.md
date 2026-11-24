@@ -3,7 +3,7 @@
 30 October 2026 · Authorized persistence with production Organization UI integration
 
 [Pure domain rules](organization-domain.md) · [Production field inventory](../engineering-design/11-production-data-model.md) ·
-[Implemented ER source](../architecture/diagrams/organization-snapshots-implemented.mmd) · [Prototype reference](../../prototype/docs/organization-er-diagram.md)
+[Implemented ER source](../architecture/diagrams/organization-snapshots-implemented.mmd) · [Complete implemented schema](../architecture/implemented-database.md)
 
 ## Scope and authority
 

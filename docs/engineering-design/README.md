@@ -2,7 +2,8 @@
 
 The current design retains accepted decisions while keeping implemented local behavior separate
 from future live OCI and deployment qualification. Start with [the product scope](../product/oci-tenancy-manager-spec.md)
-and [implemented reference guides](../reference/README.md).
+and [implemented reference guides](../reference/README.md). The earlier organization prototype is
+retired; historical checkpoints preserve decisions rather than runnable prototype instructions.
 
 The current application has real authentication, durable organization/tenancy workflows, baseline
 management, read-only drift visibility and lifecycle email capture. OCI effects are simulated;

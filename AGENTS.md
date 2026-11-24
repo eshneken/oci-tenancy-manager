@@ -2,10 +2,9 @@
 
 Make the final reply stand on its own. Lead with the outcome, then surface any decision or approval I need to give and what you recommend. Link the evidence behind consequential claims and flag any inference or verification gap that could change the conclusion.
 
-Use `otm` / `OTM` for project identifiers. The production Python package is `backend/src/otm`; the preserved lab is
-`prototype/backend/otm`. Use their separate environments and explicit `uv --project` commands;
-production code must not import the lab package. The shared coverage gate lives in
-`scripts/check_unit_coverage.py`; the prototype entry point delegates to it.
+Use `otm` / `OTM` for project identifiers. The application Python package is `backend/src/otm`.
+Use explicit `uv --project backend` commands. The unit coverage gate lives in
+`scripts/check_unit_coverage.py`.
 
 ## Code documentation
 
@@ -60,10 +59,7 @@ pushes, branch deletion and routine check bypass are prohibited. Configure and v
 in P0; these instructions do not imply that a remote CI/protection setup already exists.
 
 
-Production source must meet the 95% unit-only gate from its first slice. The separate retained
-prototype has diagnostic coverage and does not block starting the production foundation; every
-ported production module enters the complete-source gate immediately. See the transition rules
-in the canonical test policy. Do not hide prototype imports behind an unmeasured production wrapper.
+Every application module enters the complete-source 95% unit-only coverage gate immediately.
 
 ## Design simplicity
 
@@ -80,11 +76,10 @@ retrieval and manual paused database restore; the withdrawn C6-A control/journal
 
 ## Repository layout and design finalization
 
-Keep executable organization lab code/tests/data/contracts and lab-only design under `prototype/`.
 Keep current application design under `docs/engineering-design`, production contracts under
 `docs/contracts`, approved screens under `docs/walkthroughs` and production ER under `docs/architecture/diagrams`.
-Historical alternatives in `reference/history` do not supersede current decisions. Preserve reusable
-prototype business logic/tests; do not carry local actor/reset/synchronous-success bypasses into production.
+Historical alternatives in `reference/history` do not supersede current decisions. Keep local
+actor, reset and synchronous-success shortcuts out of the production app.
 Complete an independent Astra design review and address material findings before final user signoff.
 Do not commit, push, create a PR or publish the repository before the user approves the finalized design.
 

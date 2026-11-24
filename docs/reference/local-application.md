@@ -39,8 +39,7 @@ application-local identity rather than the machine running it.
 The application now has real React sign-in, administrator, Audit History and recorded Operations screens with
 explicit simulated-inspection submission, served by the
 Python backend over local HTTPS. It uses the real password/TOTP, session, grant and audit services.
-The separate organization prototype is preserved; this application does not import its environment,
-connect to its database. Registered tenancy workflows now use durable local simulation;
+The earlier organization prototype has been retired. This guide describes the current application. Registered tenancy workflows now use durable local simulation;
 [baseline authoring and version history](baseline-authoring.md) adds Configuration without applying changes to OCI.
 Organization directory, authenticated CSV/as-of
 intake and current drift are now available through the production snapshot store.
@@ -272,7 +271,7 @@ MFA, branding/configuration and history. A local backup was taken before this de
 Migration0008 adds the separate production organization snapshots. The [Organization intake and
 screen guide](organization-screens.md) covers the enabled Organization and Organization drift menu,
 private initial source setup, CSV validation, source-time attestation and remaining workflow limits.
-The production directory starts empty; the prototype retains its existing data independently.
+A fresh installation starts with an empty organization directory; existing saved application data is preserved.
 
 
 ### Reset an organization test run

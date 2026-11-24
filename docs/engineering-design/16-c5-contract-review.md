@@ -27,13 +27,13 @@ models. Do not maintain a second handwritten production schema alongside Pydanti
 Reproduce from the repository root:
 
 ```bash
-uv run --no-project scripts/check_c5_contracts.py --receipt docs/design-evidence/c5-contract-checks-2026-10-28.json
-uv run python scripts/check_design_docs.py
-uv run python scripts/check_inline_docs.py
+uv run --no-project scripts/check_c5_contracts.py
+uv run --project backend python scripts/check_design_docs.py
+uv run --project backend python scripts/check_inline_docs.py
 ```
 
 The script declares `jsonschema==4.25.1` in PEP 723 metadata. `--no-project` isolates that tool dependency
-from the application's `prototype/pyproject.toml` and `prototype/uv.lock`. Schema references resolve from two explicitly
+from the application's `backend/pyproject.toml` and `backend/uv.lock`. Schema references resolve from two explicitly
 registered local files, including the existing C2 Context definition; the checker does not fetch
 remote schemas. It is not a live simulator, provider mock implementation or substitute for database tests.
 

@@ -23,7 +23,7 @@ Corporate SSO is neither called nor used as a fallback in local authentication.
 The implementation uses the existing six application tables. Frozen migration
 `0006_local_authentication` expands the closed audit-kind constraint; it adds no table. Apply reviewed
 migrations through the existing operator-controlled migration path before enrollment or sign-in.
-The preserved organization prototype and its database are separate.
+The earlier organization prototype is retired; use the current application’s private installation.
 
 ## Settings and identity scope
 

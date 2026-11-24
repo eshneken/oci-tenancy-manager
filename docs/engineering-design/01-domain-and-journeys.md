@@ -2,8 +2,8 @@
 
 28 October 2026 | C1 design review candidate | Current journeys and chapter11 model; implementation qualification separate
 
-[Design hub](README.md) · [Implemented ER](../../prototype/docs/organization-er-diagram.md) ·
-[Current associations](../../prototype/docs/tenancy-associations.md) · [Product lifecycle](../product/oci-tenancy-manager-spec.md#6-tenancy-lifecycle-workflows)
+[Design hub](README.md) · [Implemented ER](../architecture/implemented-database.md) ·
+[Current associations](../reference/organization-workflows.md) · [Product lifecycle](../product/oci-tenancy-manager-spec.md#6-tenancy-lifecycle-workflows)
 
 ## Current data-model contract — 21 October 2026
 

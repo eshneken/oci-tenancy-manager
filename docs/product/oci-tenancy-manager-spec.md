@@ -46,7 +46,7 @@ questions in section 12 must be resolved before affected real-OCI behavior is co
 
 Revision note: the September 22 review supersedes the earlier requirement to approve every organization-feed change. Valid employee metadata changes now apply automatically with audit. Absence raises an ownership exception; tenancy deletion still requires explicit administrator initiation and confirmation. The later-release ideas in section 2 do not expand the MVP.
 
-The September 23 revision adds the seven-field organizational feed contract, full-name handling, reference-only manager records, separate source territory and configured LOB fields, and explicit completeness checks. A complete feed is expected to include an employee row for every person, including managers. Missing profiles must be represented explicitly and cannot silently qualify absence conclusions. See the [generic feed contract](../../prototype/docs/organizational-feed-contract.md).
+The September 23 revision adds the seven-field organizational feed contract, full-name handling, reference-only manager records, separate source territory and configured LOB fields, and explicit completeness checks. A complete feed is expected to include an employee row for every person, including managers. Missing profiles must be represented explicitly and cannot silently qualify absence conclusions. The current CSV contract is documented in the [organization domain reference](../reference/organization-domain.md).
 
 The October 12 revision supersedes the earlier V1/V2 boundary. Security auditing and security-findings workflows move to V2; administrative action history stays in V1. V1 adds configurable managed policies, quotas and budgets with verification, monthly spend/forecast visibility, and a stateful simulated OCI provider. Daily organization synchronization uses a canonical internal contract while the production feed remains TBD. The agreed stack and milestone review intake are in the [engineering review plan](../decisions/engineering-review-decisions.md).
 
@@ -63,13 +63,13 @@ named path in D19/D37. Rotation is not hard logout or exact attribution of share
 
 ### Adopted association/offboarding model — 19 October 2026
 
-The user approved the association-aware model, now implemented and tested in the local prototype.
+The user approved the association-aware model, originally tested in the now-retired local prototype.
 The current model below
 supersedes earlier descriptions that treated tenancy deletion and person cleanup as unrelated
 Resolve/Remove actions. It does not silently qualify the prototype as production or change the
-requirement for administrator-initiated OCI mutations. See the [current association contract and
-walkthrough](../../prototype/docs/tenancy-associations.md), [ten-table ER model and descriptions](../../prototype/docs/organization-er-diagram.md)
-and [detailed organization design](../../prototype/docs/organization-detailed-design.md#adopted-current-model--19-october-2026).
+requirement for administrator-initiated OCI mutations. See the [current organization workflow](../reference/organization-workflows.md),
+[implemented schema](../architecture/implemented-database.md) and
+[domain design](../engineering-design/01-domain-and-journeys.md).
 
 ### Later adopted UI/return refinement — 19 October 2026
 
@@ -262,9 +262,8 @@ One active person/tenancy relationship and at most one active owner per tenancy 
 Shared owners and members are distinct roles. Changes in the reporting chain update accountability
 and routing; they do not silently transfer these ownership or membership relationships.
 
-The working prototype now has **ten physical tables**: the eight organization/evidence tables
-plus `org_tenancy` and `org_tenancy_association`. The [ER guide](../../prototype/docs/organization-er-diagram.md) describes
-each table. These registry rows represent **simulated** tenancies; their UUIDs are not OCI OCIDs.
+The original prototype checkpoint had **ten physical tables**: the eight organization/evidence tables
+plus `org_tenancy` and `org_tenancy_association`. That historical schema is retired; the [implemented schema reference](../architecture/implemented-database.md) describes current storage. These registry rows represent **simulated** tenancies; their UUIDs are not OCI OCIDs.
 They establish and test the application relationship model, not OCI provisioning evidence or the
 complete production schema. Production must add qualified operation/provider/authentication state
 and migration design. The SQL source views remain source-oriented; the web registry/API supplies
@@ -295,7 +294,7 @@ informational history; the requirements below remain the go-forward authority fo
 
 ## 5. Organization synchronization and accountability
 
-The existing [sample feed contract](../../prototype/docs/organizational-feed-contract.md) supplies an initial XLSX adapter and validation fixture with `ID`, `ECA_NAME`, `ECA_EMAIL`, `ECA_MANAGER`, `ECA_MANAGER_EMAIL`, `ECA_TOP_MGR_DIR_MINUS_3` and `ENG_TERRITORY`. The production source, delivery format and delivery metadata remain open. The canonical internal people/reporting/snapshot model must work independently of that format; source adapters normalize records before reconciliation.
+The retired sample feed contract supplied an initial XLSX adapter and validation fixture with `ID`, `ECA_NAME`, `ECA_EMAIL`, `ECA_MANAGER`, `ECA_MANAGER_EMAIL`, `ECA_TOP_MGR_DIR_MINUS_3` and `ENG_TERRITORY`. The production source, delivery format and delivery metadata remain open. The canonical internal people/reporting/snapshot model must work independently of that format; source adapters normalize records before reconciliation.
 
 1. Receive the daily feed or an administrator-submitted development file through a source adapter, recording source, schema, capture/receipt times, scope, declared completeness and checksum. A sample's receipt date is not its source capture date.
 2. Validate identity fields, duplicate emails/IDs, self-management, cycles, the configured root and freshness. Flag referenced managers that lack employee rows as profile/coverage gaps; preserve those references without inventing ancestry. The intended production source includes managers' own rows.
@@ -315,7 +314,7 @@ Engineering decision D5: source snapshots and diagnostics are retained separatel
 
 Ordinary reporting changes inherit the destination LOB's assigned designees automatically. Changes to LOB leadership or a designee's eligibility flag the assignment for administrator review; the feed must not invent a new designee. Missing or unresolved designees never cause an alert to disappear; administrators receive the routing exception.
 
-Engineering decision D15 (12 October 2026): each successful publication stores a complete immutable effective organization revision, including retained people, reporting relationships and accountability mappings, against stable internal person IDs and exact configuration inputs. A single current-head reference advances with D5 publication. Historical reads select a stored revision directly; later feed/configuration changes cannot rewrite its facts. A later source capture may publish refreshed presence evidence even when metadata is unchanged; duplicate delivery of the same source snapshot creates no extra revision. Tenancy ownership and shared memberships continue to reference stable people. See the [detailed organization design](../../prototype/docs/organization-detailed-design.md).
+Engineering decision D15 (12 October 2026): each successful publication stores a complete immutable effective organization revision, including retained people, reporting relationships and accountability mappings, against stable internal person IDs and exact configuration inputs. A single current-head reference advances with D5 publication. Historical reads select a stored revision directly; later feed/configuration changes cannot rewrite its facts. A later source capture may publish refreshed presence evidence even when metadata is unchanged; duplicate delivery of the same source snapshot creates no extra revision. Tenancy ownership and shared memberships continue to reference stable people. See the [organization domain design](../engineering-design/01-domain-and-journeys.md).
 
 Engineering decision D17 (12 October 2026): a configured fresh feed declaring completeness but omitting required manager employee rows is assessed as incomplete. Publish eligible unambiguous supplied metadata under partial-feed rules after effective-graph validation, retain trusted missing facts/reference-only profiles with provenance, and persist a feed-quality exception plus administrator notification intent. Block absence conclusions for that census/population. Retained database profiles or resolved paths cannot fill the incoming census's coverage gap. Source claims and assessed completeness remain separately visible; a later qualified complete snapshot is evaluated on its own evidence. Other source/identity/freshness/structural rejection rules remain in force.
 
@@ -595,7 +594,7 @@ menu approval does not approve a replacement organization layout.
 
 ### Organization revision context
 
-Engineering decision D16 (12 October 2026): organization pages preserve a selected immutable organization revision across related navigation and pagination. New publication displays a Refresh banner rather than silently changing the investigation. Current tenancy/operation/check/incident data have their own labeled freshness and are not frozen by that revision. Actions obtain current previews and recheck authorization, owner/routing facts and required guardrails at acceptance/dispatch; historical context cannot authorize stale action or recipient evidence. An explicit unknown/unavailable revision is a visible error, never an implicit fallback to latest. See the [page/data contracts](../../prototype/docs/organization-page-contracts.md).
+Engineering decision D16 (12 October 2026): organization pages preserve a selected immutable organization revision across related navigation and pagination. New publication displays a Refresh banner rather than silently changing the investigation. Current tenancy/operation/check/incident data have their own labeled freshness and are not frozen by that revision. Actions obtain current previews and recheck authorization, owner/routing facts and required guardrails at acceptance/dispatch; historical context cannot authorize stale action or recipient evidence. An explicit unknown/unavailable revision is a visible error, never an implicit fallback to latest. See the [current organization screen contract](../reference/organization-screens.md).
 
 ### Baseline publication and rollout
 
