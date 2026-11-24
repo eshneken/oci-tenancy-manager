@@ -11,6 +11,7 @@ import time
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
+from urllib.error import HTTPError
 
 import pytest
 import yaml
@@ -256,7 +257,7 @@ def test_request_json(monkeypatch):
 def test_real_signing_pair():
     private, public = module.signing_pair()
     key = serialization.load_pem_private_key(private, password=None)
-    counterpart = serialization.load_pem_public_key(public)
+    counterpart = serialization.load_der_public_key(base64.b64decode(public, validate=True))
     assert key.key_size == counterpart.key_size == 2048
     assert key.public_key().public_numbers() == counterpart.public_numbers()
 
@@ -265,6 +266,7 @@ def test_real_signing_pair():
 @pytest.mark.parametrize("fault", ["missing", "relative", "private", "public"])
 def test_signing_pair_guards(monkeypatch, fault):
     private, public = module.signing_pair()
+    public_der = base64.b64decode(public, validate=True)
     monkeypatch.setattr(
         module.shutil,
         "which",
@@ -275,7 +277,7 @@ def test_signing_pair_guards(monkeypatch, fault):
     execute = Mock(
         side_effect=[
             SimpleNamespace(stdout=b"bad" if fault == "private" else private),
-            SimpleNamespace(stdout=b"bad" if fault == "public" else public),
+            SimpleNamespace(stdout=b"bad" if fault == "public" else public_der),
         ]
     )
     monkeypatch.setattr(module.subprocess, "run", execute)
@@ -285,29 +287,32 @@ def test_signing_pair_guards(monkeypatch, fault):
         execute.assert_not_called()
 
 
-# A synthetic OCI response demonstrates matching PEM custody and both Terraform auth consumers.
+# The exchange payload carries the public DER matching the privately staged PEM key.
 def test_federation(tmp_path, monkeypatch):
     values = environment_values()
     target = json.loads(values["OTM_INFRASTRUCTURE_INPUTS_JSON"])["target"]
     request = Mock(side_effect=[{"value": "synthetic-jwt"}, {"token": rpst()}])
     monkeypatch.setattr(module, "request_json", request)
-    monkeypatch.setattr(module, "signing_pair", lambda: (b"private-synthetic", b"public-synthetic"))
     credentials = module.federate(tmp_path, target, "staging", values)
     assert credentials["OCI_RESOURCE_PRINCIPAL_VERSION"] == "2.2"
     assert credentials["OCI_RESOURCE_PRINCIPAL_REGION"] == "us-ashburn-1"
-    assert (
-        Path(credentials["OCI_RESOURCE_PRINCIPAL_PRIVATE_PEM"]).read_bytes() == b"private-synthetic"
-    )
+    private_key = Path(credentials["OCI_RESOURCE_PRINCIPAL_PRIVATE_PEM"]).read_bytes()
     assert stat.S_IMODE(Path(credentials["OCI_RESOURCE_PRINCIPAL_RPST"]).stat().st_mode) == 0o600
     first, second = request.call_args_list
     assert "audience=otm-infrastructure-staging" in first.args[0]
     assert first.args[1]["Authorization"] == "Bearer " + values["ACTIONS_ID_TOKEN_REQUEST_TOKEN"]
     assert second.args[0] == values["OTM_INFRA_IDENTITY_DOMAIN_URL"] + "/oauth2/v1/token"
     payload = module.urllib.parse.parse_qs(second.args[2].decode())
-    assert payload["public_key"] == ["public-synthetic"] and payload["rpst_exp"] == ["60"]
+    (public_key,) = payload["public_key"]
+    der = base64.b64decode(public_key, validate=True)
+    key = serialization.load_pem_private_key(private_key, password=None)
+    assert der == key.public_key().public_bytes(
+        serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+    assert payload["rpst_exp"] == ["60"]
     assert payload["requested_token_type"] == ["urn:oci:token-type:oci-rpst"]
     assert payload["res_type"] == ["githubactions"]
-    assert "private-synthetic" not in str(request.call_args_list)
+    assert "BEGIN PRIVATE KEY" not in str(request.call_args_list)
 
 
 # The installed SDK accepts our actual ephemeral PEM/token files without making any OCI request.
@@ -654,6 +659,47 @@ def test_prepare_preflight_guards(monkeypatch, fault):
     with pytest.raises(ValueError):
         module.prepare_plan("staging", "security", environment_values())
     exchange.assert_not_called()
+
+
+# Distinguish GitHub OIDC, OCI exchange, and OCI session validation without publishing raw errors.
+@pytest.mark.parametrize(
+    ("responses", "stage", "http_status"),
+    [
+        (
+            [HTTPError("https://private.example", 403, "private reason", {}, None)],
+            "github_oidc",
+            403,
+        ),
+        (
+            [
+                {"value": "synthetic-jwt"},
+                HTTPError("https://private.example", 400, "private reason", {}, None),
+            ],
+            "oci_token_exchange",
+            400,
+        ),
+        (
+            [{"value": "synthetic-jwt"}, {"token": rpst(res_tenant="other")}],
+            "oci_session_validation",
+            None,
+        ),
+    ],
+)
+def test_cli_federation_failure_stage(monkeypatch, capsys, responses, stage, http_status):
+    monkeypatch.setattr(module, "context", lambda *args: {"target": {"tenancy_ocid": TENANCY}})
+    monkeypatch.setattr(module, "checked_source", lambda values: "/usr/bin/terraform")
+    monkeypatch.setattr(module, "render_inputs", lambda *args: ([], "unused"))
+    monkeypatch.setattr(module, "signing_pair", lambda: (b"private-synthetic", b"public-synthetic"))
+    monkeypatch.setattr(module, "request_json", Mock(side_effect=responses))
+    for key, value in environment_values().items():
+        monkeypatch.setenv(key, value)
+    assert module.main(["--environment", "staging", "--component", "security"]) == 1
+    raw = capsys.readouterr().out
+    output = json.loads(raw)
+    assert output["stage"] == stage and output.get("http_status") == http_status
+    assert (
+        "private.example" not in raw and "private reason" not in raw and "synthetic-jwt" not in raw
+    )
 
 
 # CLI errors expose one fixed diagnostic rather than provider messages or credential values.
