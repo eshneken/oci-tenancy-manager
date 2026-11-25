@@ -258,7 +258,15 @@ def test_real_https_browser_login_directory_and_logout(pg_engine, tmp_path):
             else:
                 pytest.fail("Synthetic HTTPS server failed to start")
         result = subprocess.run(
-            ["npm", "run", "test:ui", "--", "e2e/auth.spec.ts"],
+            [
+                "npm",
+                "run",
+                "test:ui",
+                "--",
+                "e2e/auth.spec.ts",
+                "e2e/corporate-sign-in.spec.ts",
+                "e2e/administrator-onboarding.spec.ts",
+            ],
             cwd=PROJECT / "frontend",
             env=environment,
             capture_output=True,

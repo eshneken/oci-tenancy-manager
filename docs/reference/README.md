@@ -16,6 +16,7 @@ is in [the engineering chapters](../engineering-design/README.md).
 - [Application settings and session cleanup](application-settings.md)
 - [Audit History read directory](audit-history.md)
 - [Session verification and request authorization](authentication.md)
+- [Atlas corporate sign-in and administrator onboarding](corporate-sso.md)
 - [Baseline authoring and publication history](baseline-authoring.md)
 - [Configuration drift: read-only on-demand checks](configuration-drift.md)
 - [Selected configuration repair](configuration-repair.md), including
@@ -29,11 +30,11 @@ is in [the engineering chapters](../engineering-design/README.md).
 - [Required-user presence boundary and responsive tenancy cards](required-user-presence.md)
 - [Internal tenancy inspection](inspection.md)
 - [Lifecycle email and environment contact routing](lifecycle-email.md), including [all supported lifecycle action/failure notices](lifecycle-email.md#lifecycle-notice-parity--6-november-2026)
-- [Run the local application](local-application.md) — saved preview and fresh installs on PostgreSQL 18.7
+- [Run the local application](local-application.md) — saved preview and separate [OCI development setup](local-application.md#local-oci-provider-development)
 - [Local recovery authentication](local-authentication.md)
 - [Read-only Operations list and detail](operations.md)
 - [Organization intake and reconciliation domain](organization-domain.md)
-- [Organization Mapping implementation and operator guide](organization-mapping.md), including [root manager names](organization-mapping.md#root-manager-display-name)
+- [Organization Mapping implementation and operator guide](organization-mapping.md), including [root manager names](organization-mapping.md#root-manager-display-name) and [hosted setup](../how-to/hosted-startup.md#initial-organization-mapping-and-import)
 - [Organization directory and CSV intake](organization-screens.md)
 - [Production organization snapshot storage](organization-storage.md)
 - [Organization reviews and tenancy workflows](organization-workflows.md), including [fresh directory return and destructive consent](organization-workflows.md#destructive-consent-and-directory-return-correction--source-checkpoint) — qualified locally; live OCI remains pending

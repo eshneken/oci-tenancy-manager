@@ -35,6 +35,32 @@ async function fillSignIn() {
 }
 
 describe('SignIn', () => {
+  // Lead with corporate SSO, serialize attempts, and preserve independent recovery access on failure.
+  it('starts Oracle SSO and keeps recovery behind a disclosure', async () => {
+    const attempt = deferred<{ authorization_url: string }>();
+    const start = vi.spyOn(api, 'startCorporateSignIn').mockReturnValue(attempt.promise);
+    const signIn = vi.spyOn(api, 'signIn').mockResolvedValue(session);
+    mount(<SignIn onSuccess={vi.fn()} notice="" corporateEnabled corporateFailed />);
+    expect(screen.getByRole('alert')).toHaveTextContent('Oracle SSO could not complete');
+    const recovery = screen.getByText('Recovery administrator sign-in');
+    expect(recovery.closest('details')).not.toHaveAttribute('open');
+    const corporate = screen.getByRole('button', { name: 'Sign in with Corporate SSO' });
+    expect(corporate).toHaveClass('primary');
+    fireEvent.click(corporate);
+    fireEvent.click(corporate);
+    expect(start).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Opening Corporate SSO…' })).toBeDisabled();
+    await act(async () => attempt.resolve({ authorization_url: 'javascript:void(0)' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Oracle SSO could not complete');
+    await userEvent.click(recovery);
+    expect(recovery.closest('details')).toHaveAttribute('open');
+    await fillSignIn();
+    const button = screen.getByRole('button', { name: 'Sign in' });
+    expect(button).toHaveClass('secondary');
+    await userEvent.click(button);
+    expect(signIn).toHaveBeenCalledWith('unit-test-password', '123456');
+  });
+
   // Verify labels, first-time instructions, pending protection and sensitive-field cleanup.
   it('submits one request and clears factors after successful sign-in', async () => {
     const pending = deferred<SessionView>(); const signIn = vi.spyOn(api, 'signIn').mockReturnValue(pending.promise); const success = vi.fn();
@@ -89,6 +115,80 @@ describe('Administrators', () => {
     expect(screen.getByText('Showing 1–13 of 13')).toBeInTheDocument();
   });
 
+  // Require verified directory details and deliberate confirmation before granting access.
+  it.each([true, false])('confirms the exact review for existing_account=%s', async (existingAccount) => {
+    vi.spyOn(api, 'directory').mockResolvedValue(directory);
+    vi.spyOn(api, 'administratorOnboarding').mockResolvedValue({ enabled: true });
+    const preview = vi.spyOn(api, 'previewAdministrator').mockResolvedValue({
+      display_name: 'Verified synthetic', username: 'synthetic', work_email: 'synthetic@example.test',
+      environment: 'development', role: 'Administrator', existing_account: existingAccount, confirmation: 'proof',
+    });
+    const confirm = vi.spyOn(api, 'confirmAdministrator').mockResolvedValue({});
+    mount(<Administrators expired={vi.fn()} />);
+    const open = screen.getByRole('button', { name: 'Add administrator' });
+    await waitFor(() => expect(open).toBeEnabled());
+    for (let step = 0; step < 2; step += 1) {
+      await userEvent.click(open);
+      const dialog = screen.getByRole('dialog', { name: 'Add administrator' });
+      await userEvent.type(within(dialog).getByLabelText('Corporate work email'), 'synthetic@example.test');
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Review access' }));
+      expect(await within(dialog).findByText('Verified synthetic')).toBeInTheDocument();
+      expect(within(dialog).getByText('development')).toBeInTheDocument();
+      if (existingAccount) {
+        expect(within(dialog).queryByLabelText('First name')).toBeNull();
+      } else {
+        await userEvent.type(within(dialog).getByLabelText('First name'), ' Synthetic ');
+        await userEvent.type(within(dialog).getByLabelText('Last name'), ' Pilot ');
+      }
+      if (!step) {
+        await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+        expect(confirm).not.toHaveBeenCalled();
+      } else {
+        await userEvent.click(within(dialog).getByRole('button', { name: 'Grant access' }));
+      }
+    }
+    expect(preview).toHaveBeenCalledWith('synthetic@example.test', expect.any(Object));
+    expect(confirm).toHaveBeenCalledWith('synthetic@example.test', 'proof',
+      existingAccount ? undefined : { first_name: 'Synthetic', last_name: 'Pilot' });
+    expect(await screen.findByText('Administrator access granted.')).toBeInTheDocument();
+  });
+
+  // Report local revoke separately from provider cleanup and retry only the displayed revision.
+  it('reports pending cleanup and retries a revoked grant', async () => {
+    vi.spyOn(api, 'directory').mockResolvedValue(directory);
+    vi.spyOn(api, 'administratorOnboarding').mockResolvedValue({ enabled: true });
+    vi.spyOn(api, 'revoke').mockResolvedValue({ group_cleanup: 'pending' });
+    const cleanup = vi.spyOn(api, 'retryAdministratorCleanup').mockResolvedValue({ group_cleanup: 'complete' });
+    mount(<Administrators expired={vi.fn()} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Remove access' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Revoke access' }));
+    expect(await screen.findByText('Atlas access is revoked. OCI group cleanup can be retried.')).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: 'Retry OCI group cleanup for Revoked test' }));
+    expect(cleanup).toHaveBeenCalledWith('revoked-test', 'r3');
+    expect(await screen.findByText('OCI group cleanup complete.')).toBeVisible();
+  });
+
+  // A retry reports progress and failure at the affected row while Atlas access stays revoked.
+  it.each([503, 409])('shows progress and an accurate error when cleanup returns %s', async (status) => {
+    vi.spyOn(api, 'directory').mockResolvedValue(directory);
+    vi.spyOn(api, 'administratorOnboarding').mockResolvedValue({ enabled: true });
+    const outcome = deferred<{ group_cleanup: 'complete' | 'pending' }>();
+    vi.spyOn(api, 'retryAdministratorCleanup').mockReturnValue(outcome.promise);
+    mount(<Administrators expired={vi.fn()} />);
+    const button = await screen.findByRole('button', { name: 'Retry OCI group cleanup for Revoked test' });
+    await userEvent.click(button);
+    await waitFor(() => expect(button).toHaveTextContent('Retrying…'));
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    expect(button).toHaveFocus();
+    await act(async () => outcome.reject(new ApiError(status)));
+    const message = status === 409
+      ? 'This administrator changed. Review the refreshed list before retrying.'
+      : 'OCI group cleanup failed. Review the administrator row before retrying.';
+    expect(await screen.findByText(message)).toBeVisible();
+    expect(Boolean(screen.queryByText('Cleanup failed'))).toBe(status === 503);
+    expect(button).toHaveAttribute('aria-disabled', 'false');
+  });
+
   // A failed read must remain retryable, and an empty search offers a working reset.
   it('recovers from load failure and clears a no-match search', async () => {
     const read = vi.spyOn(api, 'directory').mockRejectedValueOnce(new Error('offline')).mockResolvedValue({ ...directory, items: [], total: 0, pages: 1 });
@@ -112,7 +212,7 @@ describe('Administrators', () => {
   // Cancel and Escape must close the native confirmation without changing a grant.
   it('cancels revocation using both Cancel and native cancel', async () => {
     vi.spyOn(api, 'directory').mockResolvedValue(directory); const revoke = vi.spyOn(api, 'revoke'); const { container } = mount(<Administrators expired={vi.fn()} />);
-    await userEvent.click(await screen.findByRole('button', { name: 'Revoke' })); const dialog = container.querySelector('dialog')!;
+    await userEvent.click(await screen.findByRole('button', { name: 'Revoke' })); const dialog = container.querySelector<HTMLDialogElement>('dialog[aria-labelledby="revoke-title"]')!;
     expect(dialog.open).toBe(true); await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' })); expect(dialog.open).toBe(false);
     await userEvent.click(screen.getByRole('button', { name: 'Revoke' })); fireEvent(dialog, new Event('cancel', { cancelable: true }));
     expect(dialog.open).toBe(false); expect(revoke).not.toHaveBeenCalled();
@@ -122,7 +222,7 @@ describe('Administrators', () => {
   it('confirms revocation and prevents dismissal while it is pending', async () => {
     vi.spyOn(api, 'directory').mockResolvedValue(directory); const pending = deferred<unknown>(); const revoke = vi.spyOn(api, 'revoke').mockReturnValue(pending.promise);
     const { container } = mount(<Administrators expired={vi.fn()} />); await userEvent.click(await screen.findByRole('button', { name: 'Revoke' }));
-    const dialog = container.querySelector('dialog')!; await userEvent.click(within(dialog).getByRole('button', { name: 'Revoke access' }));
+    const dialog = container.querySelector<HTMLDialogElement>('dialog[aria-labelledby="revoke-title"]')!; await userEvent.click(within(dialog).getByRole('button', { name: 'Revoke access' }));
     expect(revoke).toHaveBeenCalledWith('corporate-test', 'r2'); await waitFor(() => expect(within(dialog).getByRole('button', { name: 'Cancel' })).toBeDisabled());
     fireEvent(dialog, new Event('cancel', { cancelable: true })); expect(dialog.open).toBe(true);
     await act(async () => pending.resolve({})); expect(await screen.findByText('Administrator access revoked.')).toBeInTheDocument(); expect(dialog.open).toBe(false);

@@ -17,6 +17,7 @@ for root in \
   infra/modules/postgresql \
   infra/modules/secret-foundation \
   infra/modules/workload-vault-access \
+  infra/modules/application-registration \
   infra/environments/staging/security \
   infra/environments/production/security \
   infra/environments/staging/platform \

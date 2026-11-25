@@ -58,7 +58,7 @@ includes replacement verification, identity retention/removal and manual resourc
 
 - [Hosted Kubernetes workload bundle](kubernetes-workloads.md) — disabled API/worker/migration manifests, immutable settings, credential references and strict schema checks; startup mechanics implemented; hosted composition/activation pending.
 
-- [Hosted startup foundation](hosted-startup.md) — explicit TLS/roles, readiness, migration and worker composition; activation remains held.
+- [Hosted startup foundation](hosted-startup.md) — explicit TLS/roles, readiness, migration, worker composition and [initial organization setup](hosted-startup.md#initial-organization-mapping-and-import).
 
 - [Schema-changing release maintenance](hosted-administration.md#schema-changing-application-release) — approved V1 drain/migrate/start/reopen procedure; unchanged-schema releases roll normally.
 

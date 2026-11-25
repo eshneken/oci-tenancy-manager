@@ -265,6 +265,22 @@ describe("Immutable audit history", () => {
     expect(screen.queryByText("Recovery target name")).not.toBeInTheDocument();
   });
 
+  // Distinguish corporate sign-in, first grants and restored grants in recorded history.
+  it.each([
+    ["corporate_sign_in_succeeded", "authentication", "Corporate SSO sign-in succeeded"],
+    ["administrator_granted", "administration", "Administrator access granted"],
+    ["administrator_regranted", "administration", "Administrator access restored"],
+  ] as const)("renders the audit label for %s", async (kind, category, label) => {
+    vi.spyOn(api, "auditHistory").mockResolvedValue({
+      ...directory,
+      items: [{ ...directory.items[1], kind, category }],
+      total: 1,
+      pages: 1,
+    });
+    mount(<AuditHistory expired={vi.fn()} navigate={vi.fn()} />);
+    expect(await screen.findByText(label)).toBeInTheDocument();
+  });
+
   // Service failure remains retryable, while denied reads leave the privileged history view.
   it.each([401, 403, 503])(
     "handles audit status %s without exposing server diagnostics",

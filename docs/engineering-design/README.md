@@ -6,8 +6,10 @@ and [implemented reference guides](../reference/README.md). The earlier organiza
 retired; historical checkpoints preserve decisions rather than runnable prototype instructions.
 
 The current application has real authentication, durable organization/tenancy workflows, baseline
-management, read-only drift visibility and lifecycle email capture. OCI effects are simulated;
-corporate SSO, real provider bindings and infrastructure deployment need separate qualification.
+management, read-only drift visibility and lifecycle email capture. Most OCI provider effects are
+simulated. The separate [8445 OCI pilot](26-administrator-sso.md#local-milestone-and-hosted-handoff)
+supports corporate SSO and administrator enrollment. Hosted rollout and other real OCI bindings
+need separate qualification.
 Drift scheduling is explicitly deferred until staging/Kubernetes deployment. All five hosted CI jobs
 and administrator-enforced master protection are verified at baseline `db08b3b`. Use
 [one milestone PR](../how-to/github-checkpoints.md) for related implementation slices; the five
@@ -61,6 +63,7 @@ integration remains separately qualified.
 | [22: recovery console CIDR boundary and 30-day API-key rotation](22-credential-security-lifecycles.md) |
 | [23: proposed managed signing-key rotation execution and accounting](23-signing-key-rotation.md) |
 | [24: isolated staging/production and build-once promotion](24-environments-and-promotion.md) |
+| [26: Atlas administrator sign-in through OCI IAM federation](26-administrator-sso.md) |
 
 ## Authority and decisions
 

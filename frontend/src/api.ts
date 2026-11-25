@@ -53,6 +53,16 @@ import type {
   SessionView,
 } from "./contracts";
 
+export interface AdministratorEnrollmentPreview {
+  environment: "development" | "staging" | "production";
+  role: "Administrator";
+  username: string;
+  work_email: string | null;
+  display_name: string;
+  existing_account: boolean;
+  confirmation: string;
+}
+
 // Keep provider/server details and credential input out of visible error messages.
 export class ApiError extends Error {
   // Classify only the HTTP status; response bodies may contain private diagnostics.
@@ -389,6 +399,14 @@ export const api = {
       throw error;
     }
   },
+  // Read whether this installation has configured the corporate sign-in method.
+  corporateSignInStatus(signal?: AbortSignal) {
+    return request<{ enabled: boolean }>("/api/auth/sso/status", "GET", undefined, signal);
+  },
+  // Start a same-origin browser-bound attempt without putting factors in the request.
+  startCorporateSignIn(signal?: AbortSignal) {
+    return request<{ authorization_url: string }>("/api/auth/sso/start", "POST", undefined, signal);
+  },
   // Factor values never become query keys or cached query data.
   signIn(password: string, code: string) {
     return request<SessionView>("/api/auth/local/sign-in", "POST", {
@@ -482,6 +500,28 @@ export const api = {
   // Submit only a client request identity and synthetic target; server authorization supplies all binding fields.
   inspect(body: InspectionSubmission) {
     return request<Acceptance>("/api/operations/inspect", "POST", body);
+  },
+  // Show interactive provisioning only when an authorized backend adapter is configured.
+  administratorOnboarding(signal?: AbortSignal) {
+    return request<{ enabled: boolean; environment?: AdministratorEnrollmentPreview["environment"] | null }>(
+      "/api/administrators/onboarding", "GET", undefined, signal,
+    );
+  },
+  // Send the lookup in a request body and let the directory provide all displayed fields.
+  previewAdministrator(value: string) {
+    return request<AdministratorEnrollmentPreview>("/api/administrators/onboarding/preview", "POST", { value });
+  },
+  // Confirm the exact server review and include profile names only for a new account.
+  confirmAdministrator(value: string, confirmation: string, name?: { first_name: string; last_name: string }) {
+    return request<unknown>("/api/administrators/onboarding/confirm", "POST", { value, confirmation, name });
+  },
+  // Retry only the OCI cleanup for the displayed, still-revoked grant revision.
+  retryAdministratorCleanup(id: string, revision: string) {
+    return request<{ group_cleanup: "complete" | "pending" }>(
+      "/api/administrators/" + encodeURIComponent(id) + "/group-cleanup",
+      "POST",
+      { expected_revision: revision },
+    );
   },
   // Require the exact displayed grant revision; server-side protected-account checks remain authoritative.
   revoke(id: string, revision: string) {

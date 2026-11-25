@@ -11,6 +11,7 @@ from pydantic import TypeAdapter
 from starlette.authentication import BaseUser
 
 from otm.auth.contracts import AdminEntitlement, AdminSession
+from otm.auth.corporate_entitlements import CorporateEntitlements
 from otm.contracts import UtcInstant
 from otm.operations.contracts import ActorIdentity
 
@@ -84,16 +85,25 @@ class AdminPrincipal(BaseUser):
 
 # Require explicit storage, trusted issuer and current entitlement; no default access.
 class SessionService:
-    # Compose verification independently of cookies, provider callbacks or network defaults.
+    # Keep the corporate issuer opt-in and require an issuer-dispatching authority when enabled.
     def __init__(
         self,
         repository: SessionRepository,
         entitlements: EntitlementAuthority,
         trusted_issuer: str,
         clock: Callable[[], datetime],
+        *,
+        corporate: CorporateEntitlements | None = None,
     ):
+        if corporate is not None and (
+            not isinstance(corporate, CorporateEntitlements)
+            or corporate.local_issuer != trusted_issuer
+        ):
+            raise ValueError("CORPORATE_SESSION_AUTHORITY_REQUIRED")
         self.repository, self.entitlements = repository, entitlements
         self.trusted_issuer, self.clock = trusted_issuer, clock
+        self.corporate = corporate
+        self.corporate_issuer = corporate.target.issuer if corporate is not None else None
 
     # Hash a bounded opaque handle; do not retain it in principal, database or diagnostics.
     def authenticate(self, handle: str) -> AdminPrincipal:
@@ -111,22 +121,22 @@ class SessionService:
             now = TypeAdapter(UtcInstant).validate_python(self.clock())
             if (
                 session.session_token_hash != token_hash
-                or session.issuer != self.trusted_issuer
+                or session.issuer not in (self.trusted_issuer, self.corporate_issuer)
                 or session.revoked_at is not None
                 or now >= session.last_seen_at + timedelta(seconds=session.idle_timeout_seconds)
                 or not session.auth_time <= session.created_at <= now < session.expires_at
             ):
                 raise SessionFailure(401, "AUTHENTICATION_REQUIRED")
             try:
+                authority = (
+                    self.entitlements if session.issuer == self.trusted_issuer else self.corporate
+                )
                 grant = AdminEntitlement.model_validate(
-                    self.entitlements.require_admin(
-                        session.issuer, session.subject, session.workspace_id
-                    )
+                    authority.require_admin(session.issuer, session.subject, session.workspace_id)
                 )
             except PermissionError:
                 raise SessionFailure(403, "ADMINISTRATOR_REQUIRED") from None
-            # Check time again after external verification. A slow entitlement call cannot
-            # extend an expired session or silently authorize another issuer/subject/workspace.
+            # A slow grant read cannot extend a session or authorize another issuer or workspace.
             now = TypeAdapter(UtcInstant).validate_python(self.clock())
             if now >= session.expires_at or now >= session.last_seen_at + timedelta(
                 seconds=session.idle_timeout_seconds

@@ -6,8 +6,8 @@ config:
     minEntityWidth: 220
     fontSize: 14
 ---
-%% Fresh empty disposable PostgreSQL metadata reflection through0029:17 November2026;34tables,439columns,89FK.
-%% No row values or saved8443 database inspected; imported_access is nullable JSONB.
+%% Reflected disposable PostgreSQL 18.7 through migration 0032 on 25 November 2026.
+%% Schema metadata only: 34 tables, 440 columns and 89 foreign keys.
 erDiagram
   direction LR
   alembic_version {
@@ -163,6 +163,7 @@ erDiagram
     timestamp_with_time_zone created_at "required"
     timestamp_with_time_zone updated_at "required"
     timestamp_with_time_zone revoked_at "nullable"
+    boolean group_cleanup_complete "required"
   }
   otm_baseline_version {
     uuid id PK "required"

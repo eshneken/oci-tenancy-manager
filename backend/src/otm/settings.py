@@ -75,6 +75,24 @@ class LocalServerSettings(Contract):
     organization_reset_enabled: bool = False
 
 
+# Define the deployment-owned CSV source before an administrator saves the first mapping.
+class HostedOrganizationSource(Contract):
+    # Source identifier, 1–256 nonblank characters, persisted with subsequent manual CSV imports.
+    source_id: Text
+    # Population identifier, 1–256 nonblank characters, scoped by the deployment operator.
+    population_id: Text
+    # Maximum accepted source age in seconds, 1–2147483647, based on the stated UTC capture time.
+    max_age_seconds: PositiveSeconds = 86400
+    # True only for an approved authoritative census; qualified complete feeds may flag absences.
+    census_contract_confirmed: bool = False
+    # Approved single production operations mailbox, up to 254 characters. Required in
+    # production and omitted in staging, where the configured testing override applies.
+    administrator_alert_email: str | None = None
+
+    # Validate a single mailbox and reject address lists and header content at release validation.
+    _alert_mailbox = field_validator("administrator_alert_email")(mailbox)
+
+
 # Explicit hosted serving/connection budgets; this never selects an OCI provider or creates pods.
 class HostedSettings(Contract):
     # Exact public HTTPS origin, up to256 characters; shared with host/origin and email-link guards.
@@ -85,6 +103,9 @@ class HostedSettings(Contract):
     database_pool_size: Annotated[int, Field(ge=1, le=16)] = 2
     # Worker graceful-drain seconds:1-240, below the pod worker grace of300 seconds.
     worker_shutdown_seconds: Annotated[int, Field(ge=1, le=240)] = 120
+
+    # Optional first-mapping source policy; absence leaves existing database policies usable.
+    organization_source: HostedOrganizationSource | None = None
 
     # Optional HTTP-01 edge; no ingress resources are emitted when absent.
     ingress: CaddyIngressSettings | None = None
@@ -209,6 +230,11 @@ class ApplicationSettings(Contract):
             or self.notifications.application_origin not in {None, self.hosted.public_origin}
         ):
             raise ValueError("HOSTED_SERVING_SETTINGS_MISMATCH")
+        source = self.hosted.organization_source if self.hosted else None
+        if source and (source.administrator_alert_email is not None) != (
+            self.environment == "production"
+        ):
+            raise ValueError("HOSTED_ORGANIZATION_ALERT_EMAIL_ENVIRONMENT_MISMATCH")
         if self.hosted is not None and self.hosted.ingress is not None:
             ingress_hostname(self.hosted.public_origin)
             if self.recovery_console is None or any(

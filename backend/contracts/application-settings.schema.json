@@ -98,6 +98,53 @@
       "title": "CostPolicy",
       "type": "object"
     },
+    "HostedOrganizationSource": {
+      "additionalProperties": false,
+      "properties": {
+        "administrator_alert_email": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Administrator Alert Email"
+        },
+        "census_contract_confirmed": {
+          "default": false,
+          "title": "Census Contract Confirmed",
+          "type": "boolean"
+        },
+        "max_age_seconds": {
+          "default": 86400,
+          "maximum": 2147483647,
+          "minimum": 1,
+          "title": "Max Age Seconds",
+          "type": "integer"
+        },
+        "population_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Population Id",
+          "type": "string"
+        },
+        "source_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Source Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "population_id"
+      ],
+      "title": "HostedOrganizationSource",
+      "type": "object"
+    },
     "HostedSettings": {
       "additionalProperties": false,
       "properties": {
@@ -112,6 +159,17 @@
           "anyOf": [
             {
               "$ref": "#/$defs/CaddyIngressSettings"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "organization_source": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HostedOrganizationSource"
             },
             {
               "type": "null"

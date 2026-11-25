@@ -26,6 +26,11 @@ class OciAuthenticationUnavailable(RuntimeError):
     pass
 
 
+# Fail startup instead of serving configured credential material from the public asset tree.
+class PublicOciCredentialPath(ValueError):
+    pass
+
+
 # Read bounded private regular files; no relative paths, symlink leaves, FIFOs or shared custody.
 def private_text(filename):
     path = Path(filename).expanduser()
@@ -48,13 +53,31 @@ def private_text(filename):
     return content.decode("utf-8")
 
 
-# Require a complete named API-key section; DEFAULT inheritance cannot choose another identity.
-def api_key_signer(policy):
+# Parse a private named section without inheriting another profile's credential values.
+def api_key_profile(policy):
     parser = configparser.ConfigParser(interpolation=None, default_section="OTM_NO_INHERITANCE")
     parser.read_string(private_text(policy.config_file))
     if parser.defaults() or not parser.has_section(policy.profile):
         raise ValueError("EXPLICIT_OCI_PROFILE_REQUIRED")
-    values = dict(parser[policy.profile])
+    return dict(parser[policy.profile])
+
+
+# Check each configured profile independently of signer validity or feature availability.
+def reject_public_oci_profile(policy, frontend):
+    public = frontend.resolve()
+    if Path(policy.config_file).expanduser().resolve().is_relative_to(public):
+        raise PublicOciCredentialPath("OCI_CREDENTIALS_CANNOT_BE_PUBLIC")
+    try:
+        key = api_key_profile(policy).get("key_file")
+    except (OSError, ValueError, configparser.Error):
+        return
+    if key and Path(key).expanduser().resolve().is_relative_to(public):
+        raise PublicOciCredentialPath("OCI_CREDENTIALS_CANNOT_BE_PUBLIC")
+
+
+# Require a complete named API-key section; DEFAULT inheritance cannot choose another identity.
+def api_key_signer(policy):
+    values = api_key_profile(policy)
     required = {"user", "tenancy", "fingerprint", "key_file", "region"}
     if not required <= values.keys() or values.keys() - required - {"pass_phrase"}:
         raise ValueError("COMPLETE_OCI_API_KEY_PROFILE_REQUIRED")

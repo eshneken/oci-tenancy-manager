@@ -14,6 +14,21 @@ describe("API transport", () => {
     await api.repairRecoveryNetworks("unit/id",command,signal);
     expect(fetch).toHaveBeenLastCalledWith("/api/tenancies/unit%2Fid/recovery-network-repair",expect.objectContaining({method:"POST",signal,body:JSON.stringify(command),headers:{"Content-Type":"application/json","X-OTM-Request":"1"}}));
   });
+  // Discover the capability without credentials and start the exact CSRF-protected SSO endpoint.
+  it("keeps Oracle SSO capability and start on fixed same-origin routes", async () => {
+    const fetch = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
+    vi.stubGlobal("fetch", fetch);
+    const signal = new AbortController().signal;
+    await api.corporateSignInStatus(signal);
+    expect(fetch).toHaveBeenLastCalledWith("/api/auth/sso/status", expect.objectContaining({
+      method: "GET", signal, cache: "no-store", credentials: "same-origin",
+    }));
+    await api.startCorporateSignIn();
+    expect(fetch).toHaveBeenLastCalledWith("/api/auth/sso/start", expect.objectContaining({
+      method: "POST", body: undefined, headers: { "Content-Type": "application/json", "X-OTM-Request": "1" },
+    }));
+  });
+
   // Verify routing, abort signals, privacy options and exact grant revisions.
   it("sends same-origin requests without caching or URL factor leakage", async () => {
     const session = {

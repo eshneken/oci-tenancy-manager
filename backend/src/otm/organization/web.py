@@ -143,14 +143,25 @@ def project(config, current, previous, issues=()):
 # Keep acquisition identity stable on transport retry while a new manual upload gets a fresh UUID.
 class OrganizationWeb:
     # Dependencies are explicit; the initial profile never replaces an existing database
-    # configuration.
-    def __init__(self, store, clock, initial=None, *, test_reset_enabled=False, workflows=None):
+    # configuration. A mapping-only reapply dependency leaves lifecycle routes disabled.
+    def __init__(
+        self,
+        store,
+        clock,
+        initial=None,
+        *,
+        test_reset_enabled=False,
+        workflows=None,
+        mapping_workflows=None,
+    ):
         self.store, self.clock, self.initial = store, clock, initial
         self.test_reset_enabled = test_reset_enabled
         self.workflows = workflows
         from otm.organization.mapping import MappingService
 
-        self.mapping = MappingService(store, initial, workflows)
+        self.mapping = MappingService(
+            store, initial, workflows if mapping_workflows is None else mapping_workflows
+        )
 
     # Validate file structure before any initialization or publication and preserve raw digest
     # evidence.
@@ -214,7 +225,7 @@ class OrganizationWeb:
         )
 
 
-# Mount only authenticated read/upload endpoints; session and CSRF middleware remain authoritative.
+# Mount organization routes behind the shared session and same-origin mutation guards.
 def organization_router(service):
     router = APIRouter()
     if getattr(service, "mapping", None) is not None:

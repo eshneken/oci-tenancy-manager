@@ -2,6 +2,8 @@
 
 29 October 2026 · P0.9 internal implementation checkpoint
 
+This dated foundation covers session verification and request authorization. The [8445 corporate sign-in pilot](corporate-sso.md) documents corporate issuance and the current enrollment boundary.
+
 [Backend setup](../../backend/README.md) · [Session data dictionary](../engineering-design/11-production-data-model.md)
 · [Identity design](../engineering-design/04-identity-and-access.md)
 

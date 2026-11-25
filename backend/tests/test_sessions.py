@@ -201,3 +201,14 @@ def test_authentication_diagnostic_is_a_closed_public_vocabulary():
     with pytest.raises(ValueError, match="^INVALID_AUTHENTICATION_DIAGNOSTIC$") as error:
         SessionFailure(401, "private-example")
     assert "private-example" not in str(error.value)
+
+
+# Require a dedicated authority with live OCI status before accepting corporate sessions.
+def test_corporate_session_namespace_is_opt_in(session_case):
+    c = session_case
+    local = "urn:otm:local:test"
+    disabled = SessionService(c.repository, c.authority, local, c.clock)
+    with pytest.raises(SessionFailure):
+        disabled.authenticate(c.handle)
+    with pytest.raises(ValueError, match="CORPORATE_SESSION_AUTHORITY_REQUIRED"):
+        SessionService(c.repository, c.authority, local, c.clock, corporate=c.authority)

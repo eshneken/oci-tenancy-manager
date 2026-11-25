@@ -21,6 +21,42 @@ Public templates contain synthetic origins/networks. Replace them with reviewed 
 values. Configure the ingress proxy networks here, rather than the end-user access allowlist.
 `hosted_settings` also enforces the existing release, recovery-network and email-routing policies.
 
+## Initial organization mapping and import
+
+Use `[hosted.organization_source]` from the [staging](../../backend/config/staging.application.toml)
+and [production](../../backend/config/production.application.toml) templates. Set an approved
+`source_id` and a `population_id` for each environment. Keep both IDs stable after the first mapping Apply.
+Set `max_age_seconds` to the permitted age of a dated export. Leave
+`census_contract_confirmed = false` until the source is approved as authoritative for absence
+review. A CSV marked complete cannot confer that authority by itself.
+
+- **Staging** mirrors the approved real directory and organization mapping in its own database.
+  Set `testing.email_override` to the controlled test mailbox. The source policy uses that mailbox
+  for its alert address. Keep SMTP disabled until the notifier and worker are qualified with the
+  same routing policy as the hosted app. The existing OCI email builders enforce that policy in
+  local tests. Hosted OCI activation and contact integration still require qualification.
+- **Production** uses its approved directory export, mapping, and non-personal operations mailbox
+  in `administrator_alert_email`. The production profile excludes testing overrides.
+
+Before using the UI, have the approved database operator review and apply the
+[organization API grants](../../infra/postgresql/hosted-organization-api-grants.sql) to the target
+database in one transaction. This assumes the post-migration table owner, the restricted
+`otm_api` role, and existing authentication and audit grants. Review the exact role identifier if
+the deployment uses a different role name. The startup path itself does not grant privileges.
+
+In each environment, sign in as an administrator. Open **Application Settings → Organization
+Mapping** and enter the real root and segment leaders. Select **Preview changes**, review the
+proposed mapping, then select **Apply changes**. From **Organization**, upload the CSV through
+the authenticated UI with the export's actual UTC capture time and completeness. Verify that the
+employee count and segment assignments match the approved export and mapping.
+
+Keep employee feeds and person-level mappings in approved private storage and the app database.
+Use deployment-owned source metadata and the designated mailbox in settings. Keep employee rows,
+manager emails and names out of source control, deployment inputs and CI artifacts. Startup and
+page loads create no organization rows. Once saved, the database owns the mapping and associated
+source policy. Changing the TOML template or restarting the service leaves that saved policy in
+effect. A source-policy change after setup requires a separately reviewed data change.
+
 ## Database connections and migrations
 
 `otm.hosted_database.hosted_engine` requires an explicit PostgreSQL DNS endpoint, database, role,
@@ -50,7 +86,7 @@ bundled head is supported. API startup performs no DDL and never seeds administr
 
 `create_hosted_application` composes existing authentication, organization, audit and Operations
 services with an explicitly injected MFA secret reader and API-role pool. Enabled notifications
-also require an injected notifier; startup cannot silently drop notices. Provider-backed mutations
+also require an injected notifier with the active email policy. Provider-backed mutations
 remain unavailable in this partial composition. A real Vault/OCI composition root and executable
 API/worker launch wiring are subsequent work; this is not a standalone hosted application launcher.
 

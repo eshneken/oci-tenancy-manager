@@ -46,7 +46,12 @@ from otm.tenancies.signing_key_contracts import (
     signing_event_summary,
 )
 
-AUTHENTICATION = ("local_sign_in_succeeded", "local_sign_in_failed", "session_logged_out")
+AUTHENTICATION = (
+    "local_sign_in_succeeded",
+    "corporate_sign_in_succeeded",
+    "local_sign_in_failed",
+    "session_logged_out",
+)
 ADMINISTRATION = (
     "configuration_review_staged",
     "baseline_draft_saved",
@@ -54,6 +59,8 @@ ADMINISTRATION = (
     "baseline_default_changed",
     "administrator_revoked",
     "administrator_bootstrapped",
+    "administrator_granted",
+    "administrator_regranted",
     "local_credentials_reset",
     "audit_export",
 )

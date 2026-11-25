@@ -2,6 +2,8 @@
 
 29 October 2026 · D58 A1 internal implementation checkpoint
 
+This dated foundation covers administrator grants and atomic revocation. The [8445 corporate sign-in pilot](corporate-sso.md#administrator-enrollment-and-removal) documents enrollment, regrant and OCI group cleanup.
+
 [Backend setup](../../backend/README.md) · [Session verification](authentication.md)
 · [Accepted administrator design](../engineering-design/19-administrator-provisioning.md)
 · [Production data model](../engineering-design/11-production-data-model.md)

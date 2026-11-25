@@ -34,3 +34,34 @@ def security_event(
             data_hash=canonical_hash(data),
         )
     )
+
+
+# Record a first grant or regrant with revision evidence and no mutable identity details.
+def corporate_grant_event(
+    connection, *, workspace, grant_id, actor, at, revision, previous_revision
+):
+    kind = "administrator_granted" if previous_revision is None else "administrator_regranted"
+    version = "corporate-administrator-1"
+    data = {
+        "contract_version": version,
+        "outcome": kind,
+        "authorization_revision": str(revision),
+        "previous_authorization_revision": (
+            str(previous_revision) if previous_revision is not None else None
+        ),
+    }
+    connection.execute(
+        audit_event.insert().values(
+            id=uuid4(),
+            workspace_id=workspace,
+            administrator_id=grant_id,
+            actor=actor.key,
+            actor_subject=actor.key,
+            actor_snapshot=actor.model_dump(mode="json"),
+            kind=kind,
+            at=at,
+            contract_version=version,
+            data=data,
+            data_hash=canonical_hash(data),
+        )
+    )

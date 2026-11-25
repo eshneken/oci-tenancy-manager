@@ -2,7 +2,7 @@ import { Select } from "./Select";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTable } from "@tanstack/react-table";
-import { api, ApiError } from "./api";
+import { api, ApiError, type AdministratorEnrollmentPreview } from "./api";
 import type { AdministratorQuery, AdministratorView } from "./contracts";
 
 const labels = [
@@ -24,8 +24,99 @@ export function Administrators({ expired }: { expired: () => void }) {
   const client = useQueryClient();
   const [query, setQuery] = useState(initialQuery);
   const [search, setSearch] = useState("");
+  const searchInput = useRef<HTMLInputElement>(null);
   const [target, setTarget] = useState<AdministratorView | null>(null);
   const [message, setMessage] = useState("");
+  const onboarding = useQuery({
+    queryKey: ["administrator-onboarding"],
+    queryFn: ({ signal }) => api.administratorOnboarding(signal),
+    retry: false,
+  });
+  const canOnboard = onboarding.data?.enabled === true;
+  const addDialog = useRef<HTMLDialogElement>(null);
+  const [lookup, setLookup] = useState("");
+  const [name, setName] = useState({ first_name: "", last_name: "" });
+  const [review, setReview] = useState<AdministratorEnrollmentPreview | null>(null);
+  const [addError, setAddError] = useState("");
+  const reviewHeading = useRef<HTMLHeadingElement>(null);
+  const lookupInput = useRef<HTMLInputElement>(null);
+  const [cleanupResults, setCleanupResults] = useState<Record<string, "pending" | "complete" | "failed">>({});
+  useEffect(() => {
+    if (!addDialog.current?.open) return;
+    if (review) reviewHeading.current?.focus();
+    else lookupInput.current?.focus();
+  }, [review, addError]);
+  const preview = useMutation({
+    gcTime: 0,
+    mutationFn: api.previewAdministrator,
+    onSuccess: (current) => {
+      if (current.existing_account) setName({ first_name: "", last_name: "" });
+      setReview(current);
+    },
+    onError: (error) => {
+      if (error instanceof ApiError && error.status === 401) expired();
+      else setAddError(
+        error instanceof ApiError && error.status === 409
+          ? "This administrator already has Atlas access."
+          : "Atlas could not prepare access for this email. Check the address and account status.",
+      );
+    },
+  });
+  const confirm = useMutation({
+    gcTime: 0,
+    mutationFn: (command: { confirmation: string; name?: Parameters<typeof api.confirmAdministrator>[2] }) =>
+      api.confirmAdministrator(lookup.trim(), command.confirmation, command.name),
+    onSuccess: () => {
+      addDialog.current?.close();
+      setMessage("Administrator access granted.");
+      void client.invalidateQueries({ queryKey: ["administrators"] });
+    },
+    onError: (error) => {
+      if (error instanceof ApiError && error.status === 401) expired();
+      else {
+        setReview(null);
+        setAddError("Grant could not be confirmed. Refresh the administrator list and verify the identity before retrying.");
+        void client.invalidateQueries({ queryKey: ["administrators"] });
+      }
+    },
+  });
+  const cleanup = useMutation({
+    mutationFn: (row: AdministratorView) =>
+      api.retryAdministratorCleanup(row.id, row.authorization_revision),
+    onMutate: () => {
+      setMessage("Retrying OCI group cleanup…");
+      return { trigger: document.activeElement instanceof HTMLButtonElement
+        && document.activeElement.getAttribute("aria-label")?.startsWith("Retry OCI group cleanup for ")
+          ? document.activeElement : null };
+    },
+    onSuccess: (result, row, context) => {
+      if (result.group_cleanup === "complete" && context?.trigger && document.activeElement === context.trigger) {
+        searchInput.current?.focus();
+      }
+      setCleanupResults((previous) => ({
+        ...previous, [row.id + row.authorization_revision]: result.group_cleanup,
+      }));
+      setMessage(result.group_cleanup === "complete"
+        ? "OCI group cleanup complete."
+        : "Cleanup is still pending after the retry. Atlas access remains revoked.");
+    },
+    onError: (error, row) => {
+      if (error instanceof ApiError && error.status === 401) {
+        expired();
+        return;
+      }
+      if (error instanceof ApiError && error.status === 409) {
+        setMessage("This administrator changed. Review the refreshed list before retrying.");
+        return;
+      }
+      setCleanupResults((previous) => ({
+        ...previous, [row.id + row.authorization_revision]: "failed",
+      }));
+      setMessage("OCI group cleanup failed. Review the administrator row before retrying.");
+    },
+    onSettled: () => void client.invalidateQueries({ queryKey: ["administrators"] }),
+  });
+  const adding = preview.isPending || confirm.isPending;
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const timer = setTimeout(
@@ -59,7 +150,26 @@ export function Administrators({ expired }: { expired: () => void }) {
     mutationFn: (row: AdministratorView) =>
       api.revoke(row.id, row.authorization_revision),
     retry: false,
-    onSuccess: () => setMessage("Administrator access revoked."),
+    onSuccess: (result, row) => {
+      if (result && typeof result === "object" && "group_cleanup" in result
+        && (result.group_cleanup === "complete" || result.group_cleanup === "pending") && dialog.current?.open) {
+        dialog.current.close();
+        searchInput.current?.focus();
+      }
+      if (result && typeof result === "object" && "group_cleanup" in result) {
+        const state = result.group_cleanup;
+        if ("authorization_revision" in result && typeof result.authorization_revision === "string"
+          && (state === "pending" || state === "complete")) {
+          const revision = result.authorization_revision;
+          setCleanupResults((previous) => ({ ...previous, [row.id + revision]: state }));
+        }
+        if (state === "pending") {
+          setMessage("Atlas access is revoked. OCI group cleanup can be retried.");
+          return;
+        }
+      }
+      setMessage("Administrator access revoked.");
+    },
     onError: (error) => {
       if (error instanceof ApiError && error.status === 401) expired();
       else
@@ -111,16 +221,23 @@ export function Administrators({ expired }: { expired: () => void }) {
         </div>
         <button
           className="button primary"
-          disabled
-          aria-describedby="corporate-help"
+          disabled={!canOnboard}
+          aria-describedby={canOnboard ? undefined : "corporate-help"}
+          onClick={() => {
+            setLookup("");
+            setReview(null);
+            setAddError("");
+            addDialog.current?.showModal();
+          }}
         >
           Add administrator
         </button>
       </div>
-      <p id="corporate-help" className="notice">
-        Additional administrators require a verified corporate identity.
-        Corporate sign-in is not configured.
-      </p>
+      {!canOnboard && (
+        <p id="corporate-help" className="notice">
+          Administrator onboarding is unavailable on this instance.
+        </p>
+      )}
       <div className="metrics" aria-label="Administrator statistics">
         {[
           ["Administrators", data?.statistics.total],
@@ -143,6 +260,7 @@ export function Administrators({ expired }: { expired: () => void }) {
           <label className="search-field">
             Search administrators
             <input
+              ref={searchInput}
               type="search"
               placeholder="Name or email"
               value={search}
@@ -252,8 +370,27 @@ export function Administrators({ expired }: { expired: () => void }) {
                             className="button compact secondary"
                             onClick={() => setTarget(row.original)}
                           >
-                            Revoke
+                            {canOnboard ? "Remove access" : "Revoke"}
                           </button>
+                        ) : canOnboard ? (
+                          cleanupResults[row.original.id + row.original.authorization_revision] === "complete" ? (
+                            <span className="muted">Group cleanup complete</span>
+                          ) : (
+                            <>
+                              <button className="button compact secondary" aria-disabled={cleanup.isPending}
+                                aria-label={`Retry OCI group cleanup for ${row.original.display_name}`}
+                                onClick={() => { if (!cleanup.isPending) cleanup.mutate(row.original); }}>
+                                {cleanup.isPending && cleanup.variables?.id === row.original.id
+                                  ? "Retrying…" : "Retry OCI group cleanup"}
+                              </button>
+                              {cleanupResults[row.original.id + row.original.authorization_revision] === "failed" && (
+                                <div className="muted">Cleanup failed</div>
+                              )}
+                              {cleanupResults[row.original.id + row.original.authorization_revision] === "pending" && (
+                                <div className="muted">Cleanup pending</div>
+                              )}
+                            </>
+                          )
                         ) : (
                           <span className="muted">No action</span>
                         )}
@@ -350,6 +487,83 @@ export function Administrators({ expired }: { expired: () => void }) {
         )}
       </section>
       <dialog
+        ref={addDialog}
+        aria-labelledby="administrator-add-title"
+        onClose={() => {
+          setLookup("");
+          setName({ first_name: "", last_name: "" });
+          setReview(null);
+          setAddError("");
+          preview.reset();
+          confirm.reset();
+        }}
+        onCancel={(event) => { if (adding) event.preventDefault(); }}
+      >
+        <h2 id="administrator-add-title">Add administrator</h2>
+        <form onSubmit={(event) => {
+          event.preventDefault();
+          if (adding) return;
+          setAddError("");
+          if (!review) {
+            preview.mutate(lookup.trim());
+          } else if (review.existing_account) {
+            confirm.mutate({ confirmation: review.confirmation });
+          } else {
+            const first_name = name.first_name.trim();
+            const last_name = name.last_name.trim();
+            if (first_name && last_name) confirm.mutate({ confirmation: review.confirmation, name: { first_name, last_name } });
+          }
+        }}>
+          {review ? (
+            <>
+              <h3 ref={reviewHeading} tabIndex={-1}>Review administrator access</h3>
+              <dl className="administrator-review-details">
+                {review.display_name !== review.work_email && (
+                  <><dt>OCI display name</dt><dd>{review.display_name}</dd></>
+                )}
+                <dt>Work email</dt><dd>{review.work_email}</dd>
+                <dt>Environment</dt><dd>{review.environment}</dd>
+                <dt>Access</dt><dd>{review.role}</dd>
+              </dl>
+              {review.existing_account
+                ? <p>Atlas will use the existing OCI account. Sign-in to Atlas requires Oracle SSO.</p>
+                : <>
+                  <p>Atlas will create a federated OCI account for this email. Enter the person’s name and check the address before granting access.</p>
+                  <div className="administrator-name-fields">
+                    <label className="administrator-form-field">
+                      First name
+                      <input value={name.first_name} onChange={(event) => setName({ ...name, first_name: event.target.value })}
+                        autoComplete="off" pattern={String.raw`.*\S.*`} required maxLength={100} disabled={adding} />
+                    </label>
+                    <label className="administrator-form-field">
+                      Last name
+                      <input value={name.last_name} onChange={(event) => setName({ ...name, last_name: event.target.value })}
+                        autoComplete="off" pattern={String.raw`.*\S.*`} required maxLength={100} disabled={adding} />
+                    </label>
+                  </div>
+                </>}
+            </>
+          ) : (
+            <label className="administrator-form-field">
+              Corporate work email
+              <input ref={lookupInput} type="email" autoComplete="off" value={lookup} onChange={(event) => {
+                setLookup(event.target.value);
+                if (lookup.trim() !== event.target.value.trim()) setName({ first_name: "", last_name: "" });
+              }}
+                required maxLength={254} disabled={adding} />
+            </label>
+          )}
+          {addError && <p role="alert" className="alert">{addError}</p>}
+          <div className="dialog-actions">
+            <button type="button" className="button secondary" disabled={adding}
+              onClick={() => addDialog.current?.close()}>Cancel</button>
+            <button key={review ? "grant" : "verify"} type="submit" className="button primary" disabled={adding}>
+              {adding ? "Working…" : review ? "Grant access" : "Review access"}
+            </button>
+          </div>
+        </form>
+      </dialog>
+      <dialog
         ref={dialog}
         aria-labelledby="revoke-title"
         onCancel={(event) => {
@@ -362,6 +576,16 @@ export function Administrators({ expired }: { expired: () => void }) {
           <strong>{target?.display_name}</strong> will lose access to this
           application and their active sessions will end.
         </p>
+        {canOnboard && target && (
+          <>
+            <dl className="administrator-review-details">
+              <dt>{target.email ? "Work email" : "Atlas grant reference"}</dt>
+              <dd>{target.email ?? target.id}</dd>
+              <dt>Environment</dt><dd>{onboarding.data?.environment}</dd>
+            </dl>
+            <p>Atlas will remove this environment’s app-group membership. The OCI account and other groups will remain.</p>
+          </>
+        )}
         <p>Tenancy ownership and resources are not changed.</p>
         <div className="dialog-actions">
           <button

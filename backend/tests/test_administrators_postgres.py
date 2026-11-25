@@ -3,8 +3,10 @@
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from datetime import timedelta
+from pathlib import Path
 from threading import Barrier
 from types import SimpleNamespace
+from unittest.mock import Mock
 from uuid import uuid4
 
 import pytest
@@ -14,9 +16,21 @@ from test_administrators import LOCAL, grant
 from test_admission_service import NOW
 from test_sessions import session_case
 
-from otm.auth.administrators import AdministratorFailure
+from otm.auth.administrators import AdministratorFailure, AdministratorQuery
+from otm.auth.corporate_enrollment import (
+    CorporateLookup,
+    DomainPerson,
+    EnrollmentTarget,
+    NewAccountName,
+    membership_request,
+)
+from otm.auth.corporate_entitlements import CorporateEntitlements
+from otm.auth.corporate_oidc import VerifiedDomainLogin
 from otm.auth.service import AdminPrincipal, SessionFailure, SessionService
+from otm.settings import load_settings
 from otm.storage.administrators import SqlAdministratorStore
+from otm.storage.corporate_administrators import ConfirmAdministrator, CorporateAdministrators
+from otm.storage.corporate_sessions import EVENT, SqlCorporateSessions
 from otm.storage.sessions import SqlSessionRepository
 from otm.storage.tables import admin_session, administrator, audit_event, local_credential
 
@@ -508,3 +522,237 @@ def test_directory_scope_search_sort_and_statistics(grants_case):
     result = c.store.directory(c.workspace, AdministratorQuery(query="Page", page=2))
     assert result.total == 12 and result.pages == 2 and len(result.items) == 2
     assert result.items[0].display_name == "Page 10"
+
+
+# Exercise issuer dispatch and transactional revoke against persisted hashed sessions.
+def test_corporate_sign_in_group_and_revocation_preserve_recovery(grants_case):
+    c = grants_case
+    subject = uuid4().hex
+    target = EnrollmentTarget(
+        environment="development",
+        workspace=c.workspace,
+        domain="synthetic-nonprod",
+        issuer=c.actor.issuer,
+        app=uuid4().hex,
+        group=uuid4().hex,
+    )
+    corporate = grant(workspace_id=c.workspace, subject=subject)
+    corporate_session = c.session.model_copy(
+        update={
+            "id": uuid4(),
+            "session_token_hash": uuid4().hex + uuid4().hex,
+            "subject": subject,
+            "entitlement_reference": str(corporate.id),
+            "entitlement_revision": corporate.authorization_revision,
+        }
+    )
+    recovery_session = c.session.model_copy(
+        update={
+            "id": uuid4(),
+            "session_token_hash": uuid4().hex + uuid4().hex,
+            "issuer": LOCAL,
+            "subject": c.recovery.subject,
+            "entitlement_reference": str(c.recovery.id),
+            "entitlement_revision": c.recovery.authorization_revision,
+        }
+    )
+    with c.engine.begin() as connection:
+        connection.execute(administrator.insert().values(**corporate.model_dump()))
+        for session in (corporate_session, recovery_session):
+            connection.execute(admin_session.insert().values(**session.model_dump()))
+    authorities = CorporateEntitlements(c.store, LOCAL, target)
+    sessions = SessionService(c.sessions, c.store, LOCAL, lambda: NOW, corporate=authorities)
+    recovery = sessions._resolve(recovery_session.session_token_hash)
+    assert (
+        sessions._resolve(corporate_session.session_token_hash).session.id == corporate_session.id
+    )
+    settings = load_settings(Path(__file__).resolve().parents[1] / "config/application.toml")
+    issuer = SqlCorporateSessions(authorities, settings.sessions, lambda: NOW)
+    with pytest.raises(PermissionError):
+        issuer.issue(VerifiedDomainLogin(guid=subject, group=uuid4().hex))
+    c.store.revoke(recovery, corporate.id, corporate.authorization_revision)
+    with pytest.raises(SessionFailure) as revoked:
+        sessions._resolve(corporate_session.session_token_hash)
+    assert revoked.value.status == 401
+    assert sessions._resolve(recovery_session.session_token_hash).session.id == recovery_session.id
+
+    # Re-use the corporate receipt issuer on a second independently granted synthetic identity.
+    other = grant(workspace_id=c.workspace, subject=uuid4().hex)
+    with c.engine.begin() as connection:
+        connection.execute(administrator.insert().values(**other.model_dump()))
+    issued = issuer.issue(VerifiedDomainLogin(guid=other.subject, group=target.group))
+    assert sessions.authenticate(issued.handle.get_secret_value()).session.id == issued.session.id
+    with c.engine.connect() as connection:
+        evidence = connection.execute(
+            select(audit_event.c.data).where(
+                audit_event.c.workspace_id == c.workspace, audit_event.c.kind == EVENT
+            )
+        ).scalar_one()
+    assert evidence == {
+        "session_id": str(issued.session.id),
+        "authorization_revision": str(other.authorization_revision),
+    }
+
+
+# Prove durable local revoke, exact group changes, and a stale retry fenced after regrant.
+@pytest.mark.parametrize("provision", [False, True], ids=["existing-account", "new-account"])
+def test_corporate_onboarding_and_failed_cleanup_regrant(grants_case, provision):
+    c = grants_case
+    target = EnrollmentTarget(
+        environment="development",
+        workspace=c.workspace,
+        domain="synthetic-nonprod",
+        issuer=c.actor.issuer,
+        app=uuid4().hex,
+        group=uuid4().hex,
+    )
+    account = DomainPerson(
+        guid=uuid4().hex,
+        domain=target.domain,
+        username="pilot@example.test",
+        display_name="Synthetic pilot",
+        active=True,
+        federated=provision,
+        deleting=False,
+    )
+    membership = Mock(side_effect=[True, TimeoutError("synthetic"), True])
+    creator = Mock(return_value=account)
+    domain = Mock(return_value=[account])
+    if provision:
+        domain.side_effect = [(), (), (account,), (account,), (account,)]
+    workflows = CorporateAdministrators(c.store, target, domain, membership, creator)
+    lookup = CorporateLookup(value=account.username)
+    preview = workflows.preview(c.principal, lookup)
+    assert preview.work_email == account.username
+    enrolled = workflows.confirm(
+        c.principal,
+        ConfirmAdministrator(
+            value=lookup.value,
+            confirmation=preview.confirmation,
+            name=NewAccountName(first_name="Synthetic", last_name="Pilot") if provision else None,
+        ),
+    )
+    authority = CorporateEntitlements(c.store, LOCAL, target)
+    service = SessionService(c.sessions, c.store, LOCAL, lambda: NOW, corporate=authority)
+    settings = load_settings(Path(__file__).resolve().parents[1] / "config/application.toml")
+    issuer = SqlCorporateSessions(authority, settings.sessions, lambda: NOW)
+    signed_in = issuer.issue(VerifiedDomainLogin(guid=account.guid, group=target.group))
+    assert service.authenticate(signed_in.handle.get_secret_value()).session.subject == account.guid
+    removal = workflows.remove(c.principal, enrolled.id, enrolled.authorization_revision)
+    assert removal.group_cleanup == "pending"
+    with pytest.raises(SessionFailure) as denied:
+        service.authenticate(signed_in.handle.get_secret_value())
+    assert denied.value.status == 401
+    renamed = account.model_copy(
+        update={"username": "renamed@example.test", "display_name": "Renamed pilot"}
+    )
+    domain.side_effect = None
+    domain.return_value = [renamed]
+    lookup = CorporateLookup(value=renamed.username)
+    preview = workflows.preview(c.principal, lookup)
+    regrant = workflows.confirm(
+        c.principal, ConfirmAdministrator(value=lookup.value, confirmation=preview.confirmation)
+    )
+    assert regrant.id == enrolled.id
+    assert (regrant.email, regrant.display_name) == (renamed.username, renamed.display_name)
+    assert regrant.authorization_revision != removal.authorization_revision
+    with pytest.raises(AdministratorFailure) as stale:
+        workflows.cleanup(c.principal, enrolled.id, removal.authorization_revision)
+    assert stale.value.code == "ADMINISTRATOR_REVISION_CHANGED"
+    with pytest.raises(AdministratorFailure) as protected:
+        workflows.remove(c.principal, c.recovery.id, c.recovery.authorization_revision)
+    assert protected.value.code == "RECOVERY_ADMINISTRATOR_PROTECTED"
+    add = membership_request(target, account.guid, add=True)
+    remove = membership_request(target, account.guid, add=False)
+    assert [call.args for call in membership.call_args_list] == [add, remove, add]
+    with c.engine.connect() as connection:
+        kinds = (
+            connection.execute(
+                select(audit_event.c.kind).where(audit_event.c.workspace_id == c.workspace)
+            )
+            .scalars()
+            .all()
+        )
+    assert kinds.count("administrator_granted") == 1
+    assert kinds.count("administrator_regranted") == 1
+    with c.engine.connect() as connection:
+        evidence = connection.scalar(
+            select(audit_event.c.data).where(
+                audit_event.c.administrator_id == enrolled.id,
+                audit_event.c.kind == "administrator_regranted",
+            )
+        )
+    assert evidence["previous_authorization_revision"] == str(removal.authorization_revision)
+    assert evidence["authorization_revision"] == str(regrant.authorization_revision)
+    assert kinds.count("administrator_revoked") == 1
+    assert creator.call_count == int(provision)
+    if provision:
+        assert creator.call_args.args[0]["name"] == {
+            "givenName": "Synthetic",
+            "familyName": "Pilot",
+        }
+
+
+# Persist cleanup independently of audit and keep regrant bound to the original administrator.
+def test_completed_cleanup_hides_grant_and_regrant_restores_same_identity(grants_case):
+    c = grants_case
+    target = EnrollmentTarget(
+        environment="development",
+        workspace=c.workspace,
+        domain="synthetic",
+        issuer=c.actor.issuer,
+        app=uuid4().hex,
+        group=uuid4().hex,
+    )
+    account = DomainPerson(
+        guid=uuid4().hex,
+        domain=target.domain,
+        username="pilot@example.test",
+        active=True,
+        federated=True,
+        deleting=False,
+    )
+    membership = Mock(side_effect=[True, False, True, True])
+    workflows = CorporateAdministrators(c.store, target, Mock(return_value=[account]), membership)
+    lookup = CorporateLookup(value=account.username)
+    review = workflows.preview(c.principal, lookup)
+    enrolled = workflows.confirm(
+        c.principal, ConfirmAdministrator(value=lookup.value, confirmation=review.confirmation)
+    )
+    pending = workflows.remove(c.principal, enrolled.id, enrolled.authorization_revision)
+    assert pending.group_cleanup == "pending"
+    assert enrolled.id in [
+        row.id for row in c.store.directory(c.workspace, AdministratorQuery()).items
+    ]
+    complete = workflows.cleanup(c.principal, enrolled.id, pending.authorization_revision)
+    assert complete.group_cleanup == "complete"
+    assert enrolled.id not in [
+        row.id for row in c.store.directory(c.workspace, AdministratorQuery()).items
+    ]
+    assert (
+        workflows.cleanup(c.principal, enrolled.id, pending.authorization_revision).group_cleanup
+        == "complete"
+    )
+    assert membership.call_count == 3
+    review = workflows.preview(c.principal, lookup)
+    restored = workflows.confirm(
+        c.principal, ConfirmAdministrator(value=lookup.value, confirmation=review.confirmation)
+    )
+    assert (
+        restored.id == enrolled.id
+        and restored.authorization_revision != pending.authorization_revision
+    )
+    assert enrolled.id in [
+        row.id for row in c.store.directory(c.workspace, AdministratorQuery()).items
+    ]
+    with c.engine.connect() as connection:
+        events = (
+            connection.execute(
+                select(audit_event.c.kind).where(audit_event.c.administrator_id == enrolled.id)
+            )
+            .scalars()
+            .all()
+        )
+    assert events.count("administrator_revoked") == 1
+    assert events.count("administrator_granted") == 1
+    assert events.count("administrator_regranted") == 1

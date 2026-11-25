@@ -20,6 +20,7 @@ independent recovery access. This manifest does not itself authorize live resour
 | Area | Procedure / expected qualification | Status |
 | --- | --- | --- |
 | Terraform state bootstrap | [Private bucket, target identity, local-state custody and future backend qualification](#terraform-state-bootstrap); mock plans are not live authorization or recovery evidence. | Pending |
+| Atlas administrator SSO and onboarding | [8445 smoke test and staged qualification](#atlas-administrator-sso-and-onboarding). | Pending hosted qualification |
 | App source allowlist | [Shared ingress contract](../engineering-design/06-platform-and-delivery.md#shared-inbound-source-allowlist--13-november-2026): permit HTTPS from each approved range/host and deny unapproved sources for UI and API. Inspect all NSG/security-list/controller rules for broad unions; reject missing/invalid input and ensure no alternate endpoint, NodePort, IPv6 or forwarded-header bypass. Qualify shared recovery-console propagation and lockout-safe updates independently. Network/allowlist and optional Caddy ingress source are implemented; full deployment/activation and effective live enforcement remain Pending. | Pending |
 | Network foundation | [Source and operator procedure](#network-foundation): actual private subnet flags, closed default/attached lists, routing/service prefix, deployment runner reachability, pod-to-database NSG identity and state separation. | Pending |
 | Enhanced OKE and private worker bootstrap | [Cluster, launch metadata, sensor and public-API qualification](#enhanced-oke-and-worker-bootstrap). ARM64 sensor compatibility is unknown and must be established before application deployment. | Pending |
@@ -622,7 +623,8 @@ namespace as the load balancer configuration.
 
 ## Hosted startup and database qualification
 
-Pending staging: verify managed PostgreSQL DNS/CA chain and separate API/worker/migration grants; reject wrong CA/hostname and excessive runtime authority. Rehearse migration ownership, competing migration rejection, failure rollback and exact-schema readiness. Verify the migration role can apply migration 0030, including use of the supported `pg_trgm` extension and creation of the OCID search index, while API and worker roles remain restricted. Confirm proxy trust/HTTPS, Vault MFA reader, complete OCI/mail task registration, queue TLS and one slot per worker. Exercise SIGTERM API/worker drain under load, bounded DB/network outage handling, restore and schema-changing release sequencing. Source-only disposable TLS tests are not deployed evidence. See [startup contract](hosted-startup.md).
+Pending staging: verify managed PostgreSQL DNS/CA chain and separate API/worker/migration grants; reject wrong CA/hostname and excessive runtime authority. Rehearse migration ownership, competing migration rejection, failure rollback and exact-schema readiness. Verify the migration role can apply migration 0030, including use of the supported `pg_trgm` extension and creation of the OCID search index, and the administrator cleanup receipt and corporate audit
+checks in migrations 0032 and 0033, while API and worker roles remain restricted. Confirm proxy trust/HTTPS, Vault MFA reader, complete OCI/mail task registration, queue TLS and one slot per worker. Exercise SIGTERM API/worker drain under load, bounded DB/network outage handling, restore and schema-changing release sequencing. Source-only disposable TLS tests are not deployed evidence. See [startup contract](hosted-startup.md).
 
 
 ## Vault retrieval and OKE identity
@@ -641,6 +643,24 @@ and one approved Vault/key apply. The operator bootstrap manages the existing Gi
 which grants the shared OCI principal initial Vault/key creation. Verify the first plan has no
 Vault/key effects. Verify that GitHub approval, separate apply enablement and exact-plan review
 are enforced. Keep all live qualification cases Pending until evidenced.
+
+## Atlas administrator SSO and onboarding
+
+On 25 November 2026, the operator completed the 8445 smoke test using an existing OCI identity.
+Corporate SSO and independent recovery sign-in worked. The operator exercised Atlas revoke and
+regrant, and verified that removing the OCI app-group membership directly blocked a subsequent
+sign-in. Removing and re-adding the Atlas grant restored the expected access. This is operator
+smoke evidence for the development laptop. Identity details remain private.
+
+| Case | Expected evidence | Status |
+| --- | --- | --- |
+| New federated administrator | With an approved test identity absent from the domain, confirm the exact work login and both profile names, verify notification suppression, sign in through corporate federation, and verify no OCI resource permissions through the app group or automatic domain memberships. Remove and regrant the Atlas assignment while preserving the OCI account. | Pending in staging |
+| Hosted SSO and enrollment | Verify independent dev/staging clients, groups, redirects and Atlas grants, native-session denial, cross-replica callbacks, Vault credential rotation, independent recovery after restart, and exact membership changes with the OKE workload identity. Verify denial of unrelated writes and validate operation admission after revocation. | Pending in staging |
+| Development Terraform adoption | Prove safe secret handling, adopt the existing SSO resources into the single development root without replacement, and verify a zero-change GitHub plan. | Pending development infrastructure |
+
+See [chapter 26](../engineering-design/26-administrator-sso.md#local-milestone-and-hosted-handoff)
+for the milestone boundary and [the acceptance criteria](../engineering-design/26-administrator-sso.md#implementation-and-acceptance)
+for the full qualification matrix.
 
 ## Hosted workload Vault identity
 

@@ -18,15 +18,17 @@ from docker_test_resources import remove_owned
 from fastapi.testclient import TestClient
 from psycopg import sql
 from psycopg.conninfo import make_conninfo
-from sqlalchemy import create_engine, event, text
+from sqlalchemy import create_engine, event, select, text
 from sqlalchemy.engine import URL
 from test_local_auth import factors
 
 from otm import hosted_runtime as runtime
+from otm.auth.http import COOKIE_NAME
 from otm.auth.local import totp_step
 from otm.hosted_database import database_ready, hosted_engine, migrate_database
-from otm.settings import load_settings
+from otm.settings import ApplicationSettings, load_settings
 from otm.storage.local_auth import SqlLocalAuth
+from otm.storage.tables import org_workspace
 
 pytestmark = pytest.mark.postgres
 __all__ = ["factors"]
@@ -323,6 +325,11 @@ def migrated(tls_database):
             "public.procrastinate_periodic_defers TO otm_worker"
         )
         connection.exec_driver_sql("GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO otm_worker")
+    path = (
+        Path(__file__).resolve().parents[2] / "infra/postgresql/hosted-organization-api-grants.sql"
+    )
+    with c.migration.begin() as connection:
+        connection.exec_driver_sql(path.read_text())
     return c
 
 
@@ -371,13 +378,14 @@ def test_migration_lock_and_rollback(migrated):
     assert migrate_database(c.migration) == c.head
 
 
-# Actual non-owner auth/session writes use TLS; only MFA custody is an explicit in-memory boundary.
-def test_hosted_authenticated_api_and_health(migrated, tmp_path, factors):
+# Both hosted profiles authenticate, save and import over the restricted TLS pool.
+@pytest.mark.parametrize("environment", ["staging", "production"])
+def test_hosted_authenticated_api_and_health(migrated, tmp_path, factors, environment):
     c = migrated
     config = Path(__file__).resolve().parents[1] / "config"
     path = tmp_path / "application.toml"
     path.write_text(
-        (config / "staging.application.toml").read_text()
+        (config / f"{environment}.application.toml").read_text()
         + '\n[recovery_console]\nallowed_cidrs=["198.51.100.0/24"]\n'
     )
     policy = load_settings(config / "application.toml").local_auth.model_copy(
@@ -398,9 +406,19 @@ def test_hosted_authenticated_api_and_health(migrated, tmp_path, factors):
     (frontend / "assets").mkdir(parents=True)
     (frontend / "index.html").write_text("<html>synthetic hosted shell</html>")
     app = runtime.create_hosted_application(
-        settings, "staging", pool(c, "api"), custody, frontend=frontend, clock=clock
+        settings, environment, pool(c, "api"), custody, frontend=frontend, clock=clock
     )
     origin = settings.hosted.public_origin
+    csrf = {"origin": origin, "x-otm-request": "1"}
+    route = "/api/organization/mapping"
+    csv = (
+        "EMPLOYEE_FULL_NAME,EMAIL,MGR,TOP_MGR\n"
+        "Director,director@directory.example.test,,\n"
+        "Lead,lead@directory.example.test,director@directory.example.test,"
+        "director@directory.example.test\n"
+        "Engineer,employee@directory.example.test,lead@directory.example.test,"
+        "lead@directory.example.test\n"
+    )
     with TestClient(app, base_url=origin) as client:
         assert client.get("/health/ready").status_code == 200
         response = client.post(
@@ -415,9 +433,101 @@ def test_hosted_authenticated_api_and_health(migrated, tmp_path, factors):
         assert response.status_code == 200
         assert client.get("/api/session").status_code == 200
         assert client.get("/api/administrators").status_code == 200
+        initial_response = client.get(route)
+        assert initial_response.status_code == 200, initial_response.json().get("code")
+        initial = initial_response.json()
+        assert initial["available"] and initial["candidate"] is None
+        proposed = {
+            "context": initial["context"],
+            "candidate": {
+                "root_email": "director@directory.example.test",
+                "segments": [
+                    {"label": "Engineering", "leader_email": "lead@directory.example.test"}
+                ],
+            },
+        }
+        preview = client.post(route + "/preview", json=proposed, headers=csrf)
+        assert preview.status_code == 200
+        applied = client.post(
+            route + "/apply",
+            json={**proposed, "preview_token": preview.json()["preview_token"]},
+            headers=csrf,
+        )
+        assert applied.status_code == 200, applied.json().get("code")
+        imported = client.post(
+            "/api/organization/feeds",
+            content=csv,
+            headers={
+                **csrf,
+                "content-type": "text/csv",
+                "x-otm-as-of": (clock() - timedelta(minutes=1)).isoformat(),
+                "x-otm-complete": "true",
+                "x-otm-delivery": str(uuid4()),
+            },
+        )
+        assert imported.status_code == 200, imported.json().get("code")
+        assert imported.json()["state"] == "published"
+        directory = client.get("/api/organization").json()
+        assert directory["employee_count"] == 3 and not directory["absence_eligible"]
+        assert "employee@directory.example.test" in {row["email"] for row in directory["items"]}
+        delivery = client.get("/api/email-policy").json()
+        assert delivery["effective_test_email"] == settings.mail_policy().email_override
+        handle = client.cookies.get(COOKIE_NAME)
+    # A later deployment template must never overwrite or change the authority of saved policy.
+    new_settings = settings.model_dump()
+    new_settings["hosted"]["organization_source"].update(
+        source_id="replacement-source", census_contract_confirmed=True
+    )
+    restarted = runtime.create_hosted_application(
+        ApplicationSettings.model_validate(new_settings),
+        environment,
+        pool(c, "api"),
+        custody,
+        frontend=frontend,
+        clock=clock,
+    )
+    with TestClient(restarted, base_url=origin) as client:
+        client.cookies.set(COOKIE_NAME, handle)
+        saved = client.get(route).json()
+        assert saved["candidate"]["root_email"] == "director@directory.example.test"
+        assert client.get("/api/organization").json()["employee_count"] == 3
+        update = {"context": saved["context"], "candidate": saved["candidate"]}
+        update["candidate"]["segments"][0]["label"] = "Product Engineering"
+        preview = client.post(route + "/preview", json=update, headers=csrf)
+        assert preview.status_code == 200
+        applied = client.post(
+            route + "/apply",
+            json={**update, "preview_token": preview.json()["preview_token"]},
+            headers=csrf,
+        )
+        assert applied.status_code == 200, applied.json().get("code")
+        assert client.post("/api/logout", headers=csrf).status_code == 204
+    with c.migration.connect() as connection:
+        assert not connection.scalar(
+            text("SELECT has_table_privilege('otm_api', 'public.org_feed', 'DELETE,TRUNCATE')")
+        )
+        assert not connection.scalar(
+            text("SELECT has_column_privilege('otm_api', 'public.org_feed', 'data', 'UPDATE')")
+        )
+        assert not connection.scalar(
+            text("SELECT has_table_privilege('otm_api', 'public.procrastinate_jobs', 'INSERT')")
+        )
+        persisted = connection.scalar(
+            select(org_workspace.c.configuration).where(org_workspace.c.id == policy.workspace_id)
+        )["policy"]
+        source = settings.hosted.organization_source
+        assert persisted["source_id"] == source.source_id and not persisted["authoritative"]
+        recipient = settings.mail_policy().email_override or source.administrator_alert_email
+        assert persisted["administrator_recipients"] == [recipient]
         assert (
-            client.post("/api/logout", headers={"origin": origin, "x-otm-request": "1"}).status_code
-            == 204
+            connection.scalar(
+                text(
+                    "SELECT count(*) FROM public.otm_notification_outbox "
+                    "WHERE workspace_id=:workspace"
+                ),
+                {"workspace": policy.workspace_id},
+            )
+            == 0
         )
     assert TestClient(app).get("/health/ready").status_code == 503
 
