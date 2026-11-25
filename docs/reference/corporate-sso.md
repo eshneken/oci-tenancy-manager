@@ -162,8 +162,10 @@ and Terraform state. Atlas owns routine membership and grant changes after onboa
 
 The development operator bootstrap already owns the state bucket and the two development IAM
 policies. A refreshed plan using a private copy of the operator state returned no changes.
-The protected **Development infrastructure** workflow plans the Vault and software key in its
-separate custody state. It has no identity-domain adoption authority.
+After local bootstrap, [one development Terraform build](../engineering-design/26-administrator-sso.md#development-terraform-ownership)
+will own development resources, including the Vault, software key and Atlas SSO configuration.
+Expand the existing **Development infrastructure** workflow and state in place. Today that
+workflow manages the Vault and software key. Identity-domain adoption is pending.
 
 The pinned OCI provider 9.13.0 was tested against a synthetic App endpoint. Both CLI import and
 an import-block plan used default App reads despite the resource's attribute allowlist. The

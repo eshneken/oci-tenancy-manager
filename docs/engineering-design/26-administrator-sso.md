@@ -225,12 +225,31 @@ until a supported claim or mapping is qualified. [Oracle issuer settings](https:
   namespace. Recheck the current Atlas grant wherever dispatch already rechecks the actor.
   Preserve accepted system-owned cleanup. Workers have no browser OIDC client secrets.
 
+## Development Terraform ownership
+
+Run one local operator bootstrap to establish the development compartment, state bucket and
+GitHub federation prerequisites. After bootstrap, **Development infrastructure** is the single
+GitHub Actions Terraform build for development. Use one root, state, plan and apply for the
+Vault, software key, development Atlas application, assignment group, app grant, app-specific
+policies and other development resources. Modules can organize the resources within that root.
+Extend the existing root at `infra/environments/development/custody` and preserve the existing
+`custody/development/terraform.tfstate` key so previously created resources keep their state
+addresses. The local bootstrap currently owns the laptop enrollment IAM policy. Review its
+ownership and migration as part of adopting development identity resources.
+
+The current GitHub build covers the Vault and software key. Before adding the remaining resources,
+qualify app creation, import and refresh without persisting client credentials or administrator
+membership data. Supply private workflow inputs through GitHub environment secrets. Keep provider
+responses that contain credentials out of saved plans and state. Qualify the workflow's exact
+identity-domain permissions. Adopt the existing
+objects into the single development state and require a reviewed zero-change GitHub plan.
+
 ## Terraform ownership for signing keys
 
-Development and staging share one non-production identity domain. Use a single domain-level
-Terraform state owner for its existing Settings singleton. Production has its own domain and
-separate state owner. Environment roots keep their own clients, secrets, groups, app grants and
-callbacks, and reference the shared setting instead of managing it independently.
+Development and staging share one non-production identity domain. The operator bootstrap is the
+single owner for its existing shared Settings singleton. Production has its own domain and
+bootstrap owner. The environment builds reference this setting and own their respective clients,
+groups, grants and callbacks.
 
 Use OCI integrated application display names `otm-application-development`,
 `otm-application-staging`, and `otm-application-production`. The shared description is

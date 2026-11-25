@@ -102,7 +102,10 @@ deletion, require separate permission and operation qualification.
 
 The approved development target is a compartment named `otm-development`, directly under the non-production
 tenancy. The laptop profile remains private and is used for laptop SDK calls and approved operator
-bootstrap. The development custody workflow uses temporary federated credentials.
+bootstrap. After local bootstrap, [Development infrastructure](../engineering-design/26-administrator-sso.md#development-terraform-ownership)
+is the single Terraform build for all development resources. It uses temporary federated
+credentials. This procedure covers its current Vault and software key scope. Atlas SSO adoption
+will extend the same root and state after provider qualification.
 
 1. **Verify the target before requesting approval.** Independently check the named profile's
    principal, tenancy, region, namespace, and the exact compartment name, OCID and parent. Create

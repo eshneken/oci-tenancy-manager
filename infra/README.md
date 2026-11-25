@@ -6,7 +6,7 @@ and production use separate roots and separate tenancies. Optional [held Caddy/N
 | Directory | Responsibility |
 | --- | --- |
 | `environments/development/bootstrap/` | Named operator profile and private local state for the development bucket, GitHub infrastructure IAM policy, and optional laptop enrollment IAM policy |
-| `environments/development/custody/` | Fixed remote state and ephemeral CI principal for one Vault with software-protected application custody |
+| `environments/development/custody/` | Single post-bootstrap development root and remote state. Currently manages the Vault and software key. |
 | `modules/state-bootstrap/` | One private, versioned Standard Object Storage bucket, with a namespace check and replacement/destruction guard |
 | `environments/staging/bootstrap/` | Fixed staging binding and explicit operator authentication |
 | `environments/production/bootstrap/` | Fixed production binding and explicit operator authentication |
@@ -150,6 +150,10 @@ software-protected AES-256 key in the existing development compartment. Compartm
 and identity-domain trust setup are administrator prerequisites. The
 [development runbook](../docs/how-to/laptop-oci-development.md#development-custody-through-github-actions)
 covers custody deployment.
+
+Extend this root and preserve its state key when adopting the development Atlas SSO resources.
+The [development ownership design](../docs/engineering-design/26-administrator-sso.md#development-terraform-ownership)
+defines one GitHub plan and apply for all development resources after operator bootstrap.
 
 The optional `local_app_iam` input adds the laptop enrollment policy to this bootstrap state.
 Its domain and groups are in the tenancy root. The GitHub policy and development resources still

@@ -656,7 +656,7 @@ smoke evidence for the development laptop. Identity details remain private.
 | --- | --- | --- |
 | New federated administrator | With an approved test identity absent from the domain, confirm the exact work login and both profile names, verify notification suppression, sign in through corporate federation, and verify no OCI resource permissions through the app group or automatic domain memberships. Remove and regrant the Atlas assignment while preserving the OCI account. | Pending in staging |
 | Hosted SSO and enrollment | Verify independent dev/staging clients, groups, redirects and Atlas grants, native-session denial, cross-replica callbacks, Vault credential rotation, independent recovery after restart, and exact membership changes with the OKE workload identity. Verify denial of unrelated writes and validate operation admission after revocation. | Pending in staging |
-| Terraform adoption | Prove safe secret handling, adopt the existing development resources without replacement, and review separate non-production and production domain-setting ownership. | Pending hosted milestone |
+| Development Terraform adoption | Prove safe secret handling, adopt the existing SSO resources into the single development root without replacement, and verify a zero-change GitHub plan. | Pending development infrastructure |
 
 See [chapter 26](../engineering-design/26-administrator-sso.md#local-milestone-and-hosted-handoff)
 for the milestone boundary and [the acceptance criteria](../engineering-design/26-administrator-sso.md#implementation-and-acceptance)
