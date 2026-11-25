@@ -22,6 +22,7 @@ const privateQueries = [
   "configuration-check",
   "baselines",
   "administrators",
+  "administrator-onboarding",
   "operations",
   "audit-history",
   "organization",
@@ -60,6 +61,15 @@ export function App() {
     retry: false,
     refetchInterval: 30_000,
     refetchOnWindowFocus: false,
+  });
+  const corporateSignIn = useQuery({
+    queryKey: ["corporate-sign-in-status"],
+    queryFn: ({ signal }) =>
+      api.corporateSignInStatus(AbortSignal.any([signal, AbortSignal.timeout(2_000)])),
+    retry: false,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
   // Cancel before clearing so an older in-flight response cannot restore signed-out directory data.
   const signedOut = useCallback(
@@ -130,11 +140,19 @@ export function App() {
         </button>
       </main>
     );
+  if (!session.data && corporateSignIn.isPending)
+    return (
+      <main className="session-status" role="status">
+        Loading sign-in methods…
+      </main>
+    );
   if (!session.data)
     return (
       <SignIn
         branding={branding}
         notice={notice}
+        corporateEnabled={corporateSignIn.data?.enabled === true}
+        corporateFailed={path === "/login" && new URLSearchParams(currentPath.split("?")[1]).get("sso") === "failed"}
         onSuccess={async (value) => {
           // An older unauthenticated poll cannot overwrite this newly verified session.
           await client.cancelQueries({ queryKey: ["session"] });

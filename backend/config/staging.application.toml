@@ -49,3 +49,14 @@ trusted_proxy_cidrs = ["192.0.2.0/24"]
 database_pool_size = 2
 # Worker drain1-240 seconds, below Kubernetes worker termination grace300 seconds.
 worker_shutdown_seconds = 120
+
+[hosted.organization_source]
+# Deployment-owned source identifier, 1–256 nonblank characters, stable across imports.
+source_id = "manual-directory-csv"
+# Deployment-scoped population identifier, 1–256 nonblank characters, stable across imports.
+population_id = "staging-directory"
+# Source age limit, 1–2147483647 seconds; 86400 accepts exports up to 24 hours old.
+max_age_seconds = 86400
+# Set true only after approving this source as a complete census eligible for absence review.
+census_contract_confirmed = false
+# Alert routing uses the required testing.email_override from this same profile.

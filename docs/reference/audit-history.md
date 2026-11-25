@@ -101,8 +101,8 @@ request. Export uses the identical projection.
 
 | Category | Existing allowed kinds |
 | --- | --- |
-| `authentication` | `local_sign_in_succeeded`, `local_sign_in_failed`, `session_logged_out` |
-| `administration` | `administrator_revoked`, `administrator_bootstrapped`, `local_credentials_reset`, `audit_export`, `configuration_review_staged`, `baseline_draft_saved`, `baseline_published`, `baseline_default_changed` |
+| `authentication` | `local_sign_in_succeeded`, `corporate_sign_in_succeeded`, `local_sign_in_failed`, `session_logged_out` |
+| `administration` | `administrator_revoked`, `administrator_bootstrapped`, `administrator_granted`, `administrator_regranted`, `local_credentials_reset`, `audit_export`, `configuration_review_staged`, `baseline_draft_saved`, `baseline_published`, `baseline_default_changed` |
 | `operations` | `signing_key_outcome`, `signing_key_requested`, `operation_responsibility_changed`, `configuration_check_outcome`, `cost_collection_outcome`, `required_user_check_outcome`, `recovery_network_outcome`, `recovery_password_outcome`, `cost_refresh_requested`, `operation_intent`, `inspection_dispatch`, `inspection_outcome`, `organization_action_outcome`, `onboarding_action`, `onboarding_outcome`, `configuration_outcome`, `configuration_retry` |
 | `recovery_access` (Recovery access) | `recovery_password_disclosed` only. |
 | `email_delivery` (Email delivery) | `email_delivery` only; independent of the Operations category. |

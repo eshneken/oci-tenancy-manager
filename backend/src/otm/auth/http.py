@@ -9,6 +9,7 @@ from starlette.datastructures import Headers, MutableHeaders
 from starlette.requests import HTTPConnection
 from starlette.responses import JSONResponse
 
+from otm.auth.corporate_oidc import CALLBACK_PATH, START_PATH
 from otm.auth.service import SessionFailure, SessionService
 from otm.contracts import Contract, HttpsOrigin
 
@@ -70,6 +71,7 @@ def ui_path(path: str) -> bool:
             "/operations",
             "/audit-history",
             "/api/branding",
+            "/api/auth/sso/status",
             "/organization",
             "/tenancies",
             "/organization/drift",
@@ -95,11 +97,17 @@ def ui_path(path: str) -> bool:
 class CookieSessionBackend(AuthenticationBackend):
     # Use explicit dependencies; authentication has no environment or local-actor fallback.
     def __init__(
-        self, sessions: SessionService, allow_local_login: bool = False, public_ui: bool = False
+        self,
+        sessions: SessionService,
+        allow_local_login: bool = False,
+        public_ui: bool = False,
+        *,
+        allow_corporate_login: bool = False,
     ):
         self.sessions = sessions
         self.allow_local_login = allow_local_login
         self.public_ui = public_ui
+        self.allow_corporate_login = allow_corporate_login
 
     # Bound parsing and reject duplicate target cookies before external access.
     async def authenticate(self, conn: HTTPConnection):
@@ -108,6 +116,11 @@ class CookieSessionBackend(AuthenticationBackend):
                 self.public_ui
                 and conn.scope.get("method") in {"GET", "HEAD"}
                 and ui_path(conn.url.path)
+            )
+            or (
+                self.allow_corporate_login
+                and (conn.scope.get("method"), conn.url.path)
+                in {("POST", START_PATH), ("GET", CALLBACK_PATH)}
             )
             or conn.url.path in {"/health/live", "/health/ready"}
             or (conn.url.path == "/api/logout" and conn.scope.get("method") == "POST")

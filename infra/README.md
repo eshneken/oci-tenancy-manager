@@ -1,11 +1,11 @@
 # Terraform infrastructure
 
 The implementation supplies the **state-bucket bootstrap, network, Enhanced OKE, managed PostgreSQL and Vault custody source**. Staging
-and production use separate roots and separate tenancies. Optional [held Caddy/NLB source](../docs/how-to/caddy-ingress.md) and scoped workload Vault-read IAM are implemented. Held [plan/review/apply workflow/federation source](../docs/how-to/infrastructure-plans.md) is implemented; activation, live apply qualification and application deployment/promotion remain separate. A live platform apply now creates managed ARM nodes; their launch metadata explicitly disables IMDSv1. No cloud resources were created during development.
+and production use separate roots and separate tenancies. Optional [held Caddy/NLB source](../docs/how-to/caddy-ingress.md) and scoped workload Vault-read IAM are implemented. Held [plan/review/apply workflow/federation source](../docs/how-to/infrastructure-plans.md) is implemented; activation, live apply qualification and application deployment/promotion remain separate. A reviewed hosted platform apply can create managed ARM nodes with launch metadata that explicitly disables IMDSv1. The held hosted source is covered by local mock checks.
 
 | Directory | Responsibility |
 | --- | --- |
-| `environments/development/bootstrap/` | Named laptop profile and private local state for the development bucket and GitHub IAM policy |
+| `environments/development/bootstrap/` | Named operator profile and private local state for the development bucket, GitHub infrastructure IAM policy, and optional laptop enrollment IAM policy |
 | `environments/development/custody/` | Fixed remote state and ephemeral CI principal for one Vault with software-protected application custody |
 | `modules/state-bootstrap/` | One private, versioned Standard Object Storage bucket, with a namespace check and replacement/destruction guard |
 | `environments/staging/bootstrap/` | Fixed staging binding and explicit operator authentication |
@@ -33,7 +33,7 @@ bash scripts/check_infrastructure.sh
 ```
 
 The script checks formatting, initializes with `-backend=false -lockfile=readonly`, validates all
-fourteen configurations and runs native Terraform provider mocks. It needs network access to install
+fifteen configurations and runs native Terraform provider mocks. It needs network access to install
 the locked provider, but no OCI credentials and no OCI API calls. The suites cover all modules and
 both environments' bootstrap/platform roots. Negative journeys also verify cluster and state-bucket replacement guards. A separate negative journey performs a mocked apply followed by a blocked replacement
 plan; the script requires that precise lifecycle rejection, rather than accepting an arbitrary failure.
@@ -131,7 +131,7 @@ Both platform roots now include the [managed database module and operator guide]
 
 ## Vault custody foundation
 
-Create each environment's [security root](../docs/how-to/vault-foundation.md) after state bootstrap and before platform creation. A separately approved custodian ingests the initial DB secret outside Terraform; private references connect the stages. Exact API/worker [workload Vault-read grants](../docs/how-to/oke-workload-identity.md) exist as source. Federation grants, runtime database role provisioning and live activation remain separate work.
+Create each environment's [security root](../docs/how-to/vault-foundation.md) after state bootstrap and before platform creation. A separately approved custodian ingests the initial DB secret outside Terraform; private references connect the stages. Exact API/worker [workload Vault-read grants](../docs/how-to/oke-workload-identity.md) exist as source. Federation grants, runtime database role provisioning and live activation remain separate work. The [hosted organization setup](../docs/how-to/hosted-startup.md#initial-organization-mapping-and-import) documents the additional [organization API table privileges](postgresql/hosted-organization-api-grants.sql).
 
 The required [hosting compartment Actions input](../docs/how-to/hosting-compartment.md) is rendered privately from `OTM_HOSTING_COMPARTMENT_OCID`; no live target value is configured until the real tenancy is available.
 
@@ -146,9 +146,14 @@ is composed with Vault and OCI and qualified in staging.
 state to manage the dedicated state bucket and scoped GitHub IAM policy.
 `environments/development/custody/` uses that remote
 backend and a short-lived GitHub Actions principal to plan and apply one application Vault and
-software-protected AES-256 key in the existing development compartment. Compartment creation and
-identity-domain trust setup are administrator prerequisites. The [development runbook](../docs/how-to/laptop-oci-development.md#development-custody-through-github-actions)
-records the completed bucket bootstrap and the pending live custody qualification.
+software-protected AES-256 key in the existing development compartment. Compartment creation
+and identity-domain trust setup are administrator prerequisites. The
+[development runbook](../docs/how-to/laptop-oci-development.md#development-custody-through-github-actions)
+covers custody deployment.
+
+The optional `local_app_iam` input adds the laptop enrollment policy to this bootstrap state.
+Its domain and groups are in the tenancy root. The GitHub policy and development resources still
+use the development compartment. See the [laptop enrollment policy](../docs/how-to/laptop-oci-development.md#development-laptop-enrollment-policy) for the scope and qualification steps.
 
 
 ## Hosted workload Vault reads
@@ -156,9 +161,24 @@ records the completed bucket bootstrap and the pending live custody qualificatio
 `modules/workload-vault-access/` supplies read-only policies for exact API/worker workload identities, bound to each environment cluster/namespace/service account/application Vault. Both platform roots require `application_vault_ocid` from the preceding security-root custody output. No node/migration grants or secret writes are added. [Handoff and qualification](../docs/how-to/oke-workload-identity.md) remain distinct from a live apply.
 
 
+## Hosted administrator enrollment
+
+The staging and production platform roots do not grant administrator enrollment permissions.
+The hosted milestone must qualify the exact environment's API workload and demonstrate denial
+of unrelated identity-domain writes before adding the policy.
+
 ## V1 NSG-only network boundary
 
 The owner approved [NSGs only](../docs/how-to/nsg-only-networking.md), without Calico or Kubernetes NetworkPolicy objects. Optional platform `smtp_egress={cidrs=[...],port=587}` adds bounded relay-specific pod-NSG rules; null adds none. Existing CNI/Oracle service allowances remain additive. Live network unions, metadata/IAM and ingress/SMTP qualification remain pending.
+
+## Corporate sign-in application registration
+
+The provider-free [application registration module](modules/application-registration/main.tf)
+defines the OCI integrated application and app-assignment group names and descriptions for
+development, staging, and production. Use its outputs when adopting the application and group
+resources. It requires no live
+credentials to test. Live adoption remains gated on preserving the registered client ID and
+excluding the OAuth secret from Terraform state. See the [Atlas pilot reference](../docs/reference/corporate-sso.md#terraform-follow-through).
 
 ## Held environment plan/review/apply workflows
 

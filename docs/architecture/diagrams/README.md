@@ -4,14 +4,11 @@
 
 - **[OCI deployment](oci-deployment.svg)** ([PNG](oci-deployment.png), [Mermaid](oci-deployment.mmd), [Excalidraw](oci-deployment.excalidraw)): OKE, OCI Database with PostgreSQL and Vault context. Nested export is one SVG for annotation.
 - **[Logical software architecture](logical-architecture.svg)** ([PNG](logical-architecture.png), [Mermaid](logical-architecture.mmd), [Excalidraw](logical-architecture.excalidraw)): components/data flows with simulated and OCI adapters explicitly separated. Scene is element-editable.
-- **[Complete implemented ER source](implemented-full-er.mmd)** ([SVG](implemented-full-er.svg), [PNG](implemented-full-er.png)): 34 tables/439 columns/89 foreign keys through freshly reflected migration0029, including native queue and migration tables. SVG/PNG regenerated17 November with pinned Mermaid CLI12.2.0 and visually reviewed; asset publication review remains separate. [Table responsibilities and every column](../implemented-database.md).
+- **[Complete implemented ER source](implemented-full-er.mmd)** ([SVG](implemented-full-er.svg), [PNG](implemented-full-er.png)): 34 tables, 440 columns and 89 foreign keys, including native queue and migration tables. Reflected at 0032 and unchanged at 0033. [Table responsibilities and every column](../implemented-database.md).
 
-The ER source metadata was re-reflected on 17 November from a freshly migrated empty disposable
-PostgreSQL database through0029, confirming439 columns including nullable `imported_access`.
-The earlier438-column reflection at `786f83b` remains historical. No saved organization data or
-row values were inspected. It does not fold proposed production entities or prototype
-tables into the implemented schema. Existing feature diagrams below retain their own scope labels.
-
+The ER source was checked against the 25 November reflection of a fresh disposable PostgreSQL 18.7
+database. It includes the non-nullable administrator cleanup column. The reflection used schema
+metadata only. Existing feature diagrams below retain their own scope labels.
 
 Mermaid files are editable sources. Companion SVG/PNG files are generated views; Excalidraw files
 are auxiliary editing/annotation artifacts and may embed a rendered image rather than editable

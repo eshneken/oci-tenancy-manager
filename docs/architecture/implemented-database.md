@@ -1,28 +1,31 @@
 # Implemented database: complete ER and table directory
 
-This reference describes the **implemented application schema**, not the retired prototype or the
-larger proposed production model. On 17 November 2026, the complete metadata was reflected using
-SQLAlchemy inspection of `public` in a newly created, empty disposable PostgreSQL database migrated
-through 0029, without seeding or reading row values. It confirms 34 tables, 439 columns, 89 declared
-foreign keys and nullable JSONB `otm_tenancy_membership.imported_access`. The earlier 438-column
-reflection at `786f83b` remains historical. No saved database or employee data was inspected.
+This reference describes the **implemented application schema**. On 25 November 2026,
+SQLAlchemy reflected the `public` schema in a fresh, empty disposable PostgreSQL 18.7 database
+migrated through 0032. The reflection used schema metadata only.
 
-**34 tables · 439 columns · 89 declared foreign keys through migration 0029.** The inventory includes 29 application
-tables, four Procrastinate-owned tables and Alembic’s migration marker.
+**34 tables · 440 columns · 89 declared foreign keys through migration 0032.** The inventory
+includes 29 application tables, four Procrastinate-owned tables and Alembic's migration marker.
 
 [Full-size SVG](diagrams/implemented-full-er.svg) · [PNG](diagrams/implemented-full-er.png) ·
 [Editable Mermaid source](diagrams/implemented-full-er.mmd)
 
 ![Complete implemented ER diagram](diagrams/implemented-full-er.png)
 
-**Render status:** the editable Mermaid, field directory and regenerated SVG/PNG include
-`imported_access`, confirmed by fresh empty-database reflection and exact table/column name-set
-comparison. On 17 November, pinned Mermaid CLI 12.2.0 produced the zoomable SVG and 2340×2196 PNG;
-visual review found no figure clipping. Independent security privacy/provenance review completed
-and confirmed the exact two schema-only SVG/PNG asset hashes in the publication manifest.
-Schema reflection remains separate from the
-[subsequently verified saved8443 publication](../engineering-design/24-imported-membership-adoption.md#scoped-local-development-risk-acceptance-and-follow-up): migration0029 and matched assets/API/worker were installed under explicit local
-dependency-risk acceptance with existing data/settings preserved. Hosted security gates remain required with the [exact approved exception](../reference/frontend-security-exception.md) and live OCI qualification Pending.
+The SVG and 2356 × 2208 PNG were rendered from the editable source with Mermaid CLI 12.2.0.
+
+Migration 0031 extends the existing audit-event check to admit a corporate sign-in success
+event. Migration 0032 adds `otm_administrator.group_cleanup_complete` and a check that limits
+completion to revoked corporate grants. Migration 0033 extends the audit-event check to admit
+`administrator_granted` and `administrator_regranted`. It changes no tables, columns or foreign
+keys, so the 0032 ER inventory also describes the 0033 schema shape.
+
+The 17 November 0029 reflection confirmed 439 columns, including nullable JSONB
+`otm_tenancy_membership.imported_access`. Its
+[saved 8443 publication](../engineering-design/24-imported-membership-adoption.md#scoped-local-development-risk-acceptance-and-follow-up)
+is a separate historical qualification record. The 0032 reflection used no saved database or row
+values. See the [8445 corporate identity pilot](../reference/corporate-sso.md) for the application
+behavior and its live qualification boundary.
 
 ## Reading the diagram
 
@@ -50,7 +53,7 @@ not omitted relational tables. The full schema is large: open the SVG to zoom, o
 | [org_version](#org_version) | Versioned organization representation, including provenance and configuration identity. Proposed and applied views can point to different versions. |
 | [org_workspace](#org_workspace) | Organization settings plus pointers to the latest proposed and applied versions; contains the configured leader/segment/designee mappings. |
 | [otm_admin_session](#otm_admin_session) | Active browser session credentials and expiration/revocation state, separate from immutable audit history. |
-| [otm_administrator](#otm_administrator) | Application administrator grants, identity subject, display/contact information and authorization revision. |
+| [otm_administrator](#otm_administrator) | Application administrator grants, identity subject, display/contact information, authorization revision and OCI group cleanup completion. |
 | [otm_baseline_version](#otm_baseline_version) | Draft and immutable published baseline content: policy/quota statement arrays, monthly budget, namespace and defined-tag/default configuration. |
 | [otm_configuration_check](#otm_configuration_check) | Recorded expected-versus-observed managed configuration and drift-check outcome for a tenancy. |
 | [otm_configuration_plan](#otm_configuration_plan) | Reviewed single-tenancy or bulk configuration update plan and execution/acknowledgment state. |
@@ -295,7 +298,7 @@ Foreign keys:
 
 ### otm_administrator
 
-Application administrator grants, identity subject, display/contact information and authorization revision.
+Application administrator grants, identity subject, display/contact information, authorization revision and OCI group cleanup completion.
 
 | Column | PostgreSQL type | Required | Key |
 | --- | --- | --- | --- |
@@ -311,6 +314,9 @@ Application administrator grants, identity subject, display/contact information 
 | `created_at` | `TIMESTAMP WITH TIME ZONE` | Yes | — |
 | `updated_at` | `TIMESTAMP WITH TIME ZONE` | Yes | — |
 | `revoked_at` | `TIMESTAMP WITH TIME ZONE` | No | — |
+| `group_cleanup_complete` | `BOOLEAN` | Yes | — |
+
+The cleanup bit defaults to `false`. The `ck_administrator_cleanup_revoked` constraint allows `true` only for a revoked corporate grant. A regrant clears the bit and advances the authorization revision.
 
 ### otm_baseline_version
 

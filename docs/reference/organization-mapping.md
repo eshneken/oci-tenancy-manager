@@ -160,6 +160,8 @@ configuration changes retain their before/after mapping evidence in audit even w
 The private deployment `organization.json` remains a trusted legacy/bootstrap policy input. Its LOB
 values no longer silently initialize settings during CSV upload, and cannot overwrite saved DB values
 on restart. `application.toml` continues to hold operational settings, not this mutable mapping list.
+Hosted staging and production use the same first-mapping service with source policy supplied by
+`[hosted.organization_source]`. See the [hosted setup procedure](../how-to/hosted-startup.md#initial-organization-mapping-and-import).
 Validation uses synthetic fixtures and disposable PostgreSQL, never the user's saved mappings.
 
 ## Required regression matrix trace

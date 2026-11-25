@@ -55,3 +55,29 @@ variable "github_repository" {
     error_message = "Provide the workflow's GitHub owner/repository without a URL, ref, or wildcard."
   }
 }
+
+# Opt in only after verifying these private OCI identities and approving the root attachment.
+variable "local_app_iam" {
+  description = "Optional development laptop IAM enrollment scope; null adds no policy."
+  type = object({
+    # Exact root domain OCID. Never accept a display name, wildcard, or free-form policy fragment.
+    domain_ocid = string
+    # OCI group OCID for the development laptop principal.
+    writer_group_ocid = string
+    # OCI group OCID for development Atlas assignment, distinct from the signer group.
+    assignment_group_ocid = string
+    # Include the explicit user-create permission only after separate review.
+    create_federated_users = optional(bool, false)
+  })
+  default = null
+  validation {
+    condition = var.local_app_iam == null ? true : (
+      can(regex("^ocid1[.]domain[.]oc1[.][a-z0-9-]*[.][a-z0-9]{1,220}$", var.local_app_iam.domain_ocid)) &&
+      alltrue([for ocid in [var.local_app_iam.writer_group_ocid, var.local_app_iam.assignment_group_ocid] :
+        can(regex("^ocid1[.]group[.]oc1[.][a-z0-9-]*[.][a-z0-9]{1,220}$", ocid))
+      ]) &&
+      var.local_app_iam.writer_group_ocid != var.local_app_iam.assignment_group_ocid
+    )
+    error_message = "Provide the exact non-prod domain and two distinct group OCIDs."
+  }
+}

@@ -32,6 +32,40 @@ reviewer must include configuration-field coverage and accuracy in its reviews g
 In OCI, do not launch a VM that has IMDSv1 enabled. Do not include secrets in code,
 documentation, logs or tool output. Keep local connection files under ignored `.local-dev`.
 
+### OCI naming
+
+Use lowercase, hyphenated `otm` names. Spell environments `development`, `staging`, and
+`production` consistently.
+
+- Integrated applications use `otm-<purpose>-<environment>`, such as
+  `otm-github-development` and `otm-application-development`.
+- IAM policies and groups use `otm-<environment>-<purpose>`, such as
+  `otm-development-github-infrastructure` and `otm-development-users`.
+
+Write neutral descriptions that explain what the resource does. Keep ports, activation status,
+organization-specific references, and personal information out of names and descriptions. Keep
+live and Terraform names consistent. Match existing bindings by immutable IDs when renaming
+resources.
+
+Prefer exact, readable OCI names in Terraform IAM statements where Oracle documents the
+name syntax and the name identifies the intended resource without weakening the scope.
+Use a domain-qualified group name, such as `Default/otm-development-localapp`, when the
+tenancy and domain are verified. Use exact name conditions, such as
+`target.resource.domain.name` and `target.group.name`, where supported for the operation.
+Retain OCIDs for Terraform lookups and resource bindings, and in IAM conditions when a name
+does not have an equivalent documented scope. Preserve exact workload, federation, Vault,
+compartment and other immutable identity bindings where required for isolation.
+
+### Terraform environment parity
+
+For every Terraform change, compare the corresponding development, staging and production
+roots. Update equivalent modules, defaults, guardrails, tests and runbooks in the same
+slice. Document intentional differences, such as a laptop signer versus hosted OKE Workload
+Identity. Use the read-only `terraform_environment_parity` subagent for this check. The user
+authorizes reuse or recreation of this reviewer on each Terraform update. Run the affected
+mock suites and `scripts/check_infrastructure.sh` before declaring the Terraform slice
+complete. Parity review and mock plans do not authorize a live apply.
+
 ## UI/UX review
 
 The user has authorized a persistent UI/UX review subagent, `ui_ux_review`, alongside the

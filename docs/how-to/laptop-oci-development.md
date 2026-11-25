@@ -76,6 +76,28 @@ OKE. Vault region must agree before private files are read. The local platform p
 approved Vault/parent operations; child calls still use each registered child's automation credential.
 An application admin login and a platform SDK identity are separate authorities.
 
+## Development laptop enrollment policy
+
+The optional `local_app_iam` input in
+`infra/environments/development/bootstrap` uses the existing private bootstrap state. Supply the
+Default domain OCID, the `otm-development-localapp` writer group OCID, and the distinct
+`otm-development-users` app group OCID in a private variable file. Verify the three live
+references and the writer's actual group membership. Leaving the input unset adds no policy.
+Keep the input in subsequent bootstrap plans once the policy is managed in state.
+
+The policy is attached to the non-production root because the domain is there. Terraform verifies
+the named writer and assignment groups against their configured OCIDs. The dedicated pilot signer
+has `use groups` and `use users` throughout the tenancy, including updates. Keep that credential
+private to this laptop and review its broader effective authority independently of Atlas. Atlas
+checks the named development app group and its exact GUID before using `AddUserToGroup` or
+`RemoveUserFromGroup`, and rejects incomplete or mismatched provider responses.
+
+Keep `create_federated_users` false until separately qualifying the optional user-create grant.
+The draft grant limits the operation to the selected domain. Atlas supplies the federated-only,
+notification-suppressed request. Review effective permissions against unrelated groups, user
+updates and credentials. Parent organization operations, including child tenancy creation and
+deletion, require separate permission and operation qualification.
+
 ## Development custody through GitHub Actions
 
 The approved development target is a compartment named `otm-development`, directly under the non-production
@@ -156,13 +178,14 @@ recovery. Development creates no hosted network, compute, database, or child ten
 
 ## What is implemented and what comes next
 
-Implemented: strict settings, named API-key signer, OKE selection, shared Vault-reader composition,
-synthetic regressions and mock-tested minimal development custody source. Actual private target settings and live resources are maintained outside this source. The existing simulator API/worker launchers explicitly
-refuse OCI mode rather than silently running simulated mutations under a real-OCI profile.
+The [isolated OCI laptop launcher](../reference/local-application.md#local-oci-provider-development)
+already supports the [8445 corporate identity pilot](../reference/corporate-sso.md), using its own
+database and private configuration. The launcher can enable scoped administrator enrollment
+and reads the pilot's client secret from owner-only local custody. The simulator API and
+worker launchers reject OCI mode.
 
-Next: compose the full live OCI service adapters and laptop launcher, provide private Vault references
-and effective IAM, and qualify the non-production parent/child flows. Until then, copying the example
-over the saved demo config will not make the UI live against OCI; leave saved 8443 unchanged.
+Compose and qualify the remaining real OCI service adapters and non-production parent/child
+flows on 8445. Keep the saved 8443 demo on its simulator configuration.
 
 Live profile signing/permissions, Vault reads/writes, activation email redirection and independent
 local/staging inventories belong in the [manual qualification manifest](real-oci-test-manifest.md#laptop-api-key-development).

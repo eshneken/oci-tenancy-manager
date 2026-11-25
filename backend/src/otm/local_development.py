@@ -10,6 +10,7 @@ import stat
 import subprocess  # nosec B404
 import time
 from pathlib import Path
+from typing import Literal
 from urllib.parse import urlsplit
 from uuid import UUID, uuid4
 
@@ -22,6 +23,7 @@ from sqlalchemy.engine import URL
 
 from otm.admin_cli import PrivateParser
 from otm.contracts import Contract
+from otm.local_oci import validate_local_oci
 from otm.maintenance import maintenance_engine
 from otm.secrets.directory import DirectorySecrets
 from otm.settings import load_settings
@@ -31,6 +33,8 @@ IMAGE = "postgres:18.7@sha256:eb63372c1e05c755f55fa30cbd07aecc443676fc6c0fa90b90
 
 # Keep generated operator/API credentials private and masked in object representations.
 class LocalState(Contract):
+    # Pin provider mode when writing installation state. Legacy state is simulated.
+    provider_mode: Literal["simulated", "oci"] = "simulated"
     # Random ownership label; every Docker operation verifies this exact instance first.
     instance_id: UUID
     # Random local database-owner credential, used only for explicit setup/bootstrap operations.
@@ -233,9 +237,19 @@ def setup_database(root: Path, state: LocalState, project: Path) -> LocalState:
                 "public.audit_event TO otm_local_api"
             )
             connection.exec_driver_sql(
-                "GRANT UPDATE(id,status,authorization_revision,updated_at,revoked_at) "
+                "GRANT UPDATE(id,status,authorization_revision,updated_at,revoked_at,"
+                "group_cleanup_complete) "
                 "ON public.otm_administrator TO otm_local_api"
             )
+            if state.provider_mode == "oci":
+                connection.exec_driver_sql(
+                    "GRANT UPDATE(display_name,email) ON public.otm_administrator TO otm_local_api"
+                )
+                connection.exec_driver_sql(
+                    "GRANT INSERT(id,workspace_id,identity_kind,issuer,subject,display_name,email,"
+                    "status,authorization_revision,created_at,updated_at,revoked_at) "
+                    "ON public.otm_administrator TO otm_local_api"
+                )
             connection.exec_driver_sql(
                 "GRANT UPDATE(last_totp_step,failed_attempts,"
                 "failure_window_started_at,retry_after) "
@@ -578,16 +592,24 @@ def setup(project: Path, root: Path, port: int = 8443):
     except FileExistsError:
         pass
     DirectorySecrets(root)
+    config = root / "application.toml"
+    settings = load_settings(config) if config.exists() else None
+    mode = settings.provider_mode if settings else "simulated"
+    if mode == "oci":
+        validate_local_oci(settings)
     if (root / "state.json").exists():
         state = read_state(root)
+        if state.provider_mode != mode:
+            raise ValueError("LOCAL_INSTALLATION_PROVIDER_MODE_MISMATCH")
     else:
         state = LocalState(
+            provider_mode=mode,
             instance_id=uuid4(),
             owner_password=secrets.token_urlsafe(32),
             api_password=secrets.token_urlsafe(32),
         )
         write_state(root, state)
-    if not (root / "application.toml").exists():
+    if settings is None:
         content = (
             (project / "backend/config/application.toml")
             .read_text()
@@ -598,15 +620,16 @@ def setup(project: Path, root: Path, port: int = 8443):
             )
             .replace("https://localhost:8443", "https://localhost:" + str(port))
         )
-        (root / "application.toml").write_text(content)
+        config.write_text(content)
+        settings = load_settings(config)
     recovery_custody = root / "recovery-passwords"
     recovery_custody.mkdir(mode=0o700, exist_ok=True)
     DirectorySecrets(recovery_custody)
     custody = root / "mfa"
     custody.mkdir(mode=0o700, exist_ok=True)
     DirectorySecrets(custody)
-    if not (root / "simulation.json").exists():
-        policy = load_settings(root / "application.toml").local_auth
+    if mode == "simulated" and not (root / "simulation.json").exists():
+        policy = settings.local_auth
         if policy is None:
             raise ValueError("LOCAL_AUTH_CONFIGURATION_REQUIRED")
         from otm.operations.sandbox import sample_sandbox
@@ -667,6 +690,15 @@ def main(argv=None) -> int:
             return 0
         DirectorySecrets(root)
         state = read_state(root)
+        settings = load_settings(root / "application.toml")
+        if settings.provider_mode != state.provider_mode:
+            raise ValueError("LOCAL_INSTALLATION_PROVIDER_MODE_MISMATCH")
+        if settings.provider_mode == "oci":
+            if args.directory is None:
+                raise ValueError("EXPLICIT_LOCAL_OCI_DIRECTORY_REQUIRED")
+            validate_local_oci(settings)
+            if args.operation in {"worker", "reset-organization"}:
+                raise ValueError("LOCAL_OCI_OPERATION_UNAVAILABLE")
         if args.operation == "reset-organization":
             from otm.organization.local_reset import reset_test_organization
 
@@ -676,7 +708,7 @@ def main(argv=None) -> int:
 
             removed = reset_test_organization(
                 state,
-                load_settings(root / "application.toml"),
+                settings,
                 confirmed=args.confirm_reset_organization,
                 inspect=inspect_owned,
                 database_url=database_url,
@@ -723,12 +755,14 @@ def main(argv=None) -> int:
                 ],
                 env=values,
             ).returncode
-        settings = load_settings(root / "application.toml")
         if settings.local_server is None:
             raise ValueError("LOCAL_SERVER_CONFIGURATION_REQUIRED")
         origin = urlsplit(settings.local_server.public_origin)
         if origin.hostname not in {"localhost", "127.0.0.1"} or not origin.port:
             raise ValueError("LOOPBACK_ORIGIN_REQUIRED")
+        factory = "otm.local_server:create_local_application"
+        if settings.provider_mode == "oci":
+            factory = "otm.local_server:create_local_oci_application"
         run(["npm", "--prefix", str(project / "frontend"), "ci", "--ignore-scripts"])
         run(["npm", "--prefix", str(project / "frontend"), "run", "build"])
         values["OTM_FRONTEND_DIST"] = str(project / "frontend/dist")
@@ -747,7 +781,7 @@ def main(argv=None) -> int:
                 "--project",
                 str(project / "backend"),
                 "uvicorn",
-                "otm.local_server:create_local_application",
+                factory,
                 "--factory",
                 "--host",
                 "127.0.0.1",

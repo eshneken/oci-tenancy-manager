@@ -7,10 +7,12 @@ dependencies = [
   "alembic==1.20.1",
   "argon2-cffi==25.1.0",
   "fastapi==0.143.0",
+  "httpx==0.28.1",
   "oci==2.191.0",
   "procrastinate==3.10.0",
   "psycopg[binary,pool]==3.3.6",
   "pydantic==2.14.1",
+  "pyjwt==2.15.1",
   "pyotp==2.9.0",
   "sqlalchemy==2.0.54",
   "uvicorn==0.54.0",
@@ -28,7 +30,6 @@ dev = [
   "pytest==9.1.1",
   "pytest-cov==7.1.0",
   "coverage==7.17.0",
-  "httpx==0.28.1",
   "ruff==0.17.0",
   "defusedxml==0.7.1",
   "hatchling==1.33.0",
@@ -45,6 +46,12 @@ packages = ["src/otm"]
 
 # Deploy the frozen migration assets alongside the package; never bundle local environments.
 [tool.hatch.build.targets.wheel.force-include]
+"migrations/versions/0033_corporate_grant_audit.py" = "otm_migrations/migrations/versions/0033_corporate_grant_audit.py"
+"migrations/sql/0033-corporate-grant-audit.sql" = "otm_migrations/migrations/sql/0033-corporate-grant-audit.sql"
+"migrations/versions/0032_administrator_cleanup.py" = "otm_migrations/migrations/versions/0032_administrator_cleanup.py"
+"migrations/sql/0032-administrator-cleanup.sql" = "otm_migrations/migrations/sql/0032-administrator-cleanup.sql"
+"migrations/versions/0031_corporate_sign_in.py" = "otm_migrations/migrations/versions/0031_corporate_sign_in.py"
+"migrations/sql/0031-corporate-sign-in.sql" = "otm_migrations/migrations/sql/0031-corporate-sign-in.sql"
 "migrations/versions/0027_recovery_passwords.py" = "otm_migrations/migrations/versions/0027_recovery_passwords.py"
 "migrations/versions/0029_imported_memberships.py" = "otm_migrations/migrations/versions/0029_imported_memberships.py"
 "migrations/sql/0029-imported-memberships.sql" = "otm_migrations/migrations/sql/0029-imported-memberships.sql"

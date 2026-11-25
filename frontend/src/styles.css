@@ -323,11 +323,14 @@ input {
   display: block;
   margin: 24px 0 8px;
 }
-.corporate-note {
-  font-size: 13px;
-  margin: 22px 0;
-  text-align: center;
-  color: #5b6877;
+.recovery-sign-in {
+  margin-top: 24px;
+}
+.recovery-sign-in[open] > p:first-of-type {
+  margin-top: 4px;
+}
+.recovery-sign-in .setup-help {
+  margin-top: 20px;
 }
 .setup-help {
   border-top: 1px solid #dce1e7;
@@ -1947,3 +1950,41 @@ dialog p {
 .import-members select { max-width: 25rem; width: 100%; }
 .import-members details p { overflow-wrap: anywhere; max-width: 25rem; }
 .import-members .workflow-check { margin-top: 1rem; }
+
+/* Emphasize the exact account and access details before an administrator confirms the change. */
+.administrator-review-details {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: .65rem 1rem;
+  margin: 1rem 0;
+  padding: .85rem 1rem;
+  border: 1px solid #dce1e7;
+  border-radius: 3px;
+  background: #f3f5f7;
+  line-height: 1.4;
+}
+.administrator-review-details dt {
+  color: #5b6877;
+}
+.administrator-review-details dd {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 480px) {
+  .administrator-review-details {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: .2rem;
+  }
+  .administrator-review-details dd + dt {
+    margin-top: .45rem;
+  }
+}
+
+/* Align administrator form labels and inputs and stack editable names on narrow screens. */
+.administrator-form-field { display: grid; gap: 8px; min-width: 0; }
+.administrator-form-field input { min-width: 0; font-weight: 400; }
+.administrator-name-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
+@media (max-width: 480px) {
+  .administrator-name-fields { grid-template-columns: minmax(0, 1fr); }
+}

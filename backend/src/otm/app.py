@@ -19,6 +19,12 @@ from otm.auth.administrators import (
     RevokeAdministrator,
 )
 from otm.auth.contracts import SessionView
+from otm.auth.corporate_administrator_http import (
+    administrator_action,
+    administrator_body,
+    corporate_administrator_router,
+)
+from otm.auth.corporate_browser import LAPTOP_PILOT_ORIGIN, CorporateSignIn, corporate_router
 from otm.auth.http import (
     COOKIE_NAME,
     BrowserBoundaryMiddleware,
@@ -45,6 +51,7 @@ from otm.storage.administrators import SqlAdministratorStore
 from otm.storage.admission import RequestConflict
 from otm.storage.audit_directory import SqlAuditDirectory
 from otm.storage.audit_export import AuditExportTooLarge, SqlAuditExport
+from otm.storage.corporate_administrators import CorporateAdministrators
 from otm.storage.operation_directory import SqlOperationDirectory
 
 
@@ -57,7 +64,7 @@ class Liveness(BaseModel):
 # Build liveness, optionally adding the explicitly configured session boundary.
 #
 # No prototype router, reset endpoint, local actor or simulated-success command is mounted.
-# Sign-in and provider workflows require explicit host dependencies; SSO is not composed.
+# Sign-in and provider workflows require explicit host dependencies.
 def create_app(
     sessions: SessionService | None = None,
     browser: BrowserSettings | None = None,
@@ -76,6 +83,8 @@ def create_app(
     cost_collections=None,
     email_policy: MailPolicy | None = None,
     readiness=None,
+    corporate_sign_in: CorporateSignIn | None = None,
+    corporate_administrators: CorporateAdministrators | None = None,
 ) -> FastAPI:
     if (
         configuration_rollouts is not None
@@ -87,6 +96,27 @@ def create_app(
         raise ValueError("BASELINE_PUBLICATION_REQUIRES_ORGANIZATION")
     if (sessions is None) != (browser is None):
         raise ValueError("Both session authority and browser settings are required")
+    if corporate_sign_in is not None and (
+        not isinstance(corporate_sign_in, CorporateSignIn)
+        or sessions is None
+        or browser is None
+        or sessions.corporate is None
+        or sessions.corporate.target.environment != "development"
+        or browser.public_origin != LAPTOP_PILOT_ORIGIN
+        or corporate_sign_in.issuer.authority is not sessions.corporate
+        or corporate_sign_in.exchange.binding.client_id != sessions.corporate.target.oidc_client_id
+        or corporate_sign_in.exchange.binding.group != sessions.corporate.target.group
+        or corporate_sign_in.exchange.binding.installation_origin != browser.public_origin
+    ):
+        raise ValueError("CORPORATE_LOGIN_REQUIRES_QUALIFIED_LAPTOP_BOUNDARY")
+    if corporate_administrators is not None and (
+        not isinstance(corporate_administrators, CorporateAdministrators)
+        or administrators is not corporate_administrators.store
+        or sessions is None
+        or sessions.corporate is None
+        or sessions.corporate.target != corporate_administrators.target
+    ):
+        raise ValueError("CORPORATE_ADMINISTRATORS_REQUIRE_QUALIFIED_SCOPE")
     if login is not None and sessions is None:
         raise ValueError("LOCAL_LOGIN_REQUIRES_SESSION_BOUNDARY")
     if (
@@ -141,7 +171,10 @@ def create_app(
         app.add_middleware(
             AuthenticationMiddleware,
             backend=CookieSessionBackend(
-                sessions, allow_local_login=login is not None, public_ui=ui_dist is not None
+                sessions,
+                allow_local_login=login is not None,
+                public_ui=ui_dist is not None,
+                allow_corporate_login=corporate_sign_in is not None,
             ),
             on_error=authentication_error,
         )
@@ -195,6 +228,9 @@ def create_app(
                 response = JSONResponse({"code": failure.code}, status_code=failure.status)
             clear_session_cookie(response)
             return response
+
+    if corporate_sign_in is not None:
+        app.include_router(corporate_router(corporate_sign_in))
 
     if login is not None:
         # Bound credential input before decoding; never emit framework errors containing
@@ -272,22 +308,30 @@ def create_app(
             except Exception:
                 return JSONResponse({"code": "ADMINISTRATOR_SERVICE_UNAVAILABLE"}, status_code=503)
 
-        # Reuse the existing transactional protected-account/revision/authority checks.
+        # Advertise onboarding only to an already authorized administrator.
+        @app.get("/api/administrators/onboarding")
+        def administrator_onboarding_status():
+            return {
+                "enabled": corporate_administrators is not None,
+                "environment": corporate_administrators.target.environment
+                if corporate_administrators
+                else None,
+            }
+
+        if corporate_administrators is not None:
+            app.include_router(corporate_administrator_router(corporate_administrators))
+
+        # Preserve local revocation when provider cleanup has not been configured.
         @app.post("/api/administrators/{identifier}/revoke")
         async def revoke_administrator(identifier: UUID, request: Request):
-            try:
-                if request.headers.get("content-type", "").split(";")[0] != "application/json":
-                    raise ValueError("INVALID_COMMAND")
-                data = bytearray()
-                async for chunk in request.stream():
-                    if len(data) + len(chunk) > 4096:
-                        raise ValueError("INVALID_COMMAND")
-                    data.extend(chunk)
-                body = RevokeAdministrator.model_validate_json(bytes(data))
-            except ValueError:
-                return JSONResponse({"code": "INVALID_ADMINISTRATOR_COMMAND"}, status_code=400)
-            return await run_in_threadpool(
-                administrators.revoke, request.user, identifier, body.expected_revision
+            body = await administrator_body(request, RevokeAdministrator)
+            revoke = (
+                corporate_administrators.remove
+                if corporate_administrators
+                else administrators.revoke
+            )
+            return await administrator_action(
+                revoke, request.user, identifier, body.expected_revision
             )
 
     if sandbox is not None:
@@ -504,6 +548,11 @@ def create_app(
             app.mount(
                 "/branding-assets", StaticFiles(directory=branding_assets), name="branding-assets"
             )
+
+        # Advertise whether corporate sign-in is configured without contacting the provider.
+        @app.get("/api/auth/sso/status")
+        def corporate_sign_in_status():
+            return {"enabled": corporate_sign_in is not None}
 
         # Public sign-in identity contains only allowlisted presentation fields, never settings.
         @app.get("/api/branding", response_model=BrandingView)

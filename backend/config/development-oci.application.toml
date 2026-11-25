@@ -3,7 +3,7 @@
 schema_version = 1
 # This is laptop development against real non-production OCI, not a hosted release.
 environment = "local"
-# Explicit mode; the simulator launcher refuses this until live service composition is supplied.
+# Explicit mode selects the isolated development launcher with read-only OCI readiness.
 provider_mode = "oci"
 
 [sessions]
@@ -40,9 +40,9 @@ max_password_workers = 2
 
 # Laptop-only serving; production uses qualified ingress configuration instead.
 [local_server]
-# Canonical HTTPS origin with explicit local port; no path/query/credentials/default443.
-public_origin = "https://localhost:8443"
-# Local testing only; true shows reset instructions and permits the confirmed owner CLI command.
+# HTTPS on 127.0.0.1 with an explicit port other than the reserved 8443 and retired 8444.
+public_origin = "https://127.0.0.1:8445"
+# Keep false in OCI development; organization reset is available only in simulated setups.
 organization_reset_enabled = false
 
 # Public per-instance identity; these values contain no credentials or authorization settings.
@@ -65,15 +65,19 @@ source_max_age_seconds = 86400
 retry_delays_seconds = [30, 120]
 
 [testing]
-# Required for live laptop development, including activation/contact emails triggered through OCI.
+# Required single .test mailbox for OCI development; this setup has no delivery or activation.
 email_override = "developer@example.test"
+
+[notifications]
+# Keep false in OCI development to disable SMTP delivery.
+enabled = false
 
 [oci]
 # Named API key only on a laptop; staging/production select oke_workload_identity instead.
 auth_method = "api_key_profile"
-# Explicit region and expected platform credential tenancy; replace the synthetic OCID privately.
+# OCI SDK endpoint region; it must match the selected API key profile.
 region = "us-ashburn-1"
-# Exact expected platform API-key tenancy; independent of the configured managed-parent target.
+# Exact expected platform API-key tenancy; replace the synthetic OCID privately.
 tenancy_ocid = "ocid1.tenancy.oc1..synthetic"
 # References only: no key material or passphrase belongs in application settings.
 config_file = "~/.oci/config"

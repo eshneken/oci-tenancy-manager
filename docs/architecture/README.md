@@ -6,15 +6,14 @@
 | --- | --- |
 | [OCI deployment (SVG)](diagrams/oci-deployment.svg) | OKE, managed PostgreSQL and Vault context. |
 | [Software/data flows (SVG)](diagrams/logical-architecture.svg) | Application components, durable work and explicit simulated/OCI provider separation. |
-| [Complete implemented ER source](diagrams/implemented-full-er.mmd) | 34 public tables, 439 columns and 89 declared foreign keys through freshly reflected migration0029; [SVG](diagrams/implemented-full-er.svg)/PNG regenerated and visually reviewed on17 November with pinned Mermaid CLI12.2.0. |
+| [Complete implemented ER source](diagrams/implemented-full-er.mmd) | 34 public tables, 440 columns and 89 declared foreign keys, reflected at 0032 and unchanged at 0033. [SVG](diagrams/implemented-full-er.svg) · [PNG](diagrams/implemented-full-er.png). |
 | [Implemented table/column directory](implemented-database.md) | Human-readable responsibilities, exact PostgreSQL types, keys and relationships. |
 | [Focused diagrams and editable sources](diagrams/README.md) | Feature subsets, sources and generated views with implemented/proposed labels. |
 
-The [table directory](implemented-database.md) records the 17 November fresh empty-database reflection
-through migration0029 and its nullable membership JSONB addition. The separately verified
-[saved8443 local publication](../engineering-design/24-imported-membership-adoption.md#scoped-local-development-risk-acceptance-and-follow-up) applied0029 under explicit local risk acceptance; hosted security gates remain required, with the [exact advisory exception](../reference/frontend-security-exception.md)
-and live OCI Pending. No new table or foreign key was added. Current full ER SVG/PNG match the439-column reflected source;
-asset privacy/provenance review precedes publication-manifest updates.
+The [table directory](implemented-database.md) records the 25 November empty-database reflection
+through migration 0032 and the new administrator cleanup column. The 17 November reflection through
+0029 and its [saved 8443 publication](../engineering-design/24-imported-membership-adoption.md#scoped-local-development-risk-acceptance-and-follow-up)
+remain historical qualification records.
 
 The hosting tenancy/compartment need not be the managed parent tenancy. The OCI context view is a
 logical target, not evidence that services are running. Terraform foundations, scoped workload IAM,

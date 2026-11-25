@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from threading import Event
+from uuid import uuid4
 
 import procrastinate
 import uvicorn
@@ -24,6 +25,7 @@ from otm.hosted_database import (
     migrate_database,
 )
 from otm.notifications.worker import NOTIFICATION_TASK
+from otm.organization.contracts import Configuration, SourcePolicy
 from otm.organization.web import OrganizationWeb
 from otm.settings import load_settings
 from otm.storage.administrators import SqlAdministratorStore
@@ -68,6 +70,27 @@ def utc_now():
     return datetime.now(UTC)
 
 
+# Supply trusted source settings for first Apply; the UI supplies the real root and segments.
+def organization_template(settings):
+    source = settings.hosted.organization_source
+    if source is None:
+        return None
+    recipient = settings.mail_policy().email_override or source.administrator_alert_email
+    return Configuration(
+        id=uuid4(),
+        policy=SourcePolicy(
+            source_id=source.source_id,
+            population_id=source.population_id,
+            root_email="organization-root@example.test",
+            allow_metadata=True,
+            authoritative=source.census_contract_confirmed,
+            census_contract_confirmed=source.census_contract_confirmed,
+            max_age_seconds=source.max_age_seconds,
+            administrator_recipients=(recipient,),
+        ),
+    )
+
+
 # Compose real auth/directory/audit services using an explicit secret reader and verified API pool.
 # Provider mutations stay unavailable until the OCI composition is supplied in a subsequent slice.
 def create_hosted_application(
@@ -83,7 +106,8 @@ def create_hosted_application(
             raise ValueError("HOSTED_RUNTIME_DATABASE_NOT_READY")
         if not frontend.is_dir():
             raise ValueError("HOSTED_FRONTEND_REQUIRED")
-        if settings.notifications.enabled and notifier is None:
+        mail = settings.mail_policy()
+        if settings.notifications.enabled and getattr(notifier, "policy", None) != mail:
             raise ValueError("HOSTED_NOTIFICATION_COMPOSITION_REQUIRED")
         policy = settings.local_auth
         grants = SqlAdministratorStore(
@@ -93,7 +117,9 @@ def create_hosted_application(
         login = LocalLogin(settings, SqlLocalAuth(engine, settings, clock), mfa_secrets)
         store = SqlOrganizationStore(engine, sessions, clock)
         workflow = OrganizationWorkflows(
-            store, notifications=notifier, mail_policy=settings.mail_policy()
+            store,
+            notifications=notifier if settings.notifications.enabled else None,
+            mail_policy=mail,
         )
         draining = Event()
 
@@ -111,10 +137,10 @@ def create_hosted_application(
             audit_history=SqlAuditDirectory(engine),
             audit_export=SqlAuditExport(engine, clock),
             branding=settings.branding,
-            email_policy=settings.mail_policy(),
+            email_policy=mail,
             readiness=readiness,
             organization=OrganizationWeb(
-                store, clock, None, test_reset_enabled=False, workflows=workflow
+                store, clock, organization_template(settings), workflows=workflow
             ),
         )
         app.add_middleware(

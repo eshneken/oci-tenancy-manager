@@ -139,6 +139,51 @@ deliberately and restart; use a localhost/127.0.0.1 HTTPS origin with an explici
 The generated certificate covers localhost and 127.0.0.1. Paths, query strings and credentials do
 not belong in that origin.
 
+## Local OCI provider development
+
+The OCI development instance serves HTTPS at [https://127.0.0.1:8445](https://127.0.0.1:8445).
+Keep its private installation directory and source checkout separate from the saved demo.
+Using the IP address keeps its host-only session cookie separate from the demo on `localhost`.
+Use a fresh PostgreSQL database and a new local issuer. The launcher pins provider mode in the
+private installation state when it is created. Start with synthetic data only.
+
+1. From a dedicated source checkout, create an owner-only installation directory under
+   `.local-dev`. Copy `backend/config/development-oci.application.toml` into it as
+   `application.toml` with owner-only read/write permissions. Set a unique local issuer and
+   workspace ID and fill in the independently verified non-production tenancy and region.
+   Set the named OCI profile and leave its key in private OCI configuration. Keep the
+   `.test` email override and SMTP disabled.
+2. From that checkout, set `OTM_OCI_LOCAL_DIR` to the absolute installation directory and run:
+
+   ```sh
+   uv run --locked --project backend otm-local setup --directory "$OTM_OCI_LOCAL_DIR" --port 8445
+   uv run --locked --project backend otm-local bootstrap --directory "$OTM_OCI_LOCAL_DIR"
+   uv run --locked --project backend otm-local start --directory "$OTM_OCI_LOCAL_DIR"
+   ```
+
+   Bootstrap is interactive and creates the local recovery administrator. Run it once and
+   enroll a dedicated authenticator entry. The configuration and PostgreSQL data persist across
+   restarts.
+3. Check database connectivity and the result of the signed OCI startup probe with:
+
+   ```sh
+   curl --noproxy '*' --cacert "$OTM_OCI_LOCAL_DIR/tls.crt" https://127.0.0.1:8445/health/ready
+   ```
+
+The local development server stores administration, operations, audit and organization data in
+its own database. Save the root and at least one segment in **Application Settings → Organization
+Mapping** before uploading the first dated CSV from **Organization**. Use synthetic people with
+`.test` addresses. Manual development CSVs can update directory metadata. They carry no
+authority to infer absences. Tenancy lifecycle operations and application email delivery remain
+disabled. Optional [administrator enrollment](corporate-sso.md#administrator-enrollment-and-removal)
+uses its own qualified OCI scope.
+
+Startup can verify the exact domain and Atlas group with the enrollment signer. Without a verified
+enrollment scope, startup checks the configured tenancy with a signed `GetTenancy` request.
+Readiness checks the database and reports that startup result. Restart to retry an unavailable
+OCI probe. A missing OCI signer leaves local recovery sign-in available. Start only the application
+process for this instance. Use separate approval for future live OCI changes.
+
 ## What the screens do
 
 The sign-in form sends factors only in guarded same-origin JSON. It never stores them in browser
@@ -152,8 +197,9 @@ be revoked through a confirmation dialog; the backend rechecks live authority, t
 and the displayed authorization revision. This changes application access and sessions, not OCI
 tenancy ownership/resources. There are no fictitious directory rows or demonstration revocations.
 
-Add administrator is disabled because verified corporate identity enrollment is not configured.
-Ordinary grant creation/regrant and corporate SSO remain unimplemented. Operations now reads real
+In the saved 8443 simulator, Add administrator is disabled and recovery sign-in is used. The
+separate [8445 OCI pilot](corporate-sso.md) supports corporate sign-in and administrator enrollment.
+Operations now reads real
 persisted inspection records. Organization/Organization drift are enabled. Tenancies and Configuration now expose the implemented local registry, baselines, overrides, updates and read-only drift checks. Provider effects remain simulated.
 
 Session polling checks authorization but does not extend idle time. Trusted browser pointer/key
@@ -192,7 +238,7 @@ and `authorization_revision`. `AdministratorDirectory` returns `items`, filtered
 `page`, `page_size`, `pages` and `statistics`. The statistics' `total`, `active` and
 `protected_recovery` cover the whole authorized workspace independently of the search. These are
 projections of the existing grant table, not new database tables. Neither credentials nor raw
-issuer/subject/session hashes are returned. The original read-history milestone had23exported schemas; the frontend generates public TypeScript types from authoritative models. The current generated schema inventory is checked against the Python models; that earlier count is historical.
+issuer/subject/session hashes are returned. The original read-history milestone had 23 exported schemas; the frontend generates public TypeScript types from authoritative models. The current generated schema inventory is checked against the Python models; that earlier count is historical.
 Static TypeScript types do not replace server validation or prove a response's runtime contents.
 
 ## Local boundaries and remaining gates
@@ -202,9 +248,10 @@ use the separate owner credential; the worker has its own restricted database ro
 Both runtime factories reject owner/superuser-like authority
 even if called outside the launcher. That is real database-role separation, but not production process
 isolation: both commands run as the same OS user, which can read the private state holding both
-passwords. The local API role is not a qualified OCI managed-PostgreSQL deployment role. No production
-Vault adapter, ingress/IP limiter, corporate SSO or OKE deployment is installed/qualified. Hosted
-GitHub checkpoint CI and protected master are verified separately; see the
+passwords. The local API role is not a qualified OCI managed-PostgreSQL deployment role. Production
+qualification for Vault, ingress/IP limiting, corporate SSO and OKE remains pending. See the
+[8445 OCI pilot](corporate-sso.md) for local corporate SSO qualification. Hosted GitHub
+checkpoint CI and protected master are verified separately. See the
 [existing checkpoint policy](../how-to/github-checkpoints.md).
 
 The local application is persistent developer state, separate from disposable database/browser test
@@ -296,7 +343,7 @@ Final candidate test/package counts are pending and supersede none of the histor
 
 ## Parallel local test organization — historical, retired 9 November 2026
 
-Do not follow this historical setup or recreate 8444; only saved 8443 is currently authorized.
+The 8444 environment is retired. The saved demo remains on 8443.
 
 [The parallel Atlas Test guide](../how-to/parallel-local-instance.md) describes the prepared
 `.local-dev/runbook` installation at `https://127.0.0.1:8444`; the existing Atlas remains on

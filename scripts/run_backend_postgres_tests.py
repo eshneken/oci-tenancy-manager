@@ -46,6 +46,8 @@ def failing_test_identifiers(cases):
 def browser_failure_locations(cases):
     names = {
         "auth.spec.ts",
+        "corporate-sign-in.spec.ts",
+        "administrator-onboarding.spec.ts",
         "signing-key-rotation.spec.ts",
         "simulation.spec.ts",
         "financial-costs.spec.ts",

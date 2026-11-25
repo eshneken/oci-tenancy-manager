@@ -30,6 +30,7 @@ from otm.storage.transaction import require_transaction
 # Normalize aware database instants without relabeling naive or otherwise malformed timestamps.
 def administrator_record(row) -> Administrator:
     values = dict(row)
+    values.pop("group_cleanup_complete", None)
     for name in ("created_at", "updated_at", "revoked_at"):
         value = values[name]
         if value is not None:
@@ -113,52 +114,62 @@ class SqlAdministratorStore:
         except Exception:
             raise AdministratorFailure(503, "ADMINISTRATOR_SERVICE_UNAVAILABLE") from None
 
-    # Serialize scope changes on the protected row, then recheck live actor/session under that lock.
-    def _revoke(self, principal: AdminPrincipal, target_id: UUID, expected_revision: UUID):
+    # Serialize membership writes and local grant transitions in the same Atlas workspace.
+    def lock_administration(self, connection: Connection, workspace: str):
+        require_transaction(connection)
+        anchor = connection.execute(
+            select(administrator.c.id)
+            .where(
+                administrator.c.workspace_id == workspace,
+                administrator.c.identity_kind == "local_recovery",
+                administrator.c.status == "active",
+            )
+            .with_for_update()
+        ).scalar_one_or_none()
+        if anchor is None:
+            raise AdministratorFailure(503, "ADMINISTRATOR_SERVICE_UNAVAILABLE")
+
+    # Recheck the browser's actual session and current grant in the open transaction.
+    def current_actor(self, connection: Connection, principal: AdminPrincipal):
         presented = principal.session
         workspace = presented.workspace_id
-        with self.engine.begin() as connection:
-            require_transaction(connection)
-            anchor = connection.execute(
-                select(administrator.c.id)
-                .where(
-                    administrator.c.workspace_id == workspace,
-                    administrator.c.identity_kind == "local_recovery",
-                    administrator.c.status == "active",
+        at = TypeAdapter(UtcInstant).validate_python(self.clock())
+        stored = session_record(
+            connection.execute(
+                select(admin_session).where(
+                    admin_session.c.id == presented.id,
+                    admin_session.c.workspace_id == workspace,
+                    admin_session.c.session_token_hash == presented.session_token_hash,
+                    ~invalid_session(at),
                 )
-                .with_for_update()
-            ).scalar_one_or_none()
-            if anchor is None:
-                raise AdministratorFailure(503, "ADMINISTRATOR_SERVICE_UNAVAILABLE")
-            at = TypeAdapter(UtcInstant).validate_python(self.clock())
-            stored = session_record(
-                connection.execute(
-                    select(admin_session).where(
-                        admin_session.c.id == presented.id,
-                        admin_session.c.workspace_id == workspace,
-                        admin_session.c.session_token_hash == presented.session_token_hash,
-                        ~invalid_session(at),
-                    )
-                )
-                .mappings()
-                .one_or_none()
             )
-            if (
-                stored is None
-                or not stored.auth_time <= stored.created_at <= at
-                or (stored.issuer, stored.subject)
-                != (
-                    presented.issuer,
-                    presented.subject,
-                )
-            ):
-                raise PermissionError("ADMINISTRATOR_REQUIRED")
-            actor = self._grant(connection, workspace, stored.issuer, stored.subject)
-            if (
-                stored.entitlement_reference != str(actor.id)
-                or stored.entitlement_revision != actor.authorization_revision
-            ):
-                raise PermissionError("ADMINISTRATOR_REQUIRED")
+            .mappings()
+            .one_or_none()
+        )
+        if (
+            stored is None
+            or not stored.auth_time <= stored.created_at <= at
+            or (stored.issuer, stored.subject)
+            != (
+                presented.issuer,
+                presented.subject,
+            )
+        ):
+            raise PermissionError("ADMINISTRATOR_REQUIRED")
+        actor = self._grant(connection, workspace, stored.issuer, stored.subject)
+        if (
+            stored.entitlement_reference != str(actor.id)
+            or stored.entitlement_revision != actor.authorization_revision
+        ):
+            raise PermissionError("ADMINISTRATOR_REQUIRED")
+        return at
+
+    # Serialize scope changes on the protected row, then recheck the actor under that lock.
+    def _revoke(self, principal: AdminPrincipal, target_id: UUID, expected_revision: UUID):
+        workspace = principal.session.workspace_id
+        with self.engine.begin() as connection:
+            self.lock_administration(connection, workspace)
+            at = self.current_actor(connection, principal)
             row = (
                 connection.execute(
                     select(administrator)
@@ -243,7 +254,11 @@ class SqlAdministratorStore:
     # Page only the server-authorized workspace, with allowlisted sorting and escaped search values.
     def directory(self, workspace: str, query: AdministratorQuery) -> AdministratorDirectory:
         query = AdministratorQuery.model_validate(query)
-        where = [administrator.c.workspace_id == workspace]
+        visible = or_(
+            administrator.c.status == "active",
+            administrator.c.group_cleanup_complete.is_(False),
+        )
+        where = [administrator.c.workspace_id == workspace, visible]
         if query.query:
             where.append(
                 or_(
@@ -271,7 +286,7 @@ class SqlAdministratorStore:
                         ),
                         0,
                     ),
-                ).where(administrator.c.workspace_id == workspace)
+                ).where(administrator.c.workspace_id == workspace, visible)
             ).one()
             total = connection.scalar(select(func.count()).select_from(administrator).where(*where))
             pages = max(1, (total + query.page_size - 1) // query.page_size)

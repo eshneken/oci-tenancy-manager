@@ -34,6 +34,7 @@ Earlier dated preservation receipts remain historical evidence.
 | Ashburn backups and restore qualification | [V1 backup policy, sizing and regional boundary](engineering-design/06-platform-and-delivery.md#ashburn-v1-backup-policy-proposal--13-november-2026) |
 | Staging, production and release promotion | [Isolated tenancies and build-once delivery](engineering-design/24-environments-and-promotion.md) |
 | Hosted administrator updates, backup and restore | [Human-readable operating runbooks](how-to/hosted-administration.md) — design-stage procedures, pending staging qualification |
+| Atlas corporate sign-in and onboarding | [8445 pilot](reference/corporate-sso.md), [local milestone and hosted handoff](engineering-design/26-administrator-sso.md#local-milestone-and-hosted-handoff), [manual acceptance](how-to/real-oci-test-manifest.md#atlas-administrator-sso-and-onboarding) |
 | Terraform state foundation | [Implemented layout and mock-only tests](../infra/README.md), [operator bootstrap procedure](how-to/terraform-state-bootstrap.md) — live qualification pending |
 | Network foundation | [Subnets, routing, source allowlist and private-input renderer](how-to/network-foundation.md) — OKE and managed PostgreSQL source attached; optional [held Caddy ingress](how-to/caddy-ingress.md) and live qualification documented separately |
 | Enhanced OKE, worker initialization and sensor | [Cluster/pool fields and private cloud-init procedure](how-to/oke-foundation.md), [NSG traffic matrix](how-to/oke-network-traffic.md) — live ARM64 sensor, deployment and connectivity qualification pending |
@@ -44,7 +45,7 @@ Earlier dated preservation receipts remain historical evidence.
 | App ingress and recovery-console source restrictions | [Shared allowlist contract](engineering-design/06-platform-and-delivery.md#shared-inbound-source-allowlist--13-november-2026) — one private environment input; live enforcement pending |
 | Create/import bootstrap handoff and copy fields | [Public bootstrap handoff](reference/tenancy-onboarding.md#public-bootstrap-handoff--12-november-2026), [complete action and field dictionary](reference/tenancy-onboarding.md#complete-contract-field-dictionary) |
 | Maintained container base, isolated qualification and security gate | [Container development](how-to/container-development.md) |
-| Run the application | [Local HTTPS setup](reference/local-application.md) — saved PostgreSQL 18.7 preview through migration 0030 |
+| Run the application | [Local HTTPS setup](reference/local-application.md) — saved PostgreSQL 18.7 preview and separate [OCI development setup](reference/local-application.md#local-oci-provider-development) |
 | Manual required-user presence checks | [Current check fields, authority and ER](reference/user-presence-checks.md) |
 | Presence-only connection foundation | [Current fields, ER and qualification boundary](reference/user-presence-connections.md) |
 | Compact required-user inventory summary | [Fields and state rules](reference/required-users-summary.md) — [local qualification/main update](history/required-users-summary-checkpoint-2026-11-06.md) |
@@ -223,7 +224,7 @@ The [recovery-network repair source subset](reference/recovery-network-repair.md
 
 - [Hosted Kubernetes workload bundle](how-to/kubernetes-workloads.md) — disabled API/worker/migration manifests, immutable settings, credential references and strict schema checks; hosted runtime/activation pending.
 
-- [Hosted startup foundation](how-to/hosted-startup.md) — explicit TLS/roles, readiness, migration and worker composition; activation remains held.
+- [Hosted startup foundation](how-to/hosted-startup.md) — explicit TLS/roles, readiness, migration, worker composition and [initial organization setup](how-to/hosted-startup.md#initial-organization-mapping-and-import).
 
 - [Schema-changing release maintenance](how-to/hosted-administration.md#schema-changing-application-release) — approved V1 drain/migrate/start/reopen procedure; unchanged-schema releases roll normally.
 

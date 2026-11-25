@@ -114,7 +114,8 @@ audit_event = Table(
         "AND intent_revision IS NULL))) "
         "OR (kind IN ('administrator_revoked','administrator_bootstrapped',"
         "'local_credentials_reset',"
-        "'local_sign_in_succeeded','local_sign_in_failed','session_logged_out','audit_export') "
+        "'local_sign_in_succeeded','corporate_sign_in_succeeded','local_sign_in_failed',"
+        "'session_logged_out','audit_export') "
         "AND operation_id IS NULL "
         "AND intent_revision IS NULL AND administrator_id IS NOT NULL) "
         "OR (kind IN ('organization_configured','organization_feed_received',"
@@ -291,12 +292,17 @@ administrator = Table(
     Column("created_at", DateTime(timezone=True), nullable=False),
     Column("updated_at", DateTime(timezone=True), nullable=False),
     Column("revoked_at", DateTime(timezone=True)),
+    Column("group_cleanup_complete", Boolean, nullable=False, server_default="false"),
     UniqueConstraint("workspace_id", "id", name="uq_administrator_workspace_id"),
     UniqueConstraint("workspace_id", "issuer", "subject", name="uq_administrator_identity"),
     CheckConstraint(
         "identity_kind IN ('local_recovery','corporate_sso')", name="ck_administrator_kind"
     ),
     CheckConstraint("status IN ('active','revoked')", name="ck_administrator_status"),
+    CheckConstraint(
+        "NOT group_cleanup_complete OR (status = 'revoked' AND identity_kind = 'corporate_sso')",
+        name="ck_administrator_cleanup_revoked",
+    ),
     CheckConstraint(
         "(status='active' AND revoked_at IS NULL) OR (status='revoked' AND revoked_at IS NOT NULL)",
         name="ck_administrator_revocation",

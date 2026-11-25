@@ -32,6 +32,9 @@
     "0027-recovery-passwords.sql": "331aec3da0c8544d74c73349afc1eea528c22e4bee35ca899ad361c8fcff7c01",
     "0028-signing-credentials.sql": "d5895716c62ba4d0a3892598ff4a6ceed954cba79f0c363cc0b78271fa228f3e",
     "0029-imported-memberships.sql": "ed2957a6f5be82bdb869381d7c56ceb32a27ddd700d652b1b93cb2d266159ff2",
-    "0030-tenancy-ocid-search.sql": "dada0b2e52c6af1ab1b99cad5a65c53b0bc8b4853755ed3c9f1dc4b5581013b4"
+    "0030-tenancy-ocid-search.sql": "dada0b2e52c6af1ab1b99cad5a65c53b0bc8b4853755ed3c9f1dc4b5581013b4",
+    "0031-corporate-sign-in.sql": "49cc71b64df9e210a7b56c13dee22fa1d3b8878c6501904f4abdc183c736ffc2",
+    "0032-administrator-cleanup.sql": "e9285db0e9af6ec71a026021b14325a01b6ff3d3788d1396a6309fa7c54970be",
+    "0033-corporate-grant-audit.sql": "513384473e4de8424a443bb8d232ba9cc5167527185c4c0b20fd0a979bdb7620"
   }
 }

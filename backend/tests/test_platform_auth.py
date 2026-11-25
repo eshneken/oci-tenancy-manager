@@ -76,6 +76,27 @@ def test_named_profile_constructs_real_signer(development):
     oke.assert_not_called()
 
 
+# Refuse public custody independently of whether the named profile can create an SDK signer.
+@pytest.mark.parametrize("managed_path", ["config", "key", "private"])
+def test_local_public_profile_custody_is_rejected(development, managed_path):
+    config, key, values, settings = development
+    public = config.parent / "dist"
+    public.mkdir()
+    if managed_path == "config":
+        public_config = public / config.name
+        profile = settings.oci.model_copy(update={"config_file": str(public_config)})
+    else:
+        profile = settings.oci
+    if managed_path == "key":
+        values["key_file"] = str(public / key.name)
+        config.write_text("[ATLAS_DEV]\n" + "\n".join(f"{k}={v}" for k, v in values.items()) + "\n")
+    if managed_path == "private":
+        auth.reject_public_oci_profile(profile, public)
+    else:
+        with pytest.raises(auth.PublicOciCredentialPath, match="OCI_CREDENTIALS_CANNOT_BE_PUBLIC"):
+            auth.reject_public_oci_profile(profile, public)
+
+
 # The same Vault reader accepts a real local signer; SDK client initialization performs no calls.
 def test_named_profile_composes_real_vault_clients(development):
     _, _, _, settings = development

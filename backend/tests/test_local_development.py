@@ -229,7 +229,42 @@ def test_worker_credential_and_launch(tmp_path, local_state, monkeypatch):
         local.database_url(state, worker=True, owner=True)
     monkeypatch.chdir(PROJECT)
     tmp_path.chmod(0o700)
+    (tmp_path / "application.toml").write_text(
+        (PROJECT / "backend/config/application.toml").read_text()
+    )
     with patch.object(local.os, "execve") as execute:
         assert local.main(["worker", "--directory", str(tmp_path)]) == 0
         assert "otm-simulation-worker" in execute.call_args.args[1]
         assert "otm_local_worker" in execute.call_args.args[2]["OTM_DATABASE_URL"]
+
+
+# A private OCI installation gets its own database and starts the OCI factory without fixtures.
+def test_setup_and_start_explicit_oci_installation(tmp_path, local_state, monkeypatch):
+    root = tmp_path / "oci"
+    root.mkdir(mode=0o700)
+    (root / "application.toml").write_text(
+        (PROJECT / "backend/config/development-oci.application.toml").read_text()
+    )
+    monkeypatch.chdir(PROJECT)
+    with (
+        patch.object(local, "setup_database") as database,
+        patch.object(local, "setup_certificate"),
+        patch.object(local, "run"),
+        patch.object(local.os, "execve") as launch,
+    ):
+        assert local.main(["setup", "--directory", str(root), "--port", "8445"]) == 0
+        database.assert_called_once()
+        assert not (root / "simulation.json").exists()
+        state = local.read_state(root)
+        assert state.provider_mode == "oci"
+        local.write_state(root, local_state)
+        assert local.main(["setup", "--directory", str(root), "--port", "8445"]) == 1
+        assert database.call_count == 1
+        assert local.main(["start", "--directory", str(root)]) == 1
+        launch.assert_not_called()
+        local.write_state(root, state.model_copy(update={"database_port": 18000}))
+        assert local.main(["worker", "--directory", str(root)]) == 1
+        launch.assert_not_called()
+        assert local.main(["start", "--directory", str(root)]) == 0
+        assert "otm.local_server:create_local_oci_application" in launch.call_args.args[1]
+        assert "8445" in launch.call_args.args[1]

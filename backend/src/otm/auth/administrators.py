@@ -67,6 +67,9 @@ class AdministratorFailure(Exception):
             (403, "RECOVERY_ADMINISTRATOR_PROTECTED"),
             (404, "ADMINISTRATOR_NOT_FOUND"),
             (409, "ADMINISTRATOR_REVISION_CHANGED"),
+            (409, "ADMINISTRATOR_ALREADY_ACTIVE"),
+            (409, "ADMINISTRATOR_CONFIRMATION_CHANGED"),
+            (422, "CORPORATE_IDENTITY_UNVERIFIED"),
             (503, "ADMINISTRATOR_SERVICE_UNAVAILABLE"),
         }:
             raise ValueError("INVALID_ADMINISTRATOR_DIAGNOSTIC") from None

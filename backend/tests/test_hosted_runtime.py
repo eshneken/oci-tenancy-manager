@@ -12,7 +12,10 @@ from sqlalchemy.engine import make_url
 from otm import hosted_database as database
 from otm import hosted_runtime as runtime
 from otm.app import create_app
-from otm.settings import load_settings
+from otm.email_policy import EmailPolicyBlocked, MailPolicy
+from otm.notifications.runtime import compose_notifications
+from otm.providers.email_contacts import activation_address, identity_contacts
+from otm.settings import ApplicationSettings, load_settings
 
 CONFIG = Path(__file__).resolve().parents[1] / "config"
 
@@ -378,13 +381,93 @@ def test_disabled_email_still_requires_existing_delivery_handler(hosted):
 
 
 # An enabled delivery profile must never silently discard lifecycle notices during API composition.
-def test_hosted_api_requires_notification_composition(hosted):
+@pytest.mark.parametrize("notifier_policy", [None, "wrong", "configured"])
+def test_hosted_api_requires_notification_composition(hosted, notifier_policy):
     settings = hosted.settings.model_copy(
         update={"notifications": hosted.settings.notifications.model_copy(update={"enabled": True})}
     )
+    notifier, _, _ = compose_notifications(settings, "synthetic-queue")
+    if notifier_policy is None:
+        notifier = None
+    elif notifier_policy == "wrong":
+        notifier.policy = MailPolicy(environment="production")
     with patch.object(runtime, "database_ready", return_value=True):
-        with pytest.raises(RuntimeError, match="HOSTED_API_STARTUP_FAILED"):
-            runtime.create_hosted_application(
-                settings, "staging", hosted.engine, Mock(), frontend=hosted.frontend
+        if notifier_policy == "configured":
+            app = runtime.create_hosted_application(
+                settings,
+                "staging",
+                hosted.engine,
+                Mock(),
+                frontend=hosted.frontend,
+                notifier=notifier,
             )
+            with TestClient(app) as client:
+                assert client.get("/health/ready").status_code == 200
+        else:
+            with pytest.raises(RuntimeError, match="HOSTED_API_STARTUP_FAILED"):
+                runtime.create_hosted_application(
+                    settings,
+                    "staging",
+                    hosted.engine,
+                    Mock(),
+                    frontend=hosted.frontend,
+                    notifier=notifier,
+                )
     hosted.engine.dispose.assert_called_once()
+
+
+# A missing source preserves legacy startup; an operator-owned census opt-in binds both trust flags.
+def test_hosted_organization_source_is_optional_and_explicit():
+    settings = load_settings(CONFIG / "staging.application.toml").model_dump()
+    source = settings["hosted"].pop("organization_source")
+    assert runtime.organization_template(ApplicationSettings.model_validate(settings)) is None
+
+    settings["hosted"]["organization_source"] = {**source, "census_contract_confirmed": True}
+    policy = runtime.organization_template(ApplicationSettings.model_validate(settings)).policy
+    assert policy.authoritative and policy.census_contract_confirmed
+    assert not policy.allow_undated_development_metadata
+
+
+# Hosted source config accepts only deployment settings and uses the correct environment mailbox.
+@pytest.mark.parametrize(
+    ("environment", "fields"),
+    [
+        ("staging", {"administrator_alert_email": "unexpected@example.test"}),
+        ("staging", {"root_email": "employee@example.test"}),
+        ("staging", {"source_id": " "}),
+        ("staging", {"max_age_seconds": 0}),
+        ("production", {"administrator_alert_email": None}),
+        ("production", {"administrator_alert_email": "one@example.test,two@example.test"}),
+    ],
+)
+def test_hosted_organization_source_rejects_invalid_scope_and_alert_mailbox(environment, fields):
+    raw = load_settings(CONFIG / f"{environment}.application.toml").model_dump()
+    raw["hosted"]["organization_source"].update(fields)
+    with pytest.raises(ValueError):
+        ApplicationSettings.model_validate(raw)
+
+
+# Real directory addresses remain identity values while staging SMTP and OCI route to one mailbox.
+def test_hosted_staging_mail_uses_one_destination_for_organization_contacts():
+    settings = load_settings(CONFIG / "staging.application.toml")
+    raw = settings.model_dump()
+    raw["notifications"]["enabled"] = True
+    settings = ApplicationSettings.model_validate(raw)
+    override = settings.testing.email_override
+    policy = settings.mail_policy()
+    notifier, _, _ = compose_notifications(settings, "synthetic-queue")
+    identity = "employee@directory.example.test"
+    route = policy.route(identity)
+    assert route.original_email == identity
+    assert notifier.policy.guard(route) == override
+    assert (
+        activation_address(
+            policy, SimpleNamespace(email_contacts=SimpleNamespace(activation=route))
+        )
+        == override
+    )
+    contact = identity_contacts(policy, identity, route)
+    assert contact.username == identity
+    assert contact.primary_email == contact.recovery_email == override
+    with pytest.raises(EmailPolicyBlocked):
+        policy.guard_address(identity)
