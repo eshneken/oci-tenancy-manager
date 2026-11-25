@@ -15,9 +15,13 @@ test(`recovery administrator reviews and changes Atlas access (${existingAccount
     status: "active",
     authorization_revision: "active-revision",
   };
-  await page.route("**/api/session", route => route.fulfill({
-    json: { display_name: "Recovery administrator", workspace_id: "synthetic", expires_at: "2099-01-01T00:00:00Z" },
-  }));
+  const session = { display_name: "Recovery administrator", workspace_id: "synthetic", expires_at: "2099-01-01T00:00:00Z" };
+  // Stub the signed-in shell's background queries so the real server does not end the synthetic session.
+  await page.route("**/api/session", route => route.fulfill({ json: session }));
+  await page.route("**/api/session/activity", route => route.fulfill({ json: session }));
+  await page.route("**/api/email-policy", route => route.fulfill({ json: { redirected: false } }));
+  await page.route("**/api/operations?*", route => route.fulfill({ json: { attention_count: 0 } }));
+  await page.route("**/api/organization/reviews?*", route => route.fulfill({ json: { actionable_count: 0 } }));
   await page.route("**/api/administrators?*", route => route.fulfill({
     json: { items: cleanupComplete ? [] : [user], page: 1, page_size: 10, pages: 1,
       total: cleanupComplete ? 0 : 1, statistics: { total: cleanupComplete ? 0 : 1,
@@ -53,6 +57,7 @@ test(`recovery administrator reviews and changes Atlas access (${existingAccount
   });
   await page.goto("/administrators");
   const open = page.getByRole("button", { name: "Add administrator" });
+  await expect(open).toBeEnabled();
   const add = page.getByRole("dialog", { name: "Add administrator" });
   for (const width of [1024, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
