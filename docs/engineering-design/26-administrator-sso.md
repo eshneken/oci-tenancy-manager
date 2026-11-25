@@ -246,10 +246,10 @@ objects into the single development state and require a reviewed zero-change Git
 
 ## Terraform ownership for signing keys
 
-Development and staging share one non-production identity domain. The operator bootstrap is the
-single owner for its existing shared Settings singleton. Production has its own domain and
-bootstrap owner. The environment builds reference this setting and own their respective clients,
-groups, grants and callbacks.
+Development and staging share one non-production identity domain. Assign its existing shared
+Settings singleton to the operator bootstrap as the single owner. Production uses its own
+domain and bootstrap owner. The environment builds reference the shared setting and own their
+respective clients, groups, grants and callbacks.
 
 Use OCI integrated application display names `otm-application-development`,
 `otm-application-staging`, and `otm-application-production`. The shared description is
@@ -293,7 +293,9 @@ access. Qualify that path in staging with a consenting test identity and indepen
 
 The hosted milestone retains the separate client, group and grants per environment, environment
 Vault secret retrieval and rotation, OKE Workload Identity and operation-level qualification,
-cross-replica callback handling, and Terraform adoption of the identity-domain resources.
+cross-replica callback handling, and Terraform adoption of the staging and production
+identity-domain resources. [Development adoption](#development-terraform-ownership) extends the
+single development build independently of hosted rollout.
 Development and staging share the non-production domain setting. Keep hosted corporate sign-in
 and enrollment disabled until staging qualification and the relevant approvals are complete.
 
