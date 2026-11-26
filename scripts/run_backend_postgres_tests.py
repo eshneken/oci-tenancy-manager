@@ -113,7 +113,7 @@ def main() -> int:
     artifacts.mkdir(parents=True, exist_ok=True)
     directory = Path(tempfile.mkdtemp(prefix="backend-postgres-", dir=artifacts))
     owner = uuid4().hex
-    name = "otm-backend-test-" + owner[:12]
+    container_name = "otm-backend-test-" + owner[:12]
     label = "otm.test.postgres"
     password = secrets.token_hex(24)
     # Explicit connection values plus removal of inherited libpq overrides protect the target.
@@ -159,7 +159,7 @@ def main() -> int:
                 "--detach",
                 "--rm",
                 "--name",
-                name,
+                container_name,
                 "--label",
                 label + "=" + owner,
                 "--env",
@@ -181,7 +181,7 @@ def main() -> int:
                 [
                     "docker",
                     "exec",
-                    name,
+                    container_name,
                     "pg_isready",
                     "-h",
                     "127.0.0.1",
@@ -197,7 +197,13 @@ def main() -> int:
         else:
             raise RuntimeError("Disposable PostgreSQL did not become ready")
         output = subprocess.check_output(
-            ["docker", "inspect", "--format", "{{json .NetworkSettings.Ports}}", name]
+            [
+                "docker",
+                "inspect",
+                "--format",
+                "{{json .NetworkSettings.Ports}}",
+                container_name,
+            ]
         )
         port = json.loads(output)["5432/tcp"][0]["HostPort"]
         env["OTM_BACKEND_TEST_DATABASE_URL"] = (
@@ -309,7 +315,7 @@ def main() -> int:
         finally:
             # Report cleanup must never prevent removal of the container owned by this run.
             if launch_attempted:
-                remove_owned("docker", name, label, owner)
+                remove_owned("docker", container_name, label, owner)
     (directory / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     print(json.dumps(summary))
     return 0 if passed else 1
