@@ -26,12 +26,13 @@ variable "oci_profile" {
   }
 }
 
-# Operator-supplied OCID for the existing top-level development compartment.
-# Syntax does not establish tenancy ownership or permission; independently verify both before apply.
+# Existing compartment adoption can pin its verified immutable OCID. A new bootstrap omits it.
 variable "hosting_compartment_ocid" {
-  type = string
+  description = "Optional expected OCID of the adopted development compartment."
+  type        = string
+  default     = null
   validation {
-    condition     = length(var.hosting_compartment_ocid) <= 255 && can(regex("^ocid1[.]compartment[.][a-z0-9]+[.][a-z0-9-]*[.][a-z0-9]+$", var.hosting_compartment_ocid))
+    condition     = var.hosting_compartment_ocid == null ? true : length(var.hosting_compartment_ocid) <= 255 && can(regex("^ocid1[.]compartment[.][a-z0-9]+[.][a-z0-9-]*[.][a-z0-9]+$", var.hosting_compartment_ocid))
     error_message = "Provide the selected environment's existing hosting compartment OCID, at most 255 characters."
   }
 }
@@ -56,16 +57,14 @@ variable "github_repository" {
   }
 }
 
-# Opt in only after verifying these private OCI identities and approving the root attachment.
+# Opt in after verifying the Default domain and the laptop's public signing key.
 variable "local_app_iam" {
-  description = "Optional development laptop IAM enrollment scope; null adds no policy."
+  description = "Optional development laptop identity, public key and enrollment IAM policy."
   type = object({
-    # Exact root domain OCID. Never accept a display name, wildcard, or free-form policy fragment.
+    # Exact root domain OCID. Never accept a name, wildcard, or free-form policy fragment.
     domain_ocid = string
-    # OCI group OCID for the development laptop principal.
-    writer_group_ocid = string
-    # OCI group OCID for development Atlas assignment, distinct from the signer group.
-    assignment_group_ocid = string
+    # RSA public key in PEM format. The laptop's private key stays in its named OCI profile.
+    signing_public_key_pem = string
     # Include the explicit user-create permission only after separate review.
     create_federated_users = optional(bool, false)
   })
@@ -73,11 +72,8 @@ variable "local_app_iam" {
   validation {
     condition = var.local_app_iam == null ? true : (
       can(regex("^ocid1[.]domain[.]oc1[.][a-z0-9-]*[.][a-z0-9]{1,220}$", var.local_app_iam.domain_ocid)) &&
-      alltrue([for ocid in [var.local_app_iam.writer_group_ocid, var.local_app_iam.assignment_group_ocid] :
-        can(regex("^ocid1[.]group[.]oc1[.][a-z0-9-]*[.][a-z0-9]{1,220}$", ocid))
-      ]) &&
-      var.local_app_iam.writer_group_ocid != var.local_app_iam.assignment_group_ocid
+      can(regex("^-----BEGIN PUBLIC KEY-----\\n[A-Za-z0-9+/=\\n]+\\n-----END PUBLIC KEY-----$", trimspace(var.local_app_iam.signing_public_key_pem)))
     )
-    error_message = "Provide the exact non-prod domain and two distinct group OCIDs."
+    error_message = "Supply the verified non-production domain OCID and an RSA public signing key in PEM format."
   }
 }

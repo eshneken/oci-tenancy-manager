@@ -51,10 +51,12 @@ The backend unit job invokes `scripts/check_unit_coverage.py` (`-m "not postgres
 job invokes `scripts/run_backend_postgres_tests.py` (`-m postgres`). Together they execute every
 backend test once across the required lanes. The integration job no longer repeats units already
 owned by the independently required coverage job. Frontend units remain a separate required job.
-This changes test orchestration only: assertions, unit scope, the 95% threshold and required hosted
-checks remain intact. The current approved aggregate integration budget is 900 seconds; individual test
-limits remain unchanged. A lane's missing/skipped/timed-out evidence blocks
-merge; a passing companion lane cannot compensate. [Canonical policy](../engineering-test-plan.md#complementary-backend-test-lanes).
+The integration runner executes the installer-only suite and the remaining PostgreSQL-marked
+tests concurrently under one 900-second deadline. The installer fixture owns a separate
+disposable database. Both lanes must exit successfully and produce valid, nonempty JUnit
+reports without failures, errors or skips. Missing or timed-out evidence blocks merge.
+The 95% unit-only threshold and individual test limits remain unchanged.
+[Canonical policy](../engineering-test-plan.md#current-local-cadence-and-integration-budget--9-november-2026).
 
 ### Responsive browser geometry
 

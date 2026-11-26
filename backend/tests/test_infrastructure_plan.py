@@ -26,36 +26,26 @@ COMPARTMENT = "ocid1.compartment.oc1..synthetic"
 
 # Synthetic protected settings exercise both fixed roots; no actual employee or cloud identity
 # exists.
-def environment_values(environment="staging", component="security"):
+def environment_values(environment="staging"):
     target = {
         "environment": environment,
         "tenancy_ocid": TENANCY,
         "region": "us-ashburn-1",
         "object_storage_namespace": "synthetic",
     }
-    inputs = {"target": target, "database_provisioner_group_ocid": "ocid1.group.oc1..synthetic"}
-    if component == "infrastructure":
-        inputs = {
-            "target": target,
-            "atlas_sso": {
-                "assignment_group_id": "a" * 32,
-                "signon_policy_id": "b" * 32,
-                "idp_policy_id": "c" * 32,
-            },
-        }
-    if component == "platform":
-        inputs = {
-            "target": target,
-            "vcn_cidr": "10.80.0.0/16",
-            "oke": {"availability_domains": ["synthetic:AD1"]},
-            "database_administrator": {
-                "username": "provisioner",
-                "secret_ocid": ".".join(("ocid1", "vaultsecret", "oc1", "iad", "synthetic")),
-                "secret_version": "1",
-            },
-            "database": {"backup_start_utc": "02:00", "maintenance_start_utc": "SUN 03:00"},
-            "application_vault_ocid": "ocid1.vault.oc1.iad.synthetic",
-        }
+    inputs = {"target": target, "atlas_sso": {"corporate_idp_id": "d" * 32}}
+    if environment != "development":
+        inputs["atlas_sso"]["callback_url"] = (
+            f"https://{environment}.example.test/api/auth/sso/callback"
+        )
+        inputs.update(
+            {
+                "vcn_cidr": "10.80.0.0/16",
+                "oke": {"availability_domains": ["synthetic:AD1"]},
+                "database_administrator": {"username": "provisioner"},
+                "database": {"backup_start_utc": "02:00", "maintenance_start_utc": "SUN 03:00"},
+            }
+        )
     return {
         "OTM_INFRASTRUCTURE_ENABLED": "true",
         "GITHUB_EVENT_NAME": "workflow_dispatch",
@@ -126,7 +116,7 @@ def test_context_rejects_unapproved_job(key, value):
     values = environment_values()
     values[key] = value
     with pytest.raises(ValueError, match="PROTECTED_INFRASTRUCTURE_CONTEXT_REQUIRED"):
-        module.context("staging", "security", values)
+        module.context("staging", "infrastructure", values)
 
 
 # No user-selectable root, environment or auth field can escape the fixed source and signer
@@ -136,8 +126,8 @@ def test_context_rejects_unapproved_job(key, value):
     [
         ("development", "security"),
         ("development", "custody"),
-        ("staging", "infrastructure"),
-        ("production", "infrastructure"),
+        ("staging", "security"),
+        ("production", "platform"),
         ("staging", "../platform"),
         ("production", "bootstrap"),
     ],
@@ -189,17 +179,17 @@ def test_context_private_input_guard(fault):
         inputs["target"][field] = value
     values["OTM_INFRASTRUCTURE_INPUTS_JSON"] = json.dumps(inputs)
     with pytest.raises(ValueError):
-        module.context("staging", "security", values)
+        module.context("staging", "infrastructure", values)
 
 
 # All renderers preserve separate protected values and create only owner-readable candidate files.
-@pytest.mark.parametrize("environment", ["staging", "production"])
-@pytest.mark.parametrize("component", ["security", "platform"])
-def test_render_inputs(tmp_path, environment, component):
-    values = environment_values(environment, component)
+@pytest.mark.parametrize("environment", ["development", "staging", "production"])
+def test_render_inputs(tmp_path, environment):
+    component = "infrastructure"
+    values = environment_values(environment)
     inputs = module.context(environment, component, values)
-    files, digest = module.render_inputs(tmp_path, inputs, component, values)
-    assert len(files) == (5 if component == "platform" else 2)
+    files, digest = module.render_inputs(tmp_path, inputs, values)
+    assert len(files) == (2 if environment == "development" else 5)
     assert len(digest) == 64
     assert (
         json.loads((tmp_path / "inputs.tfvars.json").read_text())["oci_auth"] == "ResourcePrincipal"
@@ -210,7 +200,7 @@ def test_render_inputs(tmp_path, environment, component):
         "hosting_compartment_ocid": COMPARTMENT
     }
     with pytest.raises(FileExistsError):
-        module.render_inputs(tmp_path, inputs, component, values)
+        module.render_inputs(tmp_path, inputs, values)
 
 
 # Existing files and symlink leaves are never replaced when staging private material.
@@ -544,7 +534,9 @@ def test_retired_key_state_removal_counts(fault):
 
 # Private bucket checks and conditional object creation prevent public, cross-compartment or
 # overwrite custody.
-@pytest.mark.parametrize("fault", [None, "compartment", "public", "versioning", "upload"])
+@pytest.mark.parametrize(
+    "fault", [None, "compartment", "public", "versioning", "upload", "platform", "security"]
+)
 def test_private_plan_upload(tmp_path, monkeypatch, fault):
     values = environment_values()
     target = json.loads(values["OTM_INFRASTRUCTURE_INPUTS_JSON"])["target"]
@@ -560,6 +552,9 @@ def test_private_plan_upload(tmp_path, monkeypatch, fault):
         public_access_type="ObjectRead" if fault == "public" else "NoPublicAccess",
         versioning="Disabled" if fault == "versioning" else "Enabled",
     )
+    client.list_objects.return_value.data.objects = [
+        SimpleNamespace(name=f"{fault}/staging/terraform.tfstate")
+    ]
     if fault == "upload":
         client.put_object.side_effect = RuntimeError("uncertain upload")
     monkeypatch.setattr(module.oci.auth.signers, "EphemeralResourcePrincipalSigner", signer)
@@ -578,7 +573,7 @@ def test_private_plan_upload(tmp_path, monkeypatch, fault):
             "content_length": 12,
         }
         assert args.args[3].closed
-    if fault in {"compartment", "public", "versioning"}:
+    if fault in {"compartment", "public", "versioning", "security", "platform"}:
         client.put_object.assert_not_called()
     assert constructor.call_args.kwargs["timeout"] == (10, 60)
     assert constructor.call_args.kwargs["log_requests"] is False
@@ -590,15 +585,13 @@ def test_private_plan_upload(tmp_path, monkeypatch, fault):
     "environment,component",
     [
         ("development", "infrastructure"),
-        ("staging", "security"),
-        ("staging", "platform"),
-        ("production", "security"),
-        ("production", "platform"),
+        ("staging", "infrastructure"),
+        ("production", "infrastructure"),
     ],
 )
 @pytest.mark.parametrize("fault", [None, "version", "plan", "upload"])
 def test_prepare_full_plan(monkeypatch, environment, component, fault):
-    values = environment_values(environment, component)
+    values = environment_values(environment)
     monkeypatch.setattr(module.shutil, "which", lambda name: "/usr/bin/" + name)
     monkeypatch.setattr(module.subprocess, "check_output", lambda *args, **kwargs: SHA + "\n")
     monkeypatch.setattr(
@@ -624,7 +617,7 @@ def test_prepare_full_plan(monkeypatch, environment, component, fault):
         calls.append(arguments)
         directories.append(directory)
         if arguments[0] == "version":
-            assert bucket_preflight.call_count == (1 if environment == "development" else 0)
+            assert bucket_preflight.call_count == 1
             return json.dumps(
                 {"terraform_version": "1.0.0" if fault == "version" else "1.15.5"}
             ).encode()
@@ -664,7 +657,7 @@ def test_prepare_full_plan(monkeypatch, environment, component, fault):
             assert [args[0] for args in calls] == ["version", "init", "validate", "plan", "show"]
             assert "-lockfile=readonly" in calls[1] and "-lock-timeout=60s" in calls[3]
             assert len([arg for arg in calls[3] if arg.startswith("-var-file=")]) == (
-                5 if component == "platform" else 2
+                2 if environment == "development" else 5
             )
         assert os.umask(0o027) == 0o027
     finally:
@@ -698,7 +691,7 @@ def test_prepare_preflight_guards(monkeypatch, fault):
     exchange = Mock()
     monkeypatch.setattr(module, "federate", exchange)
     with pytest.raises(ValueError):
-        module.prepare_plan("staging", "security", environment_values())
+        module.prepare_plan("staging", "infrastructure", environment_values())
     exchange.assert_not_called()
 
 
@@ -734,7 +727,7 @@ def test_cli_federation_failure_stage(monkeypatch, capsys, responses, stage, htt
     monkeypatch.setattr(module, "request_json", Mock(side_effect=responses))
     for key, value in environment_values().items():
         monkeypatch.setenv(key, value)
-    assert module.main(["--environment", "staging", "--component", "security"]) == 1
+    assert module.main(["--environment", "staging", "--component", "infrastructure"]) == 1
     raw = capsys.readouterr().out
     output = json.loads(raw)
     assert output["stage"] == stage and output.get("http_status") == http_status
@@ -747,17 +740,17 @@ def test_cli_federation_failure_stage(monkeypatch, capsys, responses, stage, htt
 def test_cli_and_entrypoint(monkeypatch, capsys):
     prepare = Mock(side_effect=RuntimeError("private credential and provider details"))
     monkeypatch.setattr(module, "prepare_plan", prepare)
-    assert module.main(["--environment", "staging", "--component", "security"]) == 1
+    assert module.main(["--environment", "staging", "--component", "infrastructure"]) == 1
     output = json.loads(capsys.readouterr().out)
     assert output["code"] == "INFRASTRUCTURE_PLAN_FAILED"
     assert "private credential and provider details" not in str(output)
     prepare.side_effect = None
     prepare.return_value = {"status": "planned", "applied": False}
-    assert module.main(["--environment", "production", "--component", "platform"]) == 0
+    assert module.main(["--environment", "production", "--component", "infrastructure"]) == 0
     assert json.loads(capsys.readouterr().out) == prepare.return_value
     monkeypatch.setattr(
         "sys.argv",
-        ["otm.infrastructure_plan", "--environment", "staging", "--component", "security"],
+        ["otm.infrastructure_plan", "--environment", "staging", "--component", "infrastructure"],
     )
     monkeypatch.setenv("OTM_INFRASTRUCTURE_ENABLED", "false")
     with pytest.raises(SystemExit) as result:
@@ -772,10 +765,7 @@ def test_workflow_contract(environment):
     path = module.ROOT / ".github/workflows" / f"infra-{environment}.yml"
     workflow = yaml.safe_load(path.read_text())
     assert list(workflow[True]) == ["workflow_dispatch"]
-    assert workflow[True]["workflow_dispatch"]["inputs"]["component"]["options"] == [
-        "security",
-        "platform",
-    ]
+    assert "component" not in workflow[True]["workflow_dispatch"]["inputs"]
     assert workflow["permissions"] == {"contents": "read"}
     assert workflow["concurrency"] == {
         "group": "otm-environment-" + environment,
@@ -796,6 +786,11 @@ def test_workflow_contract(environment):
     assert 'case "$OTM_OPERATION" in' in final["run"]
     assert f"otm.infrastructure_plan --environment {environment}" in final["run"]
     assert f"otm.infrastructure_apply --environment {environment}" in final["run"]
+    assert final["run"].count("--component infrastructure") == 2
+    assert (
+        final["env"]["OTM_INFRASTRUCTURE_INPUTS_JSON"]
+        == "${{ secrets.OTM_INFRASTRUCTURE_INPUTS_JSON }}"
+    )
     inputs = workflow[True]["workflow_dispatch"]["inputs"]
     assert inputs["operation"]["options"] == ["plan", "apply"]
     assert inputs["operation"]["default"] == "plan"
@@ -879,14 +874,91 @@ def test_development_workflow_contract():
 # Refuse arbitrary nested inputs before storing the protected SSO metadata in a plan.
 @pytest.mark.parametrize("fault", ["missing", "extra", "ocid"])
 def test_development_sso_reference_guard(fault):
-    values = environment_values("development", "infrastructure")
+    values = environment_values("development")
     inputs = json.loads(values["OTM_INFRASTRUCTURE_INPUTS_JSON"])
     if fault == "missing":
         del inputs["atlas_sso"]
     elif fault == "extra":
         inputs["atlas_sso"]["unexpected"] = "synthetic"
     else:
-        inputs["atlas_sso"]["assignment_group_id"] = "ocid1.group.oc1..synthetic"
+        inputs["atlas_sso"]["corporate_idp_id"] = "ocid1.group.oc1..synthetic"
     values["OTM_INFRASTRUCTURE_INPUTS_JSON"] = json.dumps(inputs)
-    with pytest.raises(ValueError, match="DEVELOPMENT_SSO_REFERENCES_REQUIRED"):
+    with pytest.raises(ValueError, match="ATLAS_SSO_REFERENCES_REQUIRED"):
         module.context("development", "infrastructure", values)
+
+
+# Only the existing native group may enter development state through an approved no-op import.
+@pytest.mark.parametrize(
+    "fault", [None, "unknown", "address", "id", "change", "duplicate", "scope"]
+)
+def test_group_import_summary(fault):
+    group_id = "ocid1.group.oc1..synthetic"
+    item = {
+        "type": "oci_identity_group",
+        "mode": "managed",
+        "address": "module.atlas_sso.oci_identity_group.users",
+        "change": {"actions": ["no-op"], "importing": {"id": group_id}},
+    }
+    plan = {"resource_changes": [item]}
+    if fault == "unknown":
+        item["change"]["importing"] = {"unknown": True}
+    elif fault == "address":
+        item["address"] = "module.atlas_sso.oci_identity_group.other"
+    elif fault == "id":
+        item["change"]["importing"]["id"] += "other"
+    elif fault == "change":
+        item["change"]["actions"] = ["update"]
+    elif fault == "duplicate":
+        plan["resource_changes"].append(item)
+    if fault:
+        with pytest.raises(ValueError, match="UNEXPECTED_TERRAFORM_IMPORT"):
+            module.change_counts(plan, adopt_group_ocid=None if fault == "scope" else group_id)
+    else:
+        assert module.change_counts(plan, adopt_group_ocid=group_id) == {
+            "import": 1,
+            "create": 0,
+            "delete": 0,
+            "update": 0,
+            "replace": 0,
+        }
+
+
+# Staging and production create the DB credential and accept exactly the installation callback.
+@pytest.mark.parametrize("fault", ["credential", "url", "adoption", "app_group", "vault"])
+def test_fresh_hosted_inputs_guard(fault):
+    values = environment_values()
+    inputs = json.loads(values["OTM_INFRASTRUCTURE_INPUTS_JSON"])
+    if fault == "credential":
+        inputs["database_administrator"]["password"] = "synthetic"
+    elif fault == "url":
+        inputs["atlas_sso"]["callback_url"] += "?next=other"
+    elif fault == "adoption":
+        inputs["atlas_sso"]["adopt_group_ocid"] = "ocid1.group.oc1..synthetic"
+    elif fault == "app_group":
+        inputs["atlas_sso"]["assignment_group_id"] = "a" * 32
+    elif fault == "vault":
+        inputs["application_vault_ocid"] = "ocid1.vault.oc1.iad.synthetic"
+    values["OTM_INFRASTRUCTURE_INPUTS_JSON"] = json.dumps(inputs)
+    with pytest.raises(ValueError):
+        module.context("staging", "infrastructure", values)
+
+
+# The existing group is a migration input only, and it must be a single native group OCID.
+@pytest.mark.parametrize(
+    "value,valid",
+    [
+        ("ocid1.group.oc1..synthetic", True),
+        ("ocid1.user.oc1..synthetic", False),
+        (None, False),
+    ],
+)
+def test_protected_development_group_adoption(value, valid):
+    values = environment_values("development")
+    inputs = json.loads(values["OTM_INFRASTRUCTURE_INPUTS_JSON"])
+    inputs["atlas_sso"]["adopt_group_ocid"] = value
+    values["OTM_INFRASTRUCTURE_INPUTS_JSON"] = json.dumps(inputs)
+    if valid:
+        assert module.context("development", "infrastructure", values) == inputs
+    else:
+        with pytest.raises(ValueError, match="ATLAS_SSO_REFERENCES_REQUIRED"):
+            module.context("development", "infrastructure", values)

@@ -5,19 +5,19 @@ and production use separate roots and separate tenancies. Optional [held Caddy/N
 
 | Directory | Responsibility |
 | --- | --- |
-| `environments/development/bootstrap/` | Named operator profile and private local state for the development bucket, GitHub infrastructure IAM policy, and optional laptop enrollment IAM policy |
-| `environments/development/infrastructure/` | Single post-bootstrap development root and remote state. Currently manages the Vault and software key. |
+| `environments/development/bootstrap/` | Development compartment, bucket, GitHub delivery trust, shared non-production domain settings and optional laptop enrollment IAM |
+| `environments/development/infrastructure/` | Single post-bootstrap root and remote state. Vault and key, plus partial Atlas SSO source held for full ownership review. |
 | `modules/state-bootstrap/` | One private, versioned Standard Object Storage bucket, with a namespace check and replacement/destruction guard |
-| `environments/staging/bootstrap/` | Fixed staging binding and explicit operator authentication |
-| `environments/production/bootstrap/` | Fixed production binding and explicit operator authentication |
+| `environments/staging/bootstrap/` | Staging compartment and state bucket. Uses shared non-production settings and holds delivery activation pending client-bound federation. |
+| `environments/production/bootstrap/` | Production compartment, state bucket, GitHub delivery trust, and production domain settings |
+| `environments/staging/infrastructure/` | One staging root/state for Vault, generated DB credential, network, OKE, PostgreSQL, IAM and SSO. Live use held. |
+| `environments/production/infrastructure/` | One production root/state with independent delivery and same-source staging acceptance. Live use held. |
+| `modules/oci-delivery-foundation/` | OCI token exchange, exact GitHub trust, IAM and shared domain setting ownership |
+| `modules/github-environment/` | GitHub reviewer/deployment controls and protected inputs |
 | `modules/secret-foundation/` | Two Vaults and software-protected AES-256 keys in the existing hosting compartment and exact Vault-ID reader policy |
-| `environments/staging/security/` | Fixed staging security root, separate remote state key; run before platform and secret ingestion |
-| `environments/production/security/` | Fixed production security root and private state, no staging resource reuse |
 | `modules/postgresql/` | Private two-node managed PostgreSQL, pinned Vault provisioning references, backup/PITR intent and replacement guard |
 | `modules/oke/` | Enhanced cluster, public source-restricted API, private ARM pool and sensitive operator cloud-init |
 | `modules/networking/` | VCN, five disjoint regional subnets, gateways/routes, closed security lists and service NSGs |
-| `environments/staging/platform/` | Fixed staging network/OKE composition; private partial OCI backend |
-| `environments/production/platform/` | Fixed production network/OKE composition; separate private partial OCI backend |
 
 The environment label is a guard against a mislabeled input, **not authorization or proof that a
 principal/compartment belongs to the intended tenancy**. The namespace read checks the configured
@@ -69,14 +69,14 @@ live qualification. No credential is accepted as a Terraform variable.
 
 Both outputs are marked sensitive to avoid printing private coordinates in ordinary output;
 this does not encrypt Terraform state. `environment_binding` records the supplied environment,
-tenancy and compartment. `state_backend` supplies bucket/namespace/region plus the future platform
-key `platform/<environment>/terraform.tfstate`. **It does not migrate the bootstrap state or initialize
-a remote backend.** Bootstrap uses an explicitly configured local backend. The platform roots declare
-partial OCI backends with distinct fixed keys; operator initialization and locking remain unqualified.
+tenancy and compartment. `state_backend` supplies the bucket, namespace, region and remote key.
+Hosted roots use `infrastructure/<environment>/terraform.tfstate`; development retains
+`custody/development/terraform.tfstate`. Bootstrap uses private local state. Reconcile any occupied
+legacy hosted `security/` or `platform/` key through a separately reviewed migration before rollout.
 
 ## Network composition
 
-The platform roots accept the same target/auth inputs, plus required `vcn_cidr` (canonical private
+The hosted infrastructure roots accept the same target/auth inputs, plus required `vcn_cidr` (canonical private
 IPv4 `/16`–`/20`) and `app_ingress_allowed_cidrs` (1–64 canonical IPv4 networks, <=4096 serialized
 bytes). There is no default allowlist. Supply it through the private renderer from
 `OTM_ALLOWED_SOURCE_CIDRS`; IPv6, host bits and unrestricted unions fail closed. Edge admits human TCP443; the API admits the same human sources on TCP6443. Private database access is scoped to the pod NSG. OKE attaches endpoint/node/pod NSGs and configures the explicit native-CNI matrix; live connectivity is not yet qualified. See the
@@ -105,7 +105,7 @@ See the [bootstrap operating procedure](../docs/how-to/terraform-state-bootstrap
 
 ## OKE and private worker initialization
 
-Both platform roots require explicit `oke` OS/placement and a sensitive `worker_cloud_init` string,
+Both hosted infrastructure roots require explicit `oke` OS/placement and a sensitive `worker_cloud_init` string,
 with no script default. Render it from the per-environment `OTM_WORKER_CLOUD_INIT` GitHub Actions
 secret using `python -m otm.worker_bootstrap_release`; do not put the private script/PAR URLs in source.
 Normal plans redact the base64 `user_data`, but saved state/plans and node metadata retain it.
@@ -127,11 +127,11 @@ it validates the binding without claiming acceptance/provenance or implementing 
 
 ## Managed PostgreSQL
 
-Both platform roots now include the [managed database module and operator guide](../docs/how-to/managed-postgresql.md). Required private administrator Vault references and explicit backup/maintenance windows have no deployment defaults. Runtime database role/secret provisioning and live restore/upgrade qualification follow separately. Scoped [workload Vault-read IAM](../docs/how-to/oke-workload-identity.md) and optional [held Caddy ingress](../docs/how-to/caddy-ingress.md) source are implemented but require deployment qualification.
+Both hosted infrastructure roots now include the [managed database module and operator guide](../docs/how-to/managed-postgresql.md). The hosted roots generate the provisioning credential inside Vault and supply its OCID and initial version to PostgreSQL. Backup and maintenance windows remain explicit. Runtime database role/secret provisioning and live restore/upgrade qualification follow separately. Scoped [workload Vault-read IAM](../docs/how-to/oke-workload-identity.md) and optional [held Caddy ingress](../docs/how-to/caddy-ingress.md) source are implemented but require deployment qualification.
 
 ## Vault custody foundation
 
-Create each environment's [security root](../docs/how-to/vault-foundation.md) after state bootstrap and before platform creation. A separately approved custodian ingests the initial DB secret outside Terraform; private references connect the stages. Exact API/worker [workload Vault-read grants](../docs/how-to/oke-workload-identity.md) exist as source. Federation grants, runtime database role provisioning and live activation remain separate work. The [hosted organization setup](../docs/how-to/hosted-startup.md#initial-organization-mapping-and-import) documents the additional [organization API table privileges](postgresql/hosted-organization-api-grants.sql).
+The [Vault foundation](../docs/how-to/vault-foundation.md) composes custody and service-side PostgreSQL password generation in each hosted root. Live readiness and effective IAM remain unqualified. Exact API/worker [workload Vault-read grants](../docs/how-to/oke-workload-identity.md) exist as source. Federation grants, runtime database role provisioning and live activation remain separate work. The [hosted organization setup](../docs/how-to/hosted-startup.md#initial-organization-mapping-and-import) documents the additional [organization API table privileges](postgresql/hosted-organization-api-grants.sql).
 
 The required [hosting compartment Actions input](../docs/how-to/hosting-compartment.md) is rendered privately from `OTM_HOSTING_COMPARTMENT_OCID`; no live target value is configured until the real tenancy is available.
 
@@ -140,29 +140,28 @@ Terraform. It keeps workloads disabled until the existing [hosted startup founda
 is composed with Vault and OCI and qualified in staging.
 
 
-## Laptop development custody
+## Laptop development infrastructure
 
-`environments/development/bootstrap/` uses a named laptop API-key profile and private local
-state to manage the dedicated state bucket and scoped GitHub IAM policy.
-`environments/development/infrastructure/` uses that remote
-backend and a short-lived GitHub Actions principal to plan and apply one application Vault, its
-software-protected AES-256 key, and the staged Atlas client and assignment in their respective compartment and identity domain. Compartment creation
-and identity-domain trust setup are administrator prerequisites. The
-[development runbook](../docs/how-to/laptop-oci-development.md#development-infrastructure-through-github-actions)
-covers custody deployment.
+Terraform ownership of all OTM-created infrastructure is the target. Development bootstrap currently references the existing GitHub exchange client by immutable GUID. The [development ownership design](../docs/engineering-design/26-administrator-sso.md#development-terraform-ownership)
+assigns the compartment, state bucket, GitHub authentication and trust, scoped IAM and shared
+domain setting to the local operator bootstrap. The upstream corporate identity federation is
+an external dependency.
 
-Use this root and preserve its state key when adopting the development Atlas SSO resources.
-The [development ownership design](../docs/engineering-design/26-administrator-sso.md#development-terraform-ownership)
-defines one GitHub plan and apply for all development resources after operator bootstrap.
+The [development runbook](../docs/how-to/laptop-oci-development.md#development-infrastructure-through-github-actions)
+covers the single post-bootstrap root and state for the Vault, software key, Atlas client,
+assignment group, app grants, policies and rules. Preserve existing groups and app grants when
+qualifying their Terraform adoption. Atlas manages individual membership and database grants.
 
-The optional `local_app_iam` input adds the laptop enrollment policy to this bootstrap state.
-Its domain and groups are in the tenancy root. The GitHub policy and development resources still
-use the development compartment. See the [laptop enrollment policy](../docs/how-to/laptop-oci-development.md#development-laptop-enrollment-policy) for the scope and qualification steps.
-
+Bootstrap source declares the compartment, bucket, GitHub exchange client/trust, scoped IAM
+and shared non-production domain settings. The optional `local_app_iam` adds laptop enrollment IAM.
+The environment root owns the Vault and key and declares the SSO group, client, app grant,
+policies and rules. A [read-only native group adoption plan](../docs/how-to/laptop-oci-development.md#development-group-adoption-proof)
+verified the group binding and no changes to Vault/key. Live GitHub authorization, bootstrap
+adoption and the exact protected workflow apply remain separate checks.
 
 ## Hosted workload Vault reads
 
-`modules/workload-vault-access/` supplies read-only policies for exact API/worker workload identities, bound to each environment cluster/namespace/service account/application Vault. Both platform roots require `application_vault_ocid` from the preceding security-root custody output. No node/migration grants or secret writes are added. [Handoff and qualification](../docs/how-to/oke-workload-identity.md) remain distinct from a live apply.
+`modules/workload-vault-access/` supplies read-only policies for exact API/worker workload identities, bound to each environment cluster/namespace/service account/application Vault. Each composed hosted root derives the application Vault OCID from its own custody module. No node/migration grants or secret writes are added. [Handoff and qualification](../docs/how-to/oke-workload-identity.md) remain distinct from a live apply.
 
 
 ## Hosted administrator enrollment
@@ -186,8 +185,10 @@ excluding the OAuth secret from Terraform state. See the [Atlas pilot reference]
 
 ## Held environment plan/review/apply workflows
 
-`infra-staging.yml` and `infra-production.yml` are manual master-only entry points for their fixed
-`security` or `platform` root. Both remain held unless deliberately enabled after live qualification.
+The [common Terraform layout](../docs/engineering-design/24-environments-and-promotion.md#terraform-layout-for-each-environment)
+uses operator bootstrap for delivery foundation and one composed infrastructure root/state per
+environment. Staging and production have fixed composed `infrastructure` workflows. Keep both
+held until separate authorization and live qualification.
 They use separate protected-environment OAuth client secrets to exchange a GitHub JWT for an
 ephemeral signing session. Provider and backend explicitly use file-backed `ResourcePrincipal`;
 operator defaults remain unchanged. Default operation is plan; apply additionally requires the

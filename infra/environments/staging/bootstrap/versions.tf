@@ -2,6 +2,14 @@
 terraform {
   required_version = "= 1.15.5"
   required_providers {
+    github = {
+      source  = "integrations/github"
+      version = "= 6.13.0"
+    }
+    external = {
+      source  = "hashicorp/external"
+      version = "= 2.3.5"
+    }
     oci = {
       source  = "oracle/oci"
       version = "= 9.13.0"

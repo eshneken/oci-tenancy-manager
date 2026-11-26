@@ -8,7 +8,7 @@ mock_provider "oci" {
 variables {
   environment                     = "staging"
   hosting_compartment_ocid        = "ocid1.compartment.oc1..synthetichosting"
-  database_provisioner_group_ocid = "ocid1.group.oc1..syntheticprovisioners"
+  database_provisioner_group_name = "otm-staging-database-provisioners"
 }
 run "separate_shared_software_custody_domains" {
   command = apply
@@ -25,21 +25,21 @@ run "credential_read_policy_is_exactly_database_scoped" {
   command = plan
   assert {
     condition = oci_identity_policy.database_reader.compartment_id == var.hosting_compartment_ocid && oci_identity_policy.database_reader.statements == tolist([
-      "Allow group id ocid1.group.oc1..syntheticprovisioners to read secret-family in compartment id ${var.hosting_compartment_ocid} where target.vault.id = '${oci_kms_vault.domain["database-provisioning"].id}'",
-      "Allow group id ocid1.group.oc1..syntheticprovisioners to read vaults in compartment id ${var.hosting_compartment_ocid} where target.vault.id = '${oci_kms_vault.domain["database-provisioning"].id}'",
+      "Allow group Default/otm-staging-database-provisioners to read secret-family in compartment otm-${var.environment} where target.vault.id = '${oci_kms_vault.domain["database-provisioning"].id}'",
+      "Allow group Default/otm-staging-database-provisioners to read vaults in compartment otm-${var.environment} where target.vault.id = '${oci_kms_vault.domain["database-provisioning"].id}'",
     ])
     error_message = "Only the exact DB Vault may be read in the shared compartment; no unconditioned, app, write or tenancy-wide grants."
   }
 }
 run "reject_group_name_or_policy_injection" {
   command = plan
-  variables { database_provisioner_group_ocid = "Operators to manage all-resources in tenancy" }
-  expect_failures = [var.database_provisioner_group_ocid]
+  variables { database_provisioner_group_name = "Operators to manage all-resources in tenancy" }
+  expect_failures = [var.database_provisioner_group_name]
 }
 run "reject_missing_reader" {
   command = plan
-  variables { database_provisioner_group_ocid = "" }
-  expect_failures = [var.database_provisioner_group_ocid]
+  variables { database_provisioner_group_name = "" }
+  expect_failures = [var.database_provisioner_group_name]
 }
 run "reject_bad_parent" {
   command = plan
@@ -48,12 +48,18 @@ run "reject_bad_parent" {
 }
 run "reject_unknown_environment" {
   command = plan
-  variables { environment = "preview" }
+  variables {
+    environment                     = "preview"
+    database_provisioner_group_name = "otm-preview-database-provisioners"
+  }
   expect_failures = [var.environment]
 }
 run "production_names_and_references_stay_bound" {
   command = plan
-  variables { environment = "production" }
+  variables {
+    environment                     = "production"
+    database_provisioner_group_name = "otm-production-database-provisioners"
+  }
   assert {
     condition     = output.custody.environment == "production" && oci_kms_vault.domain["database-provisioning"].display_name == "otm-production-database-provisioning" && oci_kms_vault.domain["application-secrets"].display_name == "otm-production-application-secrets" && alltrue([for domain in values(output.custody.domains) : domain.compartment_ocid == var.hosting_compartment_ocid])
     error_message = "Environment labels must drive all resource names and private output bindings."

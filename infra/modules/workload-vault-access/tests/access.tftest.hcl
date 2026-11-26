@@ -14,7 +14,7 @@ run "exact_staging_readers" {
   }
   assert {
     condition = alltrue([for role in ["api", "worker"] : toset(oci_identity_policy.reader[role].statements) == toset([
-      "Allow any-user to read secret-family in compartment id ${var.hosting_compartment_ocid} where all {request.principal.type = 'workload', request.principal.cluster_id = '${var.cluster_ocid}', request.principal.namespace = 'otm-staging', request.principal.service_account = 'otm-${role}', target.vault.id = '${var.application_vault_ocid}'}"
+      "Allow any-user to read secret-family in compartment otm-${var.environment} where all {request.principal.type = 'workload', request.principal.cluster_id = '${var.cluster_ocid}', request.principal.namespace = 'otm-staging', request.principal.service_account = 'otm-${role}', target.vault.id = '${var.application_vault_ocid}'}"
     ])])
     error_message = "Reader grants must bind every identity and target condition, without writes."
   }

@@ -2,7 +2,7 @@
 # workflow_ref and environment so IAM can bind every grant to the development workflow.
 locals {
   github_workflow_ref         = "${var.github_repository}/.github/workflows/infra-development.yml@refs/heads/master"
-  github_infrastructure_scope = "in compartment id ${var.hosting_compartment_ocid} where all {request.principal.type = 'identityfederateddomainapp', request.principal.domain.id = '${var.github_identity_domain_ocid}', request.principal.ext_workflow_ref = '${local.github_workflow_ref}', request.principal.ext_environment = 'development'"
+  github_infrastructure_scope = "in compartment ${oci_identity_compartment.development.name} where all {request.principal.type = 'identityfederateddomainapp', request.principal.domain.id = '${var.github_identity_domain_ocid}', request.principal.ext_workflow_ref = '${local.github_workflow_ref}', request.principal.ext_environment = 'development'"
   github_state_bucket         = "target.bucket.name = 'otm-development-tfstate'"
   github_state_object         = "target.object.name = 'custody/development/terraform.tfstate'"
   github_lock_object          = "target.object.name = 'custody/development/terraform.tfstate.lock'"
@@ -13,12 +13,13 @@ locals {
   github_plan_recovery = "any {target.object.name = '*/apply-attempt.json', target.object.name = '*/errored.tfstate'}"
 }
 
-# The operator bootstrap owns CI permissions. The workflow has no IAM administration authority.
+# This compartment policy covers Vault and state storage. For the root-level identity grants,
+# see module.delivery in delivery.tf and modules/oci-delivery-foundation/identity-policy.tf.
 resource "oci_identity_policy" "github_infrastructure" {
-  compartment_id = var.hosting_compartment_ocid
+  compartment_id = oci_identity_compartment.development.id
   # OCI policy names are immutable. Keep this name aligned with the live bootstrap policy.
   name        = "otm-development-github-infrastructure"
-  description = "Plan and initial reviewed apply for development Vault and key custody"
+  description = "Development Vault, key, state and reviewed plan access for GitHub Actions"
   statements = [
     "Allow any-user to read vaults ${local.github_infrastructure_scope}}",
     "Allow any-user to read keys ${local.github_infrastructure_scope}}",
@@ -37,7 +38,6 @@ resource "oci_identity_policy" "github_infrastructure" {
     "Allow any-user to read objects ${local.github_infrastructure_scope}, ${local.github_state_bucket}, ${local.github_plan_prefix}, ${local.github_plan_archive}, request.operation = 'GetObject', request.permission = 'OBJECT_READ'}",
     "Allow any-user to manage objects ${local.github_infrastructure_scope}, ${local.github_state_bucket}, ${local.github_plan_prefix}, ${local.github_plan_recovery}, request.operation = 'PutObject', request.permission = 'OBJECT_CREATE'}",
   ]
-  depends_on = [data.oci_identity_compartment.development]
 
   lifecycle {
     prevent_destroy = true

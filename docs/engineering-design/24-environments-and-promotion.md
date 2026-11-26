@@ -59,8 +59,8 @@ not implemented deployment claims. Environment entry points stay separate and bi
 | --- | --- |
 | `build-application.yml` — first native hosted publication qualified | Follows exact successful master-push Checkpoint; builds/scans two ARM64 images, binds SBOM/public-source/schema metadata and standard attestations. No staging/production mutation authority |
 | `verify-application-release.yml` — hosted success and wrong-Checkpoint rejection qualified | Master-only manual run selection, exact native artifact download and six read-only provenance/SBOM checks; no acceptance or deployment authority |
-| `infra-staging.yml` — held plan/review/apply source implemented | Plan the fixed staging security/platform root, then consume one separately reviewed private plan once; own identity/state |
-| `infra-production.yml` — held plan/review/apply source implemented | Review/apply production's own plan after successful same-source staging apply, explicit manual test confirmation, parity/image checks and production approval |
+| `infra-staging.yml` — composed source held | One protected plan and separately approved apply from the composed staging root/state. |
+| `infra-production.yml` — composed source held | Review and apply production's own composed plan after successful same-source staging acceptance, explicit test confirmation, parity/image checks and production approval. |
 | `deploy-staging.yml` | Select the trusted build's release ID, deploy its exact image/deployment bundle, apply compatible migrations and run required staging acceptance; record pass/fail against the exact deployed candidate |
 | `promote-production.yml` | Select only a staging-qualified release ID; verify provenance, evidence, compatibility and current security policy; obtain production approval and deploy the same artifact bytes, without rebuilding |
 | `deploy-settings-staging.yml` / `promote-settings-production.yml` | Separately qualify and promote reviewed compatible nonsecret settings/maintenance definitions using the deployed application image; no image rebuild |
@@ -96,9 +96,9 @@ than re-resolving a different newest image. Saved plans pin resolution; workflow
 qualification remain separate gates. The managed PostgreSQL module now consumes its major input with configuration/shape discovery,
 Vault-referenced provisioning credentials, backup/PITR policy and replacement protection; actual
 upgrade/recovery and runtime-role qualification remain pending. The
-[Vault custody foundation](../how-to/vault-foundation.md) now runs in separate fixed security roots
-before private ingestion and platform creation; its DB-reader IAM grants no runtime or federation
-authority and never places secret content in Terraform.
+[Vault custody foundation](../how-to/vault-foundation.md) runs inside each composed hosted root.
+Vault generates the database provisioning password and the database module receives only its
+secret OCID and initial version. Effective IAM and initial version availability need live qualification.
 The implemented offline `otm.image_handoff` converter extracts the accepted staging cluster output
 into private production `qualified_node_image` tfvars, validating the target binding without exporting
 endpoints or state. Until protected workflow transfer/provenance is implemented, an authorized operator
@@ -169,6 +169,40 @@ blanket approval for all future commits. Changed artifacts require a new staging
 Re-scan the selected artifact under current security policy before production promotion; a new
 blocking vulnerability stops promotion without silently rebuilding the tested image.
 
+## Terraform layout for each environment
+
+Development, staging and production use the same two-layer layout. The operator bootstrap
+owns shared delivery prerequisites and existing foundation. Each environment's protected
+workflow then plans and applies one `infrastructure` root with one environment-owned remote
+state. Security and platform are modules inside that root when required. Development keeps
+its laptop footprint and existing state key. Development and staging can use the existing
+shared non-production delivery foundation. Production uses its independently authorized
+bootstrap, identity and state. External Oracle SSO remains an existing dependency.
+
+For each environment, review one protected plan and approve one apply of that exact saved plan.
+Adopt any existing resources safely in their owning state. Keep hosted production's same-source
+staging acceptance and its separate approval. Composed staging and production source is implemented.
+The hosted workflows remain held pending state reconciliation where needed and live qualification.
+
+### Staging infrastructure acceptance
+
+The first staging infrastructure acceptance must start from the existing shared non-production
+delivery and bootstrap services and external Oracle SSO. Supply reviewed inputs to one composed
+staging Terraform root and its dedicated remote state. That root must manage staging-specific
+resources and order their dependencies internally. Staging-specific resource creation belongs
+in the reviewed apply, including custody and platform resources. An earlier staging security apply,
+a separate platform apply, or manual staging-specific resource creation cannot satisfy this gate.
+
+Run one protected staging plan from protected master. Review its full scope and exact saved
+plan, then obtain approval for one staging apply that consumes that binary plan. Verify the
+resulting staging resources and record the run, plan hash, state scope and acceptance evidence.
+Runtime application deployment and tests remain downstream of infrastructure acceptance.
+
+The composed root and reviewed-plan source implement this layout. Live trust, effective IAM,
+backend behavior, generated-secret readiness and the production parity gate still require
+qualification. There is no staging deployment
+authorized by this design. See the [staging acceptance runbook](../how-to/infrastructure-plans.md#staging-composed-plan-and-apply).
+
 ## Infrastructure and settings promotion
 
 Test common Terraform/module source and provider lockfiles in staging first. Production uses the
@@ -232,7 +266,12 @@ References: [GitHub deployment environments](https://docs.github.com/en/actions/
 
 ## Single hosting compartment — owner decision, 13 November 2026
 
-All infrastructure in each environment lives in one existing compartment selected by the protected GitHub Environment Secret `OTM_HOSTING_COMPARTMENT_OCID`. Bootstrap/security/platform roots consume the same required flat input; no child compartments are created. Staging and production still use separate tenancies. Separate Vaults and exact Vault-ID IAM conditions retain credential scope without compartment proliferation. See the [input contract](../how-to/hosting-compartment.md).
+Each hosted bootstrap owns one hosting compartment. The composed workflow receives its exact
+ID via `OTM_HOSTING_COMPARTMENT_OCID`. The
+[composed Terraform design](#terraform-layout-for-each-environment) brings environment-specific
+resource creation into the composed plan. Development and staging share the non-production tenancy.
+Production uses a separate tenancy. Separate Vaults and exact Vault-ID IAM conditions retain
+credential scope. See the [current source input contract](../how-to/hosting-compartment.md).
 
 
 ## Disabled Kubernetes workload source — 13 November 2026
@@ -344,7 +383,7 @@ No app UI, database model, schema or saved preview changes are required.
 ## Infrastructure plan/review/apply delivery — 16 November 2026
 
 The infrastructure-delivery source implements held, manual `infra-staging.yml` and
-`infra-production.yml` plan and reviewed-plan apply entry points for the existing security/platform roots. Both check out
+`infra-production.yml` plan and reviewed-plan apply entry points at that source checkpoint. The current workflows use the composed infrastructure roots. Both check out
 the exact protected master source, use their fixed GitHub Environment and share that environment's
 non-cancelling change group. `OTM_INFRASTRUCTURE_ENABLED` gates both operations, and the separate
 default-false `OTM_INFRASTRUCTURE_APPLY_ENABLED` additionally gates apply after environment protection
@@ -376,8 +415,8 @@ protected production approval, the exact shared-variable parity whitelist and st
 image selection described in the reference. Environment-specific values remain separately reviewed.
 GitHub CLI 2.104.0+ authenticates producer evidence. Plan job/token/Terraform budgets are 30/60/20
 minutes; apply budgets are 90/120/75. Neither enable flag is deployment authorization. No destroy or
-application-deployment operation is introduced. Preserve separate bootstrap, secret ingestion and
-staging-before-production rules. The earlier plan-only checkpoint retains its historical scope.
+application-deployment operation is introduced. Keep operator bootstrap and staging qualification
+separate from the approved production apply. The earlier plan-only checkpoint retains its historical scope.
 
 [Source contract](../reference/infrastructure-plans.md) ·
 [Human-readable setup/review runbook](../how-to/infrastructure-plans.md).

@@ -64,10 +64,6 @@ description = "Approved exact synthetic PostgreSQL provisioning Vault reference"
 targetRules = ["generic-api-key"]
 condition = "AND"
 paths = [
-  '''(^|/)infra/environments/staging/platform/terraform\.tfvars\.example$''',
-  '''(^|/)infra/environments/production/platform/terraform\.tfvars\.example$''',
-  '''(^|/)infra/environments/staging/platform/tests/binding\.tftest\.hcl$''',
-  '''(^|/)infra/environments/production/platform/tests/binding\.tftest\.hcl$''',
   '''(^|/)infra/modules/postgresql/tests/database\.tftest\.hcl$''',
   '''(^|/)infra/modules/postgresql/tests/upgrade\.tftest\.hcl$''',
   '''(^|/)infra/modules/postgresql/guard-tests/replacement\.tftest\.hcl$''',

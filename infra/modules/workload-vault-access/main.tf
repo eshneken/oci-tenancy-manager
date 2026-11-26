@@ -10,9 +10,9 @@ resource "oci_identity_policy" "reader" {
   name           = "otm-${var.environment}-${each.key}-vault-read"
   description    = "Read only application custody through this exact OKE workload identity"
   statements = [
-    "Allow any-user to read secret-family in compartment id ${var.hosting_compartment_ocid} where all {request.principal.type = 'workload', request.principal.cluster_id = '${var.cluster_ocid}', request.principal.namespace = '${local.namespace}', request.principal.service_account = 'otm-${each.key}', target.vault.id = '${var.application_vault_ocid}'}"
+    "Allow any-user to read secret-family in compartment otm-${var.environment} where all {request.principal.type = 'workload', request.principal.cluster_id = '${var.cluster_ocid}', request.principal.namespace = '${local.namespace}', request.principal.service_account = 'otm-${each.key}', target.vault.id = '${var.application_vault_ocid}'}"
   ]
-  freeform_tags = { "otm.environment" = var.environment, "otm.component" = "${each.key}-vault-read" }
+  freeform_tags = { "otm-environment" = var.environment, "otm-component" = "${each.key}-vault-read" }
 }
 # No secret values, kubeconfig tokens or newly granted identity are returned.
 output "access" {

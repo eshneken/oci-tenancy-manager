@@ -37,7 +37,7 @@ data "oci_identity_availability_domains" "hosting" {
 
 locals {
   name = "otm-${var.environment}"
-  tags = { "otm.environment" = var.environment, "otm.component" = "oke" }
+  tags = { "otm-environment" = var.environment, "otm-component" = "oke" }
 }
 
 # Enhanced is mandatory for future workload identity. Only the control endpoint is public;

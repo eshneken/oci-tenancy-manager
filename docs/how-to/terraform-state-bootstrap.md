@@ -1,17 +1,18 @@
 # Terraform state bootstrap
 
-**Implemented source; live execution not yet qualified.** This procedure covers only the initial
-state bucket. It does not create OKE, PostgreSQL, IAM federation or an application deployment, and
-does not authorize live changes. Use staging first when tenancy access and approval are available.
-The [infrastructure reference](../../infra/README.md) documents inputs, guards and mock tests.
+**Implemented bootstrap source; hosted live execution pending.** The local bootstrap roots
+declare each compartment, private state bucket and OCI GitHub delivery foundation. Development
+and production own their respective domain settings. Staging uses the setting shared with
+development. The GitHub Environment controls and protected inputs also have a Terraform module;
+verify the configured repository support and credential handoff independently.
 
-Use the [hosting compartment renderer](hosting-compartment.md) to create private `hosting.tfvars.json`
-from `OTM_HOSTING_COMPARTMENT_OCID` before planning. All roots use that existing compartment; no child
-compartments are created. Pass the file alongside the other reviewed inputs.
+For an existing compartment, verify the exact OCID and review adoption before any apply. No
+live change is authorized by these instructions. Use the [infrastructure runbook](infrastructure-plans.md)
+for the separate environment workflow.
 
 ## Before any live command
 
-1. Confirm the approved environment, tenancy, region, existing hosting compartment and
+1. Confirm the approved environment, tenancy, region, intended hosting compartment and
    Object Storage namespace through OCI. Verify the authenticated principal's actual tenancy,
    effective permissions and compartment ancestry independently. An OCID pattern or environment
    string is not proof. Staging and production must not share principals or state paths.
@@ -27,7 +28,105 @@ compartments are created. Pass the file alongside the other reviewed inputs.
    coordinates and profile with the approved values. Keep provider metadata, plans, state and state
    backups there too. Exclude all of this from cloud-synced/public folders and CI artifacts.
 
-## Create the bucket — operator-reviewed commands
+## GitHub exchange client rollout
+
+For the existing development exchange, set `github_delivery.existing_exchange_app_id` to the
+exact active App's 32-character lowercase hexadecimal SCIM GUID. Supply its verified GitHub issuer trust's GUID as `github_delivery.existing_trust_id`. The bootstrap declares a no-op adoption for the matching active trust. Inspect the plan and reject any trust mutation during adoption. Set `trust_active = true`
+and keep `exchange_write_response_qualified = false`. The bootstrap verifies the active
+development client through a read-only metadata projection. The trust and GitHub input
+delivery use that verified identity. This transition leaves the App itself outside Terraform
+resource state and preserves the existing client without replacing it.
+
+Do not use the stock OCI provider's `terraform import` or an import block for an existing
+live confidential App. Provider 9.13.0 can read its default credential-bearing response
+before applying the configured attribute projection. For a fresh exchange client, set
+`github_delivery.exchange_write_response_qualified = true` only after isolated verification
+that the pinned provider's create and update responses exclude the client secret and its
+hash from plans and state. Start a fresh client inactive and review any activation separately.
+
+Development owns the GitHub issuer trust in the shared non-production identity domain.
+Staging declares no second trust for that issuer. Both `github_environment.plan_enabled`
+and `apply_enabled` and the staging `github_delivery.trust_active` must remain false.
+Qualify a design that binds each staging assertion to its intended staging client before
+changing these gates. Production uses a separate identity domain and remains held pending
+its own qualifications.
+
+## OCI IAM names and Identity Domains permissions
+
+Use the checked top-level `otm-<environment>` name in the policy location. Use the exact group,
+policy, bucket, or secret name where the OCI operation supports it. The hosted reader-policy
+grant also pins `target.compartment.id`. Compartment names are unique only among siblings, and
+the location includes descendants. An identical leaf name could therefore match another
+compartment. Vault and OKE cluster bindings also use OCIDs that identify the exact resource.
+[OCI compartment naming](https://docs.oracle.com/en-us/iaas/Content/Identity/compartments/To_create_a_compartment.htm) ·
+[Vault policy variables](https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/keypolicyreference.htm)
+
+Keep `request.principal.domain.id` on the exchanged GitHub principal alongside the exact
+workflow and environment claims. Oracle documents `request.domain.name` as a general
+principal variable, but its equivalence for this token exchange is unqualified. Before adopting
+the name for a new grant, test an authorized read-only plan and confirm denial for principals
+outside the exact domain, workflow, and environment. Keep the separate
+`target.resource.domain.name = 'Default'` condition on native group operations. A group name
+can scope get, create, and update. A group list request has no target group name.
+[OCI general variables](https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/policyreference_topic-General_Variables_for_All_Requests.htm) ·
+[OCI IAM policy variables and permissions](https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/iampolicyreference.htm)
+
+The workflow's native group policy does not establish authorization for the SCIM group lookup,
+App, Grant, Condition, Rule, or sign-on and identity-provider Policy calls in the environment graph.
+Qualify the required reads with the exchanged workflow principal before the first plan. Obtain
+separate approval for the Identity Domains writes before apply and verify their exact effects.
+Oracle's documented administrative AppRoles can affect resources beyond the Atlas app, so show
+their scope and the denial results before choosing a grant. Keep the shared upstream federation
+and existing GitHub exchange client outside the scope of those writes.
+[Identity Domains AppRole permissions](https://docs.oracle.com/en-us/iaas/Content/Identity/api-getstarted/RequiredRolePerEndpointExt.htm)
+
+## Hosted reader-policy writes
+
+The staging and production bootstrap option `allow_runtime_policy_writes` defaults to `false`.
+The default authorizes the protected GitHub workflow to refresh its three reader policies.
+Creating or updating those policies in the hosted workflow requires setting the option to `true`
+in the selected environment's private bootstrap inputs and separately approving that bootstrap
+policy change.
+
+When enabled, the grant permits `CreatePolicy` and `UpdatePolicy` for the exact
+`otm-<environment>-database-provisioning-read`, `otm-<environment>-api-vault-read` and
+`otm-<environment>-worker-vault-read` names in the verified hosting compartment. OCI can scope
+policy names and operations, but does not restrict the statement bodies. The workflow could use
+those three policies to grant its principal additional permissions within the hosting compartment.
+Review this authority before approval. Verify the expected policy statements and denial of writes
+to unrelated names, other compartments, and tenancy-root policies before enabling the hosted apply.
+[OCI IAM policy variables and permissions](https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/iampolicyreference.htm)
+
+## GitHub Environment and protected inputs
+
+Set each root's `github_environment` controls. Provide one to six user or team reviewer IDs in
+total and decide whether to prevent self-review. Terraform restricts the deployment environment
+to `master` and disables administrator bypass. Keep `plan_enabled` and `apply_enabled` false
+until the corresponding qualifications pass. Hosted roots also require the approved exact
+Kubernetes patch and PostgreSQL major.
+
+Set `settings_file` to a JSON filename under the checkout's ignored `.local-dev` directory.
+Use one owner-only regular file per environment, mode `0600`, at most 256,000 bytes. For development,
+the file contains only an `inputs` object with the development `atlas_sso` fields. For staging and
+production, it also contains top-level `allowed_source_cidrs` and `worker_cloud_init` strings.
+Place the remaining [workflow inputs](../reference/infrastructure-plans.md#inputs) under
+`inputs`. Bootstrap inserts the verified target automatically. Keep credentials out of that file.
+
+Use an operator `GITHUB_TOKEN` authorized to administer the repository and write its environment
+settings, plus `uv`, Python and the OCI CLI. Bootstrap validates the exact `master` deployment
+rule before reading inputs. It reads the exact OCI exchange client credential through the
+approved operator profile. The pinned Python helper seals input bytes against the GitHub
+Environment's returned public key. Terraform writes the encrypted envelopes to GitHub. The
+plaintext exchange credential stays out of Terraform variables, plans and state. Keep the
+bootstrap state and saved plan private because they contain encrypted inputs and metadata.
+
+Reconcile any existing GitHub environment, `master` deployment rule, variables and secrets with
+their intended Terraform addresses before changing them. Review current protections and reserve
+approval for expected changes only. Increase `secret_revision` after rotating the exchange
+credential so Terraform delivers new ciphertext. Live credential handoff, trust, effective IAM
+and access denials still require qualification.
+
+## Review the foundation — operator-reviewed commands
 
 The following is a template for **staging only**, not a command executed during development.
 Replace the private directory before use. Run from the repository root. Do not point the production
@@ -44,16 +143,16 @@ terraform -chdir=infra/environments/staging/bootstrap init \
 
 terraform -chdir=infra/environments/staging/bootstrap plan \
   -input=false -var-file="$OTM_BOOTSTRAP_DIR/target.tfvars" \
-  -var-file="$OTM_BOOTSTRAP_DIR/hosting.tfvars.json" \
   -out="$OTM_BOOTSTRAP_DIR/bootstrap.tfplan"
 
 terraform -chdir=infra/environments/staging/bootstrap show \
   "$OTM_BOOTSTRAP_DIR/bootstrap.tfplan"
 ```
 
-1. Inspect the plan locally. Expect exactly one new private, versioned Standard bucket in the
-   approved compartment/namespace, no IAM/compute/database changes and no destruction. Verify the
-   account using an independent OCI session; keep raw plan output private.
+1. Inspect the plan locally. Review the exact compartment, private versioned bucket, delivery
+   client/trust, IAM and any domain setting within the stated owner. Compute and database are
+   outside bootstrap. Require no unexpected deletion or replacement, and verify the account
+   independently. Keep raw plan output private.
 2. Once approved, apply that **exact saved plan**, without re-planning under different inputs:
 
    ```sh
@@ -72,11 +171,11 @@ terraform -chdir=infra/environments/staging/bootstrap show \
 ## What this does not finish
 
 The bootstrap state's local backend must remain protected. The output key
-`platform/<environment>/terraform.tfstate` is reserved for that environment's separate **platform
-root**, not a migration destination for this bucket's bootstrap state. The
-[network foundation](network-foundation.md) now declares those partial remote backends; initialization,
-locking and recovery still require live qualification. Bootstrap-state migration remains separate
-work. Never initialize two different root states onto the same key.
+is `infrastructure/<environment>/terraform.tfstate` for staging and production, and
+`custody/development/terraform.tfstate` for development. Keep local bootstrap state separate.
+Qualify backend initialization, locks and recovery, and review any prior hosted
+[split-state migration](infrastructure-plans.md#one-time-setup-in-each-hosted-environment) before
+enabling the composed workflow.
 
 Before using hosted Terraform delivery, qualify remote locking with competing writers, least-privilege
 access, version recovery, loss of local bootstrap state, interrupted initialization and state-bucket

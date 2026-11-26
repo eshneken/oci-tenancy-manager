@@ -8,7 +8,7 @@ isolated synthetic fixtures; private enrollment factors do not belong in reports
 - [Real OCI manual test manifest](real-oci-test-manifest.md) — maintain pending live-only cases for every slice
 - [Pending shared-import adoption qualification](real-oci-test-manifest.md#shared-import-existing-user-adoption) — exact existing users, multiple/shared scopes, full lifecycle and read-only drift
 - [Hosted administrator runbooks](hosted-administration.md) — design-stage application, infrastructure, combined/settings updates and backup/restore procedures; implementation and staging walkthrough required before live use
-- [Terraform state bootstrap](terraform-state-bootstrap.md) — implemented isolated roots, mock checks and pending live operator procedure; does not create the application platform
+- [Terraform state bootstrap](terraform-state-bootstrap.md) — operator setup, [exchange rollover](terraform-state-bootstrap.md#github-exchange-client-rollout), and [hosted reader-policy permissions](terraform-state-bootstrap.md#hosted-reader-policy-writes)
 - [Network foundation](network-foundation.md) — subnet/routing/NSG source, private shared-input rendering and platform initialization; OKE/managed PostgreSQL and optional [held Caddy ingress](caddy-ingress.md) source; live qualification pending
 - [Enhanced OKE and worker bootstrap](oke-foundation.md) — source-restricted public API, private ARM node/pod bindings, sensitive cloud-init input and pending Falcon ARM64 qualification
 - [OKE traffic matrix](oke-network-traffic.md) — explicit control/CNI/DNS/egress rules, optional Caddy backend/health rules and pending job-specific admission
@@ -30,7 +30,7 @@ Cloud bootstrap, managed services and scheduled drift acquisition have separate 
 requirements in [the build order](../engineering-design/18-database-ci-and-build-order.md).
 These procedures do not authorize deployment, repository publication or live OCI changes.
 
-- [GitHub checkpoints and CI definitions](github-checkpoints.md) — complementary backend unit and PostgreSQL/browser lanes, with all required checks retained
+- [GitHub checkpoints and CI definitions](github-checkpoints.md) — backend unit and PostgreSQL/browser gates, including [integration lane evidence](github-checkpoints.md#backend-partition-and-evidence)
 
 Workflow definitions are repository artifacts; hosted runs, branch protection and deployment
 qualification must be verified separately. This guide does not authorize cloud deployment.
@@ -52,7 +52,7 @@ includes replacement verification, identity retention/removal and manual resourc
 
 - [Managed PostgreSQL foundation](managed-postgresql.md) — private two-node service, provisioning references, recovery policy and upgrade safeguards; live qualification pending
 
-- [Vault custody foundation](vault-foundation.md) — separate security roots, shared Vaults and software-protected keys, private ingestion handoff and database-reader IAM
+- [Vault custody foundation](vault-foundation.md) — composed hosted Vaults, software-protected keys, service-generated database credential and reader IAM
 
 - [Hosting compartment input](hosting-compartment.md) — required per-environment Actions Secret, private renderer and one-compartment placement across infrastructure roots
 
@@ -63,7 +63,7 @@ includes replacement verification, identity retention/removal and manual resourc
 - [Schema-changing release maintenance](hosted-administration.md#schema-changing-application-release) — approved V1 drain/migrate/start/reopen procedure; unchanged-schema releases roll normally.
 
 
-- [Laptop OCI development](laptop-oci-development.md) — named API-key profiles, operator-managed IAM and the protected development infrastructure workflow and SSO cutover.
+- [Laptop OCI development](laptop-oci-development.md) — named API-key profiles, Terraform bootstrap ownership, and protected infrastructure rollout.
 
 
 - [Hosted workload identity and Vault IAM](oke-workload-identity.md) — security-root Vault handoff, cluster-bound policies, projected tokens and remaining live checks.
@@ -75,6 +75,6 @@ includes replacement verification, identity retention/removal and manual resourc
 
 - [Application release review](application-releases.md) — manual or automatic four-file verification, qualified master-only Actions dispatch, genuine publisher/signature evidence, intentional wrong-Checkpoint rejection and remaining acceptance/deployment/custody boundaries.
 
-- [Review and apply an infrastructure plan](infrastructure-plans.md) — separate environment setup,
+- [Review and apply an infrastructure plan](infrastructure-plans.md), including [one infrastructure plan per environment](infrastructure-plans.md#one-infrastructure-plan-and-apply-per-environment) — separate environment setup,
   private inputs, held plan/apply workflows, manual staging-test confirmation and single-attempt
   failure/recovery procedure; live OCI qualification remains Pending.

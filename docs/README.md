@@ -29,10 +29,10 @@ Earlier dated preservation receipts remain historical evidence.
 | Recovery-window wait before key replacement | [Targeted correction qualified; saved republication PASS](reference/signing-key-rotation.md#recovery-window-waiting) |
 | Signer setup authority and rotation regression scope | [Current authority checks](reference/signing-key-rotation.md#setup-authority-and-ship-regression-checks--10-november-2026) |
 | Worker deployment sizing | [Staging/production targets and qualification](engineering-design/06-platform-and-delivery.md#accepted-initial-worker-sizing--10-november-2026) |
-| Development infrastructure and SSO cutover | [Laptop profile, state and IAM bootstrap, and GitHub Actions](how-to/laptop-oci-development.md#development-infrastructure-through-github-actions) |
+| Development Terraform ownership and SSO rollout | [Local bootstrap, GitHub Actions, and qualification gates](how-to/laptop-oci-development.md#development-infrastructure-through-github-actions) |
 | Paid OCI platform and candidate capacity | [Enhanced OKE, ARM nodes and managed PostgreSQL](engineering-design/06-platform-and-delivery.md#paid-tenancy-platform-direction-and-candidate-sizing--13-november-2026) |
 | Ashburn backups and restore qualification | [V1 backup policy, sizing and regional boundary](engineering-design/06-platform-and-delivery.md#ashburn-v1-backup-policy-proposal--13-november-2026) |
-| Staging, production and release promotion | [Isolated tenancies and build-once delivery](engineering-design/24-environments-and-promotion.md) |
+| Staging, production and release promotion | [Common Terraform layout](engineering-design/24-environments-and-promotion.md#terraform-layout-for-each-environment), [isolated environments and build-once delivery](engineering-design/24-environments-and-promotion.md) |
 | Hosted administrator updates, backup and restore | [Human-readable operating runbooks](how-to/hosted-administration.md) — design-stage procedures, pending staging qualification |
 | Atlas corporate sign-in and onboarding | [8445 pilot](reference/corporate-sso.md), [local milestone and hosted handoff](engineering-design/26-administrator-sso.md#local-milestone-and-hosted-handoff), [manual acceptance](how-to/real-oci-test-manifest.md#atlas-administrator-sso-and-onboarding) |
 | Terraform state foundation | [Implemented layout and mock-only tests](../infra/README.md), [operator bootstrap procedure](how-to/terraform-state-bootstrap.md) — live qualification pending |
@@ -56,7 +56,7 @@ Earlier dated preservation receipts remain historical evidence.
 | Review/test/operator procedures | [How-to guides](how-to/README.md) |
 | Accepted engineering decisions | [D1–D17](decisions/engineering-review-decisions.md), [D18–D58](decisions/design-decisions.md) |
 | Diagram source and generated views | [Architecture diagrams](architecture/diagrams/README.md) |
-| GitHub checkpoints and CI definitions | [Checkpoint workflow guide](how-to/github-checkpoints.md) (including [responsive geometry checks](how-to/github-checkpoints.md#responsive-browser-geometry)), [required backend lane partition](engineering-test-plan.md#complementary-backend-test-lanes) |
+| GitHub checkpoints and CI definitions | [Checkpoint workflow guide](how-to/github-checkpoints.md), [required test lanes and evidence](engineering-test-plan.md#current-local-cadence-and-integration-budget--9-november-2026), [responsive geometry checks](how-to/github-checkpoints.md#responsive-browser-geometry) |
 | All pending real-OCI manual qualification | [Live test manifest](how-to/real-oci-test-manifest.md) |
 | Pending real-OCI drift and repair validation | [Manual checklist and automated coverage](how-to/configuration-drift-runbook.md#pending-real-oci-manual-validation) |
 | Required quality/security conventions | [Testing](engineering-test-plan.md), [security](security-review-policy.md), [code documentation](code-documentation-policy.md), [UI review](ui-ux-review-policy.md) |

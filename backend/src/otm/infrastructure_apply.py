@@ -181,7 +181,7 @@ def trusted_report(run_id, environment, status, values):
         or report.get("source_sha") != source
         or report.get("run_id") != run_id
         or report.get("attempt") != str(attempt)
-        or report.get("component") not in planning.ENVIRONMENT_COMPONENTS[environment]
+        or report.get("component") != planning.COMPONENT
         or report.get("applied") is not (status == "applied")
         or any(
             not isinstance(report.get(key), str) or HASH.fullmatch(report[key]) is None
@@ -197,13 +197,13 @@ def trusted_report(run_id, environment, status, values):
         or not isinstance(report.get("plan_attempt"), str)
         or NUMBER.fullmatch(report["plan_attempt"]) is None
         or (
-            report["component"] == "platform"
+            environment != "development"
             and (
                 not isinstance(report.get("node_image_sha256"), str)
                 or HASH.fullmatch(report["node_image_sha256"]) is None
             )
         )
-        or (report["component"] != "platform" and report.get("node_image_sha256") is not None)
+        or (environment == "development" and report.get("node_image_sha256") is not None)
         or (
             environment != "production"
             and (
@@ -261,9 +261,9 @@ def unpack_plan(content, directory, report):
 
 
 # Hash effective shared sizing/version behavior; tenancy references remain environment-specific.
-def parity(plan, component):
-    if component != "platform":
-        common = {"component": component}
+def parity(plan, environment):
+    if environment == "development":
+        common = {"environment": environment}
     else:
         variables = plan["variables"]
         common = {
@@ -325,7 +325,11 @@ def reviewed_plan(report, component, reviewed_hash):
         or report.get("plan_sha256") != reviewed_hash
         or report.get("object_key") != expected_key
         or not isinstance(changes, dict)
-        or set(changes) != {"create", "update", "delete", "replace"}
+        or (changes.keys() - {"import"}) != {"create", "update", "delete", "replace"}
+        or (
+            "import" in changes
+            and (report["environment"] != "development" or changes["import"] != 1)
+        )
         or any(type(value) is not int or value < 0 for value in changes.values())
     ):
         raise ValueError("EXACT_REVIEWED_PLAN_REQUIRED")
@@ -411,7 +415,7 @@ def apply_plan(
     try:
         with tempfile.TemporaryDirectory(prefix="otm-infrastructure-apply-") as temporary:
             directory = Path(temporary)
-            _, digest = planning.render_inputs(directory, inputs, component, values)
+            _, digest = planning.render_inputs(directory, inputs, values)
             if digest != report["inputs_sha256"]:
                 raise ValueError("PLAN_INPUTS_CHANGED")
             credentials = planning.federate(
@@ -442,14 +446,26 @@ def apply_plan(
                 ),
                 limit=MAX_LOG,
             )
-            if planning.change_counts(plan) != report["changes"]:
+            if (
+                planning.change_counts(
+                    plan, adopt_group_ocid=inputs["atlas_sso"].get("adopt_group_ocid")
+                )
+                != report["changes"]
+            ):
                 raise ValueError("PLAN_CHANGE_SUMMARY_MISMATCH")
-            common = parity(plan, component)
+            # The inactive browser client passed operator qualification. Hold CI App writes before
+            # claiming the plan until the workflow signer and deployment are qualified.
+            if any(
+                item.get("type") == "oci_identity_domains_app"
+                and item["change"]["actions"] not in (["read"], ["no-op"])
+                for item in plan.get("resource_changes", [])
+            ):
+                raise ValueError("OCI_APP_WORKFLOW_WRITE_UNQUALIFIED")
+            common = parity(plan, environment)
             if staging is not None and (
                 staging["parity_sha256"] != common
                 or (
-                    component == "platform"
-                    and staging["node_image_sha256"]
+                    staging["node_image_sha256"]
                     != image_digest(plan["variables"]["qualified_node_image"]["value"])
                 )
             ):
@@ -481,7 +497,7 @@ def apply_plan(
                     deadline,
                 )
                 node_image = None
-                if component == "platform":
+                if environment != "development":
                     outputs = planning.decode_json(
                         planning.terraform(
                             command,
@@ -527,10 +543,8 @@ def apply_plan(
 # output.
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--environment", choices=tuple(planning.ENVIRONMENT_COMPONENTS), required=True
-    )
-    parser.add_argument("--component", choices=tuple(planning.COMPONENT_FIELDS), required=True)
+    parser.add_argument("--environment", choices=planning.ENVIRONMENTS, required=True)
+    parser.add_argument("--component", choices=(planning.COMPONENT,), required=True)
     parser.add_argument("--plan-run-id", required=True)
     parser.add_argument("--reviewed-plan-sha256", required=True)
     parser.add_argument("--staging-run-id", default="")

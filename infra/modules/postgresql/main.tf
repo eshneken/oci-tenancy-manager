@@ -35,7 +35,7 @@ resource "oci_psql_db_system" "app" {
   instance_memory_size_in_gbs = var.database.memory_gib
   config_id                   = try(local.selected_configuration.id, "")
   allow_major_version_upgrade = var.database.allow_major_version_upgrade
-  freeform_tags               = { "otm.environment" = var.environment, "otm.component" = "postgresql" }
+  freeform_tags               = { "otm-environment" = var.environment, "otm-component" = "postgresql" }
   credentials {
     username = var.administrator.username
     password_details {

@@ -22,7 +22,7 @@ BINARY = b"synthetic saved Terraform plan"
 
 
 # The synthetic receipt mirrors the producer's exact public schema and private archive fields.
-def report(environment="staging", component="security"):
+def report(environment="staging", component="infrastructure"):
     prefix = "custody" if environment == "development" else component
     return {
         "status": "planned",
@@ -50,7 +50,7 @@ def selection():
 
 
 # A successful staging apply has no production acceptance fields or private resource outputs.
-def applied_report(component="security"):
+def applied_report(component="infrastructure"):
     return {
         "status": "applied",
         "environment": "staging",
@@ -62,8 +62,8 @@ def applied_report(component="security"):
         "plan_attempt": "1",
         "plan_sha256": "a" * 64,
         "inputs_sha256": "b" * 64,
-        "parity_sha256": module.parity(native_plan(), component),
-        "node_image_sha256": module.image_digest(selection()) if component == "platform" else None,
+        "parity_sha256": module.parity(native_plan(), "staging"),
+        "node_image_sha256": module.image_digest(selection()),
         "staging_apply_run_id": None,
         "staging_tests_confirmed": False,
         "applied": True,
@@ -211,7 +211,7 @@ def test_report_schema_rejected(monkeypatch, field, value):
         ("parity_sha256", None),
         ("plan_run_id", "x"),
         ("plan_attempt", "0"),
-        ("node_image_sha256", "a" * 64),
+        ("node_image_sha256", None),
         ("staging_apply_run_id", "123"),
         ("staging_tests_confirmed", True),
     ],
@@ -341,18 +341,18 @@ def test_unpack_rejected(tmp_path, monkeypatch, fault):
 # Shared parity ignores tenancy AD prefixes while protecting sizing, versions and scheduled windows.
 def test_parity_and_image():
     plan = native_plan()
-    original = module.parity(plan, "platform")
+    original = module.parity(plan, "staging")
     plan["variables"]["oke"]["value"]["availability_domains"] = ["other:AD1"]
-    assert module.parity(plan, "platform") == original
+    assert module.parity(plan, "staging") == original
     plan["variables"]["database"]["value"]["ocpus"] = 4
-    assert module.parity(plan, "platform") != original
+    assert module.parity(plan, "staging") != original
     assert (
         module.image_digest(selection())
         == hashlib.sha256(planning.canonical(selection())).hexdigest()
     )
     plan["variables"]["oke"]["value"]["availability_domains"] = []
     with pytest.raises(ValueError):
-        module.parity(plan, "platform")
+        module.parity(plan, "staging")
 
 
 # Image handoff fields are exact and regional, not a free-form image or architecture selector.
@@ -403,9 +403,9 @@ def test_claim_once():
 # run.
 @pytest.fixture
 def harness(tmp_path, monkeypatch, request):
-    environment, component = getattr(request, "param", ("staging", "platform"))
+    environment, component = getattr(request, "param", ("staging", "infrastructure"))
     state = SimpleNamespace(
-        values=environment_values(environment, component),
+        values=environment_values(environment),
         receipt=report(environment, component),
         plan=native_plan(),
         stage=applied_report(component),
@@ -423,9 +423,7 @@ def harness(tmp_path, monkeypatch, request):
     inputs = planning.context(environment, component, state.values)
     rendered = tmp_path / "rendered"
     rendered.mkdir()
-    state.receipt["inputs_sha256"] = planning.render_inputs(
-        rendered, inputs, component, state.values
-    )[1]
+    state.receipt["inputs_sha256"] = planning.render_inputs(rendered, inputs, state.values)[1]
 
     # Return a newly serialized archive so intentional tampering is tested against the actual
     # reader.
@@ -478,7 +476,7 @@ def test_apply_and_no_replay(harness):
     before = os.umask(0o077)
     os.umask(before)
     result = module.apply_plan(
-        "staging", "platform", "123", state.receipt["plan_sha256"], state.values
+        "staging", "infrastructure", "123", state.receipt["plan_sha256"], state.values
     )
     assert result["status"] == "applied" and set(result) == module.APPLY_FIELDS
     assert result["node_image_sha256"] == module.image_digest(selection())
@@ -488,7 +486,7 @@ def test_apply_and_no_replay(harness):
     with pytest.raises(ValueError, match="already consumed"):
         module.apply_plan(
             "staging",
-            "platform",
+            "infrastructure",
             "123",
             state.receipt["plan_sha256"],
             {**state.values, "GITHUB_RUN_ID": "999"},
@@ -522,14 +520,13 @@ def test_apply_preclaim_guards(harness, monkeypatch, fault):
     keywords = {}
     if fault in {"stage-confirm", "stage-component", "parity", "image", "stage-race"}:
         environment = "production"
-        state.values.update(environment_values(environment, "platform"))
-        state.receipt.update(report(environment, "platform"))
+        state.values.update(environment_values(environment))
+        state.receipt.update(report(environment, "infrastructure"))
         directory = state.root.parent.parent.parent / "render-prod"
         directory.mkdir()
         state.receipt["inputs_sha256"] = planning.render_inputs(
             directory,
-            planning.context(environment, "platform", state.values),
-            "platform",
+            planning.context(environment, "infrastructure", state.values),
             state.values,
         )[1]
         keywords = {"staging_run_id": "456", "staging_tests_confirmed": fault != "stage-confirm"}
@@ -566,7 +563,12 @@ def test_apply_preclaim_guards(harness, monkeypatch, fault):
         monkeypatch.setattr(module, "trusted_report", racing)
     with pytest.raises(ValueError):
         module.apply_plan(
-            environment, "platform", "123", state.receipt["plan_sha256"], state.values, **keywords
+            environment,
+            "infrastructure",
+            "123",
+            state.receipt["plan_sha256"],
+            state.values,
+            **keywords,
         )
     assert not state.objects and not any(call[0] == "apply" for call in state.calls)
 
@@ -576,12 +578,16 @@ def test_apply_failure_retains_state(harness):
     state = harness
     state.fail = True
     with pytest.raises(module.ApplyStopped) as error:
-        module.apply_plan("staging", "platform", "123", state.receipt["plan_sha256"], state.values)
+        module.apply_plan(
+            "staging", "infrastructure", "123", state.receipt["plan_sha256"], state.values
+        )
     assert error.value.recovery_state_retained is True
     assert len(state.objects) == 2
     assert any(key.endswith("errored.tfstate") for key in state.objects)
     with pytest.raises(ValueError, match="already consumed"):
-        module.apply_plan("staging", "platform", "123", state.receipt["plan_sha256"], state.values)
+        module.apply_plan(
+            "staging", "infrastructure", "123", state.receipt["plan_sha256"], state.values
+        )
     assert sum(call[0] == "apply" for call in state.calls) == 1
 
 
@@ -615,7 +621,7 @@ def test_cli(monkeypatch, capsys):
         "--environment",
         "staging",
         "--component",
-        "security",
+        "infrastructure",
         "--plan-run-id",
         "123",
         "--reviewed-plan-sha256",
@@ -637,14 +643,13 @@ def test_cli(monkeypatch, capsys):
 # Production consumes its own plan and credentials after matching staging metadata and manual tests.
 def test_production_success(harness, monkeypatch, tmp_path):
     state = harness
-    state.values.update(environment_values("production", "platform"))
-    state.receipt.update(report("production", "platform"))
+    state.values.update(environment_values("production"))
+    state.receipt.update(report("production", "infrastructure"))
     directory = tmp_path / "production-render"
     directory.mkdir()
     state.receipt["inputs_sha256"] = planning.render_inputs(
         directory,
-        planning.context("production", "platform", state.values),
-        "platform",
+        planning.context("production", "infrastructure", state.values),
         state.values,
     )[1]
     old = planning.terraform
@@ -660,7 +665,7 @@ def test_production_success(harness, monkeypatch, tmp_path):
     monkeypatch.setattr(planning, "terraform", execute)
     result = module.apply_plan(
         "production",
-        "platform",
+        "infrastructure",
         "123",
         state.receipt["plan_sha256"],
         state.values,
@@ -669,44 +674,28 @@ def test_production_success(harness, monkeypatch, tmp_path):
     )
     assert result["staging_apply_run_id"] == "456" and result["staging_tests_confirmed"] is True
     assert list(state.objects) == [
-        "infrastructure-plans/production/platform/123/1/apply-attempt.json"
+        "infrastructure-plans/production/infrastructure/123/1/apply-attempt.json"
     ]
     assert planning.federate.call_args.args[2] == "production"
 
 
-# Security applies have no node-image output; an unexpected post-apply cluster output is a failure.
-@pytest.mark.parametrize("component,wrong_output", [("security", False), ("platform", True)])
-def test_apply_component_outputs(harness, monkeypatch, tmp_path, component, wrong_output):
+# A mismatched cluster output fails closed even after the provider reports apply success.
+def test_hosted_apply_rejects_wrong_cluster_output(harness, monkeypatch):
     state = harness
-    if component == "security":
-        state.values.update(environment_values("staging", component))
-        state.receipt.update(report("staging", component))
-        directory = tmp_path / "security-render"
-        directory.mkdir()
-        state.receipt["inputs_sha256"] = planning.render_inputs(
-            directory, planning.context("staging", component, state.values), component, state.values
-        )[1]
     old = planning.terraform
 
     # Model a provider reporting the wrong post-apply environment without touching real resources.
     def execute(command, arguments, root, child_env, private, deadline):
-        if wrong_output and arguments[0] == "output":
+        if arguments[0] == "output":
             return b'{"environment":"other"}'
         return old(command, arguments, root, child_env, private, deadline)
 
     monkeypatch.setattr(planning, "terraform", execute)
-    if wrong_output:
-        with pytest.raises(module.ApplyStopped) as error:
-            module.apply_plan(
-                "staging", component, "123", state.receipt["plan_sha256"], state.values
-            )
-        assert error.value.recovery_state_retained is False
-    else:
-        result = module.apply_plan(
-            "staging", component, "123", state.receipt["plan_sha256"], state.values
+    with pytest.raises(module.ApplyStopped) as error:
+        module.apply_plan(
+            "staging", "infrastructure", "123", state.receipt["plan_sha256"], state.values
         )
-        assert result["node_image_sha256"] is None
-        assert not any(call[0] == "output" for call in state.calls)
+    assert error.value.recovery_state_retained is False
     assert len(state.objects) == 1
 
 
@@ -724,7 +713,7 @@ def test_reviewed_changes_rejected(changes):
     receipt = report()
     receipt["changes"] = changes
     with pytest.raises(ValueError):
-        module.reviewed_plan(receipt, "security", receipt["plan_sha256"])
+        module.reviewed_plan(receipt, "infrastructure", receipt["plan_sha256"])
 
 
 # A plan that forgets the retired key remains plan-only even with a matching digest.
@@ -752,12 +741,14 @@ def test_uncertain_marker_response(harness, monkeypatch):
 
     monkeypatch.setattr(state.client, "put_object", uncertain)
     with pytest.raises(ConnectionError):
-        module.apply_plan("staging", "platform", "123", state.receipt["plan_sha256"], state.values)
+        module.apply_plan(
+            "staging", "infrastructure", "123", state.receipt["plan_sha256"], state.values
+        )
     assert len(state.objects) == 1
     with pytest.raises(ValueError, match="already consumed"):
         module.apply_plan(
             "staging",
-            "platform",
+            "infrastructure",
             "123",
             state.receipt["plan_sha256"],
             {**state.values, "GITHUB_RUN_ID": "999"},
@@ -768,7 +759,7 @@ def test_uncertain_marker_response(harness, monkeypatch):
 # Development refuses delete/replacement receipts before accessing OCI, even with a reviewed hash.
 @pytest.mark.parametrize("destructive", ["delete", "replace"])
 def test_development_refuses_destructive_plan(monkeypatch, destructive):
-    values = environment_values("development", "infrastructure")
+    values = environment_values("development")
     values["OTM_INFRASTRUCTURE_APPLY_ENABLED"] = "true"
     receipt = report("development", "infrastructure")
     receipt["changes"][destructive] = 1
@@ -794,3 +785,38 @@ def test_development_applies_reviewed_infrastructure(harness):
     assert result["staging_apply_run_id"] is None
     assert [call[0] for call in state.calls] == ["show", "apply"]
     assert len(state.objects) == 1
+
+
+# Preserve the scope and cardinality of the development-only state adoption in the consumer.
+@pytest.mark.parametrize(
+    "environment,imports,valid",
+    [
+        ("development", 1, True),
+        ("production", 1, False),
+        ("staging", 1, False),
+        ("development", 2, False),
+        ("development", True, False),
+    ],
+)
+def test_reviewed_group_import(environment, imports, valid):
+    receipt = report(environment)
+    receipt["changes"]["import"] = imports
+    if valid:
+        module.reviewed_plan(receipt, "infrastructure", receipt["plan_sha256"])
+    else:
+        with pytest.raises(ValueError, match="EXACT_REVIEWED_PLAN_REQUIRED"):
+            module.reviewed_plan(receipt, "infrastructure", receipt["plan_sha256"])
+
+
+# An approved generic apply cannot run an unqualified confidential App write or consume its plan.
+def test_identity_app_write_stops_before_claim(harness):
+    harness.plan["resource_changes"] = [
+        {"type": "oci_identity_domains_app", "change": {"actions": ["create"]}}
+    ]
+    harness.receipt["changes"]["create"] = 1
+    with pytest.raises(ValueError, match="OCI_APP_WORKFLOW_WRITE_UNQUALIFIED"):
+        module.apply_plan(
+            "staging", "infrastructure", "123", harness.receipt["plan_sha256"], harness.values
+        )
+    assert not harness.objects
+    assert [call[0] for call in harness.calls] == ["show"]

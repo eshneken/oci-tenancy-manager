@@ -1,17 +1,63 @@
 # Verify the development bootstrap without reading a local signing profile or contacting OCI.
 mock_provider "oci" {
+  override_during = plan
+
   mock_data "oci_identity_compartment" {
+    defaults = { compartment_id = "ocid1.tenancy.oc1..synthetic", name = "otm-development", state = "ACTIVE" }
+  }
+  mock_resource "oci_identity_compartment" {
+    defaults = { id = "ocid1.compartment.oc1..synthetic", state = "ACTIVE" }
+  }
+  mock_resource "oci_identity_domains_app" {
+    defaults = { name = "synthetic-exchange-development" }
+  }
+  mock_data "oci_identity_domain" {
     defaults = {
-      name           = "otm-development"
       compartment_id = "ocid1.tenancy.oc1..synthetic"
+      display_name   = "Default"
       state          = "ACTIVE"
+      url            = "https://idcs-syntheticdevelopment.identity.oraclecloud.com"
     }
   }
   mock_data "oci_objectstorage_namespace" {
     defaults = { namespace = "syntheticnamespace" }
   }
 }
+override_resource {
+  target          = oci_identity_compartment.development
+  override_during = plan
+  values          = { id = "ocid1.compartment.oc1..synthetic", state = "ACTIVE" }
+}
+
+mock_provider "github" {}
+mock_provider "external" {}
+override_module {
+  target = module.github_environment
+}
+# Exercise the mandatory Settings import without calling OCI.
+override_resource {
+  target          = module.delivery.oci_identity_domains_setting.signing_keys[0]
+  override_during = plan
+  values = {
+    id                         = "Settings"
+    csr_access                 = "none"
+    signing_cert_public_access = true
+  }
+}
+
 variables {
+  github_environment = {
+    reviewer_user_ids  = [1003]
+    settings_file      = "synthetic.json"
+    kubernetes_version = "v1.34.1"
+    postgresql_version = "16"
+  }
+  github_delivery = {
+    exchange_write_response_qualified = true
+    trust_active                      = false
+    repository_id                     = "1001"
+    repository_owner_id               = "1002"
+  }
   oci_profile                 = "SYNTHETIC_DEVELOPMENT"
   hosting_compartment_ocid    = "ocid1.compartment.oc1..synthetic"
   github_identity_domain_ocid = "ocid1.domain.oc1..synthetic"
@@ -29,6 +75,15 @@ run "development_backend_is_separate" {
     condition     = output.state_backend.bucket == "otm-development-tfstate" && output.state_backend.key == "custody/development/terraform.tfstate"
     error_message = "Development uses its own bucket and custody key."
   }
+  assert {
+    condition = (
+      oci_identity_compartment.development.name == "otm-development" &&
+      oci_identity_compartment.development.compartment_id == var.target.tenancy_ocid &&
+      !oci_identity_compartment.development.enable_delete &&
+      output.environment_binding.compartment_ocid == oci_identity_compartment.development.id
+    )
+    error_message = "The bootstrap must own the direct development child and bind the backend to it."
+  }
 }
 run "reject_default_profile" {
   command = plan
@@ -37,11 +92,12 @@ run "reject_default_profile" {
 }
 run "reject_unrelated_compartment" {
   command = plan
-  override_data {
-    target = data.oci_identity_compartment.development
-    values = { name = "other-compartment" }
+  override_resource {
+    target          = oci_identity_compartment.development
+    override_during = plan
+    values          = { id = "ocid1.compartment.oc1..other", state = "ACTIVE" }
   }
-  expect_failures = [data.oci_identity_compartment.development]
+  expect_failures = [oci_identity_compartment.development]
 }
 
 run "github_policy_is_scoped" {
@@ -55,7 +111,7 @@ run "github_policy_is_scoped" {
       oci_identity_policy.github_infrastructure.compartment_id == var.hosting_compartment_ocid &&
       length(oci_identity_policy.github_infrastructure.statements) == 13 &&
       alltrue([for statement in oci_identity_policy.github_infrastructure.statements :
-        strcontains(statement, "in compartment id ${var.hosting_compartment_ocid}") &&
+        strcontains(statement, "in compartment otm-development where") &&
         strcontains(statement, "request.principal.type = 'identityfederateddomainapp'") &&
         strcontains(statement, "request.principal.domain.id = '${var.github_identity_domain_ocid}'") &&
         strcontains(statement, "request.principal.ext_workflow_ref = 'example/tenancy-manager/.github/workflows/infra-development.yml@refs/heads/master'") &&
@@ -109,4 +165,54 @@ run "reject_github_repository_wildcard" {
   command = plan
   variables { github_repository = "example/*" }
   expect_failures = [var.github_repository]
+}
+
+run "preserve_working_development_exchange" {
+  command = plan
+  variables {
+    github_delivery = {
+      repository_id            = "1001", repository_owner_id = "1002",
+      existing_trust_id        = "22222222222222222222222222222222", trust_active = true
+      existing_exchange_app_id = "11111111111111111111111111111111"
+    }
+  }
+  override_resource {
+    target          = module.delivery.oci_identity_domains_identity_propagation_trust.github[0]
+    override_during = plan
+    values          = { id = "22222222222222222222222222222222" }
+  }
+  override_data {
+    target          = data.external.exchange_metadata[0]
+    override_during = plan
+    values          = { result = { id = "11111111111111111111111111111111", name = "synthetic-existing" } }
+  }
+  assert {
+    condition     = output.github_exchange_client_id == "synthetic-existing" && output.github_exchange_app_id == "11111111111111111111111111111111"
+    error_message = "Only projected immutable metadata should supply the exact working client."
+  }
+}
+
+# A working exchange client must keep the existing trust instead of creating a second issuer.
+run "reject_existing_client_without_trust_pin" {
+  command = plan
+  variables {
+    github_delivery = {
+      repository_id            = "1001"
+      repository_owner_id      = "1002"
+      existing_exchange_app_id = "11111111111111111111111111111111"
+      trust_active             = true
+    }
+  }
+  expect_failures = [var.github_delivery]
+}
+
+# Reject a pinned sibling before Terraform can propose renaming it into the environment.
+run "reject_unrelated_compartment_adoption" {
+  command = plan
+  override_data {
+    target          = data.oci_identity_compartment.adoption[0]
+    override_during = plan
+    values          = { name = "unrelated", state = "ACTIVE" }
+  }
+  expect_failures = [data.oci_identity_compartment.adoption]
 }

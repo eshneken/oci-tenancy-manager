@@ -7,12 +7,11 @@ override_resource {
   target          = oci_kms_key.application_software
   values          = { id = "ocid1.key.oc1.iad.syntheticsoftware" }
 }
+override_module { target = module.atlas_sso }
 variables {
   identity_domain_url = "https://idcs-synthetic.identity.oraclecloud.com"
   atlas_sso = {
-    assignment_group_id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-    signon_policy_id    = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-    idp_policy_id       = "cccccccccccccccccccccccccccccccc"
+    corporate_idp_id = "dddddddddddddddddddddddddddddddd"
   }
   oci_auth                 = "ResourcePrincipal"
   hosting_compartment_ocid = "ocid1.compartment.oc1..development"
@@ -67,26 +66,4 @@ run "reject_staging_target" {
     }
   }
   expect_failures = [var.target]
-}
-
-run "stage_assigned_sso_client" {
-  command = plan
-  assert {
-    condition = (
-      oci_identity_domains_app.atlas_sso.display_name == "otm-sso-development" &&
-      !oci_identity_domains_app.atlas_sso.active &&
-      oci_identity_domains_app.atlas_sso.allow_access_control &&
-      oci_identity_domains_app.atlas_sso.client_type == "confidential" &&
-      one(oci_identity_domains_app.atlas_sso.redirect_uris) == "https://127.0.0.1:8445/api/auth/sso/callback" &&
-      one(oci_identity_domains_app.atlas_sso.allowed_grants) == "authorization_code" &&
-      one(oci_identity_domains_app.atlas_sso.signon_policy).value == var.atlas_sso.signon_policy_id &&
-      one(oci_identity_domains_app.atlas_sso.idp_policy).value == var.atlas_sso.idp_policy_id &&
-      oci_identity_domains_app.atlas_sso.attributes != "" &&
-      !strcontains(lower(oci_identity_domains_app.atlas_sso.attributes), "secret") &&
-      oci_identity_domains_grant.atlas_assignment.grant_mechanism == "ADMINISTRATOR_TO_GROUP" &&
-      one(oci_identity_domains_grant.atlas_assignment.grantee).type == "Group" &&
-      one(oci_identity_domains_grant.atlas_assignment.grantee).value == var.atlas_sso.assignment_group_id
-    )
-    error_message = "Stage only the inactive, scoped laptop client and its existing group assignment."
-  }
 }

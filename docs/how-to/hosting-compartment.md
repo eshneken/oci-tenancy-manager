@@ -1,8 +1,12 @@
 # Hosting compartment release input
 
-Each environment installs all Atlas infrastructure in **one existing OCI compartment**. No child
-compartments are created. Staging and production remain in separate tenancies and use their own
-hosting compartment, state, credentials and deployments.
+Each hosted environment uses **one OCI hosting compartment**. Staging and production have
+separate hosting compartments, state, credentials and deployments. Staging shares the
+non-production tenancy with development. Production uses its own tenancy.
+The bootstrap root owns the compartment. The protected workflow passes its verified ID to the composed infrastructure root. The
+[composed Terraform design](../engineering-design/24-environments-and-promotion.md#terraform-layout-for-each-environment)
+requires Terraform ownership of staging-specific resource creation in the reviewed infrastructure
+apply.
 
 Configure **`OTM_HOSTING_COMPARTMENT_OCID`** as a private reference in a GitHub Actions **Environment Secret**
 in both `staging` and `production`. Use each tenancy's approved existing compartment OCID. There is
@@ -10,8 +14,8 @@ no default and no synthetic value is configured for live deployment. The actual 
 values remain pending until access is available. The deployment workflow must use the selected
 protected Environment's value, not an unrestricted caller-supplied target or a PR/fork value.
 
-This variable feeds the required flat Terraform input `hosting_compartment_ocid` in all six
-bootstrap/security/platform roots. The infrastructure modules receive the same selected value for
+This variable feeds the required flat Terraform input `hosting_compartment_ocid` in the three
+composed infrastructure roots. The infrastructure modules receive the same selected value for
 state bucket, Vaults, encryption keys, IAM policy, VCN/network resources, OKE and managed PostgreSQL.
 No target is inferred from the organization parent/child tenancy. Resource-specific service behavior
 and actual placement still require live verification.
@@ -53,9 +57,9 @@ namespace and effective IAM before live planning or mutation. The Terraform prov
 cloud IAM must constrain the target even if a variable is accidentally changed. A changed hosting
 compartment is an infrastructure migration requiring explicit review, not a routine app update.
 
-Use the [state bootstrap](terraform-state-bootstrap.md), [Vault foundation](vault-foundation.md)
-and [platform network procedure](network-foundation.md) in order. All use the same compartment input
-within the selected environment, but retain independent state keys. IAM must restrict access by the
+Use the [state bootstrap](terraform-state-bootstrap.md) to manage the compartment. The
+[Vault](vault-foundation.md) and [network](network-foundation.md) modules then share that
+compartment inside one infrastructure root and remote state per environment. IAM must restrict access by the
 necessary resource IDs/conditions; sharing a compartment never justifies broad app secret or state
 access. Live placement, effective permission/denial and workflow-origin checks remain in the
 [manual qualification manifest](real-oci-test-manifest.md#single-hosting-compartment-input).

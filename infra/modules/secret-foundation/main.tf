@@ -36,8 +36,8 @@ resource "oci_identity_policy" "database_reader" {
   name           = "otm-${var.environment}-database-provisioning-read"
   description    = "Read initial database provisioning secrets only in the designated Vault"
   statements = [
-    "Allow group id ${var.database_provisioner_group_ocid} to read secret-family in compartment id ${var.hosting_compartment_ocid} where target.vault.id = '${oci_kms_vault.domain["database-provisioning"].id}'",
-    "Allow group id ${var.database_provisioner_group_ocid} to read vaults in compartment id ${var.hosting_compartment_ocid} where target.vault.id = '${oci_kms_vault.domain["database-provisioning"].id}'",
+    "Allow group Default/${var.database_provisioner_group_name} to read secret-family in compartment otm-${var.environment} where target.vault.id = '${oci_kms_vault.domain["database-provisioning"].id}'",
+    "Allow group Default/${var.database_provisioner_group_name} to read vaults in compartment otm-${var.environment} where target.vault.id = '${oci_kms_vault.domain["database-provisioning"].id}'",
   ]
   freeform_tags = { "otm-environment" = var.environment, "otm-component" = "database-provisioning" }
 }

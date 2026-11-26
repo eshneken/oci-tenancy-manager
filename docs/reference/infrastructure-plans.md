@@ -7,14 +7,13 @@
 
 ## Implemented boundary
 
-The manual [staging workflow](../../.github/workflows/infra-staging.yml) and
-[production workflow](../../.github/workflows/infra-production.yml) invoke
-[`otm.infrastructure_plan`](../../backend/src/otm/infrastructure_plan.py) from the exact protected
-master source. Each selects only its own `security` or `platform` root. State-bucket bootstrap
-remains a separately authorized operator procedure. The default operation is `plan`; `apply` invokes
-[`otm.infrastructure_apply`](../../backend/src/otm/infrastructure_apply.py) to consume a separately
-reviewed saved plan. There is no destroy operation, application deployment or arbitrary Terraform
-command/ref/path input.
+Each protected master workflow selects its fixed `infrastructure` root. The
+[staging](../../.github/workflows/infra-staging.yml) and [production](../../.github/workflows/infra-production.yml)
+workflows compose all infrastructure in one state per environment. The default operation is
+`plan`. `apply` invokes [the saved-plan consumer](../../backend/src/otm/infrastructure_apply.py).
+There is no destroy operation, application deployment or selectable component, ref or path.
+Bootstrap runs separately under operator approval. Hosted OCI delivery remains held pending
+live qualification.
 
 Workflows require deliberate `OTM_INFRASTRUCTURE_ENABLED=true`; absence means failure before
 federation. Apply additionally requires `OTM_INFRASTRUCTURE_APPLY_ENABLED=true`. Both variables
@@ -103,23 +102,26 @@ All settings below are documented configuration, not actual configured values.
 | `OTM_INFRA_IDENTITY_DOMAIN_URL` | Secret (private coordinate); exact HTTPS `*.identity.oraclecloud.com` origin, no port/path/query/fragment |
 | `OTM_INFRA_CLIENT_ID` | Secret (private reference); environment's restricted token-exchange client |
 | `OTM_INFRA_CLIENT_SECRET` | Secret; environment-specific OAuth credential; never bootstrap/admin authority |
-| `OTM_SECURITY_INPUTS_JSON` | Secret; JSON with only `target` and `database_provisioner_group_ocid` |
-| `OTM_PLATFORM_INPUTS_JSON` | Secret; private existing platform input JSON, excluding the separately rendered fields below |
-| `OTM_HOSTING_COMPARTMENT_OCID` | Secret (private reference); existing single hosting compartment; both roots reuse its renderer |
+| `OTM_INFRASTRUCTURE_INPUTS_JSON` | Secret; exact environment's private infrastructure inputs |
+| `OTM_HOSTING_COMPARTMENT_OCID` | Secret (private reference); environment's Terraform-owned hosting compartment |
 | `OTM_ALLOWED_SOURCE_CIDRS` | Secret (private configuration); comma-separated canonical IPv4 CIDRs, validated by the existing platform/recovery parser; platform only |
 | `OTM_OKE_KUBERNETES_VERSION` | Variable; exact canonical reviewed `vMAJOR.MINOR.PATCH`; platform only |
 | `OTM_POSTGRESQL_VERSION` | Variable; reviewed two-digit managed major; platform only |
 | `OTM_WORKER_CLOUD_INIT` | Secret; existing bounded Bash/cloud-init renderer; syntax checked, never executed on the runner; approved apply supplies it to nodes |
 
-Selected JSON is passed as `OTM_INFRASTRUCTURE_INPUTS_JSON`. `target` has exactly `environment`,
-`tenancy_ocid`, `object_storage_namespace` and `region`; explicit region is `us-ashburn-1`.
-Platform JSON may contain only `target`, `vcn_cidr`, `oke`, `database_administrator`, `database`,
-`application_vault_ocid`, `qualified_node_image`, `smtp_egress` and `caddy_ingress_enabled`.
-Native Terraform validation remains authoritative for each existing variable's structure/bounds.
-Authentication, versions, compartment, allowlist and cloud-init cannot be overridden in that JSON.
-Existing [input examples](../../infra/environments/staging/platform/terraform.tfvars.example) describe
-the fields, but are synthetic HCL examples, not JSON to paste verbatim. Production's qualified-image
-record still requires the separate staging evidence/handoff; a record alone is not acceptance.
+The JSON `target` has exactly `environment`, `tenancy_ocid`,
+`object_storage_namespace` and `region`. The workflow currently accepts `us-ashburn-1`.
+`atlas_sso.corporate_idp_id` is the verified 32-character lowercase hexadecimal SCIM GUID.
+Development also accepts an optional native group OCID in `atlas_sso.adopt_group_ocid` for
+adoption of the exact existing group. Hosted stages require `atlas_sso.callback_url` with an
+exact HTTPS DNS origin plus `/api/auth/sso/callback`, without query, fragment or port.
+
+Hosted JSON also accepts `vcn_cidr`, `oke`, `database_administrator`, `database`,
+`qualified_node_image`, `smtp_egress` and `caddy_ingress_enabled`.
+`database_administrator` contains only `username`; the composed root supplies the Vault secret
+reference. Terraform validates each field. Authentication, versions, compartment, allowlist
+and cloud-init are rendered separately. The [staging example](../../infra/environments/staging/infrastructure/terraform.tfvars.example)
+uses synthetic HCL rather than JSON. Production still requires qualified staging image evidence.
 
 ## Private plan and public result
 
@@ -135,11 +137,13 @@ After planning with state locking, the source inspects JSON action kinds and cre
 - `receipt.json`: source/run/attempt/environment/root, private-input digest, plan digest and counts.
 
 The fixed private destination is the existing `otm-<environment>-tfstate` bucket in that target's
-namespace, under `infrastructure-plans/<environment>/<component>/<run>/<attempt>/plan.tar`.
+namespace, under `infrastructure-plans/<environment>/infrastructure/<run>/<attempt>/plan.tar`.
+Development retains its historical `infrastructure-plans/development/custody/` prefix.
 The SDK checks its expected hosting compartment, `NoPublicAccess` and enabled versioning before
 conditional `if-none-match:*` creation. No additional bucket, compartment, database or registry is
-introduced. State retains its existing separate `security/...` and `platform/...` keys; a plan object
-is never a state file. OCI and IAM must qualify actual object conditional-write semantics and encryption.
+introduced. Hosted composed state uses `infrastructure/<environment>/terraform.tfstate`;
+development keeps `custody/development/terraform.tfstate`. Reconcile any prior hosted split
+state before using the composed backend. A plan object is never a state file. OCI and IAM must qualify actual object conditional-write semantics and encryption.
 Private plans can contain cloud-init and other sensitive values; restrict retrieval accordingly.
 
 Only these public JSON fields are emitted after successful upload: `status=planned`, `environment`,
@@ -152,7 +156,7 @@ do not rerun an uncertain request before inspecting its exact private object.
 
 ## Qualification boundary
 
-Synthetic tests cover both roots/environments, fixed-context and target guards, input renderers,
+Synthetic tests cover the environment roots, fixed-context and target guards, input renderers,
 TLS/no-redirect/auth response failures, token target/lifetime, actual local key generation, private
 archive shape/custody, unknown Terraform actions, command budgets, cleanup and public diagnostics.
 These do not validate a real IAM trust, backend lock, provider read, OAuth secret or OCI object upload.
@@ -206,20 +210,35 @@ referenced staging deployment passed the required tests. The boolean is manual e
 workflow, test-result signature or automated staging-acceptance proof is authenticated here.
 Protected production Environment review remains separately required before credentials are minted.
 
-For `platform`, parity hashes only these effective saved-plan variables: complete `oke`, complete
+For hosted infrastructure, parity hashes the following effective saved-plan variables. complete `oke`, complete
 `database`, `oke_kubernetes_version`, `postgresql_version` and `caddy_ingress_enabled`. OKE
 availability-domain lists are sorted after removing each tenancy-specific prefix before the last
 colon, so logical domain names/count and remaining OKE sizing/settings must agree. Other values
 such as target identity, VCN CIDR, Vault references, contacts, cloud-init and SMTP settings are not
 part of this automatic parity check; review environment-specific security and deployment behavior
-separately. For `security`, parity contains only the component name, not an assertion that secrets,
-IAM identities or live behavior match.
+separately.
 
-Platform production also requires the canonical four-field staging image selection:
+Production also requires the canonical four-field staging image selection:
 `image_ocid`, `kubernetes_version`, `architecture=AARCH64` and `os_major` (8 or 9). Its hash must match
 production's `qualified_node_image` plan value; the cluster output after apply is checked against the
 staging image hash again. A recorded image selection plus manual tests does not prove every live
 compatibility or capacity property. No private image OCID is printed in the public report.
+
+### Current deployment qualification
+
+The apply consumer rejects any managed OCI App change beyond read or no-op before claiming
+the saved plan. A live local operator test with released OCI provider 9.13.0 verified creation,
+description update and a no-change refresh for an inactive Atlas browser client. The projected
+responses and inspected plan/state contained no client secret or secret hash. GitHub's effective
+SCIM permissions and the deployment of the assigned client still require qualification. Native group IAM alone does not establish authority for SCIM applications,
+grants or sign-in policies. Hosted workflow IAM also needs approval for the three runtime
+reader policies. OCI cannot restrict the contents of a policy by its resource name.
+
+Development owns the GitHub issuer trust in the shared non-production domain. Staging
+declares no duplicate trust and requires its trust activation, plan and apply switches
+to remain false until client-bound federation is qualified. Production uses a separate
+domain. See the [exchange rollout gates](../how-to/terraform-state-bootstrap.md#github-exchange-client-rollout).
+Hosted plan and apply stop for migration if either legacy security or platform state object exists.
 
 ### Single attempt and failed-backend recovery
 

@@ -5,12 +5,11 @@ mock_provider "oci" {
     defaults = { management_endpoint = "https://management.example.test" }
   }
 }
+override_module { target = module.atlas_sso }
 variables {
   identity_domain_url = "https://idcs-synthetic.identity.oraclecloud.com"
   atlas_sso = {
-    assignment_group_id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-    signon_policy_id    = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-    idp_policy_id       = "cccccccccccccccccccccccccccccccc"
+    corporate_idp_id = "dddddddddddddddddddddddddddddddd"
   }
   oci_auth                 = "ResourcePrincipal"
   hosting_compartment_ocid = "ocid1.compartment.oc1..development"

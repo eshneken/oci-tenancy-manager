@@ -7,6 +7,7 @@ import secrets
 import subprocess
 import tempfile
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from uuid import uuid4
 from xml.etree.ElementTree import ParseError
@@ -112,7 +113,7 @@ def main() -> int:
     artifacts.mkdir(parents=True, exist_ok=True)
     directory = Path(tempfile.mkdtemp(prefix="backend-postgres-", dir=artifacts))
     owner = uuid4().hex
-    name = "otm-backend-test-" + owner[:12]
+    container_name = "otm-backend-test-" + owner[:12]
     label = "otm.test.postgres"
     password = secrets.token_hex(24)
     # Explicit connection values plus removal of inherited libpq overrides protect the target.
@@ -158,7 +159,7 @@ def main() -> int:
                 "--detach",
                 "--rm",
                 "--name",
-                name,
+                container_name,
                 "--label",
                 label + "=" + owner,
                 "--env",
@@ -180,7 +181,7 @@ def main() -> int:
                 [
                     "docker",
                     "exec",
-                    name,
+                    container_name,
                     "pg_isready",
                     "-h",
                     "127.0.0.1",
@@ -196,45 +197,76 @@ def main() -> int:
         else:
             raise RuntimeError("Disposable PostgreSQL did not become ready")
         output = subprocess.check_output(
-            ["docker", "inspect", "--format", "{{json .NetworkSettings.Ports}}", name]
+            [
+                "docker",
+                "inspect",
+                "--format",
+                "{{json .NetworkSettings.Ports}}",
+                container_name,
+            ]
         )
         port = json.loads(output)["5432/tcp"][0]["HostPort"]
         env["OTM_BACKEND_TEST_DATABASE_URL"] = (
             f"postgresql+psycopg://otm_test:{password}@127.0.0.1:{port}/otm_backend_test"
         )
-        result = run_python_group(
-            [
-                "-m",
-                "pytest",
-                "-q",
-                # The independently required unit/coverage gate owns non-database tests.
-                "-m",
-                "postgres",
-                "--tb=short",
-                "--junitxml=" + str(directory / "junit.xml"),
-                "--basetemp=" + str(directory / "tmp"),
-            ],
-            cwd=ROOT,
-            env=env,
-            # The 7 November approval raises only the aggregate integration budget to 15 minutes.
-            # Individual browser, database and I/O limits remain independently bounded.
-            timeout=900,
-        )
-        (directory / "pytest.log").write_text(
-            result.stdout.replace(password, "[REDACTED]")
-        )
+        # The installer module owns separate containers and loopback ports. Keep its ordered
+        # scenarios together while the remaining suite uses the shared migrated test database.
+        installer = "tests/test_sandbox_runtime_postgres.py"
+        lanes = {"database": ["--ignore=" + installer], "installer": [installer]}
+        deadline = time.monotonic() + 900
+
+        # Bound both processes by the original aggregate deadline and isolate all private output.
+        def run_lane(name, selection):
+            lane_env = env.copy()
+            if name == "installer":
+                lane_env.pop("OTM_BACKEND_TEST_DATABASE_URL")
+            return run_python_group(
+                [
+                    "-m",
+                    "pytest",
+                    "-q",
+                    "-m",
+                    "postgres",
+                    "--tb=short",
+                    *selection,
+                    "--junitxml=" + str(directory / (name + ".xml")),
+                    "--basetemp=" + str(directory / "tmp" / name),
+                ],
+                cwd=ROOT,
+                env=lane_env,
+                timeout=max(0, deadline - time.monotonic()),
+            )
+
+        (directory / "tmp").mkdir()
+        with ThreadPoolExecutor(max_workers=len(lanes)) as pool:
+            futures = {
+                name: pool.submit(run_lane, name, selection)
+                for name, selection in lanes.items()
+            }
+            results = {name: future.result() for name, future in futures.items()}
+        cases = []
         evidence_valid = True
-        try:
-            cases = list(ElementTree.parse(directory / "junit.xml").iter("testcase"))
-        except (OSError, ParseError, DefusedXmlException):
-            cases, evidence_valid = [], False
+        for name, result in results.items():
+            (directory / (name + ".log")).write_text(
+                result.stdout.replace(password, "[REDACTED]")
+            )
+            try:
+                lane_cases = list(
+                    ElementTree.parse(directory / (name + ".xml")).iter("testcase")
+                )
+                evidence_valid = evidence_valid and bool(lane_cases)
+                cases.extend(lane_cases)
+            except (OSError, ParseError, DefusedXmlException):
+                evidence_valid = False
         counts = {
             kind: sum(case.find(kind) is not None for case in cases)
             for kind in ("failure", "error", "skipped")
         }
         passed = (
-            result.returncode == 0
-            and not result.timed_out
+            all(
+                result.returncode == 0 and not result.timed_out
+                for result in results.values()
+            )
             and evidence_valid
             and bool(cases)
             and not any(counts.values())
@@ -246,8 +278,10 @@ def main() -> int:
             "browser_failure_locations": browser_failure_locations(cases),
             "tests": len(cases),
             **counts,
-            "pytest_exit": result.returncode,
-            "timed_out": result.timed_out,
+            "pytest_exit": {
+                name: result.returncode for name, result in results.items()
+            },
+            "timed_out": any(result.timed_out for result in results.values()),
             "valid_test_evidence": evidence_valid and bool(cases),
             "database": "disposable Docker PostgreSQL 18.7",
             "persistent_database_used": False,
@@ -281,7 +315,7 @@ def main() -> int:
         finally:
             # Report cleanup must never prevent removal of the container owned by this run.
             if launch_attempted:
-                remove_owned("docker", name, label, owner)
+                remove_owned("docker", container_name, label, owner)
     (directory / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     print(json.dumps(summary))
     return 0 if passed else 1

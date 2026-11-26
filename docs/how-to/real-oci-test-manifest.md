@@ -26,7 +26,7 @@ independent recovery access. This manifest does not itself authorize live resour
 | Enhanced OKE and private worker bootstrap | [Cluster, launch metadata, sensor and public-API qualification](#enhanced-oke-and-worker-bootstrap). ARM64 sensor compatibility is unknown and must be established before application deployment. | Pending |
 | Secret version retention and cleanup | [Cleanup qualification](#secret-version-retention-and-cleanup): exact binding/IAM, keep-five retention, protected versions, conditional scheduling, quota pressure and actual purge. | Pending |
 | Single hosting compartment input | [Placement/input qualification](#single-hosting-compartment-input): environment variable origin, tenancy/ancestry, all-resource placement and fail-closed targeting. | Pending |
-| Vault custody foundation | [Vault/IAM qualification](#vault-custody-foundation): Vault-conditioned access isolation, group scope, secure ingestion, key custody/rotation and actual provisioning. | Pending |
+| Vault custody foundation | [Vault/IAM qualification](#vault-custody-foundation): Vault-conditioned access isolation, group scope, OCI-side generation, key custody/rotation and actual provisioning. | Pending |
 | Managed PostgreSQL foundation | [Database qualification](#managed-postgresql-foundation): private bindings/TLS, Vault provisioning, HA/load, backup/PITR and real provider upgrade/replacement behavior. | Pending |
 | Platform version and image promotion | [Version/image matrix](#platform-version-and-image-promotion): real regional lookup, saved-plan pinning, full staging selection/provenance and safe future PostgreSQL-major changes. | Pending |
 | Initial multi-worker production sizing | [Two-worker qualification](#initial-multi-worker-production-qualification): identical staging/production two one-slot workers; locks, child isolation, deadlines, crash recovery and connection budget. | Pending |
@@ -621,6 +621,20 @@ For future load balancers, explicitly size bandwidth and keep TLS Secret referen
 namespace as the load balancer configuration.
 
 
+## Staging composed infrastructure acceptance
+
+The [common Terraform layout](../engineering-design/24-environments-and-promotion.md#terraform-layout-for-each-environment)
+applies to all environments. Development retains its existing root and remote state. Production
+requires its own protected plan and approved apply after qualified composed staging acceptance.
+Both hosted deployments remain deferred.
+
+Composed source is implemented. Live qualification requires separate approval. Starting from shared non-production
+delivery/bootstrap and existing external Oracle SSO, verify that one protected Terraform plan
+and one approved apply of its exact saved plan provision staging-specific resources from one
+composed root and dedicated state. Record the plan hash, producer and apply runs, state scope
+and resulting resource checks. Manual staging-specific provisioning and separate security or
+platform applies do not qualify. See the [staging runbook](infrastructure-plans.md#staging-composed-plan-and-apply).
+
 ## Hosted startup and database qualification
 
 Pending staging: verify managed PostgreSQL DNS/CA chain and separate API/worker/migration grants; reject wrong CA/hostname and excessive runtime authority. Rehearse migration ownership, competing migration rejection, failure rollback and exact-schema readiness. Verify the migration role can apply migration 0030, including use of the supported `pg_trgm` extension and creation of the OCID search index, and the administrator cleanup receipt and corporate audit
@@ -656,7 +670,9 @@ smoke evidence for the development laptop. Identity details remain private.
 | --- | --- | --- |
 | New federated administrator | With an approved test identity absent from the domain, confirm the exact work login and both profile names, verify notification suppression, sign in through corporate federation, and verify no OCI resource permissions through the app group or automatic domain memberships. Remove and regrant the Atlas assignment while preserving the OCI account. | Pending in staging |
 | Hosted SSO and enrollment | Verify independent dev/staging clients, groups, redirects and Atlas grants, native-session denial, cross-replica callbacks, Vault credential rotation, independent recovery after restart, and exact membership changes with the OKE workload identity. Verify denial of unrelated writes and validate operation admission after revocation. | Pending in staging |
-| Development Terraform adoption | Review an additive GitHub plan for the inactive replacement and its assignment to the existing group. Verify secret exclusion, both policy bindings, and a no-change follow-up plan after approved creation. Preserve the original client until 8445 cutover passes. | Pending development infrastructure |
+| Development Terraform bootstrap | Qualify Terraform ownership for the compartment, state bucket, GitHub client and trust, scoped IAM and shared domain setting. Verify the exact GitHub workflow claims, restricted access and preservation of existing resource IDs. | Pending full bootstrap qualification |
+| Development Atlas browser client under local operator | Locked OCI provider 9.13.0 created an inactive, unassigned client, updated its description and produced a no-change refresh plan. Projected responses and inspected state/plans excluded credential fields with values. Cleanup verified. | Pass for local operator |
+| Development Terraform ownership | Review the complete environment plan for the Vault, software key, app, group, app grants, policies and rules. Prove credential and member-data exclusion, preserve existing access and confirm a no-change plan after approved adoption or creation. Qualify activation and 8445 cutover separately before retiring the original client. | Pending development infrastructure |
 
 See [chapter 26](../engineering-design/26-administrator-sso.md#local-milestone-and-hosted-handoff)
 for the milestone boundary and [the acceptance criteria](../engineering-design/26-administrator-sso.md#implementation-and-acceptance)
@@ -721,10 +737,10 @@ passed; unexercised variants and the remaining hosted/OCI boundaries are Pending
 
 ## Infrastructure plan/review/apply qualification
 
-Status: **Pending**. The [held plan/review/apply source](../reference/infrastructure-plans.md)
-includes a reviewed-plan consumer; the earlier plan-only checkpoint evidence retains its original
-scope. No environment is enabled, no live OCI apply or staging tests are qualified, no OCI resource
-was created and no saved Atlas data was changed by this source work.
+Status: **Pending for composed staging and production delivery**. The
+[plan/review/apply source](../reference/infrastructure-plans.md) includes a reviewed-plan consumer.
+Hosted deployment and staging acceptance remain unqualified. The earlier plan-only checkpoint
+and the local operator's development browser-client test retain their separate evidence scopes.
 
 | Case | Required hosted/OCI qualification | Status |
 | --- | --- | --- |

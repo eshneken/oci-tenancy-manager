@@ -29,8 +29,8 @@ Actions variables, a strict private renderer, automatic version/ARM/OS image dis
 staging selection required by production. The [managed database module](../how-to/managed-postgresql.md) now consumes its version input with
 private networking, Vault-reference provisioning, backup/PITR intent and replacement guards. Runtime
 roles, workflow provenance and live upgrade/recovery qualification remain pending. The
-[Vault custody security roots](../how-to/vault-foundation.md) now precede private secret ingestion and
-platform creation, with distinct state keys and no Terraform secret-content access.
+[Vault custody module](../how-to/vault-foundation.md) runs within each composed hosted root. Vault
+generates the initial PostgreSQL password and Terraform passes only its OCID and version to the DB.
 
 ## Keep the first build small
 
