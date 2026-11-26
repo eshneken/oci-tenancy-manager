@@ -43,7 +43,9 @@ identity separately, verify that account creation suppresses provider notificati
 that the Atlas app group confers no OCI resource permissions.
 Chapter 26 defines the [full acceptance matrix](../engineering-design/26-administrator-sso.md#implementation-and-acceptance).
 
-## OCI Console pilot sequence
+## Original OCI Console pilot sequence
+
+The original pilot used `otm-application-development`. The Terraform-managed development client uses `otm-sso-development`.
 
 1. In the non-production Default domain, prepare an identity-provider policy for
    `otm-application-development` that offers only the existing `Oracle SSO` provider. Prepare a
