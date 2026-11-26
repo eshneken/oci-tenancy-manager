@@ -16,7 +16,7 @@ is in [the engineering chapters](../engineering-design/README.md).
 - [Application settings and session cleanup](application-settings.md)
 - [Audit History read directory](audit-history.md)
 - [Session verification and request authorization](authentication.md)
-- [Atlas corporate sign-in, development client cutover and administrator onboarding](corporate-sso.md)
+- [Atlas corporate sign-in, Terraform ownership and administrator onboarding](corporate-sso.md)
 - [Baseline authoring and publication history](baseline-authoring.md)
 - [Configuration drift: read-only on-demand checks](configuration-drift.md)
 - [Selected configuration repair](configuration-repair.md), including

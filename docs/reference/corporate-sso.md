@@ -45,6 +45,9 @@ Chapter 26 defines the [full acceptance matrix](../engineering-design/26-adminis
 
 ## Original OCI Console pilot sequence
 
+The pilot used the following approved Console sequence. New OTM resources follow the
+[Terraform ownership design](../engineering-design/26-administrator-sso.md#development-terraform-ownership).
+
 The original pilot used `otm-application-development`. The Terraform-managed development client uses `otm-sso-development`.
 
 1. In the non-production Default domain, prepare an identity-provider policy for
@@ -143,25 +146,24 @@ Scope future IAM to each installation's cluster, namespace and Kubernetes servic
 account. Qualify Identity Domains operations using that workload identity before enabling
 hosted enrollment. The local API-key profile is unavailable to hosted runtimes.
 
-After the development pilot passes, manage each installation's OIDC client, app-assignment group,
-group-to-app assignment, app-specific identity-provider and sign-on policies, and qualified runtime
-authorization through Terraform. Use environment-owned state and separate client, group, callback
-and credential bindings for development, staging and production. Development and staging share
-the non-production domain's signing-key setting. Production owns its setting separately. See
-[Terraform ownership for signing keys](../engineering-design/26-administrator-sso.md#terraform-ownership-for-signing-keys)
-for import, verification and shared-domain impact. Reference the approved upstream federation
-without taking ownership of shared federation or the existing workload client.
+The [Terraform ownership design](../engineering-design/26-administrator-sso.md#development-terraform-ownership)
+puts all OTM-owned infrastructure in Terraform. The local operator bootstrap owns GitHub
+authentication and trust. Each environment build owns its OIDC app, app-only assignment group,
+group-to-app grants, app-specific policies and rules. The existing upstream corporate
+federation stays external. Atlas owns routine membership changes and its database grants.
 
 Use the Terraform [application registration metadata module](../../infra/modules/application-registration/main.tf)
-for integrated app and app-assignment group display names and descriptions. The module returns
-metadata strings. The development root creates a separate, inactive replacement client using
-the released provider's explicit response attributes. It also creates the assignment for the
-existing group. The original client, group members and Atlas grants continue serving the pilot
-until cutover. See the [staged cutover and approval steps](../how-to/laptop-oci-development.md#development-infrastructure-through-github-actions).
-Staging and production use their own clients and grants and remain a hosted milestone.
+for app and group descriptions. Candidate development source declares the app-only group,
+inactive replacement client, group-to-app grant, app-specific policies and rules. Adoption of
+existing resources and live permission and readback checks are pending. Preserve existing
+assignments and membership while qualifying Terraform ownership. See the [development rollout gates](../how-to/laptop-oci-development.md#development-infrastructure-through-github-actions).
 
-The pinned OCI provider 9.13.0 used default App reads during synthetic CLI and import-block
-tests, which persisted a fixture client secret. Use configured resource creation for the
-development replacement. Keep the original app outside state during the overlap. Group adoption
-still requires proving that administrator membership data stays out of state.
+Do not use the stock OCI provider to import an existing live confidential App, via either
+the CLI or an import block. Provider 9.13.0 used default App reads in synthetic tests and
+persisted a fixture client secret. Qualify a credential-free plan and state path before
+authorizing ownership changes. Group adoption must exclude individual member data
+and preserve effective access. Use separate environment-owned clients, groups, grants, redirects
+and credentials. Development and staging share the non-production domain signing-key setting.
+See [shared settings ownership](../engineering-design/26-administrator-sso.md#terraform-ownership-for-signing-keys).
+
 [Oracle App resource documentation](https://docs.oracle.com/en-us/iaas/tools/terraform-provider-oci/latest/docs/r/identity_domains_app.html)

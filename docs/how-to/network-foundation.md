@@ -1,6 +1,6 @@
 # Private network foundation
 
-**Implemented source; live OCI qualification Pending.** This guide covers the network definitions. The [OKE follow-up](oke-foundation.md) now adds cluster/node-pool source to both platform roots; a live platform apply would create worker VMs and the [managed PostgreSQL system](managed-postgresql.md). Optional [held Caddy/NLB source](caddy-ingress.md) is also available; application activation and live deployment remain separate work. No live resources were created during development. Do not infer working connectivity from mocks; the saved laptop app is unchanged.
+**Implemented source; live OCI qualification Pending.** This guide covers the network definitions. The [OKE follow-up](oke-foundation.md) now adds cluster/node-pool source to both composed infrastructure roots; a live infrastructure apply would create worker VMs and the [managed PostgreSQL system](managed-postgresql.md). Optional [held Caddy/NLB source](caddy-ingress.md) is also available; application activation and live deployment remain separate work. No live resources were created during development. Do not infer working connectivity from mocks; the saved laptop app is unchanged.
 
 Use the [hosting compartment renderer](hosting-compartment.md) to create private `hosting.tfvars.json`
 from `OTM_HOSTING_COMPARTMENT_OCID` before planning. All roots use that existing compartment; no child
@@ -19,9 +19,9 @@ still pass before opening the combined milestone PR. No saved Atlas snapshot was
 
 ## Layout and boundaries
 
-`infra/modules/networking` is composed by the fixed staging/production `platform` roots. Each
-uses its own hosting tenancy/compartment, provider identity and private OCI backend configuration.
-Bootstrap's state remains separate and local; never migrate it onto the platform key.
+The fixed staging and production `infrastructure` roots compose `infra/modules/networking`
+alongside custody, OKE and PostgreSQL. Each uses its own environment compartment, provider identity
+and private OCI backend. Operator bootstrap state remains separate and local.
 
 | Subnet | Relative allocation in an example `/16` | Intended attachment and routing |
 | --- | --- | --- |
@@ -90,62 +90,13 @@ command does not initialize Terraform, request credentials, deploy settings or c
 
 ## First live platform initialization — operator procedure
 
-The platform roots now include Enhanced OKE and worker VMs. Review the
-[OKE/bootstrap guide](oke-foundation.md) before live planning; this is no longer a network-only plan.
+Use the [composed infrastructure plan and apply](infrastructure-plans.md#one-infrastructure-plan-and-apply-per-environment).
+Review the exact approved compartment, private VCN and subnet layout, human HTTPS/API sources,
+empty security lists, OKE endpoint, worker image and database subnet/NSG in the same environment plan.
+Keep apply held until state, role, permission and resource effects are qualified. Reconcile any
+earlier platform state before using the composed backend.
 
-Live execution requires explicit approval and a qualified operator identity. This document is
-preparation, not authorization. Use staging first:
-
-1. Complete [state-bucket bootstrap](terraform-state-bootstrap.md). Independently verify the actual
-   tenancy/principal, existing hosting compartment ancestry, region and namespace. The hosting
-   compartment must match the bootstrap/security hosting compartment within this environment.
-   Namespace agreement and labels are not IAM proof.
-2. With `umask 077`, create a private operator-only directory outside the checkout for this
-   environment's platform metadata, inputs and plans. Copy the selected platform root's synthetic
-   `terraform.tfvars.example` there and replace target/VCN/profile and OKE OS/placement fields with approved inputs.
-   Supply approved environment-owned database administrator Vault references and explicit UTC backup/maintenance windows using the [database guide](managed-postgresql.md).
-   Render the protected OKE/PostgreSQL version variables with the [version guide](platform-versions.md)
-   into private `versions.tfvars.json`; production also needs its trusted staging image record.
-   The source example deliberately contains no app allowlist default; render that into a separate
-   private JSON file using the command above. Keep this list and all rendered application consumers
-   aligned through one reviewed source revision. No variable edit automatically changes either control. Render the required worker cloud-init secret into private `worker.tfvars.json` using the OKE/bootstrap guide; never use the synthetic fixture as a real bootstrap.
-3. Create a **private** `staging.tfbackend` with actual bucket/namespace/region and an explicitly
-   selected short-lived SecurityToken profile. The platform root fixes
-   `key = "platform/staging/terraform.tfstate"` and `auth = "SecurityToken"`; do not override its
-   state key or point it at bootstrap/production state. Production fixes its own
-   `platform/production/terraform.tfstate`, in its own bucket/namespace. Use the default Terraform
-   workspace only; these environments are different roots, not Terraform workspace names.
-4. Select private metadata paths and initialize the **staging platform root**, not bootstrap:
-
-   ```sh
-   umask 077
-   export OTM_PLATFORM_DIR=/absolute/private/path/otm-staging-platform
-   export TF_DATA_DIR="$OTM_PLATFORM_DIR/provider-data"
-   terraform -chdir=infra/environments/staging/platform init \
-     -input=false -lockfile=readonly \
-     -backend-config="$OTM_PLATFORM_DIR/staging.tfbackend"
-   terraform -chdir=infra/environments/staging/platform plan \
-     -input=false -var-file="$OTM_PLATFORM_DIR/target.tfvars" \
-  -var-file="$OTM_PLATFORM_DIR/hosting.tfvars.json" \
-     -var-file="$OTM_PLATFORM_DIR/network.tfvars.json" \
-     -var-file="$OTM_PLATFORM_DIR/worker.tfvars.json" \
-     -var-file="$OTM_PLATFORM_DIR/versions.tfvars.json" \
-     -out="$OTM_PLATFORM_DIR/platform.tfplan"
-   ```
-
-5. Review the exact saved plan privately. Do not publish raw plan/state/variables or run them in
-   public CI logs. Expect network, Enhanced cluster and private ARM node-pool changes, closed lists and exact human HTTPS/API sources. The API endpoint is public but source-restricted. Managed PostgreSQL creation is included, with the exact database subnet/NSG. No app load balancer is included. Treat worker cloud-init as a secret-bearing root script. Do not apply if scope, state key, pins, address plan or approved input fingerprints differ.
-6. After approval, apply the exact reviewed plan through the owned operator process. Read back
-   subnet flags, route destinations and both empty lists. Prove remote locking with competing
-   writers, version recovery and interruption recovery before enabling automated infra delivery.
-   Keep the independent bootstrap state protected; no bootstrap-state migration is included here.
-7. Qualify OKE endpoint/NSG/IMDS/placement and ARM sensor health using the OKE guide. Qualify full app ingress denial/allow rules after the next slice attaches the load balancer; the managed database source now attaches its exact subnet/NSG. Test UI/API from allowed and unapproved sources, forwarded headers,
-   alternate public paths, IPv6, additive/controller rules, private database source identity and
-   lockout-safe allowlist changes. Do not mark a non-listening endpoint as proof of correct filtering.
-
-Backend configuration and provider authentication are separate consumers; both require explicit
-approved credentials. Future federation must not silently fall back to a different principal.
-Do not override the backend's fixed key/auth using an arbitrary user-supplied file in automation;
-delivery validation must inspect that private input before credentials are obtained. Native mocks
-do not verify backend settings, locking or IAM. Follow the [OCI backend documentation](https://developer.hashicorp.com/terraform/language/backend/oci)
-and retain live evidence privately in the [test manifest](real-oci-test-manifest.md#network-foundation).
+After approved apply, read back route destinations, subnet flags and effective security rules.
+Exercise allowed and denied paths, additive/controller rules, IPv6, private database source scope,
+OKE IMDSv1 refusal and ARM sensor health. These are live exercises. Retain evidence in the
+[network qualification manifest](real-oci-test-manifest.md#network-foundation).

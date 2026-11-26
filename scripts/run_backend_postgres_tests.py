@@ -7,6 +7,7 @@ import secrets
 import subprocess
 import tempfile
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from uuid import uuid4
 from xml.etree.ElementTree import ParseError
@@ -202,39 +203,64 @@ def main() -> int:
         env["OTM_BACKEND_TEST_DATABASE_URL"] = (
             f"postgresql+psycopg://otm_test:{password}@127.0.0.1:{port}/otm_backend_test"
         )
-        result = run_python_group(
-            [
-                "-m",
-                "pytest",
-                "-q",
-                # The independently required unit/coverage gate owns non-database tests.
-                "-m",
-                "postgres",
-                "--tb=short",
-                "--junitxml=" + str(directory / "junit.xml"),
-                "--basetemp=" + str(directory / "tmp"),
-            ],
-            cwd=ROOT,
-            env=env,
-            # The 7 November approval raises only the aggregate integration budget to 15 minutes.
-            # Individual browser, database and I/O limits remain independently bounded.
-            timeout=900,
-        )
-        (directory / "pytest.log").write_text(
-            result.stdout.replace(password, "[REDACTED]")
-        )
+        # The installer module owns separate containers and loopback ports. Keep its ordered
+        # scenarios together while the remaining suite uses the shared migrated test database.
+        installer = "tests/test_sandbox_runtime_postgres.py"
+        lanes = {"database": ["--ignore=" + installer], "installer": [installer]}
+        deadline = time.monotonic() + 900
+
+        # Bound both processes by the original aggregate deadline and isolate all private output.
+        def run_lane(name, selection):
+            lane_env = env.copy()
+            if name == "installer":
+                lane_env.pop("OTM_BACKEND_TEST_DATABASE_URL")
+            return run_python_group(
+                [
+                    "-m",
+                    "pytest",
+                    "-q",
+                    "-m",
+                    "postgres",
+                    "--tb=short",
+                    *selection,
+                    "--junitxml=" + str(directory / (name + ".xml")),
+                    "--basetemp=" + str(directory / "tmp" / name),
+                ],
+                cwd=ROOT,
+                env=lane_env,
+                timeout=max(0, deadline - time.monotonic()),
+            )
+
+        (directory / "tmp").mkdir()
+        with ThreadPoolExecutor(max_workers=len(lanes)) as pool:
+            futures = {
+                name: pool.submit(run_lane, name, selection)
+                for name, selection in lanes.items()
+            }
+            results = {name: future.result() for name, future in futures.items()}
+        cases = []
         evidence_valid = True
-        try:
-            cases = list(ElementTree.parse(directory / "junit.xml").iter("testcase"))
-        except (OSError, ParseError, DefusedXmlException):
-            cases, evidence_valid = [], False
+        for name, result in results.items():
+            (directory / (name + ".log")).write_text(
+                result.stdout.replace(password, "[REDACTED]")
+            )
+            try:
+                lane_cases = list(
+                    ElementTree.parse(directory / (name + ".xml")).iter("testcase")
+                )
+                evidence_valid = evidence_valid and bool(lane_cases)
+                cases.extend(lane_cases)
+            except (OSError, ParseError, DefusedXmlException):
+                evidence_valid = False
         counts = {
             kind: sum(case.find(kind) is not None for case in cases)
             for kind in ("failure", "error", "skipped")
         }
         passed = (
-            result.returncode == 0
-            and not result.timed_out
+            all(
+                result.returncode == 0 and not result.timed_out
+                for result in results.values()
+            )
             and evidence_valid
             and bool(cases)
             and not any(counts.values())
@@ -246,8 +272,10 @@ def main() -> int:
             "browser_failure_locations": browser_failure_locations(cases),
             "tests": len(cases),
             **counts,
-            "pytest_exit": result.returncode,
-            "timed_out": result.timed_out,
+            "pytest_exit": {
+                name: result.returncode for name, result in results.items()
+            },
+            "timed_out": any(result.timed_out for result in results.values()),
             "valid_test_evidence": evidence_valid and bool(cases),
             "database": "disposable Docker PostgreSQL 18.7",
             "persistent_database_used": False,

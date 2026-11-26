@@ -22,11 +22,7 @@ on:
         description: I confirm the referenced staging deployment passed the required tests.
         type: boolean
         default: false
-      component:
-        description: Existing production Terraform root for a plan or its separately reviewed apply.
-        required: true
-        type: choice
-        options: [security, platform]
+
 
 permissions:
   contents: read
@@ -80,10 +76,8 @@ jobs:
           OTM_INFRASTRUCTURE_APPLY_ENABLED: ${{ vars.OTM_INFRASTRUCTURE_APPLY_ENABLED || 'false' }}
           # Enable only after production-specific protection, trust and IAM are qualified.
           OTM_INFRASTRUCTURE_ENABLED: ${{ vars.OTM_INFRASTRUCTURE_ENABLED || 'false' }}
-          # Fixed-root choice, never interpolated into executable shell code or file paths.
-          OTM_COMPONENT: ${{ inputs.component }}
           # Production's own private inputs/state; never copy staging settings or plan bytes.
-          OTM_INFRASTRUCTURE_INPUTS_JSON: ${{ inputs.component == 'security' && secrets.OTM_SECURITY_INPUTS_JSON || secrets.OTM_PLATFORM_INPUTS_JSON }}
+          OTM_INFRASTRUCTURE_INPUTS_JSON: ${{ secrets.OTM_INFRASTRUCTURE_INPUTS_JSON }}
           # Restricted production OAuth client; no identity-domain administrator role at runtime.
           OTM_INFRA_IDENTITY_DOMAIN_URL: ${{ secrets.OTM_INFRA_IDENTITY_DOMAIN_URL }}
           # Production exchange client ID: 1-8192 characters without CR/LF, not a bootstrap client.
@@ -103,10 +97,10 @@ jobs:
         run: |
           case "$OTM_OPERATION" in
             plan)
-              uv run --project backend python -m otm.infrastructure_plan --environment production --component "$OTM_COMPONENT"
+              uv run --project backend python -m otm.infrastructure_plan --environment production --component infrastructure
               ;;
             apply)
-              uv run --project backend python -m otm.infrastructure_apply --environment production --component "$OTM_COMPONENT" --plan-run-id "$OTM_PLAN_RUN_ID" --reviewed-plan-sha256 "$OTM_REVIEWED_PLAN_SHA256" --staging-run-id "$OTM_STAGING_APPLY_RUN_ID" --staging-tests-confirmed "$OTM_STAGING_TESTS_CONFIRMED"
+              uv run --project backend python -m otm.infrastructure_apply --environment production --component infrastructure --plan-run-id "$OTM_PLAN_RUN_ID" --reviewed-plan-sha256 "$OTM_REVIEWED_PLAN_SHA256" --staging-run-id "$OTM_STAGING_APPLY_RUN_ID" --staging-tests-confirmed "$OTM_STAGING_TESTS_CONFIRMED"
               ;;
             *) exit 2 ;;
           esac

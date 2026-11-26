@@ -15,11 +15,7 @@ on:
       reviewed_plan_sha256:
         description: SHA-256 of the privately reviewed binary plan; required only for apply.
         type: string
-      component:
-        description: Existing staging Terraform root to plan/apply; state bootstrap remains an operator task.
-        required: true
-        type: choice
-        options: [security, platform]
+
 
 permissions:
   contents: read
@@ -70,19 +66,17 @@ jobs:
           OTM_INFRASTRUCTURE_APPLY_ENABLED: ${{ vars.OTM_INFRASTRUCTURE_APPLY_ENABLED || 'false' }}
           # Must be deliberately enabled after environment protection, trust and IAM qualification.
           OTM_INFRASTRUCTURE_ENABLED: ${{ vars.OTM_INFRASTRUCTURE_ENABLED || 'false' }}
-          # Choice values are data; Python independently allowlists the fixed root.
-          OTM_COMPONENT: ${{ inputs.component }}
           # JSON references/settings only; private plan/source values never enter a GitHub artifact.
-          OTM_INFRASTRUCTURE_INPUTS_JSON: ${{ inputs.component == 'security' && secrets.OTM_SECURITY_INPUTS_JSON || secrets.OTM_PLATFORM_INPUTS_JSON }}
+          OTM_INFRASTRUCTURE_INPUTS_JSON: ${{ secrets.OTM_INFRASTRUCTURE_INPUTS_JSON }}
           # Environment-specific confidential client without identity-domain administrator roles.
           OTM_INFRA_IDENTITY_DOMAIN_URL: ${{ secrets.OTM_INFRA_IDENTITY_DOMAIN_URL }}
           # Restricted exchange client ID: 1-8192 characters, no CR/LF; never an administrator client.
           OTM_INFRA_CLIENT_ID: ${{ secrets.OTM_INFRA_CLIENT_ID }}
           # Matching protected environment credential: 1-8192 characters without CR/LF; never logged.
           OTM_INFRA_CLIENT_SECRET: ${{ secrets.OTM_INFRA_CLIENT_SECRET }}
-          # Existing single hosting compartment shared by this environment's separate roots.
+          # Protected hosting compartment created by the delivery foundation.
           OTM_HOSTING_COMPARTMENT_OCID: ${{ secrets.OTM_HOSTING_COMPARTMENT_OCID }}
-          # Reuse the protected shared application/recovery-console CIDR input; platform root only.
+          # Reuse the protected shared application/recovery-console CIDR input; hosted deployments only.
           OTM_ALLOWED_SOURCE_CIDRS: ${{ secrets.OTM_ALLOWED_SOURCE_CIDRS }}
           # Exact reviewed platform versions; no floating or implicit latest selection.
           OTM_OKE_KUBERNETES_VERSION: ${{ vars.OTM_OKE_KUBERNETES_VERSION }}
@@ -93,10 +87,10 @@ jobs:
         run: |
           case "$OTM_OPERATION" in
             plan)
-              uv run --project backend python -m otm.infrastructure_plan --environment staging --component "$OTM_COMPONENT"
+              uv run --project backend python -m otm.infrastructure_plan --environment staging --component infrastructure
               ;;
             apply)
-              uv run --project backend python -m otm.infrastructure_apply --environment staging --component "$OTM_COMPONENT" --plan-run-id "$OTM_PLAN_RUN_ID" --reviewed-plan-sha256 "$OTM_REVIEWED_PLAN_SHA256"
+              uv run --project backend python -m otm.infrastructure_apply --environment staging --component infrastructure --plan-run-id "$OTM_PLAN_RUN_ID" --reviewed-plan-sha256 "$OTM_REVIEWED_PLAN_SHA256"
               ;;
             *) exit 2 ;;
           esac

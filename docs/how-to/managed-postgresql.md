@@ -30,15 +30,13 @@ increasing capacity. There is no backup-volume allocation to size as a disk; ret
 
 ## Required private inputs
 
-Both platform roots require `database_administrator` and `database` alongside the existing private
+Both composed hosted infrastructure roots require `database_administrator` and `database` alongside the existing private
 network, version, OKE/bootstrap and target inputs. Synthetic examples are in their
 `terraform.tfvars.example`; actual secret references and deployment coordinates stay outside Git.
 
 | Field | Meaning / bounds |
 | --- | --- |
 | `database_administrator.username` | Provisioning role: lowercase letter followed by lowercase letters/digits/underscores, 1–63 characters; common service-reserved names are rejected |
-| `database_administrator.secret_ocid` | Existing environment-owned Vault secret OCID; reference only |
-| `database_administrator.secret_version` | Explicit positive integer version string; no CURRENT/latest alias |
 | `database.instance_count` | Integer 2–3, default 2 |
 | `database.ocpus` | Integer 1–8 per node, default 1 |
 | `database.memory_gib` | Integer 16–128 per node and at most 64/OCPU, default 16 |
@@ -50,15 +48,12 @@ The module emits service-compatible time strings with seconds/timezone (`02:00:0
 `SUN 04:00:00Z`). Example windows are provisional operator choices, not claims that maintenance
 cannot overrun or overlap backup activity.
 
-The authorized operator must create a strong administrator password in that environment's database-provisioning Vault
-through an approved secret-ingestion procedure. Before planning/applying, verify the approved
-requester group has the scoped secret-family/Vault reads; the custodian separately needs ingestion
-and key-use authority. Do not add a speculative PostgreSQL service-principal or direct decrypt grant. The [Vault custody foundation](vault-foundation.md) now creates separate Vaults/keys in the existing hosting compartment and an exact-Vault-conditioned
-requester read policy before platform creation. The custodian must still ingest the
-secret privately; references alone do not prove effective grants or that it belongs to the right tenancy.
-Do not put a password, secret bundle, `TF_VAR` plaintext password or raw connection URI in Terraform.
-The database module never reads the secret value into state. Sensitive outputs are redacted, not
-encrypted; private state/plan custody remains mandatory, including existing worker cloud-init.
+The composed root generates the provisioning secret in its own database-provisioning Vault.
+It sends the secret OCID and explicit initial version `1` to the PostgreSQL module. The protected
+workflow inputs supply the administrator username and database settings. Before a live apply,
+qualify the workflow's effective Vault/key and PostgreSQL permissions, OCI password constraints and
+secret-version readiness. Terraform does not read the password payload. Keep saved plans and state
+private, including worker cloud-init. See the [Vault foundation](vault-foundation.md#composed-hosting-design).
 
 These are **initial database provisioning credentials**, not the application login. Runtime API,
 worker and migration roles, grants, secrets and connection-pool configuration are a separate slice.

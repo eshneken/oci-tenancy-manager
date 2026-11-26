@@ -8,7 +8,7 @@ mock_provider "oci" {
 variables {
   environment                     = "staging"
   hosting_compartment_ocid        = "ocid1.compartment.oc1..synthetichosting"
-  database_provisioner_group_ocid = "ocid1.group.oc1..syntheticprovisioners"
+  database_provisioner_group_name = "otm-staging-database-provisioners"
 }
 run "seed_mock_key" { command = apply }
 run "reject_key_replacement" {

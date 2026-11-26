@@ -6,6 +6,8 @@ repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_dir"
 
 terraform fmt -check -recursive infra
+uv run --locked --project infra/modules/github-environment python -m unittest discover \
+  -s infra/modules/github-environment/tests -p 'test_*.py'
 for root in \
   infra/environments/development/bootstrap \
   infra/environments/development/infrastructure \
@@ -18,10 +20,12 @@ for root in \
   infra/modules/secret-foundation \
   infra/modules/workload-vault-access \
   infra/modules/application-registration \
-  infra/environments/staging/security \
-  infra/environments/production/security \
-  infra/environments/staging/platform \
-  infra/environments/production/platform; do
+  infra/modules/oci-delivery-foundation \
+  infra/modules/github-environment \
+  infra/modules/atlas-sso \
+  infra/modules/atlas-sign-in-policies \
+  infra/environments/staging/infrastructure \
+  infra/environments/production/infrastructure; do
   # Do not initialize a real state backend or permit dependency-lock rewrites in a check.
   terraform -chdir="$root" init -backend=false -lockfile=readonly -input=false -no-color
   terraform -chdir="$root" validate -no-color

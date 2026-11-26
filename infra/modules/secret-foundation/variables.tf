@@ -14,12 +14,11 @@ variable "hosting_compartment_ocid" {
     error_message = "Provide the existing hosting compartment OCID."
   }
 }
-# Existing privileged credential-reader group, verified in this environment's tenancy by the operator.
-# This grants database administrator secret reads, not secret ingestion/rotation or application access.
-variable "database_provisioner_group_ocid" {
+# Canonical group owned in this environment's Default domain. Exact equality fences policy text.
+variable "database_provisioner_group_name" {
   type = string
   validation {
-    condition     = can(regex("^ocid1[.]group[.][a-z0-9]+[.][a-z0-9-]*[.][a-z0-9]+$", var.database_provisioner_group_ocid))
-    error_message = "Provide an approved existing OCI group OCID; policy text/names are not accepted."
+    condition     = var.database_provisioner_group_name == "otm-${var.environment}-database-provisioners"
+    error_message = "Supply this environment's managed database provisioner group name."
   }
 }

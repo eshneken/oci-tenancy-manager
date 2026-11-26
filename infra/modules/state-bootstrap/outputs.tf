@@ -7,7 +7,7 @@ output "state_backend" {
     bucket    = oci_objectstorage_bucket.state.name
     namespace = oci_objectstorage_bucket.state.namespace
     region    = var.target.region
-    key       = "${var.expected_environment == "development" ? "custody" : "platform"}/${var.expected_environment}/terraform.tfstate"
+    key       = "${var.expected_environment == "development" ? "custody" : "infrastructure"}/${var.expected_environment}/terraform.tfstate"
   }
 }
 

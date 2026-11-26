@@ -1,0 +1,23 @@
+# Synthetic operator inputs. Supply actual coordinates only in a private configuration file.
+target = {
+  environment              = "development"
+  tenancy_ocid             = "ocid1.tenancy.oc1..syntheticdevelopment"
+  object_storage_namespace = "syntheticdevelopment"
+  region                   = "us-ashburn-1"
+}
+oci_profile                 = "SYNTHETIC_DEVELOPMENT"
+github_identity_domain_ocid = "ocid1.domain.oc1..syntheticdevelopment"
+github_repository           = "example/tenancy-manager"
+github_delivery = {
+  repository_id       = "1001"
+  repository_owner_id = "1002"
+  existing_trust_id        = "22222222222222222222222222222222"
+  existing_exchange_app_id = "11111111111111111111111111111111"
+  trust_active        = true
+}
+
+# GitHub reviewer IDs and settings filename are synthetic. Fresh deployments start held.
+github_environment = {
+  reviewer_user_ids = [1003]
+  settings_file     = "development-workflow.json"
+}

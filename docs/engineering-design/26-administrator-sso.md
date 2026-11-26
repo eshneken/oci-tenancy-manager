@@ -227,22 +227,37 @@ until a supported claim or mapping is qualified. [Oracle issuer settings](https:
 
 ## Development Terraform ownership
 
-Run one local operator bootstrap to establish the development compartment, state bucket and
-GitHub federation prerequisites. After bootstrap, **Development infrastructure** is the single
-GitHub Actions Terraform build for development. Use one root, state, plan and apply for the
-Vault, software key, development Atlas application, assignment group, app grant, app-specific
-policies and other development resources. Modules can organize the resources within that root.
-Extend the existing root at `infra/environments/development/infrastructure` and preserve the existing
-`custody/development/terraform.tfstate` key so previously created resources keep their state
-addresses. The local bootstrap currently owns the laptop enrollment IAM policy. Review its
-ownership and migration as part of adopting development identity resources.
+The target is Terraform ownership of all OTM-created infrastructure. The existing upstream corporate identity
+federation is an external dependency. Reference its existing binding without taking ownership
+of the corporate federation. During migration, development bootstrap verifies the existing GitHub exchange client by immutable GUID. The released provider cannot safely import that confidential client, so it remains reference-only pending qualified adoption or an approved cutover.
 
-The development client cutover uses a fresh confidential app in the same root, with Oracle's
-released provider. The existing assignment group and its memberships, database grants, policies
-and original client stay in place during testing. Create an inactive replacement and a separate
-group-to-app assignment first. Review activation, runtime credential handoff and retirement in
-separate steps. See the [development runbook](../how-to/laptop-oci-development.md#development-infrastructure-through-github-actions).
-Other existing resources still require separate adoption qualification and a zero-change plan.
+| Terraform owner | Scope |
+| --- | --- |
+| Local operator bootstrap | Development compartment, state bucket, GitHub token-exchange client and trust configuration, scoped IAM, and the shared non-production domain signing-key setting. Reconcile the existing development laptop enrollment IAM in its owning state. |
+| Development infrastructure GitHub Actions workflow | One development root and state for the Vault and software key, Atlas OIDC app, app-only assignment group, group-to-app grants, app-specific identity-provider and sign-on policies and their rules. |
+| Atlas runtime | Administrator grants in PostgreSQL and individual membership in the Terraform-owned app-only group. |
+
+Keep the post-bootstrap root at `infra/environments/development/infrastructure` and its existing
+`custody/development/terraform.tfstate` key. Adopt existing OTM groups, app grants and policies
+by immutable ID after qualifying their provider import and refresh behavior. Preserve the group
+and its members, existing app assignments, Atlas grants, and the client currently serving
+8445 throughout qualification. Terraform manages group configuration and group-to-app grants.
+Atlas add, remove and regrant operations remain the normal path for individual membership changes.
+
+The current source manages the state bucket and scoped IAM in bootstrap, and the Vault and
+software key in the development root. Candidate development source also declares the group,
+inactive client, group assignment, app-specific policies and rules, using the existing corporate
+IdP reference. Bootstrap declares the compartment, GitHub trust resources and domain setting.
+Adoption and the required live permission and trust checks remain pending. Verify that existing
+resources can be reconciled without replacement,
+disassociation, credential persistence, or membership changes. The prior limited app-and-assignment
+plan is superseded. Adopt the [common environment layout](24-environments-and-promotion.md#terraform-layout-for-each-environment)
+without migrating the existing development state key.
+
+An inactive replacement client remains a candidate when provider import would expose the original
+client credentials. Qualify the replacement with the locked provider and the complete ownership
+plan. Activation, private runtime credential handoff, and retirement remain independently
+reviewed steps. Follow the [development runbook](../how-to/laptop-oci-development.md#development-infrastructure-through-github-actions).
 
 ## Terraform ownership for signing keys
 

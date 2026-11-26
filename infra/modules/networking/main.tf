@@ -1,7 +1,7 @@
 # Different prefix sizes leave deterministic disjoint ranges for regional subnets.
 locals {
   name = "otm-${var.environment}"
-  tags = { "otm.environment" = var.environment, "otm.component" = "networking" }
+  tags = { "otm-environment" = var.environment, "otm-component" = "networking" }
   subnets = {
     edge     = { cidr = cidrsubnet(var.vcn_cidr, 8, 0), route = "edge" }
     api      = { cidr = cidrsubnet(var.vcn_cidr, 8, 1), route = "edge" }

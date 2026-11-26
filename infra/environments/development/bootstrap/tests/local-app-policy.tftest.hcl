@@ -1,33 +1,62 @@
-# Exercise the proposed Identity Domains policy without a live signer or OCI access.
+# Verify that the development signer and policy are independent of Atlas group creation.
 mock_provider "oci" {
-  mock_data "oci_identity_compartment" {
-    defaults = {
-      name           = "otm-development"
-      compartment_id = "ocid1.tenancy.oc1..synthetic"
-      state          = "ACTIVE"
-    }
+  override_during = plan
+
+  mock_resource "oci_identity_compartment" {
+    defaults = { id = "ocid1.compartment.oc1..synthetic", state = "ACTIVE" }
   }
   mock_data "oci_objectstorage_namespace" {
     defaults = { namespace = "syntheticnamespace" }
+  }
+  mock_resource "oci_identity_domains_app" {
+    defaults = { name = "synthetic-exchange-development" }
   }
   mock_data "oci_identity_domain" {
     defaults = {
       compartment_id = "ocid1.tenancy.oc1..synthetic"
       display_name   = "Default"
+      url            = "https://idcs-syntheticdevelopment.identity.oraclecloud.com"
       state          = "ACTIVE"
     }
   }
-  mock_data "oci_identity_group" {
-    defaults = {
-      compartment_id = "ocid1.tenancy.oc1..synthetic"
-      state          = "ACTIVE"
-    }
+  mock_resource "oci_identity_user" {
+    defaults = { id = "ocid1.user.oc1..syntheticsigner" }
+  }
+  mock_resource "oci_identity_group" {
+    defaults = { id = "ocid1.group.oc1..syntheticwriter" }
+  }
+}
+
+mock_provider "github" {}
+mock_provider "external" {}
+override_module {
+  target = module.github_environment
+}
+# Exercise the mandatory Settings import without calling OCI.
+override_resource {
+  target          = module.delivery.oci_identity_domains_setting.signing_keys[0]
+  override_during = plan
+  values = {
+    id                         = "Settings"
+    csr_access                 = "none"
+    signing_cert_public_access = true
   }
 }
 
 variables {
+  github_environment = {
+    reviewer_user_ids  = [1003]
+    settings_file      = "synthetic.json"
+    kubernetes_version = "v1.34.1"
+    postgresql_version = "16"
+  }
+  github_delivery = {
+    exchange_write_response_qualified = true
+    trust_active                      = false
+    repository_id                     = "1001"
+    repository_owner_id               = "1002"
+  }
   oci_profile                 = "SYNTHETIC_DEVELOPMENT"
-  hosting_compartment_ocid    = "ocid1.compartment.oc1..synthetic"
   github_identity_domain_ocid = "ocid1.domain.oc1..synthetic"
   github_repository           = "example/tenancy-manager"
   target = {
@@ -38,78 +67,54 @@ variables {
   }
 }
 
-override_data {
-  target = data.oci_identity_group.local_app_writer[0]
-  values = {
-    name           = "otm-development-localapp"
-    compartment_id = "ocid1.tenancy.oc1..synthetic"
-    state          = "ACTIVE"
-  }
-}
-
-override_data {
-  target = data.oci_identity_group.local_app_assignment[0]
-  values = {
-    name           = "otm-development-users"
-    compartment_id = "ocid1.tenancy.oc1..synthetic"
-    state          = "ACTIVE"
-  }
-}
-
 run "defaults_do_not_grant_laptop_permissions" {
   command = plan
   assert {
-    condition     = length(oci_identity_policy.local_app) == 0
-    error_message = "An existing bootstrap must not acquire a laptop writer grant by default."
+    condition = (
+      length(oci_identity_user.local_app) == 0 &&
+      length(oci_identity_group.local_app_writer) == 0 &&
+      length(oci_identity_user_group_membership.local_app) == 0 &&
+      length(oci_identity_api_key.local_app) == 0 &&
+      length(oci_identity_policy.local_app) == 0
+    )
+    error_message = "A bootstrap creates the development signer, attachment, key, and policy only when requested."
   }
 }
 
-run "laptop_membership_policy_targets_only_the_selected_group" {
+run "laptop_signer_preserves_the_approved_policy" {
   command = plan
+
   variables {
     local_app_iam = {
-      domain_ocid           = "ocid1.domain.oc1..synthetic"
-      writer_group_ocid     = "ocid1.group.oc1..writer"
-      assignment_group_ocid = "ocid1.group.oc1..assignment"
+      domain_ocid            = "ocid1.domain.oc1..synthetic"
+      signing_public_key_pem = "-----BEGIN PUBLIC KEY-----\nU1lOVEhFVElD\n-----END PUBLIC KEY-----"
     }
   }
+
+  assert {
+    condition = (
+      oci_identity_user.local_app[0].name == "otm-development-localapp" &&
+      oci_identity_user.local_app[0].compartment_id == var.target.tenancy_ocid &&
+      oci_identity_group.local_app_writer[0].name == "otm-development-localapp" &&
+      oci_identity_group.local_app_writer[0].compartment_id == var.target.tenancy_ocid &&
+      oci_identity_user_group_membership.local_app[0].user_id == oci_identity_user.local_app[0].id &&
+      oci_identity_user_group_membership.local_app[0].group_id == oci_identity_group.local_app_writer[0].id &&
+      oci_identity_api_key.local_app[0].user_id == oci_identity_user.local_app[0].id &&
+      trimspace(oci_identity_api_key.local_app[0].key_value) == var.local_app_iam.signing_public_key_pem
+    )
+    error_message = "The bootstrap must attach the named signer to its own root group and upload only its public key."
+  }
+
   assert {
     condition = (
       oci_identity_policy.local_app[0].name == "otm-development-localapp" &&
       oci_identity_policy.local_app[0].compartment_id == var.target.tenancy_ocid &&
-      length(oci_identity_policy.local_app[0].statements) == 2 &&
-      alltrue([for statement in oci_identity_policy.local_app[0].statements :
-        startswith(statement, "Allow group Default/otm-development-localapp to ") &&
-        (strcontains(statement, "target.resource.domain.name = 'Default'") || contains([
-          "Allow group Default/otm-development-localapp to inspect users in tenancy",
-        ], statement) || (strcontains(statement, " to use ") || strcontains(statement, " to use groups ")))
+      toset(oci_identity_policy.local_app[0].statements) == toset([
+        "Allow group Default/otm-development-localapp to use groups in tenancy",
+        "Allow group Default/otm-development-localapp to use users in tenancy",
       ])
     )
-    error_message = "Every grant must use the selected signer group. Only native inspection and membership may omit the domain."
-  }
-  assert {
-    condition = one([for statement in oci_identity_policy.local_app[0].statements :
-      statement if strcontains(statement, " to use users ")
-    ]) == "Allow group Default/otm-development-localapp to use users in tenancy"
-    error_message = "User update permission is scoped to the selected tenancy."
-  }
-  assert {
-    condition = (
-      length([for statement in oci_identity_policy.local_app[0].statements :
-        statement if strcontains(statement, " to use groups ")
-      ]) == 1 &&
-      alltrue([for statement in oci_identity_policy.local_app[0].statements :
-        !strcontains(statement, "request.operation") &&
-        !strcontains(statement, "target.group")
-        if strcontains(statement, " to use groups ")
-      ]) &&
-      alltrue([for statement in oci_identity_policy.local_app[0].statements :
-        !strcontains(statement, "CreateUser") && !strcontains(statement, "DELETE") &&
-        !strcontains(statement, "request.permission") &&
-        !strcontains(statement, "organizations-")
-      ])
-    )
-    error_message = "Group updates must stay scoped to the verified assignment group and domain."
+    error_message = "Preserve the two approved membership permissions on the verified signer group."
   }
 }
 
@@ -118,8 +123,7 @@ run "user_creation_requires_an_explicit_opt_in" {
   variables {
     local_app_iam = {
       domain_ocid            = "ocid1.domain.oc1..synthetic"
-      writer_group_ocid      = "ocid1.group.oc1..writer"
-      assignment_group_ocid  = "ocid1.group.oc1..assignment"
+      signing_public_key_pem = "-----BEGIN PUBLIC KEY-----\nU1lOVEhFVElD\n-----END PUBLIC KEY-----"
       create_federated_users = true
     }
   }
@@ -131,34 +135,33 @@ run "user_creation_requires_an_explicit_opt_in" {
   }
 }
 
-run "writer_and_assignment_groups_must_be_distinct" {
+run "reject_private_key_material" {
   command = plan
   variables {
     local_app_iam = {
-      domain_ocid           = "ocid1.domain.oc1..synthetic"
-      writer_group_ocid     = "ocid1.group.oc1..writer"
-      assignment_group_ocid = "ocid1.group.oc1..writer"
+      domain_ocid            = "ocid1.domain.oc1..synthetic"
+      signing_public_key_pem = "not a public key"
     }
   }
   expect_failures = [var.local_app_iam]
 }
 
-run "wrong_assignment_group_is_rejected" {
+run "reject_unrelated_domain" {
   command = plan
   variables {
     local_app_iam = {
-      domain_ocid           = "ocid1.domain.oc1..synthetic"
-      writer_group_ocid     = "ocid1.group.oc1..writer"
-      assignment_group_ocid = "ocid1.group.oc1..assignment"
+      domain_ocid            = "ocid1.domain.oc1..unrelated"
+      signing_public_key_pem = "-----BEGIN PUBLIC KEY-----\nU1lOVEhFVElD\n-----END PUBLIC KEY-----"
     }
   }
   override_data {
-    target = data.oci_identity_group.local_app_assignment[0]
+    target = data.oci_identity_domain.local_app_domain[0]
     values = {
-      name           = "otm-staging-users"
-      compartment_id = "ocid1.tenancy.oc1..synthetic"
+      compartment_id = "ocid1.tenancy.oc1..unrelated"
+      display_name   = "Default"
+      url            = "https://idcs-syntheticdevelopment.identity.oraclecloud.com"
       state          = "ACTIVE"
     }
   }
-  expect_failures = [data.oci_identity_group.local_app_assignment]
+  expect_failures = [data.oci_identity_domain.local_app_domain]
 }

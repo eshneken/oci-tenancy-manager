@@ -31,26 +31,19 @@ ROOT = Path(__file__).resolve().parents[3]
 # Standard exchange protocol identifiers are metadata, never token or credential values.
 RPST_TYPE_URN = "urn:oci:token-type:oci-rpst"
 JWT_TYPE = "jwt"
-ENVIRONMENT_COMPONENTS = {
-    "development": {"infrastructure"},
-    "staging": {"security", "platform"},
-    "production": {"security", "platform"},
+ENVIRONMENTS = ("development", "staging", "production")
+COMPONENT = "infrastructure"
+BASE_FIELDS = {"target", "atlas_sso"}
+HOSTED_FIELDS = BASE_FIELDS | {
+    "vcn_cidr",
+    "oke",
+    "database_administrator",
+    "database",
+    "qualified_node_image",
+    "smtp_egress",
+    "caddy_ingress_enabled",
 }
-COMPONENT_FIELDS = {
-    "infrastructure": {"target", "atlas_sso"},
-    "security": {"target", "database_provisioner_group_ocid"},
-    "platform": {
-        "target",
-        "vcn_cidr",
-        "oke",
-        "database_administrator",
-        "database",
-        "application_vault_ocid",
-        "qualified_node_image",
-        "smtp_egress",
-        "caddy_ingress_enabled",
-    },
-}
+GROUP_OCID = re.compile(r"ocid1[.]group[.]oc1[.][a-z0-9-]*[.][a-z0-9]{1,220}")
 
 
 # Only code-defined stage names and normalized HTTP statuses may cross the log boundary.
@@ -117,7 +110,7 @@ def canonical(value):
 # Require the fixed workflow/environment and explicit enablement before generating or fetching
 # secrets.
 def context(environment, component, values):
-    if component not in ENVIRONMENT_COMPONENTS.get(environment, ()):
+    if environment not in ENVIRONMENTS or component != COMPONENT:
         raise ValueError("FIXED_INFRASTRUCTURE_TARGET_REQUIRED")
     repository = values.get("GITHUB_REPOSITORY", "")
     source = values.get("GITHUB_SHA", "")
@@ -134,7 +127,8 @@ def context(environment, component, values):
     ):
         raise ValueError("PROTECTED_INFRASTRUCTURE_CONTEXT_REQUIRED")
     inputs = decode_json(values.get("OTM_INFRASTRUCTURE_INPUTS_JSON"))
-    if not isinstance(inputs, dict) or not inputs or inputs.keys() - COMPONENT_FIELDS[component]:
+    fields = BASE_FIELDS if environment == "development" else HOSTED_FIELDS
+    if not isinstance(inputs, dict) or not inputs or inputs.keys() - fields:
         raise ValueError("INFRASTRUCTURE_INPUT_FIELDS_REJECTED")
     target = inputs.get("target")
     if (
@@ -149,16 +143,35 @@ def context(environment, component, values):
         or re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,254}", target["object_storage_namespace"]) is None
     ):
         raise ValueError("INFRASTRUCTURE_TARGET_REJECTED")
-    if component == "infrastructure":
-        refs = inputs.get("atlas_sso")
-        if (
-            not isinstance(refs, dict)
-            or refs.keys() != {"assignment_group_id", "signon_policy_id", "idp_policy_id"}
-            or not all(
-                isinstance(v, str) and re.fullmatch(r"[a-f0-9]{32}", v) for v in refs.values()
+    refs = inputs.get("atlas_sso")
+    if (
+        not isinstance(refs, dict)
+        or not isinstance(refs.get("corporate_idp_id"), str)
+        or not re.fullmatch(r"[a-f0-9]{32}", refs["corporate_idp_id"])
+    ):
+        raise ValueError("ATLAS_SSO_REFERENCES_REQUIRED")
+    if environment == "development":
+        if refs.keys() - {"corporate_idp_id", "adopt_group_ocid"} or (
+            "adopt_group_ocid" in refs
+            and (
+                not isinstance(refs["adopt_group_ocid"], str)
+                or not GROUP_OCID.fullmatch(refs["adopt_group_ocid"])
             )
         ):
-            raise ValueError("DEVELOPMENT_SSO_REFERENCES_REQUIRED")
+            raise ValueError("ATLAS_SSO_REFERENCES_REQUIRED")
+    else:
+        if (
+            refs.keys() != {"corporate_idp_id", "callback_url"}
+            or not isinstance(refs["callback_url"], str)
+            or not re.fullmatch(
+                r"https://(?:[a-zA-Z0-9-]+[.])+[a-zA-Z0-9-]+/api/auth/sso/callback",
+                refs["callback_url"],
+            )
+        ):
+            raise ValueError("ATLAS_SSO_REFERENCES_REQUIRED")
+        admin = inputs.get("database_administrator")
+        if not isinstance(admin, dict) or admin.keys() != {"username"}:
+            raise ValueError("HOSTED_DATABASE_ADMINISTRATOR_REQUIRED")
     return inputs
 
 
@@ -294,15 +307,14 @@ def federate(directory, target, environment, values, *, lifetime_minutes=60):
 
 # Reuse existing private renderers; caller JSON cannot override auth, versions, compartment or
 # cloud-init.
-def render_inputs(directory, inputs, component, values):
+def render_inputs(directory, inputs, values):
     candidate = {**inputs, "oci_auth": "ResourcePrincipal"}
-    if component == "infrastructure":
-        candidate["identity_domain_url"] = values["OTM_INFRA_IDENTITY_DOMAIN_URL"]
+    candidate["identity_domain_url"] = values["OTM_INFRA_IDENTITY_DOMAIN_URL"]
     private_write(directory / "inputs.tfvars.json", canonical(candidate))
     render_hosting_input(
         directory / "hosting.tfvars.json", values.get("OTM_HOSTING_COMPARTMENT_OCID")
     )
-    if component == "platform":
+    if inputs["target"]["environment"] != "development":
         render_network_inputs(
             directory / "network.tfvars.json", values.get("OTM_ALLOWED_SOURCE_CIDRS")
         )
@@ -364,8 +376,8 @@ def terraform(command, arguments, root, environment, directory, deadline):
 
 
 # Emit only action counts; all resource names, IDs, attributes and provider diagnostics stay
-# private. Report the retired development key state removal separately from cloud mutations.
-def change_counts(plan, *, allow_retired_development_key=False):
+# private. Count only the scoped group adoption and retired key removal as state-only operations.
+def change_counts(plan, *, allow_retired_development_key=False, adopt_group_ocid=None):
     if (
         not isinstance(plan, dict)
         or plan.get("errored") is True
@@ -376,6 +388,20 @@ def change_counts(plan, *, allow_retired_development_key=False):
     for resource in plan.get("resource_changes", []):
         change = resource["change"]
         actions = change["actions"]
+        if change.get("importing") is not None:
+            if (
+                not isinstance(adopt_group_ocid, str)
+                or not GROUP_OCID.fullmatch(adopt_group_ocid)
+                or change["importing"] != {"id": adopt_group_ocid}
+                or resource.get("address") != "module.atlas_sso.oci_identity_group.users"
+                or resource.get("type") != "oci_identity_group"
+                or resource.get("mode") != "managed"
+                or resource.get("deposed") is not None
+                or actions != ["no-op"]
+                or "import" in result
+            ):
+                raise ValueError("UNEXPECTED_TERRAFORM_IMPORT")
+            result["import"] = 1
         if (
             actions == ["forget"]
             and allow_retired_development_key
@@ -420,6 +446,14 @@ def plan_storage(credentials, target, environment, hosting_compartment):
         or metadata.versioning != "Enabled"
     ):
         raise ValueError("PRIVATE_ENVIRONMENT_PLAN_BUCKET_REQUIRED")
+    # Earlier hosted roots have different state keys. Refuse split ownership until migration.
+    if environment in {"staging", "production"}:
+        for component in ("security", "platform"):
+            legacy_key = f"{component}/{environment}/terraform.tfstate"
+            page = client.list_objects(namespace, bucket, prefix=legacy_key, limit=1)
+            objects = page.data.objects
+            if any(item.name == legacy_key for item in objects):
+                raise ValueError("HOSTED_STATE_MIGRATION_REQUIRED")
     return client, namespace, bucket
 
 
@@ -509,18 +543,14 @@ def prepare_plan(environment, component, values):
     try:
         with tempfile.TemporaryDirectory(prefix="otm-infrastructure-") as temporary:
             directory = Path(temporary)
-            files, digest = render_inputs(directory, inputs, component, values)
+            files, digest = render_inputs(directory, inputs, values)
             stage = "federation"
             credentials = federate(directory, inputs["target"], environment, values)
-            # Check development bucket placement and privacy before Terraform can create a lock.
-            if environment == "development":
-                stage = "state_bucket"
-                plan_storage(
-                    credentials,
-                    inputs["target"],
-                    environment,
-                    values["OTM_HOSTING_COMPARTMENT_OCID"],
-                )
+            # Verify bucket placement and privacy before Terraform can create a lock.
+            stage = "state_bucket"
+            plan_storage(
+                credentials, inputs["target"], environment, values["OTM_HOSTING_COMPARTMENT_OCID"]
+            )
             deadline = time.monotonic() + 1200
             stage = "terraform_setup"
             child_env = initialize_terraform(
@@ -565,8 +595,8 @@ def prepare_plan(environment, component, values):
                 "plan_sha256": hashlib.sha256((directory / "plan.tfplan").read_bytes()).hexdigest(),
                 "changes": change_counts(
                     plan,
-                    allow_retired_development_key=(environment, component)
-                    == ("development", "infrastructure"),
+                    allow_retired_development_key=environment == "development",
+                    adopt_group_ocid=inputs["atlas_sso"].get("adopt_group_ocid"),
                 ),
             }
             key = plan_object_key(
@@ -600,8 +630,8 @@ def prepare_plan(environment, component, values):
 # errors.
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--environment", choices=tuple(ENVIRONMENT_COMPONENTS), required=True)
-    parser.add_argument("--component", choices=tuple(COMPONENT_FIELDS), required=True)
+    parser.add_argument("--environment", choices=ENVIRONMENTS, required=True)
+    parser.add_argument("--component", choices=(COMPONENT,), required=True)
     options = parser.parse_args(argv)
     try:
         result = prepare_plan(options.environment, options.component, dict(os.environ))

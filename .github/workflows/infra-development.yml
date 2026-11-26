@@ -67,7 +67,7 @@ jobs:
           OTM_INFRASTRUCTURE_APPLY_ENABLED: ${{ vars.OTM_INFRASTRUCTURE_APPLY_ENABLED || 'false' }}
           # Must be deliberately enabled after environment protection, trust and IAM qualification.
           OTM_INFRASTRUCTURE_ENABLED: ${{ vars.OTM_INFRASTRUCTURE_ENABLED || 'false' }}
-          # Protected JSON binds the development target and existing Atlas group and policy GUIDs.
+          # Protected JSON binds the development target and upstream corporate identity provider.
           OTM_INFRASTRUCTURE_INPUTS_JSON: ${{ secrets.OTM_INFRASTRUCTURE_INPUTS_JSON }}
           # Exact OCI identity-domain HTTPS origin for token exchange, without a path.
           OTM_INFRA_IDENTITY_DOMAIN_URL: ${{ secrets.OTM_INFRA_IDENTITY_DOMAIN_URL }}

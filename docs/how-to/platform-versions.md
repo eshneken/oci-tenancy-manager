@@ -105,7 +105,7 @@ and the production `OTM_OKE_KUBERNETES_VERSION` supplied through the approved pr
 ```sh
 umask 077
 # OTM_HANDOFF_DIR must already identify a private operator-owned directory outside the checkout.
-terraform -chdir=infra/environments/staging/platform output -json cluster \
+terraform -chdir=infra/environments/staging/infrastructure output -json cluster \
   > "$OTM_HANDOFF_DIR/staging-cluster.json"
 uv run --project backend python -m otm.image_handoff \
   --staging-cluster-output "$OTM_HANDOFF_DIR/staging-cluster.json" \
@@ -122,8 +122,9 @@ The new file is owner-only `0600`, contains only `qualified_node_image`, and the
 its SHA-256 digest. Private endpoints and other cluster metadata are not copied. The source output
 remains private; never publish it, Terraform state, cloud-init or secret-bearing plans as GitHub artifacts.
 
-Add `-var-file="$OTM_HANDOFF_DIR/qualified-image.tfvars.json"` to the separately reviewed production
-`terraform plan`, alongside its own target/network/version/bootstrap inputs. Production's Terraform
+Supply the qualified image record through the production workflow's private inputs when the
+[composed production plan](infrastructure-plans.md#generate-and-review) is authorized.
+Production's Terraform
 validation and live discovery independently check the binding and current eligibility. Review and
 apply that production saved plan; a successful conversion alone authorizes no deployment. Keep the
 handoff file and recorded digest with the private staging acceptance evidence.

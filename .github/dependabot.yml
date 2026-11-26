@@ -4,20 +4,22 @@ updates:
   # One reviewed proposal keeps the shared provider and both environment locks aligned.
   - package-ecosystem: terraform
     directories:
+      - /infra/modules/github-environment
+      - /infra/modules/atlas-sso
+      - /infra/modules/atlas-sign-in-policies
+      - /infra/modules/oci-delivery-foundation
       - /infra/modules/state-bootstrap
       - /infra/environments/staging/bootstrap
       - /infra/environments/production/bootstrap
       - /infra/modules/secret-foundation
-      - /infra/environments/staging/security
-      - /infra/environments/production/security
       - /infra/modules/postgresql
       - /infra/modules/oke
       - /infra/modules/networking
       - /infra/modules/workload-vault-access
       - /infra/environments/development/bootstrap
       - /infra/environments/development/infrastructure
-      - /infra/environments/staging/platform
-      - /infra/environments/production/platform
+      - /infra/environments/staging/infrastructure
+      - /infra/environments/production/infrastructure
     schedule:
       interval: weekly
       day: monday

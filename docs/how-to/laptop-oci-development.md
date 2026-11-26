@@ -54,8 +54,7 @@ simulated mode and OCI mode without settings are rejected before constructing cl
 
 ## Named OCI profile
 
-Once the tenancy and development user/IAM grants are available, register that user's API public key
-with OCI and put a complete `[ATLAS_DEV]` API-key section in the private OCI configuration file.
+Supply the local application's public signing key to operator bootstrap, which owns its OCI registration. Put a complete `[ATLAS_DEV]` API-key section in the private OCI configuration file.
 The section must explicitly provide `user`, `tenancy`, `fingerprint`, `key_file` and `region`.
 An optional `pass_phrase` supports an encrypted PEM. It must not rely on credentials inherited from
 `[DEFAULT]`. Other profiles may coexist in the same file and are not selected by Atlas.
@@ -102,23 +101,31 @@ deletion, require separate permission and operation qualification.
 
 The approved development target is a compartment named `otm-development`, directly under the non-production
 tenancy. The laptop profile remains private and is used for laptop SDK calls and approved operator
-bootstrap. After local bootstrap, [Development infrastructure](../engineering-design/26-administrator-sso.md#development-terraform-ownership)
-is the single Terraform build for all development resources. It uses temporary federated
-credentials. The same root and state cover the Vault, software key and the first stage of the
-Atlas client cutover.
+bootstrap. [Development infrastructure](../engineering-design/26-administrator-sso.md#development-terraform-ownership)
+is the single Terraform build after local bootstrap. Terraform owns the OTM-created compartment,
+state bucket, GitHub authentication and trust, scoped IAM, and shared domain setting in the
+local bootstrap, then the Vault, software key, Atlas app, assignment group, group-to-app grants,
+policies and rules in the environment root. The existing upstream corporate identity federation
+is the external configuration. Atlas manages individual membership in its app-only group.
+
+The Terraform source declares the bootstrap and environment resources. Review exact existing IDs,
+ownership and effective IAM before a live apply. The current 8445 app keeps its existing
+configuration until a separately approved cutover.
 
 1. **Verify the target before requesting approval.** Independently check the named profile's
-   principal, tenancy, region, namespace, and the exact compartment name, OCID and parent. Create
-   the compartment only after approval. The shared Actions renderer currently accepts
-   `us-ashburn-1`; verify the selected deployment region before configuring trust.
+   principal, tenancy, region, namespace and the intended compartment name and parent. Bootstrap
+   owns the compartment. Match an existing compartment by its exact ID and reconcile the
+   Terraform state before approval to apply. The shared Actions renderer
+   currently accepts `us-ashburn-1`.
 2. **Bootstrap state with separately approved operator authority.** Use
    `infra/environments/development/bootstrap` with an explicit absolute owner-only local backend
    path and private tfvars. Supply `oci_profile`, `hosting_compartment_ocid`, and a `target` object
    containing `environment = "development"`, `tenancy_ocid`, `object_storage_namespace` and
-   `region`. Supply `github_identity_domain_ocid` and `github_repository` in a separate private
-   `github-policy.tfvars.json` after verifying the domain, tenancy, and GitHub owner/repository
-   against the trust.
-   Bootstrap checks the compartment name, active state and root parent before bucket creation.
+   `region`. Supply `github_identity_domain_ocid`, `github_repository` and `github_delivery`
+   in private `github-policy.tfvars.json`. Verify the repository and owner IDs, identity domain
+   and tenancy. Use the [existing exchange transition reference](terraform-state-bootstrap.md#github-exchange-client-rollout)
+   to preserve the current App without importing it. Keep the plan's scope to the intended
+   compartment, private bucket and approved identity/IAM foundation.
    Preserve the bootstrap state privately. With `OTM_DEV_BOOTSTRAP_DIR` set to the absolute,
    owner-only directory containing the private `bootstrap.tfvars.json`, prepare and inspect a plan
    from the repo root:
@@ -134,9 +141,13 @@ Atlas client cutover.
      "${OTM_DEV_BOOTSTRAP_DIR}/bootstrap.tfplan"
    ```
 
-   A fresh bootstrap plan includes a private, versioned Standard bucket named
-   `otm-development-tfstate` and the scoped GitHub IAM policy. Review both before approving any
-   creates. The `infrastructure` component keeps the historical state key `custody/development/terraform.tfstate` and saved-plan prefix `infrastructure-plans/development/custody/` to preserve state history and the existing IAM scope. If custody was ever applied with the older local
+   Bootstrap covers the compartment, private versioned `otm-development-tfstate` bucket,
+   scoped GitHub IAM, exchange trust and shared non-production signing-key setting. A fresh
+   exchange client requires separate provider qualification. Reconcile existing objects by
+   immutable ID before applying. The `infrastructure` component keeps the historical state key
+   `custody/development/terraform.tfstate` and saved-plan prefix
+   `infrastructure-plans/development/custody/` to preserve state history and existing IAM scope.
+   If custody was ever applied with the older local
    backend, stop and review state migration before initializing the new backend. Bootstrap also
    owns the `otm-development-github-infrastructure` policy as `oci_identity_policy.github_infrastructure`. To adopt an existing
    policy, verify its identity and statements, back up the current private local state, then run
@@ -144,23 +155,24 @@ Atlas client cutover.
    and the existing policy OCID. Require a zero-change plan once the imported policy's live
    statements match the source. Review and approve any scope correction as a separate IAM update.
    OCI policy names are immutable. Replacing a policy requires separate approval.
-3. **Configure the protected `development` GitHub Environment.** Both dispatches require
-   human review. Allow only protected `master` and disable administrator bypass. Qualify one
-   restricted token-exchange client and exact OIDC claims for this environment and workflow,
-   with audience `otm-infrastructure-development`. Configure propagation of `ext_workflow_ref`
-   and `ext_environment` from the signed GitHub claims so IAM can match the exact job using
-   OCI's `identityfederateddomainapp` principal type. During plan qualification, verify that the
-   exchanged credentials resolve to the intended domain and workflow and can read the designated
-   private bucket. Use the named laptop key only on the laptop.
-4. **Store the scoped configuration in the environment.** Set
+3. **Qualify the protected `development` GitHub Environment and bootstrap trust.** Both dispatches
+   require human review. Allow only protected `master` and disable administrator bypass.
+   Verify the existing GitHub token-exchange client by GUID and review adoption of its active trust before rollout.
+   Qualify the exact repository, workflow, environment and audience
+   `otm-infrastructure-development`. Verify propagation of `ext_workflow_ref` and
+   `ext_environment` from signed GitHub claims to the OCI `identityfederateddomainapp`
+   principal. Prove the exchanged credentials can reach only the approved development resources.
+   Use the named laptop key only on the laptop.
+4. **Verify the scoped workflow configuration.** The bootstrap's [GitHub Environment module](terraform-state-bootstrap.md#github-environment-and-protected-inputs) sets
    `OTM_INFRA_IDENTITY_DOMAIN_URL`, `OTM_INFRA_CLIENT_ID`, `OTM_INFRA_CLIENT_SECRET`,
    `OTM_HOSTING_COMPARTMENT_OCID` and `OTM_INFRASTRUCTURE_INPUTS_JSON` as environment secrets.
-   For an existing deployment, migrate the protected input from `OTM_CUSTODY_INPUTS_JSON` to
-   `OTM_INFRASTRUCTURE_INPUTS_JSON` before dispatch. Generate a fresh plan because receipts
+   When adopting a deployment still using `OTM_CUSTODY_INPUTS_JSON`, reconcile it with the new
+   managed `OTM_INFRASTRUCTURE_INPUTS_JSON` input before dispatch. Generate a fresh plan because receipts
    bind the component name. The legacy object prefix retains earlier plan history.
-   Keep the existing `target` object. Add an `atlas_sso` object containing
-   `assignment_group_id`, `signon_policy_id` and `idp_policy_id`. Use the verified
-   development group and policy SCIM GUIDs, each 32 lowercase hexadecimal characters.
+   The candidate source accepts the existing `target` object and an `atlas_sso` object with
+   `corporate_idp_id`, the verified upstream corporate IdP SCIM GUID in the selected domain
+   (32 lowercase hexadecimal characters). Provide `adopt_group_ocid` only when reconciling the
+   exact existing native OCI group. The group and policy bindings come from Terraform.
    The workflow reuses the token-exchange domain URL and fixes the callback to 8445 in HCL.
    Atlas runtime credentials belong outside this input. The approved policy includes initial Vault
    and key creation in development. Both dispatches share that OCI authority. The planning command
@@ -182,22 +194,73 @@ Atlas client cutover.
    or replacement. Confirm the exact reviewed effects before approving apply. An interrupted
    apply requires state reconciliation and a fresh plan.
 
-For the replacement client, the first plan should create only
-`oci_identity_domains_app.atlas_sso` (inactive) and `oci_identity_domains_grant.atlas_assignment`
-(group-to-app assignment). The existing client continues serving 8445. Verify the locked provider,
-filtered response attributes, group GUID, domain and both policy references. The existing workflow
-IAM grants cover Vault, key and state storage. Qualify Identity Domains permissions for this
-workflow principal and review them separately before applying.
+Review the complete ownership plan once both roots implement it. The prior proposal to create
+only an inactive app and its new assignment is superseded. Require the existing group, app
+grants, policies and rules to be preserved during Terraform adoption. Review the exact locked
+provider behavior, including whether plans and state exclude client credentials and individual
+memberships. Qualify the workflow principal's exact Identity Domains permissions separately.
+Require the Vault and software key and all unrelated resources to have no changes.
 
-After an approved create, verify the replacement's actual policy bindings and assignment in OCI.
-A later reviewed Terraform plan activates it. Deliver its generated secret directly to private
-runtime custody outside Terraform. Update the private Atlas client, app and assignment references
-together, retaining the original configuration for rollback. Test 8445 with both a fresh browser
-and an existing native OCI session. The new client keeps its permanent name, `otm-sso-development`.
-Retirement of the previous client requires a separate review. The saved 8443 review instance is independent.
+If safe import of the original client remains blocked, qualify an inactive replacement and
+its assignment as part of the complete plan. Verify its actual policy bindings and assignment
+before a separately reviewed activation. Deliver its generated secret directly to private
+runtime custody. Update the private Atlas client, app and assignment references together and
+retain the original configuration for rollback. Test 8445 with a fresh browser and an
+existing native OCI session. Atlas manages membership during normal operation. Retire the
+previous client only after a separate approval. The saved 8443 review instance is independent.
 
 See the [shared plan and apply procedure](infrastructure-plans.md) for saved-plan custody and
 recovery. Development creates no hosted network, compute, database, or child tenancy.
+
+## Development group adoption proof
+
+An authorized read-only development plan returned **10 creates, one no-op native group import,
+zero updates and zero deletes**. The application Vault and software key had no changes. The
+group import used the exact existing native group OCID. It proposed no membership mutation.
+The plan established that the existing group can be adopted at its intended address with those
+reviewed inputs. It made no state or resource changes.
+
+The read-only check also verified the effective assignment GUID against the projected directory
+group and found no existing rules, conditions or policies using the proposed names. A separate
+empty-state preview of the same root with the adoption input omitted proposed creating all
+13 managed resources. Isolated local import previews of the live shared domain Settings and
+active GitHub issuer trust each showed no change. The existing compartment GitHub policy
+comparison changed its description and substituted the verified compartment name for its OCID;
+the operation and resource permissions were equivalent.
+
+An isolated local import preview under the operator identity also compared the original
+group-to-app assignment and eight sign-in objects against the proposed rules. The assignment
+was a no-op. All three condition predicates, rule results and policy rule sequences matched
+the live graph. On first import the released provider omitted the policies' rule lists even
+though a projected OCI read returned them. An apparent policy update in such an import is
+insufficient evidence of drift. Keep the pilot policies in place during the cutover.
+
+The compartment policy `otm-development-github-infrastructure` covers the Vault, key, state
+and reviewed plan objects. The proposed tenancy-root policy `otm-development-github-identity`
+restricts native group creation, retrieval and update to `Default/otm-development-users`.
+Its separate group-list permission applies to the Default domain because OCI does not expose
+a target group name on list requests. All statements bind the GitHub principal to its domain,
+protected workflow and development environment. This policy has no SCIM App, Grant, Condition,
+Rule or Policy authority. Qualify those operations before running the infrastructure apply.
+Oracle's documented administrative roles can affect other applications in the shared domain.
+Review that scope separately. See [Oracle IAM policy variables](https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/iampolicyreference.htm)
+and [Identity Domains AppRole permissions](https://docs.oracle.com/en-us/iaas/Content/Identity/api-getstarted/RequiredRolePerEndpointExt.htm).
+
+The 26 November independent security and adversarial reviews covered the three environment roots,
+the operator bootstrap, the protected workflow, and OCI provider 9.13.0. Development references
+the existing exchange App by verified GUID. The metadata lookup returned its expected identity
+and the domain reported zero directly assigned grants, granted AppRoles and allowed scopes. The
+GitHub trust retained its exact audience, workflow, repository, owner, branch and environment
+bindings. In a separate live test, the local operator created an inactive, unassigned browser
+client with the released OCI provider 9.13.0, updated its description and obtained a no-change
+refresh plan. The projected API responses and inspected saved plans and state contained no
+client secret or secret hash. OCI requires `loginMechanism=OIDC` on update when
+`isLoginTarget=true`; the Atlas module sets and reads both fields. Temporary clients were
+deleted by verified GUID. The existing pilot and exchange trust retained their identities and
+active status. SCIM write authority under the GitHub signer and hosted federation remain open. See the [bootstrap restrictions](terraform-state-bootstrap.md).
+
+GitHub authorization for the complete environment graph, activation and the 8445 cutover remain pending. Recheck the exact protected workflow
+plan and qualify relevant permissions separately before an apply.
 
 ## What is implemented and what comes next
 

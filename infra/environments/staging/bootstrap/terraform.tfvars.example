@@ -15,5 +15,26 @@ oci_auth = "SecurityToken"
 # Authenticate it separately; never paste key/token material into variables.
 oci_profile = "DEFAULT"
 
-# Required hosting_compartment_ocid comes from OTM_HOSTING_COMPARTMENT_OCID via private hosting.tfvars.json.
-# Use the same existing compartment for bootstrap, security and platform; no child compartments.
+# Set hosting_compartment_ocid privately only when adopting an existing compartment.
+# The resulting bootstrap output becomes the infrastructure workflow's hosting compartment input.
+#
+# Set github_delivery privately with the exact verified identifiers before provisioning federation.
+# github_delivery = {
+#   identity_domain_ocid = "ocid1.domain.oc1..syntheticstaging"
+#   repository          = "example/tenancy-manager"
+#   repository_id       = "1001"
+#   repository_owner_id = "1002"
+#   trust_active        = false
+# }
+
+# GitHub reviewer IDs and settings filename are synthetic. Fresh deployments start held.
+github_environment = {
+  reviewer_user_ids = [1003]
+  settings_file     = "staging-workflow.json"
+  kubernetes_version = "v1.34.1"
+  postgresql_version = "16"
+}
+
+# Enable only after approval of the reviewed hosted runtime IAM statements.
+# allow_runtime_policy_writes = true
+# Set github_delivery.exchange_write_response_qualified only after isolated provider response qualification.

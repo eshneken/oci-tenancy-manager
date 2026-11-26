@@ -100,8 +100,13 @@ not rerun. A targeted installed UI checkpoint is not a fresh full-suite or compl
 No additional local instance or artificial main drift is authorized. Live-only cases remain Pending.
 
 The aggregate integration deadline remains **900 seconds (15 minutes)**; individual test/browser/I/O
-limits and completeness/no-skip evidence rules do not change. The CI job keeps its existing 25-minute
-outer limit. Frontend unit/browser tooling and `scripts/run_backend_postgres_tests.py` run sequentially
+limits and completeness/no-skip evidence rules do not change. After setup, the runner starts two
+concurrent pytest lanes under one shared deadline. The installer-only lane runs
+`tests/test_sandbox_runtime_postgres.py` in order and uses its fixture's own disposable PostgreSQL.
+The other lane runs all remaining PostgreSQL-marked tests against the shared disposable test
+database. Each lane must exit successfully before the deadline and produce its own valid, nonempty
+JUnit report with zero failures, errors or skips. The CI job keeps its existing 25-minute outer
+limit. Frontend unit/browser tooling and `scripts/run_backend_postgres_tests.py` run sequentially
 because the runner’s `npm ci` replaces shared `frontend/node_modules`; concurrent writes caused
 ENOTEMPTY install failures and worker exits. Backend-only units/docs can remain independent.
 

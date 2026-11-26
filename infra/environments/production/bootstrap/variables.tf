@@ -35,12 +35,14 @@ variable "oci_profile" {
   }
 }
 
-# Required OTM_HOSTING_COMPARTMENT_OCID from this environment; one existing compartment, no children.
-# Syntax does not establish tenancy ownership or permission; independently verify both before apply.
+# Pin the existing compartment on adoption. A fresh bootstrap can omit this reference.
 variable "hosting_compartment_ocid" {
-  type = string
+  description = "Optional expected OCID of the adopted hosting compartment."
+  type        = string
+  default     = null
+
   validation {
-    condition     = length(var.hosting_compartment_ocid) <= 255 && can(regex("^ocid1[.]compartment[.][a-z0-9]+[.][a-z0-9-]*[.][a-z0-9]+$", var.hosting_compartment_ocid))
-    error_message = "Provide the selected environment's existing hosting compartment OCID, at most255 characters."
+    condition     = var.hosting_compartment_ocid == null ? true : length(var.hosting_compartment_ocid) <= 255 && can(regex("^ocid1[.]compartment[.][a-z0-9]+[.][a-z0-9-]*[.][a-z0-9]+$", var.hosting_compartment_ocid))
+    error_message = "Provide the selected environment's existing hosting compartment OCID, at most 255 characters."
   }
 }
