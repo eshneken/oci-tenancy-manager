@@ -6,6 +6,12 @@ mock_provider "oci" {
   }
 }
 variables {
+  identity_domain_url = "https://idcs-synthetic.identity.oraclecloud.com"
+  atlas_sso = {
+    assignment_group_id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    signon_policy_id    = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    idp_policy_id       = "cccccccccccccccccccccccccccccccc"
+  }
   oci_auth                 = "ResourcePrincipal"
   hosting_compartment_ocid = "ocid1.compartment.oc1..development"
   target = {
@@ -15,8 +21,8 @@ variables {
     region                   = "us-ashburn-1"
   }
 }
-run "seed_mock_key" { command = apply }
-run "reject_key_replacement" {
+run "seed_mock_vault" { command = apply }
+run "reject_vault_replacement" {
   command = plan
-  plan_options { replace = [oci_kms_key.application_software] }
+  plan_options { replace = [oci_kms_vault.application] }
 }

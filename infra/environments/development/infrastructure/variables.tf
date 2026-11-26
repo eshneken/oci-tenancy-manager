@@ -22,7 +22,7 @@ variable "oci_auth" {
   type = string
   validation {
     condition     = var.oci_auth == "ResourcePrincipal"
-    error_message = "Development custody CI requires ResourcePrincipal."
+    error_message = "Development infrastructure CI requires ResourcePrincipal."
   }
 }
 

@@ -23,6 +23,7 @@ BINARY = b"synthetic saved Terraform plan"
 
 # The synthetic receipt mirrors the producer's exact public schema and private archive fields.
 def report(environment="staging", component="security"):
+    prefix = "custody" if environment == "development" else component
     return {
         "status": "planned",
         "environment": environment,
@@ -33,7 +34,7 @@ def report(environment="staging", component="security"):
         "inputs_sha256": "b" * 64,
         "plan_sha256": hashlib.sha256(BINARY).hexdigest(),
         "changes": {"create": 0, "update": 0, "delete": 0, "replace": 0},
-        "object_key": f"infrastructure-plans/{environment}/{component}/123/1/plan.tar",
+        "object_key": f"infrastructure-plans/{environment}/{prefix}/123/1/plan.tar",
         "applied": False,
     }
 
@@ -731,12 +732,12 @@ def test_development_state_removal_receipt_rejected_for_apply():
     receipt = report()
     receipt.update(
         environment="development",
-        component="custody",
+        component="infrastructure",
         object_key="infrastructure-plans/development/custody/123/1/plan.tar",
     )
     receipt["changes"]["forget"] = 1
     with pytest.raises(ValueError, match="EXACT_REVIEWED_PLAN_REQUIRED"):
-        module.reviewed_plan(receipt, "custody", receipt["plan_sha256"])
+        module.reviewed_plan(receipt, "infrastructure", receipt["plan_sha256"])
 
 
 # A remotely committed marker with a lost response forbids both apply and any later consumer replay.
@@ -767,9 +768,9 @@ def test_uncertain_marker_response(harness, monkeypatch):
 # Development refuses delete/replacement receipts before accessing OCI, even with a reviewed hash.
 @pytest.mark.parametrize("destructive", ["delete", "replace"])
 def test_development_refuses_destructive_plan(monkeypatch, destructive):
-    values = environment_values("development", "custody")
+    values = environment_values("development", "infrastructure")
     values["OTM_INFRASTRUCTURE_APPLY_ENABLED"] = "true"
-    receipt = report("development", "custody")
+    receipt = report("development", "infrastructure")
     receipt["changes"][destructive] = 1
     monkeypatch.setattr(planning, "checked_source", Mock(return_value="/bin/terraform"))
     monkeypatch.setattr(module, "trusted_report", Mock(return_value=receipt))
@@ -777,17 +778,17 @@ def test_development_refuses_destructive_plan(monkeypatch, destructive):
     monkeypatch.setattr(planning, "federate", federation)
     with pytest.raises(ValueError, match="DESTRUCTIVE_DEVELOPMENT_PLAN_REJECTED"):
         module.apply_plan(
-            "development", "custody", receipt["run_id"], receipt["plan_sha256"], values
+            "development", "infrastructure", receipt["run_id"], receipt["plan_sha256"], values
         )
     federation.assert_not_called()
 
 
 # Development applies exactly its reviewed custody plan with no cluster or staging dependency.
-@pytest.mark.parametrize("harness", [("development", "custody")], indirect=True)
-def test_development_applies_reviewed_custody(harness):
+@pytest.mark.parametrize("harness", [("development", "infrastructure")], indirect=True)
+def test_development_applies_reviewed_infrastructure(harness):
     state = harness
     result = module.apply_plan(
-        "development", "custody", "123", state.receipt["plan_sha256"], state.values
+        "development", "infrastructure", "123", state.receipt["plan_sha256"], state.values
     )
     assert result["status"] == "applied" and result["node_image_sha256"] is None
     assert result["staging_apply_run_id"] is None

@@ -43,7 +43,9 @@ identity separately, verify that account creation suppresses provider notificati
 that the Atlas app group confers no OCI resource permissions.
 Chapter 26 defines the [full acceptance matrix](../engineering-design/26-administrator-sso.md#implementation-and-acceptance).
 
-## OCI Console pilot sequence
+## Original OCI Console pilot sequence
+
+The original pilot used `otm-application-development`. The Terraform-managed development client uses `otm-sso-development`.
 
 1. In the non-production Default domain, prepare an identity-provider policy for
    `otm-application-development` that offers only the existing `Oracle SSO` provider. Prepare a
@@ -152,24 +154,14 @@ without taking ownership of shared federation or the existing workload client.
 
 Use the Terraform [application registration metadata module](../../infra/modules/application-registration/main.tf)
 for integrated app and app-assignment group display names and descriptions. The module returns
-metadata strings and declares no OCI resource. Apply display-name updates to the existing app and
-group so the OAuth client ID, group ID, membership and all bindings stay intact. Import the exact qualified development objects into
-their Terraform addresses after qualifying secret exclusion and require a reviewed no-change
-plan before applying follow-on changes. Review staging and production
-plans independently. Keep OIDC client secrets in dedicated environment custody. Qualify the
-provider's secret handling before adoption and exclude secret values from source, plans, artifacts
-and Terraform state. Atlas owns routine membership and grant changes after onboarding is enabled.
+metadata strings. The development root creates a separate, inactive replacement client using
+the released provider's explicit response attributes. It also creates the assignment for the
+existing group. The original client, group members and Atlas grants continue serving the pilot
+until cutover. See the [staged cutover and approval steps](../how-to/laptop-oci-development.md#development-infrastructure-through-github-actions).
+Staging and production use their own clients and grants and remain a hosted milestone.
 
-The development operator bootstrap already owns the state bucket and the two development IAM
-policies. A refreshed plan using a private copy of the operator state returned no changes.
-After local bootstrap, [one development Terraform build](../engineering-design/26-administrator-sso.md#development-terraform-ownership)
-will own development resources, including the Vault, software key and Atlas SSO configuration.
-Expand the existing **Development infrastructure** workflow and state in place. Today that
-workflow manages the Vault and software key. Identity-domain adoption is pending.
-
-The pinned OCI provider 9.13.0 was tested against a synthetic App endpoint. Both CLI import and
-an import-block plan used default App reads despite the resource's attribute allowlist. The
-synthetic client credential fields appeared in the resulting state and saved plan. Keep the
-existing development app outside Terraform until a supported import and refresh path excludes
-those fields. Also qualify group adoption without importing administrator membership data.
-[Oracle App resource and import documentation](https://docs.oracle.com/en-us/iaas/tools/terraform-provider-oci/latest/docs/r/identity_domains_app.html#import)
+The pinned OCI provider 9.13.0 used default App reads during synthetic CLI and import-block
+tests, which persisted a fixture client secret. Use configured resource creation for the
+development replacement. Keep the original app outside state during the overlap. Group adoption
+still requires proving that administrator membership data stays out of state.
+[Oracle App resource documentation](https://docs.oracle.com/en-us/iaas/tools/terraform-provider-oci/latest/docs/r/identity_domains_app.html)

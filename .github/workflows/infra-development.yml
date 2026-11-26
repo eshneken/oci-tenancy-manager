@@ -67,8 +67,8 @@ jobs:
           OTM_INFRASTRUCTURE_APPLY_ENABLED: ${{ vars.OTM_INFRASTRUCTURE_APPLY_ENABLED || 'false' }}
           # Must be deliberately enabled after environment protection, trust and IAM qualification.
           OTM_INFRASTRUCTURE_ENABLED: ${{ vars.OTM_INFRASTRUCTURE_ENABLED || 'false' }}
-          # Private target JSON contains only approved non-production coordinates.
-          OTM_INFRASTRUCTURE_INPUTS_JSON: ${{ secrets.OTM_CUSTODY_INPUTS_JSON }}
+          # Protected JSON binds the development target and existing Atlas group and policy GUIDs.
+          OTM_INFRASTRUCTURE_INPUTS_JSON: ${{ secrets.OTM_INFRASTRUCTURE_INPUTS_JSON }}
           # Exact OCI identity-domain HTTPS origin for token exchange, without a path.
           OTM_INFRA_IDENTITY_DOMAIN_URL: ${{ secrets.OTM_INFRA_IDENTITY_DOMAIN_URL }}
           # Restricted exchange client ID: 1–8192 characters, without line breaks or admin roles.
@@ -80,10 +80,10 @@ jobs:
         run: |
           case "$OTM_OPERATION" in
             plan)
-              uv run --project backend python -m otm.infrastructure_plan --environment development --component custody
+              uv run --project backend python -m otm.infrastructure_plan --environment development --component infrastructure
               ;;
             apply)
-              uv run --project backend python -m otm.infrastructure_apply --environment development --component custody --plan-run-id "$OTM_PLAN_RUN_ID" --reviewed-plan-sha256 "$OTM_REVIEWED_PLAN_SHA256"
+              uv run --project backend python -m otm.infrastructure_apply --environment development --component infrastructure --plan-run-id "$OTM_PLAN_RUN_ID" --reviewed-plan-sha256 "$OTM_REVIEWED_PLAN_SHA256"
               ;;
             *) exit 2 ;;
           esac

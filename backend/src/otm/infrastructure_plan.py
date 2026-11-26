@@ -32,12 +32,12 @@ ROOT = Path(__file__).resolve().parents[3]
 RPST_TYPE_URN = "urn:oci:token-type:oci-rpst"
 JWT_TYPE = "jwt"
 ENVIRONMENT_COMPONENTS = {
-    "development": {"custody"},
+    "development": {"infrastructure"},
     "staging": {"security", "platform"},
     "production": {"security", "platform"},
 }
 COMPONENT_FIELDS = {
-    "custody": {"target"},
+    "infrastructure": {"target", "atlas_sso"},
     "security": {"target", "database_provisioner_group_ocid"},
     "platform": {
         "target",
@@ -149,6 +149,16 @@ def context(environment, component, values):
         or re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,254}", target["object_storage_namespace"]) is None
     ):
         raise ValueError("INFRASTRUCTURE_TARGET_REJECTED")
+    if component == "infrastructure":
+        refs = inputs.get("atlas_sso")
+        if (
+            not isinstance(refs, dict)
+            or refs.keys() != {"assignment_group_id", "signon_policy_id", "idp_policy_id"}
+            or not all(
+                isinstance(v, str) and re.fullmatch(r"[a-f0-9]{32}", v) for v in refs.values()
+            )
+        ):
+            raise ValueError("DEVELOPMENT_SSO_REFERENCES_REQUIRED")
     return inputs
 
 
@@ -286,6 +296,8 @@ def federate(directory, target, environment, values, *, lifetime_minutes=60):
 # cloud-init.
 def render_inputs(directory, inputs, component, values):
     candidate = {**inputs, "oci_auth": "ResourcePrincipal"}
+    if component == "infrastructure":
+        candidate["identity_domain_url"] = values["OTM_INFRA_IDENTITY_DOMAIN_URL"]
     private_write(directory / "inputs.tfvars.json", canonical(candidate))
     render_hosting_input(
         directory / "hosting.tfvars.json", values.get("OTM_HOSTING_COMPARTMENT_OCID")
@@ -480,6 +492,12 @@ def initialize_terraform(
     return child_env
 
 
+# Development retains its IAM-authorized object prefix across the component rename.
+def plan_object_key(environment, component, run_id, attempt):
+    prefix = "custody" if environment == "development" else component
+    return f"infrastructure-plans/{environment}/{prefix}/{run_id}/{attempt}/plan.tar"
+
+
 # Generate a plan without applying; shared setup does not introduce a mutable command selector.
 def prepare_plan(environment, component, values):
     with plan_stage("workflow_preflight"):
@@ -548,12 +566,11 @@ def prepare_plan(environment, component, values):
                 "changes": change_counts(
                     plan,
                     allow_retired_development_key=(environment, component)
-                    == ("development", "custody"),
+                    == ("development", "infrastructure"),
                 ),
             }
-            key = (
-                f"infrastructure-plans/{environment}/{component}/"
-                f"{values['GITHUB_RUN_ID']}/{values['GITHUB_RUN_ATTEMPT']}/plan.tar"
+            key = plan_object_key(
+                environment, component, values["GITHUB_RUN_ID"], values["GITHUB_RUN_ATTEMPT"]
             )
             with tarfile.open(directory / "plan.tar", "w") as archive:
                 archive.add(directory / "plan.tfplan", arcname="plan.tfplan", recursive=False)

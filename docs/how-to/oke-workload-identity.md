@@ -30,7 +30,7 @@ and its workload IAM. No Terraform remote-state secret lookup or secret content 
 Names are fixed by the module; namespace and service accounts cannot be supplied as arbitrary policy
 text. The root's sensitive `workload_vault_access` output contains only deployment references.
 Provider identity, compartment ownership and effective live IAM still require operator qualification.
-The laptop development custody root receives none of these workload grants.
+The laptop development infrastructure root receives none of these workload grants.
 
 ## Explicit pod projection
 

@@ -15,7 +15,7 @@ updates:
       - /infra/modules/networking
       - /infra/modules/workload-vault-access
       - /infra/environments/development/bootstrap
-      - /infra/environments/development/custody
+      - /infra/environments/development/infrastructure
       - /infra/environments/staging/platform
       - /infra/environments/production/platform
     schedule:

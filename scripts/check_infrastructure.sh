@@ -8,7 +8,7 @@ cd "$repo_dir"
 terraform fmt -check -recursive infra
 for root in \
   infra/environments/development/bootstrap \
-  infra/environments/development/custody \
+  infra/environments/development/infrastructure \
   infra/modules/state-bootstrap \
   infra/environments/staging/bootstrap \
   infra/environments/production/bootstrap \
@@ -68,7 +68,7 @@ check_replacement_guard infra/modules/secret-foundation seed_mock_vault reject_v
 check_replacement_guard infra/modules/secret-foundation seed_mock_key reject_key_replacement guard-key 'oci_kms_key.domain["database-provisioning"]'
 
 # Development custody has the same immutable-vault/key safeguards without a hosted platform.
-check_replacement_guard infra/environments/development/custody seed_mock_vault reject_vault_replacement guard-vault 'oci_kms_vault.application'
-check_replacement_guard infra/environments/development/custody seed_mock_key reject_key_replacement guard-key 'oci_kms_key.application_software'
+check_replacement_guard infra/environments/development/infrastructure seed_mock_vault reject_vault_replacement guard-vault 'oci_kms_vault.application'
+check_replacement_guard infra/environments/development/infrastructure seed_mock_key reject_key_replacement guard-key 'oci_kms_key.application_software'
 
 check_replacement_guard infra/modules/networking seed_mock_ingress reject_ingress_address_replacement guard-ingress 'oci_core_public_ip.ingress[0]'
