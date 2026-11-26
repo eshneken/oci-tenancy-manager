@@ -314,9 +314,8 @@ def image_digest(selection):
 # Validate the reviewed hash, fixed component and exact private object key before obtaining OCI
 # access.
 def reviewed_plan(report, component, reviewed_hash):
-    expected_key = (
-        f"infrastructure-plans/{report['environment']}/{component}/"
-        f"{report['run_id']}/{report['attempt']}/plan.tar"
+    expected_key = planning.plan_object_key(
+        report["environment"], component, report["run_id"], report["attempt"]
     )
     changes = report.get("changes")
     if (

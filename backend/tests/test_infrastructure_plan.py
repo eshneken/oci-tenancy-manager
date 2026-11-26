@@ -34,7 +34,7 @@ def environment_values(environment="staging", component="security"):
         "object_storage_namespace": "synthetic",
     }
     inputs = {"target": target, "database_provisioner_group_ocid": "ocid1.group.oc1..synthetic"}
-    if component == "custody":
+    if component == "infrastructure":
         inputs = {
             "target": target,
             "atlas_sso": {
@@ -135,8 +135,9 @@ def test_context_rejects_unapproved_job(key, value):
     "environment,component",
     [
         ("development", "security"),
-        ("staging", "custody"),
-        ("production", "custody"),
+        ("development", "custody"),
+        ("staging", "infrastructure"),
+        ("production", "infrastructure"),
         ("staging", "../platform"),
         ("production", "bootstrap"),
     ],
@@ -588,7 +589,7 @@ def test_private_plan_upload(tmp_path, monkeypatch, fault):
 @pytest.mark.parametrize(
     "environment,component",
     [
-        ("development", "custody"),
+        ("development", "infrastructure"),
         ("staging", "security"),
         ("staging", "platform"),
         ("production", "security"),
@@ -638,7 +639,8 @@ def test_prepare_full_plan(monkeypatch, environment, component, fault):
     # Inspect the exact two-file private archive before it leaves temporary custody.
     def fake_upload(directory, credentials, target, selected_environment, compartment, key):
         assert selected_environment == environment and compartment == COMPARTMENT
-        assert key == f"infrastructure-plans/{environment}/{component}/123/1/plan.tar"
+        prefix = "custody" if environment == "development" else component
+        assert key == f"infrastructure-plans/{environment}/{prefix}/123/1/plan.tar"
         with tarfile.open(directory / "plan.tar") as archive:
             assert archive.getnames() == ["plan.tfplan", "receipt.json"]
             assert archive.extractfile("plan.tfplan").read() == b"synthetic-plan"
@@ -867,7 +869,9 @@ def test_development_workflow_contract():
         "group": "otm-environment-development",
         "cancel-in-progress": False,
     }
-    assert job["steps"][-1]["run"].count("--environment development --component custody") == 2
+    assert (
+        job["steps"][-1]["run"].count("--environment development --component infrastructure") == 2
+    )
     assert "upload-artifact" not in str(workflow)
     assert "OCI_PROFILE" not in str(workflow)
 
@@ -875,7 +879,7 @@ def test_development_workflow_contract():
 # Refuse arbitrary nested inputs before storing the protected SSO metadata in a plan.
 @pytest.mark.parametrize("fault", ["missing", "extra", "ocid"])
 def test_development_sso_reference_guard(fault):
-    values = environment_values("development", "custody")
+    values = environment_values("development", "infrastructure")
     inputs = json.loads(values["OTM_INFRASTRUCTURE_INPUTS_JSON"])
     if fault == "missing":
         del inputs["atlas_sso"]
@@ -885,4 +889,4 @@ def test_development_sso_reference_guard(fault):
         inputs["atlas_sso"]["assignment_group_id"] = "ocid1.group.oc1..synthetic"
     values["OTM_INFRASTRUCTURE_INPUTS_JSON"] = json.dumps(inputs)
     with pytest.raises(ValueError, match="DEVELOPMENT_SSO_REFERENCES_REQUIRED"):
-        module.context("development", "custody", values)
+        module.context("development", "infrastructure", values)

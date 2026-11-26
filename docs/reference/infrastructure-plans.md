@@ -30,10 +30,10 @@ shared-input parity and explicit manual staging-test confirmation. These are imp
 not evidence of configured production approval or an exercised OCI apply. Terraform retains native
 state locking/stale-plan checks; an obsolete plan must be regenerated and reviewed.
 
-Development uses the fixed `custody` root, its own private bucket and state key, and one
+Development uses the fixed `infrastructure` root, its own private bucket and state key, and one
 protected GitHub Environment and federated principal. Every dispatch requires approval, and
 apply also requires explicit enablement and an exact reviewed plan without deletion or replacement.
-Once apply permissions are granted, both dispatches use that principal's effective OCI permissions. See the [development setup](../how-to/laptop-oci-development.md#development-custody-through-github-actions).
+Once apply permissions are granted, both dispatches use that principal's effective OCI permissions. See the [development setup](../how-to/laptop-oci-development.md#development-infrastructure-through-github-actions).
 
 ## Federation contract
 

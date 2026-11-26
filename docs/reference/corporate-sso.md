@@ -157,7 +157,7 @@ for integrated app and app-assignment group display names and descriptions. The 
 metadata strings. The development root creates a separate, inactive replacement client using
 the released provider's explicit response attributes. It also creates the assignment for the
 existing group. The original client, group members and Atlas grants continue serving the pilot
-until cutover. See the [staged cutover and approval steps](../how-to/laptop-oci-development.md#development-custody-through-github-actions).
+until cutover. See the [staged cutover and approval steps](../how-to/laptop-oci-development.md#development-infrastructure-through-github-actions).
 Staging and production use their own clients and grants and remain a hosted milestone.
 
 The pinned OCI provider 9.13.0 used default App reads during synthetic CLI and import-block

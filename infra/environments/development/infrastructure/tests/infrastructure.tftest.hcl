@@ -23,11 +23,11 @@ variables {
     region                   = "us-ashburn-1"
   }
 }
-run "isolated_development_custody" {
+run "isolated_development_infrastructure" {
   command = plan
   assert {
     condition     = oci_kms_vault.application.compartment_id == var.hosting_compartment_ocid && oci_kms_key.application_software.compartment_id == var.hosting_compartment_ocid
-    error_message = "Development custody must use only its explicit compartment."
+    error_message = "Development infrastructure must use only its explicit compartment."
   }
   assert {
     condition     = oci_kms_vault.application.vault_type == "DEFAULT" && oci_kms_key.application_software.protection_mode == "SOFTWARE" && oci_kms_key.application_software.key_shape[0].algorithm == "AES" && oci_kms_key.application_software.key_shape[0].length == 32 && !oci_kms_key.application_software.is_auto_rotation_enabled

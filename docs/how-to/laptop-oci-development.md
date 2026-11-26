@@ -98,7 +98,7 @@ notification-suppressed request. Review effective permissions against unrelated 
 updates and credentials. Parent organization operations, including child tenancy creation and
 deletion, require separate permission and operation qualification.
 
-## Development custody through GitHub Actions
+## Development infrastructure through GitHub Actions
 
 The approved development target is a compartment named `otm-development`, directly under the non-production
 tenancy. The laptop profile remains private and is used for laptop SDK calls and approved operator
@@ -136,7 +136,7 @@ Atlas client cutover.
 
    A fresh bootstrap plan includes a private, versioned Standard bucket named
    `otm-development-tfstate` and the scoped GitHub IAM policy. Review both before approving any
-   creates. The custody workflow uses `custody/development/terraform.tfstate`. If custody was ever applied with the older local
+   creates. The `infrastructure` component keeps the historical state key `custody/development/terraform.tfstate` and saved-plan prefix `infrastructure-plans/development/custody/` to preserve state history and the existing IAM scope. If custody was ever applied with the older local
    backend, stop and review state migration before initializing the new backend. Bootstrap also
    owns the `otm-development-github-infrastructure` policy as `oci_identity_policy.github_infrastructure`. To adopt an existing
    policy, verify its identity and statements, back up the current private local state, then run
@@ -154,7 +154,10 @@ Atlas client cutover.
    private bucket. Use the named laptop key only on the laptop.
 4. **Store the scoped configuration in the environment.** Set
    `OTM_INFRA_IDENTITY_DOMAIN_URL`, `OTM_INFRA_CLIENT_ID`, `OTM_INFRA_CLIENT_SECRET`,
-   `OTM_HOSTING_COMPARTMENT_OCID` and `OTM_CUSTODY_INPUTS_JSON` as environment secrets.
+   `OTM_HOSTING_COMPARTMENT_OCID` and `OTM_INFRASTRUCTURE_INPUTS_JSON` as environment secrets.
+   For an existing deployment, migrate the protected input from `OTM_CUSTODY_INPUTS_JSON` to
+   `OTM_INFRASTRUCTURE_INPUTS_JSON` before dispatch. Generate a fresh plan because receipts
+   bind the component name. The legacy object prefix retains earlier plan history.
    Keep the existing `target` object. Add an `atlas_sso` object containing
    `assignment_group_id`, `signon_policy_id` and `idp_policy_id`. Use the verified
    development group and policy SCIM GUIDs, each 32 lowercase hexadecimal characters.
@@ -227,7 +230,7 @@ Playwright suite remains a milestone/PR gate. No saved 8443 code/configuration w
 changed for this slice, and its health endpoint remained successful. Actual OCI IAM/profile and
 full live service composition remain pending.
 
-## Development custody workflow validation
+## Development infrastructure workflow validation
 
 The development workflow and bootstrap source passed independent documentation and security
 review. The security review identified the need to verify exact compartment placement. The

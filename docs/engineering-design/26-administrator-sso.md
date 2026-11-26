@@ -232,7 +232,7 @@ GitHub federation prerequisites. After bootstrap, **Development infrastructure**
 GitHub Actions Terraform build for development. Use one root, state, plan and apply for the
 Vault, software key, development Atlas application, assignment group, app grant, app-specific
 policies and other development resources. Modules can organize the resources within that root.
-Extend the existing root at `infra/environments/development/custody` and preserve the existing
+Extend the existing root at `infra/environments/development/infrastructure` and preserve the existing
 `custody/development/terraform.tfstate` key so previously created resources keep their state
 addresses. The local bootstrap currently owns the laptop enrollment IAM policy. Review its
 ownership and migration as part of adopting development identity resources.
@@ -241,7 +241,7 @@ The development client cutover uses a fresh confidential app in the same root, w
 released provider. The existing assignment group and its memberships, database grants, policies
 and original client stay in place during testing. Create an inactive replacement and a separate
 group-to-app assignment first. Review activation, runtime credential handoff and retirement in
-separate steps. See the [development runbook](../how-to/laptop-oci-development.md#development-custody-through-github-actions).
+separate steps. See the [development runbook](../how-to/laptop-oci-development.md#development-infrastructure-through-github-actions).
 Other existing resources still require separate adoption qualification and a zero-change plan.
 
 ## Terraform ownership for signing keys
