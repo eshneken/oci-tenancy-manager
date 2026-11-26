@@ -1,4 +1,4 @@
-# Laptop development owns no hosted platform; this state contains only its independent custody.
+# The laptop environment uses one remote state for development resources.
 terraform {
   required_version = "= 1.15.5"
   required_providers {

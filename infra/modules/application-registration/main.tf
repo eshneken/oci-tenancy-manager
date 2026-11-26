@@ -16,7 +16,7 @@ variable "environment" {
 
 # Use the same app naming pattern as the infrastructure workload clients.
 output "display_name" {
-  value       = "otm-application-${var.environment}"
+  value       = "otm-sso-${var.environment}"
   description = "Display name for the environment's OCI integrated application."
 }
 

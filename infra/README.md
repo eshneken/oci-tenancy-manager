@@ -145,13 +145,13 @@ is composed with Vault and OCI and qualified in staging.
 `environments/development/bootstrap/` uses a named laptop API-key profile and private local
 state to manage the dedicated state bucket and scoped GitHub IAM policy.
 `environments/development/custody/` uses that remote
-backend and a short-lived GitHub Actions principal to plan and apply one application Vault and
-software-protected AES-256 key in the existing development compartment. Compartment creation
+backend and a short-lived GitHub Actions principal to plan and apply one application Vault, its
+software-protected AES-256 key, and the staged Atlas client and assignment in their respective compartment and identity domain. Compartment creation
 and identity-domain trust setup are administrator prerequisites. The
 [development runbook](../docs/how-to/laptop-oci-development.md#development-custody-through-github-actions)
 covers custody deployment.
 
-Extend this root and preserve its state key when adopting the development Atlas SSO resources.
+Use this root and preserve its state key when adopting the development Atlas SSO resources.
 The [development ownership design](../docs/engineering-design/26-administrator-sso.md#development-terraform-ownership)
 defines one GitHub plan and apply for all development resources after operator bootstrap.
 

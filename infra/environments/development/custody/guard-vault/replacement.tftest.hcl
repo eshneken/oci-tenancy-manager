@@ -6,6 +6,12 @@ mock_provider "oci" {
   }
 }
 variables {
+  identity_domain_url = "https://idcs-synthetic.identity.oraclecloud.com"
+  atlas_sso = {
+    assignment_group_id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    signon_policy_id    = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    idp_policy_id       = "cccccccccccccccccccccccccccccccc"
+  }
   oci_auth                 = "ResourcePrincipal"
   hosting_compartment_ocid = "ocid1.compartment.oc1..development"
   target = {

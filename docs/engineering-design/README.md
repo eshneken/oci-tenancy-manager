@@ -63,7 +63,7 @@ integration remains separately qualified.
 | [22: recovery console CIDR boundary and 30-day API-key rotation](22-credential-security-lifecycles.md) |
 | [23: proposed managed signing-key rotation execution and accounting](23-signing-key-rotation.md) |
 | [24: isolated staging/production and build-once promotion](24-environments-and-promotion.md) |
-| [26: Atlas administrator sign-in through OCI IAM federation](26-administrator-sso.md) |
+| [26: Atlas administrator sign-in, federation and development client ownership](26-administrator-sso.md) |
 
 ## Authority and decisions
 

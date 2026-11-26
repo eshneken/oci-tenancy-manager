@@ -104,8 +104,8 @@ The approved development target is a compartment named `otm-development`, direct
 tenancy. The laptop profile remains private and is used for laptop SDK calls and approved operator
 bootstrap. After local bootstrap, [Development infrastructure](../engineering-design/26-administrator-sso.md#development-terraform-ownership)
 is the single Terraform build for all development resources. It uses temporary federated
-credentials. This procedure covers its current Vault and software key scope. Atlas SSO adoption
-will extend the same root and state after provider qualification.
+credentials. The same root and state cover the Vault, software key and the first stage of the
+Atlas client cutover.
 
 1. **Verify the target before requesting approval.** Independently check the named profile's
    principal, tenancy, region, namespace, and the exact compartment name, OCID and parent. Create
@@ -155,7 +155,11 @@ will extend the same root and state after provider qualification.
 4. **Store the scoped configuration in the environment.** Set
    `OTM_INFRA_IDENTITY_DOMAIN_URL`, `OTM_INFRA_CLIENT_ID`, `OTM_INFRA_CLIENT_SECRET`,
    `OTM_HOSTING_COMPARTMENT_OCID` and `OTM_CUSTODY_INPUTS_JSON` as environment secrets.
-   The JSON has only the `target` object from step 2. The approved policy includes initial Vault
+   Keep the existing `target` object. Add an `atlas_sso` object containing
+   `assignment_group_id`, `signon_policy_id` and `idp_policy_id`. Use the verified
+   development group and policy SCIM GUIDs, each 32 lowercase hexadecimal characters.
+   The workflow reuses the token-exchange domain URL and fixes the callback to 8445 in HCL.
+   Atlas runtime credentials belong outside this input. The approved policy includes initial Vault
    and key creation in development. Both dispatches share that OCI authority. The planning command
    does not apply the plan. GitHub review, separate apply enablement, and the exact saved-plan check
    govern apply. This policy grants no application-secret, cross-environment, or trust-administration
@@ -166,15 +170,28 @@ will extend the same root and state after provider qualification.
    select `plan`. The plan can write a lock and a saved plan object in the development bucket.
    Approve the live dispatch separately. For the retired development HSM key, the Terraform
    `removed` block prevents recreation and uses `destroy = false` so it leaves the OCI deletion
-   schedule in effect. While the old address is still in state, require one state-only `forget`
-   with zero creates, updates, deletes, or replacements. If the old address is already absent,
-   require a no-op plan. Check that the Vault and software key both have no-op actions.
+   schedule in effect. If the old address is still in state, reconcile its state-only retirement
+   separately before reviewing the replacement client plan. Expect no retirement action in that plan. Check that the Vault and software key both have no-op actions.
    The existing reviewed-apply command rejects receipts containing `forget`. Keep apply held
    and reconcile that state entry separately before a future deployment if it remains tracked.
    Terraform does not write application secret values. The separate
    apply dispatch takes the successful plan run ID and reviewed SHA-256 and rejects any delete
    or replacement. Confirm the exact reviewed effects before approving apply. An interrupted
    apply requires state reconciliation and a fresh plan.
+
+For the replacement client, the first plan should create only
+`oci_identity_domains_app.atlas_sso` (inactive) and `oci_identity_domains_grant.atlas_assignment`
+(group-to-app assignment). The existing client continues serving 8445. Verify the locked provider,
+filtered response attributes, group GUID, domain and both policy references. The existing workflow
+IAM grants cover Vault, key and state storage. Qualify Identity Domains permissions for this
+workflow principal and review them separately before applying.
+
+After an approved create, verify the replacement's actual policy bindings and assignment in OCI.
+A later reviewed Terraform plan activates it. Deliver its generated secret directly to private
+runtime custody outside Terraform. Update the private Atlas client, app and assignment references
+together, retaining the original configuration for rollback. Test 8445 with both a fresh browser
+and an existing native OCI session. The new client keeps its permanent name, `otm-sso-development`.
+Retirement of the previous client requires a separate review. The saved 8443 review instance is independent.
 
 See the [shared plan and apply procedure](infrastructure-plans.md) for saved-plan custody and
 recovery. Development creates no hosted network, compute, database, or child tenancy.

@@ -38,7 +38,7 @@ Use lowercase, hyphenated `otm` names. Spell environments `development`, `stagin
 `production` consistently.
 
 - Integrated applications use `otm-<purpose>-<environment>`, such as
-  `otm-github-development` and `otm-application-development`.
+  `otm-github-development` and `otm-sso-development`.
 - IAM policies and groups use `otm-<environment>-<purpose>`, such as
   `otm-development-github-infrastructure` and `otm-development-users`.
 

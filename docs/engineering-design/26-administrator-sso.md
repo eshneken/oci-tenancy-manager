@@ -237,12 +237,12 @@ Extend the existing root at `infra/environments/development/custody` and preserv
 addresses. The local bootstrap currently owns the laptop enrollment IAM policy. Review its
 ownership and migration as part of adopting development identity resources.
 
-The current GitHub build covers the Vault and software key. Before adding the remaining resources,
-qualify app creation, import and refresh without persisting client credentials or administrator
-membership data. Supply private workflow inputs through GitHub environment secrets. Keep provider
-responses that contain credentials out of saved plans and state. Qualify the workflow's exact
-identity-domain permissions. Adopt the existing
-objects into the single development state and require a reviewed zero-change GitHub plan.
+The development client cutover uses a fresh confidential app in the same root, with Oracle's
+released provider. The existing assignment group and its memberships, database grants, policies
+and original client stay in place during testing. Create an inactive replacement and a separate
+group-to-app assignment first. Review activation, runtime credential handoff and retirement in
+separate steps. See the [development runbook](../how-to/laptop-oci-development.md#development-custody-through-github-actions).
+Other existing resources still require separate adoption qualification and a zero-change plan.
 
 ## Terraform ownership for signing keys
 
@@ -251,8 +251,8 @@ Settings singleton to the operator bootstrap as the single owner. Production use
 domain and bootstrap owner. The environment builds reference the shared setting and own their
 respective clients, groups, grants and callbacks.
 
-Use OCI integrated application display names `otm-application-development`,
-`otm-application-staging`, and `otm-application-production`. The shared description is
+Use OCI integrated application display names `otm-sso-development`,
+`otm-sso-staging`, and `otm-sso-production`. The shared description is
 “Corporate single sign-on for OCI Tenancy Manager.” Use app-only assignment groups
 `otm-development-users`, `otm-staging-users`, and `otm-production-users` with the shared
 description “Users assigned to corporate sign-in for OCI Tenancy Manager.” Use the Terraform

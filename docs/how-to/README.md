@@ -63,7 +63,7 @@ includes replacement verification, identity retention/removal and manual resourc
 - [Schema-changing release maintenance](hosted-administration.md#schema-changing-application-release) — approved V1 drain/migrate/start/reopen procedure; unchanged-schema releases roll normally.
 
 
-- [Laptop OCI development](laptop-oci-development.md) — named API-key profiles, operator-managed IAM and the protected development custody workflow.
+- [Laptop OCI development](laptop-oci-development.md) — named API-key profiles, operator-managed IAM and the protected development infrastructure workflow and SSO cutover.
 
 
 - [Hosted workload identity and Vault IAM](oke-workload-identity.md) — security-root Vault handoff, cluster-bound policies, projected tokens and remaining live checks.

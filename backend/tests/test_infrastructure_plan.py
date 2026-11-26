@@ -35,7 +35,14 @@ def environment_values(environment="staging", component="security"):
     }
     inputs = {"target": target, "database_provisioner_group_ocid": "ocid1.group.oc1..synthetic"}
     if component == "custody":
-        inputs = {"target": target}
+        inputs = {
+            "target": target,
+            "atlas_sso": {
+                "assignment_group_id": "a" * 32,
+                "signon_policy_id": "b" * 32,
+                "idp_policy_id": "c" * 32,
+            },
+        }
     if component == "platform":
         inputs = {
             "target": target,
@@ -863,3 +870,19 @@ def test_development_workflow_contract():
     assert job["steps"][-1]["run"].count("--environment development --component custody") == 2
     assert "upload-artifact" not in str(workflow)
     assert "OCI_PROFILE" not in str(workflow)
+
+
+# Refuse arbitrary nested inputs before storing the protected SSO metadata in a plan.
+@pytest.mark.parametrize("fault", ["missing", "extra", "ocid"])
+def test_development_sso_reference_guard(fault):
+    values = environment_values("development", "custody")
+    inputs = json.loads(values["OTM_INFRASTRUCTURE_INPUTS_JSON"])
+    if fault == "missing":
+        del inputs["atlas_sso"]
+    elif fault == "extra":
+        inputs["atlas_sso"]["unexpected"] = "synthetic"
+    else:
+        inputs["atlas_sso"]["assignment_group_id"] = "ocid1.group.oc1..synthetic"
+    values["OTM_INFRASTRUCTURE_INPUTS_JSON"] = json.dumps(inputs)
+    with pytest.raises(ValueError, match="DEVELOPMENT_SSO_REFERENCES_REQUIRED"):
+        module.context("development", "custody", values)

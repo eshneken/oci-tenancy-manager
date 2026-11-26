@@ -4,7 +4,7 @@ run "development" {
   variables { environment = "development" }
 
   assert {
-    condition     = output.display_name == "otm-application-development" && output.description == "Corporate single sign-on for OCI Tenancy Manager."
+    condition     = output.display_name == "otm-sso-development" && output.description == "Corporate single sign-on for OCI Tenancy Manager."
     error_message = "Development must use the standard display name and neutral description."
   }
 
@@ -19,7 +19,7 @@ run "staging" {
   variables { environment = "staging" }
 
   assert {
-    condition     = output.display_name == "otm-application-staging" && output.description == run.development.description
+    condition     = output.display_name == "otm-sso-staging" && output.description == run.development.description
     error_message = "Staging must have its own app name and the shared description."
   }
 
@@ -34,7 +34,7 @@ run "production" {
   variables { environment = "production" }
 
   assert {
-    condition     = output.display_name == "otm-application-production" && output.description == run.development.description
+    condition     = output.display_name == "otm-sso-production" && output.description == run.development.description
     error_message = "Production must have its own app name and the shared description."
   }
 
