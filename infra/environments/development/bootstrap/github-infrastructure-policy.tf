@@ -13,7 +13,8 @@ locals {
   github_plan_recovery = "any {target.object.name = '*/apply-attempt.json', target.object.name = '*/errored.tfstate'}"
 }
 
-# The operator bootstrap owns CI permissions. The workflow has no IAM administration authority.
+# This compartment policy covers Vault and state storage. For the root-level identity grants,
+# see module.delivery in delivery.tf and modules/oci-delivery-foundation/identity-policy.tf.
 resource "oci_identity_policy" "github_infrastructure" {
   compartment_id = oci_identity_compartment.development.id
   # OCI policy names are immutable. Keep this name aligned with the live bootstrap policy.
