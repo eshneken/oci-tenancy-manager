@@ -153,10 +153,11 @@ group-to-app grants, app-specific policies and rules. The existing upstream corp
 federation stays external. Atlas owns routine membership changes and its database grants.
 
 Use the Terraform [application registration metadata module](../../infra/modules/application-registration/main.tf)
-for app and group descriptions. Candidate development source declares the app-only group,
-inactive replacement client, group-to-app grant, app-specific policies and rules. Adoption of
-existing resources and live permission and readback checks are pending. Preserve existing
-assignments and membership while qualifying Terraform ownership. See the [development rollout gates](../how-to/laptop-oci-development.md#development-infrastructure-through-github-actions).
+for app and group descriptions. Development source declares the app-only group, replacement
+client, group-to-app grant, policies and rules. OCI requires the target client to be active for
+the grant. The approved next step is Terraform activation of the already-managed replacement
+and assignment to the existing group. The previous app and runtime configuration continue
+serving 8445. See the [development activation and verification](../how-to/laptop-oci-development.md#development-atlas-browser-client-activation).
 
 Do not use the stock OCI provider to import an existing live confidential App, via either
 the CLI or an import block. Provider 9.13.0 used default App reads in synthetic tests and

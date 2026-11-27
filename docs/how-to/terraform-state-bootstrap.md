@@ -117,10 +117,23 @@ Oracle also lists native domain lifecycle privileges under `manage domains`. Rev
 effective scope, including domain lifecycle operations, unrelated apps, the GitHub exchange client,
 and upstream federation, before any live opt-in. Verify the required SCIM reads and operations with
 the actual workflow principal. The saved-plan consumer independently gates the
-[bounded inactive development App create](laptop-oci-development.md#inactive-atlas-browser-client-first-apply).
+[bounded development App activation](laptop-oci-development.md#development-atlas-browser-client-activation).
 [Oracle application management](https://docs.oracle.com/en-us/iaas/Content/Identity/applications/overview.htm) ·
 [OCI IAM policy variables and permissions](https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/iampolicyreference.htm) ·
 [Identity Domains AppRole permissions](https://docs.oracle.com/en-us/iaas/Content/Identity/api-getstarted/RequiredRolePerEndpointExt.htm)
+
+### Temporary development Application Administrator
+
+Recreate the approved temporary dynamic group with the same verified name and matching rule,
+and re-establish its **Application Administrator** domain role. Verify that the group matches only the exact
+development GitHub exchange principal and admits no other resource. Verify the effective
+domain and workflow principal before the reviewed apply. This domain role can manage apps
+beyond Atlas, so keep the temporary binding limited to the approved apply and no-change
+verification. Remove the role assignment and temporary group after success or failure, and
+confirm both removals. Reconcile state and OCI effects before retrying.
+Keep 8445 runtime configuration, the existing pilot, staging and production outside this change.
+[Oracle dynamic group domain role assignment](https://docs.oracle.com/en-us/iaas/Content/Identity/dynamicgroups/assign-domain-role.htm) ·
+[Oracle administrator role scope](https://docs.oracle.com/en-us/iaas/Content/Identity/roles/understand-administrator-roles.htm)
 
 ## Hosted reader-policy writes
 
