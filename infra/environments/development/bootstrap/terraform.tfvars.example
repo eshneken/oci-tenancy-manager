@@ -24,3 +24,14 @@ github_environment = {
 
 # Set only with separate approval for domain-wide application management.
 # identity_app_management_environments = ["development", "staging"]
+
+# Optional named GitHub policy subject and Application Administrator assignment. Use
+# independently verified values. Replace existing with create_fresh = true only for a
+# qualified fresh setup.
+# github_workflow_dynamic_group = {
+#   principal_ocid = "ocid1.identityfederateddomainapp.oc1..synthetic"
+#   existing = {
+#     group_id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+#     grant_id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+#   }
+# }

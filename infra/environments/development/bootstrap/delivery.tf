@@ -38,11 +38,44 @@ variable "identity_app_management_environments" {
   nullable    = false
 }
 
+# Opt in only after independently verifying the exact development workflow principal.
+variable "github_workflow_dynamic_group" {
+  description = "Approved development workflow principal for the named dynamic group and its Application Administrator role. Include both existing GUIDs to adopt."
+  type = object({
+    # Immutable development principal matched by the group's only rule.
+    principal_ocid = string
+    # Create a new group and role grant only when neither already exists.
+    create_fresh = optional(bool, false)
+    # Supply both SCIM IDs when the bootstrap must adopt the existing group and grant.
+    existing = optional(object({
+      # Lowercase 32-hex SCIM GUID of the verified Default-domain dynamic group.
+      group_id = string
+      # Lowercase 32-hex SCIM GUID of that group's Application Administrator grant.
+      grant_id = string
+    }))
+  })
+  default = null
+}
+
+# Adopt the two exact existing bindings before considering any managed-resource change.
+import {
+  for_each = try(var.github_workflow_dynamic_group.existing == null, true) ? {} : { development = var.github_workflow_dynamic_group.existing }
+  to       = module.delivery.oci_identity_dynamic_group.development_workflow[0]
+  id       = module.delivery.development_workflow_adoption_group_ocid
+}
+
+import {
+  for_each = try(var.github_workflow_dynamic_group.existing == null, true) ? {} : { development = var.github_workflow_dynamic_group.existing }
+  to       = module.delivery.oci_identity_domains_grant.development_application_administrator[0]
+  id       = "idcsEndpoint/${nonsensitive(module.delivery.identity_domain_url)}/grants/${each.value.grant_id}"
+}
+
 module "delivery" {
   source                               = "../../../modules/oci-delivery-foundation"
   environment                          = "development"
   tenancy_ocid                         = var.target.tenancy_ocid
   development_group_adoption_ocid      = one(data.oci_identity_group.group_adoption[*].id)
+  development_workflow_dynamic_group   = var.github_workflow_dynamic_group
   identity_app_management_environments = var.identity_app_management_environments
   identity_domain_ocid                 = var.github_identity_domain_ocid
   trust_active                         = var.github_delivery.trust_active

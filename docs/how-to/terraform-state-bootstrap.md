@@ -61,11 +61,10 @@ compartment. Vault and OKE cluster bindings also use OCIDs that identify the exa
 [OCI compartment naming](https://docs.oracle.com/en-us/iaas/Content/Identity/compartments/To_create_a_compartment.htm) ·
 [Vault policy variables](https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/keypolicyreference.htm)
 
-Keep `request.principal.domain.id` on the exchanged GitHub principal alongside the exact
-workflow and environment claims. Oracle documents `request.domain.name` as a general
-principal variable, but its equivalence for this token exchange is unqualified. Before adopting
-the name for a new grant, test an authorized read-only plan and confirm denial for principals
-outside the exact domain, workflow, and environment. Keep the separate
+Workflows without a [verified named subject](#named-development-workflow-subject) use
+`request.principal.domain.id` alongside the exact workflow and environment claims.
+Oracle documents `request.domain.name` as a general principal variable. Its equivalence
+for this token exchange still needs qualification. Keep the separate
 `target.resource.domain.name = 'Default'` condition on the native group create/update and
 list grants. The existing development adoption read uses the separate exact point-read
 condition below. A group list request has no target group name.
@@ -80,8 +79,8 @@ including the development and staging statements. The staging bootstrap has no c
 Production bootstrap owns a separate policy with the same name in the production tenancy.
 Environment compartment policies continue to own the respective state and infrastructure access.
 
-Each statement binds the federated principal to the verified domain OCID, exact protected
-workflow and matching environment claim. The development workflow's create and update
+Each statement binds the federated principal to the verified domain, exact protected workflow
+and matching environment claim. The development workflow's create and update
 grants target only `Default/otm-development-users`. Each hosted workflow's native grants target its own
 `otm-<environment>-users` and `otm-<environment>-database-provisioners` native groups in
 the Default domain. Each workflow has a separate Default-domain `ListGroups` statement
@@ -94,7 +93,7 @@ the same `atlas_sso.adopt_group_ocid` in the operator's protected settings as th
 Verify the native group metadata against the approved binding. Member information is outside
 that check. Variants requiring the target domain name or target domain OCID with the group
 name did not authorize the point read with this workflow principal. The adopted group
-condition preserves the original principal-domain, workflow and environment claims, leaves
+condition preserves the verified principal binding, workflow and environment claims, leaves
 create/update and staging grants as before, and requires no additional policy statement.
 
 This is evidence for a point read of the existing group. A fresh group's first read without
@@ -103,9 +102,12 @@ Policy remain unqualified. Keep apply disabled until the exact development deplo
 authorized and hosted qualifications are complete.
 
 The domain-owner bootstrap's `identity_app_management_environments` opt-in defaults to an empty
-set. It adds a `manage domains` grant for each selected workflow using the same domain OCID,
-workflow and environment claim bindings, and conditions on the target `Default` domain name
-and exact OCID. The complete non-production proposal sets `["development", "staging"]` in the development
+set. It adds a `manage domains` grant for each selected workflow using the same principal,
+workflow and environment bindings. The target is pinned by both its `Default` name and
+its OCID. OCI omits the target OCID for `CreateDomain`, so this condition also excludes domain
+creation. [OCI domain policy variables](https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/iampolicyreference.htm)
+
+The complete non-production proposal sets `["development", "staging"]` in the development
 bootstrap. This prepares both workflow grants in one policy. Staging dispatch and token
 exchange remain held until its client-bound federation is qualified. Production controls
 its own opt-in independently.
@@ -122,15 +124,57 @@ the actual workflow principal. The saved-plan consumer independently gates the
 [OCI IAM policy variables and permissions](https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/iampolicyreference.htm) ·
 [Identity Domains AppRole permissions](https://docs.oracle.com/en-us/iaas/Content/Identity/api-getstarted/RequiredRolePerEndpointExt.htm)
 
+### Named development workflow subject
+
+Development can opt in to the readable `dynamic-group Default/otm-development-github-identity`
+subject on both `otm-github-identity` and `otm-development-github-infrastructure`.
+The operator bootstrap owns that group and its Application Administrator assignment when enabled.
+Its input defaults to the existing principal-domain OCID policy form.
+[OCI IAM subjects](https://docs.oracle.com/en-us/iaas/Content/Identity/policysyntax/subject.htm)
+
+Independently verify the protected workflow's exchanged `principal_ocid`. In the private
+development bootstrap inputs, configure `github_workflow_dynamic_group` with that value and an
+`existing` object containing both `group_id` and `grant_id`, which are SCIM GUIDs. Migrate an
+earlier flat `group_id` into `existing` before planning. The source's import blocks adopt
+both addresses. Require an import-only plan for these existing resources. A new setup needs
+explicit `create_fresh = true` in place of `existing`. Leave the option unset if the exact
+exchanged principal is unavailable.
+
+The bootstrap looks up the single Application Administrator AppRole in the selected Default
+domain and validates its administrative flag and `IDCSAppId` owner. Projected adoption reads
+check the group's GUID, native OCID, name, domain, tenancy, and full
+`resource.id = '<principal OCID>'` rule. Terraform owns the group through native IAM because
+the Identity Domains resource import omits the matching rule. A fresh group is resolved to its
+SCIM GUID by the exact native OCID. The Grant must exclusively bind that GUID to the verified
+App and AppRole. Terraform blocks replacement and deletion of both managed resources.
+The grant's stock-provider import uses its default response because changing the projection
+would force replacement. Keep bootstrap plans and state in private custody.
+
+The named subject applies only to the development workflow. Its principal type, protected
+workflow ref, environment claim, operations and target conditions still apply. Dynamic-group
+membership supplies the principal binding in this mode, so effective access depends on the
+group retaining its exact matching rule. Reverify the rule after an approved group or principal
+change. Staging and production use their existing principal-domain OCID bindings. Qualify the
+actual exchanged GitHub principal against the named subject with an authorized read-only
+plan and confirm denial outside the intended scope before relying on the new statements in
+another setup. The existing development workflow's named-policy plan succeeded with all 13
+managed resources unchanged. The scoped bootstrap adopted the existing group and grant
+with two imports and zero OCI resource actions. Its scoped follow-up plan had zero imports
+and zero OCI resource actions. Other bootstrap resources were outside that verification.
+Obtain approval before applying later policy or ownership changes.
+
 ### Temporary development Application Administrator
 
-Recreate the approved temporary dynamic group with the same verified name and matching rule,
-and re-establish its **Application Administrator** domain role. Verify that the group matches only the exact
-development GitHub exchange principal and admits no other resource. Verify the effective
-domain and workflow principal before the reviewed apply. This domain role can manage apps
-beyond Atlas, so keep the temporary binding limited to the approved apply and no-change
-verification. Remove the role assignment and temporary group after success or failure, and
-confirm both removals. Reconcile state and OCI effects before retrying.
+The activation and follow-up used an **Application Administrator** domain role assigned to
+the dynamic group that matched the exact development GitHub exchange principal. This domain
+role can manage apps beyond Atlas. The development group and role remain in place for
+operational plans after restoring the role re-established `GetCondition` access. Manage
+the binding through the [operator bootstrap adoption](#named-development-workflow-subject).
+Once adopted, retire a role or group only through
+a separately reviewed Terraform change that explicitly addresses the resource's deletion
+guard. Verify the resulting role removal and preserve a group still used as the
+[named IAM policy subject](#named-development-workflow-subject). Reconcile state and OCI
+effects before retrying a failed plan or apply.
 Keep 8445 runtime configuration, the existing pilot, staging and production outside this change.
 [Oracle dynamic group domain role assignment](https://docs.oracle.com/en-us/iaas/Content/Identity/dynamicgroups/assign-domain-role.htm) ·
 [Oracle administrator role scope](https://docs.oracle.com/en-us/iaas/Content/Identity/roles/understand-administrator-roles.htm)

@@ -16,7 +16,7 @@ data "oci_identity_domain" "selected" {
       condition = (
         self.compartment_id == var.tenancy_ocid &&
         self.state == "ACTIVE" &&
-        self.display_name == "Default" &&
+        self.display_name == local.identity_domain_name &&
         can(regex("^https://idcs-[a-z0-9]+[.]identity[.]oraclecloud[.]com(:443)?$", trimsuffix(self.url, "/")))
       )
       error_message = "Expected the active Default identity domain at the selected tenancy root."
@@ -25,6 +25,7 @@ data "oci_identity_domain" "selected" {
 }
 
 locals {
+  identity_domain_name = "Default"
   # OCI can report the default HTTPS port; downstream endpoints use a canonical origin.
   domain_url    = trimsuffix(trimsuffix(data.oci_identity_domain.selected.url, "/"), ":443")
   display_name  = "otm-github-${var.environment}"

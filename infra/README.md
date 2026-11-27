@@ -157,12 +157,15 @@ and shared non-production domain settings. The optional `local_app_iam` adds lap
 Development bootstrap owns the shared non-production
 [`otm-github-identity` policy](../docs/how-to/terraform-state-bootstrap.md#domain-owned-github-identity-policy);
 its development and staging statements keep separate workflow and group bindings.
+The optional [named development subject](../docs/how-to/terraform-state-bootstrap.md#named-development-workflow-subject)
+also declares ownership of the exact workflow dynamic group and Application Administrator grant.
 The environment root owns the Vault and key and declares the SSO group, client, app grant,
 policies and rules. A [protected native group adoption plan](../docs/how-to/laptop-oci-development.md#development-group-adoption-proof)
 verified the existing group's exact-name and native-OCID read and no changes to Vault/key.
-Fresh-group reads remain unqualified. The protected workflow created the inactive replacement,
-then OCI rejected its grant. [In-place activation and assignment](../docs/how-to/laptop-oci-development.md#development-atlas-browser-client-activation)
-remain pending and the original 8445 client remains in use.
+Fresh-group reads remain unqualified. The protected workflow then completed
+[in-place activation and assignment](../docs/how-to/laptop-oci-development.md#development-atlas-browser-client-activation).
+The replacement passed the 8445 native-session sign-in test. The protected follow-up with the
+named workflow subject proposed zero resource actions.
 
 ## Hosted workload Vault reads
 

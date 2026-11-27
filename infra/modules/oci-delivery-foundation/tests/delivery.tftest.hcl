@@ -2,6 +2,40 @@
 mock_provider "oci" {
   override_during = plan
 
+  mock_data "oci_identity_domains_app_roles" {
+    defaults = {
+      total_results = 1
+      app_roles = [{
+        id           = "cccccccccccccccccccccccccccccccc"
+        display_name = "Application Administrator"
+        admin_role   = true
+        app          = [{ value = "IDCSAppId" }]
+      }]
+    }
+  }
+
+  mock_data "oci_identity_domains_grant" {
+    defaults = {
+      id              = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      schemas         = ["urn:ietf:params:scim:schemas:oracle:idcs:Grant"]
+      grant_mechanism = "ADMINISTRATOR_TO_DYNAMIC_RESOURCE_GROUP"
+      app             = [{ value = "IDCSAppId" }]
+      grantee         = [{ type = "DynamicResourceGroup", value = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }]
+      entitlement     = [{ attribute_name = "appRoles", attribute_value = "cccccccccccccccccccccccccccccccc" }]
+    }
+  }
+
+  mock_resource "oci_identity_dynamic_group" {
+    defaults = {
+      id    = "ocid1.dynamicgroup.oc1..synthetic"
+      state = "ACTIVE"
+    }
+  }
+
+  mock_resource "oci_identity_domains_grant" {
+    defaults = { id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" }
+  }
+
   mock_data "oci_identity_domain" {
     defaults = {
       compartment_id = "ocid1.tenancy.oc1..synthetic"
@@ -430,4 +464,238 @@ run "hosted_policy_cannot_use_development_adoption_pin" {
   }
 
   expect_failures = [var.development_group_adoption_ocid]
+}
+
+run "verified_dynamic_group_changes_development_subject_only" {
+  command = plan
+
+  variables {
+    development_workflow_dynamic_group = {
+      principal_ocid = "ocid1.identityfederateddomainapp.oc1..synthetic"
+      existing = {
+        group_id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        grant_id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    }
+    development_group_adoption_ocid      = "ocid1.group.oc1..syntheticatlas"
+    identity_app_management_environments = ["development", "staging"]
+    storage_policy = {
+      compartment_ocid = "ocid1.compartment.oc1..syntheticdevelopment"
+      bucket_name      = "otm-development-tfstate"
+      state_key        = "custody/development/terraform.tfstate"
+    }
+  }
+
+  override_data {
+    target = data.oci_identity_domains_dynamic_resource_group.development_workflow[0]
+    values = {
+      id            = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ocid          = "ocid1.dynamicgroup.oc1..synthetic"
+      display_name  = "otm-development-github-identity"
+      domain_ocid   = "ocid1.domain.oc1..synthetic"
+      tenancy_ocid  = "ocid1.tenancy.oc1..synthetic"
+      matching_rule = "resource.id = 'ocid1.identityfederateddomainapp.oc1..synthetic'"
+    }
+  }
+
+  assert {
+    condition = (
+      length(oci_identity_policy.github_identity[0].statements) == 6 &&
+      alltrue([for idx, statement in oci_identity_policy.github_identity[0].statements :
+        contains([0, 1, 4], idx) ? (
+          startswith(statement, "Allow dynamic-group Default/otm-development-github-identity to ") &&
+          !strcontains(statement, "request.principal.domain.id") &&
+          strcontains(statement, "request.principal.type = 'identityfederateddomainapp'") &&
+          strcontains(statement, "request.principal.ext_workflow_ref = 'example/tenancy-manager/.github/workflows/infra-development.yml@refs/heads/master'") &&
+          strcontains(statement, "request.principal.ext_environment = 'development'")
+          ) : (
+          startswith(statement, "Allow any-user to ") &&
+          strcontains(statement, "request.principal.domain.id = 'ocid1.domain.oc1..synthetic'") &&
+          strcontains(statement, "request.principal.ext_environment = 'staging'")
+        )
+      ]) &&
+      strcontains(oci_identity_policy.github_identity[0].statements[1], "target.group.name = 'otm-development-users', target.group.id = 'ocid1.group.oc1..syntheticatlas', request.operation = 'GetGroup'") &&
+      strcontains(oci_identity_policy.github_identity[0].statements[4], "target.domain.name = 'Default', target.domain.id = 'ocid1.domain.oc1..synthetic'") &&
+      length(oci_identity_policy.workflow_platform) == 0 &&
+      length(oci_identity_policy.workflow_storage[0].statements) == 8 &&
+      alltrue([for statement in oci_identity_policy.workflow_storage[0].statements :
+        startswith(statement, "Allow dynamic-group Default/otm-development-github-identity to ") &&
+        !strcontains(statement, "request.principal.domain.id") &&
+        strcontains(statement, "request.principal.type = 'identityfederateddomainapp'") &&
+        strcontains(statement, "request.principal.ext_workflow_ref = 'example/tenancy-manager/.github/workflows/infra-development.yml@refs/heads/master'") &&
+        strcontains(statement, "request.principal.ext_environment = 'development'") &&
+        strcontains(statement, "target.bucket.name = 'otm-development-tfstate'")
+      ])
+    )
+    error_message = "The qualified group changes only the development principal. The workflow claims and exact target pins must stay in place."
+  }
+}
+
+run "reject_broader_development_workflow_group" {
+  command = plan
+
+  variables {
+    development_workflow_dynamic_group = {
+      principal_ocid = "ocid1.identityfederateddomainapp.oc1..synthetic"
+      existing = {
+        group_id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        grant_id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    }
+  }
+
+  override_data {
+    target = data.oci_identity_domains_dynamic_resource_group.development_workflow[0]
+    values = {
+      id            = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ocid          = "ocid1.dynamicgroup.oc1..synthetic"
+      display_name  = "otm-development-github-identity"
+      domain_ocid   = "ocid1.domain.oc1..synthetic"
+      tenancy_ocid  = "ocid1.tenancy.oc1..synthetic"
+      matching_rule = "ANY {resource.id = 'ocid1.identityfederateddomainapp.oc1..synthetic', resource.type = 'instance'}"
+    }
+  }
+
+  expect_failures = [data.oci_identity_domains_dynamic_resource_group.development_workflow]
+}
+
+run "reject_development_workflow_group_from_another_domain" {
+  command = plan
+
+  variables {
+    development_workflow_dynamic_group = {
+      principal_ocid = "ocid1.identityfederateddomainapp.oc1..synthetic"
+      existing = {
+        group_id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        grant_id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    }
+  }
+
+  override_data {
+    target = data.oci_identity_domains_dynamic_resource_group.development_workflow[0]
+    values = {
+      id            = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ocid          = "ocid1.dynamicgroup.oc1..synthetic"
+      display_name  = "otm-development-github-identity"
+      domain_ocid   = "ocid1.domain.oc1..syntheticforeign"
+      tenancy_ocid  = "ocid1.tenancy.oc1..synthetic"
+      matching_rule = "resource.id = 'ocid1.identityfederateddomainapp.oc1..synthetic'"
+    }
+  }
+
+  expect_failures = [data.oci_identity_domains_dynamic_resource_group.development_workflow]
+}
+
+run "reject_development_workflow_group_response_guid_mismatch" {
+  command = plan
+
+  variables {
+    development_workflow_dynamic_group = {
+      principal_ocid = "ocid1.identityfederateddomainapp.oc1..synthetic"
+      existing = {
+        group_id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        grant_id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    }
+  }
+
+  override_data {
+    target = data.oci_identity_domains_dynamic_resource_group.development_workflow[0]
+    values = {
+      id            = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ocid          = "ocid1.dynamicgroup.oc1..synthetic"
+      display_name  = "otm-development-github-identity"
+      domain_ocid   = "ocid1.domain.oc1..synthetic"
+      tenancy_ocid  = "ocid1.tenancy.oc1..synthetic"
+      matching_rule = "resource.id = 'ocid1.identityfederateddomainapp.oc1..synthetic'"
+    }
+  }
+
+  expect_failures = [data.oci_identity_domains_dynamic_resource_group.development_workflow]
+}
+
+run "hosted_policy_cannot_use_development_dynamic_group" {
+  command = plan
+
+  variables {
+    environment = "production"
+    development_workflow_dynamic_group = {
+      principal_ocid = "ocid1.identityfederateddomainapp.oc1..synthetic"
+      existing = {
+        group_id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        grant_id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    }
+  }
+
+  expect_failures = [var.development_workflow_dynamic_group]
+}
+
+run "omitted_adoption_is_not_fresh_creation_approval" {
+  command = plan
+
+  variables {
+    development_workflow_dynamic_group = {
+      principal_ocid = "ocid1.identityfederateddomainapp.oc1..synthetic"
+    }
+  }
+
+  expect_failures = [var.development_workflow_dynamic_group]
+}
+
+run "reject_unverified_application_administrator_role" {
+  command = plan
+
+  variables {
+    development_workflow_dynamic_group = {
+      principal_ocid = "ocid1.identityfederateddomainapp.oc1..synthetic"
+      create_fresh   = true
+    }
+  }
+
+  override_data {
+    target = data.oci_identity_domains_app_roles.application_administrator[0]
+    values = {
+      total_results = 2
+      app_roles     = []
+    }
+  }
+
+  expect_failures = [data.oci_identity_domains_app_roles.application_administrator]
+}
+
+run "reject_adoption_grant_for_a_different_group" {
+  command = plan
+
+  variables {
+    development_workflow_dynamic_group = {
+      principal_ocid = "ocid1.identityfederateddomainapp.oc1..synthetic"
+      existing = {
+        group_id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        grant_id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    }
+  }
+
+  override_data {
+    target = data.oci_identity_domains_dynamic_resource_group.development_workflow[0]
+    values = {
+      id            = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ocid          = "ocid1.dynamicgroup.oc1..synthetic"
+      display_name  = "otm-development-github-identity"
+      domain_ocid   = "ocid1.domain.oc1..synthetic"
+      tenancy_ocid  = "ocid1.tenancy.oc1..synthetic"
+      matching_rule = "resource.id = 'ocid1.identityfederateddomainapp.oc1..synthetic'"
+    }
+  }
+
+  override_data {
+    target = data.oci_identity_domains_grant.development_application_administrator[0]
+    values = {
+      grantee = [{ type = "DynamicResourceGroup", value = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" }]
+    }
+  }
+
+  expect_failures = [data.oci_identity_domains_grant.development_application_administrator]
 }

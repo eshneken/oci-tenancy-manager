@@ -2,6 +2,40 @@
 mock_provider "oci" {
   override_during = plan
 
+  mock_data "oci_identity_domains_app_roles" {
+    defaults = {
+      total_results = 1
+      app_roles = [{
+        id           = "cccccccccccccccccccccccccccccccc"
+        display_name = "Application Administrator"
+        admin_role   = true
+        app          = [{ value = "IDCSAppId" }]
+      }]
+    }
+  }
+
+  mock_data "oci_identity_domains_grant" {
+    defaults = {
+      id              = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      schemas         = ["urn:ietf:params:scim:schemas:oracle:idcs:Grant"]
+      grant_mechanism = "ADMINISTRATOR_TO_DYNAMIC_RESOURCE_GROUP"
+      app             = [{ value = "IDCSAppId" }]
+      grantee         = [{ type = "DynamicResourceGroup", value = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }]
+      entitlement     = [{ attribute_name = "appRoles", attribute_value = "cccccccccccccccccccccccccccccccc" }]
+    }
+  }
+
+  mock_resource "oci_identity_dynamic_group" {
+    defaults = {
+      id    = "ocid1.dynamicgroup.oc1..synthetic"
+      state = "ACTIVE"
+    }
+  }
+
+  mock_resource "oci_identity_domains_grant" {
+    defaults = { id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" }
+  }
+
   mock_data "oci_identity_compartment" {
     defaults = { compartment_id = "ocid1.tenancy.oc1..synthetic", name = "otm-development", state = "ACTIVE" }
   }
@@ -162,6 +196,75 @@ run "github_policy_is_scoped" {
       ])
     )
     error_message = "Saved plans and recovery artifacts require both the development prefix and permitted suffix, with no overwrite or delete."
+  }
+}
+
+run "github_compartment_policy_uses_verified_named_subject" {
+  command = plan
+
+  variables {
+    github_workflow_dynamic_group = {
+      principal_ocid = "ocid1.identityfederateddomainapp.oc1..synthetic"
+      existing = {
+        group_id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        grant_id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    }
+  }
+
+  override_data {
+    target          = module.delivery.data.oci_identity_domains_dynamic_resource_group.development_workflow[0]
+    override_during = plan
+    values = {
+      id            = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ocid          = "ocid1.dynamicgroup.oc1..synthetic"
+      display_name  = "otm-development-github-identity"
+      domain_ocid   = "ocid1.domain.oc1..synthetic"
+      tenancy_ocid  = "ocid1.tenancy.oc1..synthetic"
+      matching_rule = "resource.id = 'ocid1.identityfederateddomainapp.oc1..synthetic'"
+    }
+  }
+
+  override_resource {
+    target          = module.delivery.oci_identity_dynamic_group.development_workflow[0]
+    override_during = plan
+    values = {
+      id             = "ocid1.dynamicgroup.oc1..synthetic"
+      compartment_id = "ocid1.tenancy.oc1..synthetic"
+      name           = "otm-development-github-identity"
+      description    = "Development infrastructure workflow identity"
+      state          = "ACTIVE"
+      matching_rule  = "resource.id = 'ocid1.identityfederateddomainapp.oc1..synthetic'"
+    }
+  }
+
+  override_resource {
+    target          = module.delivery.oci_identity_domains_grant.development_application_administrator[0]
+    override_during = plan
+    values = {
+      id              = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      idcs_endpoint   = "https://idcs-syntheticdevelopment.identity.oraclecloud.com"
+      schemas         = ["urn:ietf:params:scim:schemas:oracle:idcs:Grant"]
+      grant_mechanism = "ADMINISTRATOR_TO_DYNAMIC_RESOURCE_GROUP"
+      app             = { value = "IDCSAppId" }
+      grantee         = { type = "DynamicResourceGroup", value = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }
+      entitlement     = { attribute_name = "appRoles", attribute_value = "cccccccccccccccccccccccccccccccc" }
+    }
+  }
+
+  assert {
+    condition = (
+      length(oci_identity_policy.github_infrastructure.statements) == 13 &&
+      alltrue([for statement in oci_identity_policy.github_infrastructure.statements :
+        startswith(statement, "Allow dynamic-group Default/otm-development-github-identity to ") &&
+        strcontains(statement, "in compartment otm-development where") &&
+        strcontains(statement, "request.principal.type = 'identityfederateddomainapp'") &&
+        strcontains(statement, "request.principal.ext_workflow_ref = 'example/tenancy-manager/.github/workflows/infra-development.yml@refs/heads/master'") &&
+        strcontains(statement, "request.principal.ext_environment = 'development'") &&
+        !strcontains(statement, "request.principal.domain.id")
+      ])
+    )
+    error_message = "Use the verified named development grantee on every existing compartment statement, preserving the exact claims and resource scope."
   }
 }
 

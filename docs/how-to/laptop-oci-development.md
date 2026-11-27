@@ -210,7 +210,7 @@ Require the Vault and software key and all unrelated resources to have no change
 The 27 November protected development apply created nine resources, including the replacement App.
 OCI rejected its group-to-app grant with HTTP 400 while the target App was inactive. The
 temporary dynamic group and its Application Administrator role assignment were removed after
-that attempt. The original 8445 client and runtime configuration remain in use.
+that attempt. The original 8445 client carried sign-in until the later cutover.
 
 Reconcile the successful resource writes with the current development state and generate a fresh
 protected plan. Terraform's desired state now sets the replacement active so OCI can attach its
@@ -220,16 +220,23 @@ the App and grant addresses, exact resource identities and absence of any other 
 Preserve the original application, grants and effective access. A fresh active App create
 requires its own qualification.
 Existing group members may see the new App in OCI after the grant. The running 8445
-configuration continues to use the original client.
+configuration switches only during the separately approved cutover.
 
-For the approved apply and no-change verification, re-establish the same
-[temporary domain-role binding](terraform-state-bootstrap.md#temporary-development-application-administrator).
-Run the exact reviewed saved plan with separate apply enablement and its digest. Verify the
+The approved apply and no-change verification used the
+[development domain-role binding](terraform-state-bootstrap.md#temporary-development-application-administrator).
+For any later apply, use the exact reviewed saved plan with separate apply enablement and its digest. Verify the
 replacement's active state, sign-in policies, exact group assignment and preserved original access.
 Inspect private plan/state for credential exclusion. Run a fresh plan using the same workflow
-principal and record zero changes only if the plan confirms that result. Remove the temporary
-role and dynamic group after success or failure, including failed follow-up verification, and
-verify both removals. Reconcile the private state and provider effects before any retry.
+principal and record zero changes only if the plan confirms that result. Use the bootstrap's
+[named development IAM subject procedure](terraform-state-bootstrap.md#named-development-workflow-subject)
+to adopt the current group and role. Reconcile the private state and provider effects before
+any retry.
+
+In the protected follow-up, restoring the temporary role re-established the workflow's
+`GetCondition` read. The saved plan had 13 managed no-op resources, zero imports and zero
+resource actions. Refresh reported only grant metadata changes in `idcs_last_modified_by`,
+`is_fulfilled` and `meta`. The group and domain role are currently retained for operational
+plans. The subsequent named-policy workflow also confirmed zero resource actions.
 
 During separately approved cutover, deliver the generated secret directly to private runtime
 custody. Update the private Atlas client, app and assignment references together and
@@ -289,8 +296,10 @@ active status. The subsequent protected workflow proved resource creation with a
 domain role and stopped at the inactive-target grant. Hosted federation remains open.
 See the [bootstrap restrictions](terraform-state-bootstrap.md).
 
-Successful activation and assignment, no-change verification under the workflow principal, and
-the 8445 cutover remain pending.
+The replacement client was activated and its development assignment and credential exclusion
+were verified. The operator confirmed regular SSO on 8445 with an existing native OCI session.
+The former manually managed browser App and its two policies were removed after that test.
+The protected follow-up confirmed zero planned resource actions under the workflow principal.
 
 ## What is implemented and what comes next
 

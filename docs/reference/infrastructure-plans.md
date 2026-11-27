@@ -245,9 +245,11 @@ A live local operator test with released OCI provider 9.13.0 verified creation,
 description update and a no-change refresh for an inactive Atlas browser client. The projected
 responses and inspected plan/state contained no client secret or secret hash. The protected
 27 November apply then created nine resources with a temporary Application Administrator
-assignment. OCI rejected the application grant because its target was inactive. Successful
-activation, assignment and a no-change verification remain pending. The original 8445 client
-remains in use.
+assignment. OCI rejected the application grant because its target was inactive. The subsequent apply activated the client and assigned the environment group.
+The operator verified Corporate SSO on 8445 with an existing native OCI session and retired the
+manual client. A protected plan using the named development workflow dynamic group and its
+Application Administrator grant verified zero planned actions across all 13 managed resources.
+OCI reported computed metadata drift on the assignment.
 A protected development adoption plan verified the existing native group with exact name and
 OCID conditions and proposed ten creates and one no-op import, with no updates or deletes.
 Vault and key were unchanged. This did not exercise a fresh group's first read or apply.
