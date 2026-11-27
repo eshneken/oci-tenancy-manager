@@ -30,13 +30,22 @@ variable "github_delivery" {
   }
 }
 
+# Optional domain-wide App administration. Set only for independently approved workflow environments.
+variable "identity_app_management_environments" {
+  description = "Protected environments authorized to manage their shared identity domain for application provisioning."
+  type        = set(string)
+  default     = []
+  nullable    = false
+}
+
 module "delivery" {
-  source                            = "../../../modules/oci-delivery-foundation"
-  environment                       = "development"
-  tenancy_ocid                      = var.target.tenancy_ocid
-  identity_domain_ocid              = var.github_identity_domain_ocid
-  trust_active                      = var.github_delivery.trust_active
-  exchange_write_response_qualified = var.github_delivery.exchange_write_response_qualified
+  source                               = "../../../modules/oci-delivery-foundation"
+  environment                          = "development"
+  tenancy_ocid                         = var.target.tenancy_ocid
+  identity_app_management_environments = var.identity_app_management_environments
+  identity_domain_ocid                 = var.github_identity_domain_ocid
+  trust_active                         = var.github_delivery.trust_active
+  exchange_write_response_qualified    = var.github_delivery.exchange_write_response_qualified
 
   existing_exchange = var.github_delivery.existing_exchange_app_id == null ? null : {
     id   = var.github_delivery.existing_exchange_app_id

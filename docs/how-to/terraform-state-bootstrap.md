@@ -71,13 +71,42 @@ can scope get, create, and update. A group list request has no target group name
 [OCI general variables](https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/policyreference_topic-General_Variables_for_All_Requests.htm) ·
 [OCI IAM policy variables and permissions](https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/iampolicyreference.htm)
 
+### Domain-owned GitHub identity policy
+
+Attach `otm-github-identity` at the tenancy root because the native identity groups live
+there. The development bootstrap owns the policy for the shared non-production domain,
+including the development and staging statements. The staging bootstrap has no copy.
+Production bootstrap owns a separate policy with the same name in the production tenancy.
+Environment compartment policies continue to own the respective state and infrastructure access.
+
+Each statement binds the federated principal to the verified domain OCID, exact protected
+workflow and matching environment claim. The development workflow can create, read and
+update only `Default/otm-development-users`. Each hosted workflow can do so for its own
+`otm-<environment>-users` and `otm-<environment>-database-provisioners` native groups in
+the Default domain. Each workflow has a separate Default-domain `ListGroups` statement
+because that operation has no target group name. Staging's statements preserve its exact
+workflow/group pairing and do not lift the federation and dispatch holds.
+
 The workflow's native group policy does not establish authorization for the SCIM group lookup,
 App, Grant, Condition, Rule, or sign-on and identity-provider Policy calls in the environment graph.
-Qualify the required reads with the exchanged workflow principal before the first plan. Obtain
-separate approval for the Identity Domains writes before apply and verify their exact effects.
-Oracle's documented administrative AppRoles can affect resources beyond the Atlas app, so show
-their scope and the denial results before choosing a grant. Keep the shared upstream federation
-and existing GitHub exchange client outside the scope of those writes.
+
+The domain-owner bootstrap's `identity_app_management_environments` opt-in defaults to an empty
+set. It adds a `manage domains` grant for each selected workflow using the same domain OCID,
+workflow and environment claim bindings, and conditions on the target `Default` domain name
+and exact OCID. The complete non-production proposal sets `["development", "staging"]` in the development
+bootstrap. This prepares both workflow grants in one policy. Staging dispatch and token
+exchange remain held until its client-bound federation is qualified. Production controls
+its own opt-in independently.
+
+Oracle documents application management for members of a group granted `manage domains`.
+That documentation does not establish equivalent authorization for an exchanged Resource Principal
+Session Token. The candidate permission is domain-wide and can affect applications beyond Atlas.
+Oracle also lists native domain lifecycle privileges under `manage domains`. Review the exact
+effective scope, including domain lifecycle operations, unrelated apps, the GitHub exchange client,
+and upstream federation, before any live opt-in. Verify the required SCIM reads and operations with
+the actual workflow principal. Dispatch approval remains separate, and the saved-plan consumer
+continues to reject managed App writes. [Oracle application management](https://docs.oracle.com/en-us/iaas/Content/Identity/applications/overview.htm) ·
+[OCI IAM policy variables and permissions](https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/iampolicyreference.htm) ·
 [Identity Domains AppRole permissions](https://docs.oracle.com/en-us/iaas/Content/Identity/api-getstarted/RequiredRolePerEndpointExt.htm)
 
 ## Hosted reader-policy writes

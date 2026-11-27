@@ -5,11 +5,11 @@ and production use separate roots and separate tenancies. Optional [held Caddy/N
 
 | Directory | Responsibility |
 | --- | --- |
-| `environments/development/bootstrap/` | Development compartment, bucket, GitHub delivery trust, shared non-production domain settings and optional laptop enrollment IAM |
+| `environments/development/bootstrap/` | Development compartment, bucket, GitHub delivery trust, shared non-production domain settings and identity policy, and optional laptop enrollment IAM |
 | `environments/development/infrastructure/` | Single post-bootstrap root and remote state. Vault and key, plus partial Atlas SSO source held for full ownership review. |
 | `modules/state-bootstrap/` | One private, versioned Standard Object Storage bucket, with a namespace check and replacement/destruction guard |
 | `environments/staging/bootstrap/` | Staging compartment and state bucket. Uses shared non-production settings and holds delivery activation pending client-bound federation. |
-| `environments/production/bootstrap/` | Production compartment, state bucket, GitHub delivery trust, and production domain settings |
+| `environments/production/bootstrap/` | Production compartment, state bucket, GitHub delivery trust, and independent domain settings and identity policy |
 | `environments/staging/infrastructure/` | One staging root/state for Vault, generated DB credential, network, OKE, PostgreSQL, IAM and SSO. Live use held. |
 | `environments/production/infrastructure/` | One production root/state with independent delivery and same-source staging acceptance. Live use held. |
 | `modules/oci-delivery-foundation/` | OCI token exchange, exact GitHub trust, IAM and shared domain setting ownership |
@@ -154,6 +154,9 @@ qualifying their Terraform adoption. Atlas manages individual membership and dat
 
 Bootstrap source declares the compartment, bucket, GitHub exchange client/trust, scoped IAM
 and shared non-production domain settings. The optional `local_app_iam` adds laptop enrollment IAM.
+Development bootstrap owns the shared non-production
+[`otm-github-identity` policy](../docs/how-to/terraform-state-bootstrap.md#domain-owned-github-identity-policy);
+its development and staging statements keep separate workflow and group bindings.
 The environment root owns the Vault and key and declares the SSO group, client, app grant,
 policies and rules. A [read-only native group adoption plan](../docs/how-to/laptop-oci-development.md#development-group-adoption-proof)
 verified the group binding and no changes to Vault/key. Live GitHub authorization, bootstrap

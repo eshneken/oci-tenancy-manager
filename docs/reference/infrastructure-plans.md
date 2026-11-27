@@ -230,14 +230,21 @@ The apply consumer rejects any managed OCI App change beyond read or no-op befor
 the saved plan. A live local operator test with released OCI provider 9.13.0 verified creation,
 description update and a no-change refresh for an inactive Atlas browser client. The projected
 responses and inspected plan/state contained no client secret or secret hash. GitHub's effective
-SCIM permissions and the deployment of the assigned client still require qualification. Native group IAM alone does not establish authority for SCIM applications,
-grants or sign-in policies. Hosted workflow IAM also needs approval for the three runtime
+SCIM permissions and the deployment of the assigned client still require qualification. The
+domain-owner [application management opt-in](../how-to/terraform-state-bootstrap.md#domain-owned-github-identity-policy)
+is empty by default. Oracle documents `manage domains` for group members. Its effective scope
+and authorization for the exchanged workflow principal remain unproven. Hosted workflow IAM also
+needs approval for the three runtime
 reader policies. OCI cannot restrict the contents of a policy by its resource name.
 
 Development owns the GitHub issuer trust in the shared non-production domain. Staging
 declares no duplicate trust and requires its trust activation, plan and apply switches
 to remain false until client-bound federation is qualified. Production uses a separate
-domain. See the [exchange rollout gates](../how-to/terraform-state-bootstrap.md#github-exchange-client-rollout).
+domain. Development and production bootstrap each own the
+[`otm-github-identity` tenancy-root policy](../how-to/terraform-state-bootstrap.md#domain-owned-github-identity-policy)
+for their domains. The development copy covers development and staging with distinct
+workflow/environment and native group bindings. The policy leaves the staging holds in effect.
+See the [exchange rollout gates](../how-to/terraform-state-bootstrap.md#github-exchange-client-rollout).
 Hosted plan and apply stop for migration if either legacy security or platform state object exists.
 
 ### Single attempt and failed-backend recovery

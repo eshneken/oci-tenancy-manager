@@ -236,15 +236,12 @@ though a projected OCI read returned them. An apparent policy update in such an 
 insufficient evidence of drift. Keep the pilot policies in place during the cutover.
 
 The compartment policy `otm-development-github-infrastructure` covers the Vault, key, state
-and reviewed plan objects. The proposed tenancy-root policy `otm-development-github-identity`
-restricts native group creation, retrieval and update to `Default/otm-development-users`.
-Its separate group-list permission applies to the Default domain because OCI does not expose
-a target group name on list requests. All statements bind the GitHub principal to its domain,
-protected workflow and development environment. This policy has no SCIM App, Grant, Condition,
-Rule or Policy authority. Qualify those operations before running the infrastructure apply.
-Oracle's documented administrative roles can affect other applications in the shared domain.
-Review that scope separately. See [Oracle IAM policy variables](https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/iampolicyreference.htm)
-and [Identity Domains AppRole permissions](https://docs.oracle.com/en-us/iaas/Content/Identity/api-getstarted/RequiredRolePerEndpointExt.htm).
+and reviewed plan objects. Development bootstrap owns the shared non-production
+[tenancy-root identity policy](terraform-state-bootstrap.md#domain-owned-github-identity-policy)
+`otm-github-identity`. Its development statement binds that workflow to
+`Default/otm-development-users`. Its staging statements use staging's own workflow and group
+names. Staging trust activation and dispatch remain held. Native group authority supplies no
+Identity Domains AppRole qualification for SCIM reads or writes.
 
 The 26 November independent security and adversarial reviews covered the three environment roots,
 the operator bootstrap, the protected workflow, and OCI provider 9.13.0. Development references

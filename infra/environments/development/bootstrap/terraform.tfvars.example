@@ -21,3 +21,6 @@ github_environment = {
   reviewer_user_ids = [1003]
   settings_file     = "development-workflow.json"
 }
+
+# Set only with separate approval for domain-wide application management.
+# identity_app_management_environments = ["development", "staging"]

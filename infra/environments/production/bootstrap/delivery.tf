@@ -20,14 +20,23 @@ variable "github_delivery" {
   nullable = false
 }
 
+# Optional domain-wide App administration. Set only for independently approved workflow environments.
+variable "identity_app_management_environments" {
+  description = "Protected environments authorized to manage their shared identity domain for application provisioning."
+  type        = set(string)
+  default     = []
+  nullable    = false
+}
+
 module "delivery" {
-  source                            = "../../../modules/oci-delivery-foundation"
-  allow_runtime_policy_writes       = var.allow_runtime_policy_writes
-  environment                       = "production"
-  tenancy_ocid                      = var.target.tenancy_ocid
-  identity_domain_ocid              = var.github_delivery.identity_domain_ocid
-  trust_active                      = var.github_delivery.trust_active
-  exchange_write_response_qualified = var.github_delivery.exchange_write_response_qualified
+  source                               = "../../../modules/oci-delivery-foundation"
+  identity_app_management_environments = var.identity_app_management_environments
+  allow_runtime_policy_writes          = var.allow_runtime_policy_writes
+  environment                          = "production"
+  tenancy_ocid                         = var.target.tenancy_ocid
+  identity_domain_ocid                 = var.github_delivery.identity_domain_ocid
+  trust_active                         = var.github_delivery.trust_active
+  exchange_write_response_qualified    = var.github_delivery.exchange_write_response_qualified
 
   # Production owns its separate identity-domain Settings. Import before applying.
   owns_domain_settings = true

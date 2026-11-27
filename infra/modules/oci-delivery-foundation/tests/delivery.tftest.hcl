@@ -7,7 +7,7 @@ mock_provider "oci" {
       compartment_id = "ocid1.tenancy.oc1..synthetic"
       state          = "ACTIVE"
       display_name   = "Default"
-      url            = "https://idcs-synthetic.identity.oraclecloud.com/"
+      url            = "https://idcs-synthetic.identity.oraclecloud.com:443/"
     }
   }
 
@@ -75,12 +75,26 @@ run "development_binds_exact_workflow_claims" {
 
   assert {
     condition = (
-      length(oci_identity_policy.github_identity.statements) == 2 &&
-      strcontains(oci_identity_policy.github_identity.statements[0], "target.resource.domain.name = 'Default', target.group.name = 'otm-development-users'") &&
-      !strcontains(oci_identity_policy.github_identity.statements[0], "any {target.group.name") &&
-      !strcontains(oci_identity_policy.github_identity.statements[1], "target.group.name")
+      length(oci_identity_policy.github_identity) == 1 &&
+      oci_identity_policy.github_identity[0].name == "otm-github-identity" &&
+      oci_identity_policy.github_identity[0].compartment_id == var.tenancy_ocid &&
+      length(oci_identity_policy.github_identity[0].statements) == 4 &&
+      alltrue([for idx, statement in oci_identity_policy.github_identity[0].statements :
+        strcontains(statement, "request.principal.domain.id = 'ocid1.domain.oc1..synthetic'") &&
+        strcontains(statement, "target.resource.domain.name = 'Default'") &&
+        strcontains(statement, "request.principal.ext_environment = '${idx < 2 ? "development" : "staging"}'") &&
+        strcontains(statement, "request.principal.ext_workflow_ref = 'example/tenancy-manager/.github/workflows/infra-${idx < 2 ? "development" : "staging"}.yml@refs/heads/master'") &&
+        !strcontains(statement, "manage domains") &&
+        !strcontains(statement, "DeleteGroup")
+      ]) &&
+      strcontains(oci_identity_policy.github_identity[0].statements[0], "target.resource.domain.name = 'Default', target.group.name = 'otm-development-users'") &&
+      !strcontains(oci_identity_policy.github_identity[0].statements[0], "otm-staging") &&
+      !strcontains(oci_identity_policy.github_identity[0].statements[1], "target.group.name") &&
+      strcontains(oci_identity_policy.github_identity[0].statements[2], "any {target.group.name = 'otm-staging-users', target.group.name = 'otm-staging-database-provisioners'}") &&
+      !strcontains(oci_identity_policy.github_identity[0].statements[2], "otm-development") &&
+      !strcontains(oci_identity_policy.github_identity[0].statements[3], "target.group.name")
     )
-    error_message = "Use a direct group name for the singleton development rule and keep list access separate."
+    error_message = "One non-production identity policy must bind each workflow to its own native groups and keep domain management disabled."
   }
 
   assert {
@@ -111,6 +125,7 @@ run "staging_owns_exact_storage_only" {
   assert {
     condition = (
       length(oci_identity_domains_setting.signing_keys) == 0 &&
+      length(oci_identity_policy.github_identity) == 0 &&
       length(oci_identity_domains_identity_propagation_trust.github) == 0 &&
       !oci_identity_domains_app.exchange[0].active &&
       oci_identity_domains_app.exchange[0].display_name == "otm-github-staging" &&
@@ -207,6 +222,19 @@ run "production_owns_its_settings" {
       one(oci_identity_domains_identity_propagation_trust.github[0].client_claim_values) == "otm-infrastructure-production" &&
       oci_identity_policy.workflow_platform[0].name == "otm-production-github-platform" &&
       alltrue([for statement in oci_identity_policy.workflow_platform[0].statements : strcontains(statement, "request.principal.ext_environment = 'production'") && strcontains(statement, "in compartment otm-production")]) &&
+      length(oci_identity_policy.github_identity) == 1 &&
+      oci_identity_policy.github_identity[0].name == "otm-github-identity" &&
+      oci_identity_policy.github_identity[0].compartment_id == var.tenancy_ocid &&
+      length(oci_identity_policy.github_identity[0].statements) == 2 &&
+      alltrue([for statement in oci_identity_policy.github_identity[0].statements :
+        strcontains(statement, "request.principal.domain.id = 'ocid1.domain.oc1..syntheticproduction'") &&
+        strcontains(statement, "request.principal.ext_environment = 'production'") &&
+        strcontains(statement, "/infra-production.yml@refs/heads/master") &&
+        !strcontains(statement, "otm-staging") &&
+        !strcontains(statement, "otm-development") &&
+        !strcontains(statement, "manage domains")
+      ]) &&
+      strcontains(oci_identity_policy.github_identity[0].statements[0], "any {target.group.name = 'otm-production-users', target.group.name = 'otm-production-database-provisioners'}") &&
       length(oci_identity_domains_setting.signing_keys) == 1 &&
       oci_identity_domains_setting.signing_keys[0].signing_cert_public_access
     )
@@ -230,7 +258,12 @@ run "reject_non_default_domain" {
 
   override_data {
     target = data.oci_identity_domain.selected
-    values = { display_name = "Unrelated" }
+    values = {
+      compartment_id = "ocid1.tenancy.oc1..synthetic"
+      display_name   = "Unrelated"
+      state          = "ACTIVE"
+      url            = "https://idcs-synthetic.identity.oraclecloud.com"
+    }
   }
 
   expect_failures = [data.oci_identity_domain.selected]
@@ -264,4 +297,105 @@ run "refuse_unqualified_fresh_app" {
   command = plan
   variables { exchange_write_response_qualified = false }
   expect_failures = [var.exchange_write_response_qualified]
+}
+
+run "nonproduction_domain_management_requires_exact_opt_in" {
+  command = plan
+
+  variables {
+    identity_app_management_environments = ["staging"]
+  }
+
+  assert {
+    condition = one([
+      for statement in oci_identity_policy.github_identity[0].statements :
+      statement if strcontains(statement, "manage domains")
+    ]) == "Allow any-user to manage domains in tenancy where all {request.principal.type = 'identityfederateddomainapp', request.principal.domain.id = 'ocid1.domain.oc1..synthetic', request.principal.ext_workflow_ref = 'example/tenancy-manager/.github/workflows/infra-staging.yml@refs/heads/master', request.principal.ext_environment = 'staging', target.domain.name = 'Default', target.domain.id = 'ocid1.domain.oc1..synthetic'}"
+    error_message = "Explicit staging approval must add exactly one domain management statement with the staging workflow and shared domain ID."
+  }
+}
+
+run "production_domain_management_uses_its_own_domain" {
+  command = plan
+
+  variables {
+    environment                          = "production"
+    identity_domain_ocid                 = "ocid1.domain.oc1..syntheticproduction"
+    identity_app_management_environments = ["production"]
+  }
+
+  assert {
+    condition = one([
+      for statement in oci_identity_policy.github_identity[0].statements :
+      statement if strcontains(statement, "manage domains")
+    ]) == "Allow any-user to manage domains in tenancy where all {request.principal.type = 'identityfederateddomainapp', request.principal.domain.id = 'ocid1.domain.oc1..syntheticproduction', request.principal.ext_workflow_ref = 'example/tenancy-manager/.github/workflows/infra-production.yml@refs/heads/master', request.principal.ext_environment = 'production', target.domain.name = 'Default', target.domain.id = 'ocid1.domain.oc1..syntheticproduction'}"
+    error_message = "Explicit production approval must bind only its protected workflow and independent domain."
+  }
+}
+
+run "nonproduction_cannot_grant_production_domain_management" {
+  command = plan
+
+  variables {
+    identity_app_management_environments = ["production"]
+  }
+
+  expect_failures = [var.identity_app_management_environments]
+}
+
+run "production_cannot_grant_staging_domain_management" {
+  command = plan
+
+  variables {
+    environment                          = "production"
+    identity_app_management_environments = ["staging"]
+  }
+
+  expect_failures = [var.identity_app_management_environments]
+}
+
+run "staging_cannot_grant_domain_management" {
+  command = plan
+
+  variables {
+    environment                          = "staging"
+    identity_app_management_environments = ["staging"]
+  }
+
+  expect_failures = [var.identity_app_management_environments]
+}
+
+run "canonicalize_default_https_port" {
+  command = plan
+
+  override_data {
+    target = data.oci_identity_domain.selected
+    values = {
+      compartment_id = "ocid1.tenancy.oc1..synthetic"
+      display_name   = "Default"
+      state          = "ACTIVE"
+      url            = "https://idcs-synthetic.identity.oraclecloud.com:443"
+    }
+  }
+
+  assert {
+    condition     = output.identity_domain_url == "https://idcs-synthetic.identity.oraclecloud.com"
+    error_message = "Normalize OCI's explicit default HTTPS port before handing the URL to the provider and workflow."
+  }
+}
+
+run "reject_nondefault_domain_port" {
+  command = plan
+
+  override_data {
+    target = data.oci_identity_domain.selected
+    values = {
+      compartment_id = "ocid1.tenancy.oc1..synthetic"
+      display_name   = "Default"
+      state          = "ACTIVE"
+      url            = "https://idcs-synthetic.identity.oraclecloud.com:8444/"
+    }
+  }
+
+  expect_failures = [data.oci_identity_domain.selected]
 }
