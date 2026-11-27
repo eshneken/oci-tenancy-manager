@@ -63,7 +63,7 @@ includes replacement verification, identity retention/removal and manual resourc
 - [Schema-changing release maintenance](hosted-administration.md#schema-changing-application-release) — approved V1 drain/migrate/start/reopen procedure; unchanged-schema releases roll normally.
 
 
-- [Laptop OCI development](laptop-oci-development.md) — named API-key profiles, Terraform bootstrap ownership, and protected infrastructure rollout.
+- [Laptop OCI development](laptop-oci-development.md) — named API-key profiles, Terraform bootstrap, and [bounded inactive browser-client rollout](laptop-oci-development.md#inactive-atlas-browser-client-first-apply).
 
 
 - [Hosted workload identity and Vault IAM](oke-workload-identity.md) — security-root Vault handoff, cluster-bound policies, projected tokens and remaining live checks.

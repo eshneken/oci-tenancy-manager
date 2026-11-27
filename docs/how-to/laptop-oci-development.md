@@ -155,8 +155,13 @@ configuration until a separately approved cutover.
    and the existing policy OCID. Require a zero-change plan once the imported policy's live
    statements match the source. Review and approve any scope correction as a separate IAM update.
    OCI policy names are immutable. Replacing a policy requires separate approval.
-3. **Qualify the protected `development` GitHub Environment and bootstrap trust.** Both dispatches
-   require human review. Allow only protected `master` and disable administrator bypass.
+3. **Qualify the protected `development` GitHub Environment and bootstrap trust.** During the
+   authorized maintenance window, temporarily remove the development Environment required-reviewer
+   rule for plan and apply. Keep deployments restricted to protected `master`. The five
+   required Checkpoint checks and PR-only merge protection still govern changes entering
+   `master`. Restore and verify the prior development Environment configuration when the
+   window ends. The bootstrap retains its normal reviewer defaults. Hosted reviewer rules
+   remain in force throughout the window.
    Verify the existing GitHub token-exchange client by GUID and review adoption of its active trust before rollout.
    Qualify the exact repository, workflow, environment and audience
    `otm-infrastructure-development`. Verify propagation of `ext_workflow_ref` and
@@ -174,16 +179,16 @@ configuration until a separately approved cutover.
    (32 lowercase hexadecimal characters). Provide `adopt_group_ocid` only when reconciling the
    exact existing native OCI group. The group and policy bindings come from Terraform.
    The workflow reuses the token-exchange domain URL and fixes the callback to 8445 in HCL.
-   Atlas runtime credentials belong outside this input. The approved policy includes initial Vault
+   Atlas runtime credentials belong outside this input. The compartment policy includes initial Vault
    and key creation in development. Both dispatches share that OCI authority. The planning command
-   does not apply the plan. GitHub review, separate apply enablement, and the exact saved-plan check
-   govern apply. This policy grants no application-secret, cross-environment, or trust-administration
-   access. Verify that effective access is denied. Set `OTM_INFRASTRUCTURE_ENABLED=true` only after
-   approval and setup validation.
+   does not apply the plan. Private saved-plan review, separate apply enablement and the exact
+   plan digest govern apply. Verify the compartment policy's application-Vault and cross-environment
+   denials. The tenancy-root Identity Domains grant has its own qualification.
+   Set `OTM_INFRASTRUCTURE_ENABLED=true` only after approval and setup validation.
    Leave `OTM_INFRASTRUCTURE_APPLY_ENABLED` off until the first apply is separately approved.
 5. **Review the exact plan privately.** In **Actions → Development infrastructure** on `master`,
    select `plan`. The plan can write a lock and a saved plan object in the development bucket.
-   Approve the live dispatch separately. For the retired development HSM key, the Terraform
+   Plan after operator authorization. For the retired development HSM key, the Terraform
    `removed` block prevents recreation and uses `destroy = false` so it leaves the OCI deletion
    schedule in effect. If the old address is still in state, reconcile its state-only retirement
    separately before reviewing the replacement client plan. Expect no retirement action in that plan. Check that the Vault and software key both have no-op actions.
@@ -194,17 +199,30 @@ configuration until a separately approved cutover.
    or replacement. Confirm the exact reviewed effects before approving apply. An interrupted
    apply requires state reconciliation and a fresh plan.
 
-Review the complete ownership plan once both roots implement it. The prior proposal to create
-only an inactive app and its new assignment is superseded. Require the existing group, app
+Review the complete ownership plan across the bootstrap and development roots. Require the existing group, app
 grants, policies and rules to be preserved during Terraform adoption. Review the exact locked
 provider behavior, including whether plans and state exclude client credentials and individual
 memberships. Qualify the workflow principal's exact Identity Domains permissions separately.
 Require the Vault and software key and all unrelated resources to have no changes.
 
-If safe import of the original client remains blocked, qualify an inactive replacement and
-its assignment as part of the complete plan. Verify its actual policy bindings and assignment
-before a separately reviewed activation. Deliver its generated secret directly to private
-runtime custody. Update the private Atlas client, app and assignment references together and
+### Inactive Atlas browser client first apply
+
+The development workflow can accept one managed App create for the inactive Atlas browser client
+in its exact saved plan. Check the confidential authorization-code client and exact 8445 callback.
+Keep the original app, assignments and effective access in place.
+Review the full plan and verify the intended environment, the inactive App creation, the
+existing group adoption and the effects on policy and grant resources. Confirm there are no
+unexpected changes. Leave apply disabled until the exact plan and its live effects are authorized.
+
+The local operator already qualified the pinned provider against an inactive, unassigned
+client. The approved development workflow still needs live proof of SCIM write authority
+and credential exclusion. After an approved apply, verify the actual policy, group assignment
+and inactive status. Inspect private plan/state evidence for credential exclusion and record
+only sanitized results. Activation, runtime secret delivery and the 8445 switchover remain
+separate steps.
+
+During separately approved cutover, deliver the generated secret directly to private runtime
+custody. Update the private Atlas client, app and assignment references together and
 retain the original configuration for rollback. Test 8445 with a fresh browser and an
 existing native OCI session. Atlas manages membership during normal operation. Retire the
 previous client only after a separate approval. The saved 8443 review instance is independent.
@@ -242,7 +260,9 @@ and reviewed plan objects. Development bootstrap owns the shared non-production
 `otm-github-identity`. Use the same protected `atlas_sso.adopt_group_ocid` for the operator
 metadata check and workflow import. The read qualification left create/update and staging grants
 unchanged. Staging trust activation and dispatch remain held. Fresh-group read before the
-operator can pin its OCID and SCIM writes remain unqualified. Keep apply held.
+operator can pin its OCID and SCIM writes remain unqualified. Keep general apply held while
+the [bounded inactive-client deployment](#inactive-atlas-browser-client-first-apply) awaits
+its own live evidence.
 
 The 26 November independent security and adversarial reviews covered the three environment roots,
 the operator bootstrap, the protected workflow, and OCI provider 9.13.0. Development references
