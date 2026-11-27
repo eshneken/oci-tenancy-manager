@@ -21,6 +21,16 @@ MAX_BUNDLE = 64 * 1024 * 1024
 MAX_LOG = 16 * 1024 * 1024
 HASH = re.compile(r"[0-9a-f]{64}")
 NUMBER = re.compile(r"[1-9][0-9]{0,19}")
+ATLAS_APP_ADDRESS = "module.atlas_sso.oci_identity_domains_app.atlas_sso"
+ATLAS_GRANT_ADDRESS = "module.atlas_sso.oci_identity_domains_grant.atlas_assignment"
+ATLAS_GROUP_ADDRESS = "module.atlas_sso.oci_identity_group.users"
+ATLAS_GROUP_READ = "module.atlas_sso.data.oci_identity_domains_groups.atlas_users"
+SCIM_GUID = re.compile(r"[0-9a-f]{32}")
+ATLAS_APP_ATTRIBUTES = (
+    "id,ocid,name,displayName,description,schemas,basedOnTemplate,active,allowAccessControl,"
+    "isLoginTarget,loginMechanism,isOAuthClient,isOAuthResource,allowedGrants,clientType,"
+    "redirectUris,trustScope,signonPolicy,idpPolicy"
+)
 PLAN_FIELDS = {
     "status",
     "environment",
@@ -382,7 +392,273 @@ def preserve_recovery_state(client, namespace, bucket, prefix, root):
         return False
 
 
-# Apply exactly one reviewed saved plan; all failures retain the marker and require investigation.
+# Terraform includes known-only lists and objects in after_unknown for collection properties.
+# Reject actual unknown values anywhere in an activation update.
+def _all_known(mask):
+    if isinstance(mask, dict):
+        return all(_all_known(item) for item in mask.values())
+    if isinstance(mask, list):
+        return all(_all_known(item) for item in mask)
+    return mask is False
+
+
+# Permit the pending assignment only when the saved plan binds the existing App to the one
+# metadata-only SCIM row for the unchanged native development group pinned in plan inputs.
+def _reviewed_activation_grant(plan, grant, app, configuration):
+    change = grant["change"]
+    if (
+        grant.get("address") != ATLAS_GRANT_ADDRESS
+        or grant.get("type") != "oci_identity_domains_grant"
+        or grant.get("provider_name") != "registry.terraform.io/oracle/oci"
+        or change["actions"] != ["create"]
+        or change.get("before") is not None
+    ):
+        return False
+    try:
+        (resource,) = [
+            item
+            for item in configuration
+            if item["address"] == "oci_identity_domains_grant.atlas_assignment"
+        ]
+        (atlas_state,) = [
+            item
+            for item in plan["prior_state"]["values"]["root_module"]["child_modules"]
+            if item["address"] == "module.atlas_sso"
+        ]
+        (lookup,) = [
+            item["values"]
+            for item in atlas_state["resources"]
+            if item["address"] == ATLAS_GROUP_READ and item["mode"] == "data"
+        ]
+        (native_group,) = [
+            item["change"]["after"]
+            for item in plan["resource_changes"]
+            if item.get("address") == ATLAS_GROUP_ADDRESS and item["mode"] == "managed"
+        ]
+        (group,) = lookup["groups"]
+        group_ocid = native_group["id"]
+        group_guid = group["id"]
+        adoption_pin = plan["variables"]["atlas_sso"]["value"]["adopt_group_ocid"]
+        after = change["after"]
+        unknown = change["after_unknown"]
+        (app_unknown,) = unknown.get("app", [{}])
+        (grantee_unknown,) = unknown.get("grantee", [{}])
+    except (KeyError, TypeError, ValueError):
+        return False
+    scope = {
+        "app": [{"value": app["id"]}],
+        "grant_mechanism": "ADMINISTRATOR_TO_GROUP",
+        "grantee": [{"type": "Group", "value": group_guid}],
+        "idcs_endpoint": app["idcs_endpoint"],
+        "schemas": ["urn:ietf:params:scim:schemas:oracle:idcs:Grant"],
+    }
+    # Require known dependencies and no additional inputs. Terraform may compute display/ref
+    # metadata, but never the planned App GUID, group GUID or grant mechanism.
+    return (
+        resource["expressions"].keys() == scope.keys()
+        and resource["expressions"]["app"]
+        == [
+            {
+                "value": {
+                    "references": [
+                        "oci_identity_domains_app.atlas_sso.id",
+                        "oci_identity_domains_app.atlas_sso",
+                    ]
+                }
+            }
+        ]
+        and resource["expressions"]["grantee"]
+        == [
+            {
+                "type": {"constant_value": "Group"},
+                "value": {
+                    "references": [
+                        "data.oci_identity_domains_groups.atlas_users.groups",
+                        "data.oci_identity_domains_groups.atlas_users",
+                    ]
+                },
+            }
+        ]
+        and isinstance(group_ocid, str)
+        and planning.GROUP_OCID.fullmatch(group_ocid) is not None
+        and group_ocid == adoption_pin
+        and isinstance(group_guid, str)
+        and SCIM_GUID.fullmatch(group_guid) is not None
+        and native_group.get("name") == group.get("display_name") == "otm-development-users"
+        and lookup.get("total_results") == 1
+        and lookup.get("attributes") == "id,ocid,displayName"
+        and lookup.get("idcs_endpoint") == app["idcs_endpoint"]
+        and lookup.get("group_filter") == f'ocid eq "{group_ocid}"'
+        and group.get("ocid") == group_ocid
+        and group.get("members") in (None, [])
+        and {key: value for key, value in after.items() if value is not None} == scope
+        and isinstance(app_unknown, dict)
+        and app_unknown.get("value", False) is False
+        and isinstance(grantee_unknown, dict)
+        and all(grantee_unknown.get(key, False) is False for key in ("type", "value"))
+        and all(
+            _all_known(unknown.get(key, False))
+            for key in ("grant_mechanism", "idcs_endpoint", "schemas")
+        )
+    )
+
+
+# The activation run may also finish the specific pending group grant. Leave other state
+# writes and out-of-band drift for separate review and handling.
+def _activation_changes_are_scoped(plan, app, after, configuration):
+    if plan.get("resource_drift"):
+        return False
+    other_writes = [
+        item
+        for item in plan["resource_changes"]
+        if item is not app
+        and item.get("mode") == "managed"
+        and (
+            item["change"]["actions"] != ["no-op"]
+            or "importing" in item["change"]
+            or "previous_address" in item
+            or "deposed" in item
+        )
+    ]
+    return not other_writes or (
+        len(other_writes) == 1
+        and not ({"previous_address", "deposed"} & other_writes[0].keys())
+        and "importing" not in other_writes[0]["change"]
+        and _reviewed_activation_grant(plan, other_writes[0], after, configuration)
+    )
+
+
+# Match the qualified App controls against known values in the exact saved plan and reject
+# any unreviewed App configuration, including optional provider fields that can carry secrets.
+def _reviewed_development_app(plan, app, identity_domain_url):
+    change = app["change"]
+    actions = change["actions"]
+    activation = actions == ["update"]
+    if (
+        app.get("address") != ATLAS_APP_ADDRESS
+        or app.get("mode") != "managed"
+        or app.get("provider_name") != "registry.terraform.io/oracle/oci"
+        or actions not in (["create"], ["update"])
+        or "importing" in change
+        or "deposed" in app
+        or "previous_address" in app
+    ):
+        return False
+    expected = {
+        "active": activation,
+        "allow_access_control": True,
+        "allowed_grants": ["authorization_code"],
+        "attributes": ATLAS_APP_ATTRIBUTES,
+        "client_type": "confidential",
+        "description": "Corporate single sign-on for OCI Tenancy Manager.",
+        "display_name": "otm-sso-development",
+        "idcs_endpoint": identity_domain_url,
+        "is_login_target": True,
+        "is_oauth_client": True,
+        "is_oauth_resource": False,
+        "login_mechanism": "OIDC",
+        "redirect_uris": ["https://127.0.0.1:8445/api/auth/sso/callback"],
+        "schemas": ["urn:ietf:params:scim:schemas:oracle:idcs:App"],
+        "trust_scope": "Explicit",
+    }
+    # Credentials and extra attribute projections must be absent from configuration. Terraform
+    # marks provider-computed credentials unknown before the projected create response.
+    try:
+        module = plan["configuration"]["root_module"]["module_calls"]["atlas_sso"]["module"]
+        configuration = module["resources"]
+        (resource,) = [
+            resource
+            for resource in configuration
+            if resource.get("address") == "oci_identity_domains_app.atlas_sso"
+        ]
+        after = change["after"]
+        unknown = change["after_unknown"]
+        expressions = resource["expressions"]
+        if not all(isinstance(mapping, dict) for mapping in (after, unknown, expressions)):
+            return False
+        (template,) = after["based_on_template"]
+        (template_unknown,) = unknown.get("based_on_template", [{}])
+    except (KeyError, TypeError, ValueError):
+        return False
+    before = change.get("before")
+    if activation:
+        # The complete state comparison fences policy, callback, credential and other App mutations.
+        # Check the immutable GUID before admitting an update to the existing App.
+        if (
+            not isinstance(before, dict)
+            or before.get("active") is not False
+            or not isinstance(before.get("id"), str)
+            or SCIM_GUID.fullmatch(before["id"]) is None
+            or planning.canonical({**before, "active": True}) != planning.canonical(after)
+            or not _all_known(unknown)
+            or not _activation_changes_are_scoped(plan, app, after, configuration)
+        ):
+            return False
+    elif before is not None:
+        return False
+    # Policy IDs may still be unknown when those policies are created by the same reviewed plan.
+    # Their exact configured references prevent substituting unrelated IDs or private literals.
+    return (
+        expressions.keys() == expected.keys() | {"based_on_template", "signon_policy", "idp_policy"}
+        and expressions["based_on_template"]
+        == [{"value": {"constant_value": "CustomWebAppTemplateId"}}]
+        and all(
+            expressions[key]
+            == [
+                {
+                    "value": {
+                        "references": [f"module.atlas_policies.{key}_id", "module.atlas_policies"]
+                    }
+                }
+            ]
+            for key in ("signon_policy", "idp_policy")
+        )
+        and all(
+            type(after.get(key)) is type(value)
+            and after[key] == value
+            and (
+                unknown.get(key, False) is False
+                or (
+                    isinstance(value, list)
+                    and isinstance(unknown[key], list)
+                    and len(unknown[key]) == 1
+                    and unknown[key][0] is False
+                )
+            )
+            for key, value in expected.items()
+        )
+        and isinstance(template, dict)
+        and template.get("value") == "CustomWebAppTemplateId"
+        and isinstance(template_unknown, dict)
+        and template_unknown.get("value", False) is False
+        and all(
+            after.get(key) is None
+            for key in ("authorization", "client_secret", "hashed_client_secret")
+        )
+        and after.get("attribute_sets") in (None, [])
+        and unknown.get("attribute_sets", False) is False
+        and unknown.get("authorization", False) is False
+    )
+
+
+# Admit a single inactive development App creation or an existing App activation with its
+# exact pending assignment. Hosted App writes and fresh active creates remain held.
+def validate_identity_app_writes(plan, environment, identity_domain_url):
+    writes = [
+        item
+        for item in plan.get("resource_changes", [])
+        if item.get("type") == "oci_identity_domains_app"
+        and item["change"]["actions"] not in (["read"], ["no-op"])
+    ]
+    if writes and (
+        environment != "development"
+        or len(writes) != 1
+        or not _reviewed_development_app(plan, writes[0], identity_domain_url)
+    ):
+        raise ValueError("OCI_APP_WORKFLOW_WRITE_UNQUALIFIED")
+
+
+# Apply one reviewed saved plan. Failures after claiming the attempt retain its marker for review.
 def apply_plan(
     environment,
     component,
@@ -453,14 +729,7 @@ def apply_plan(
                 != report["changes"]
             ):
                 raise ValueError("PLAN_CHANGE_SUMMARY_MISMATCH")
-            # The inactive browser client passed operator qualification. Hold CI App writes before
-            # claiming the plan until the workflow signer and deployment are qualified.
-            if any(
-                item.get("type") == "oci_identity_domains_app"
-                and item["change"]["actions"] not in (["read"], ["no-op"])
-                for item in plan.get("resource_changes", [])
-            ):
-                raise ValueError("OCI_APP_WORKFLOW_WRITE_UNQUALIFIED")
+            validate_identity_app_writes(plan, environment, values["OTM_INFRA_IDENTITY_DOMAIN_URL"])
             common = parity(plan, environment)
             if staging is not None and (
                 staging["parity_sha256"] != common

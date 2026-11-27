@@ -28,7 +28,13 @@ mock_provider "oci" {
 }
 
 mock_provider "github" {}
-mock_provider "external" {}
+mock_provider "external" {
+  override_during = plan
+
+  mock_data "external" {
+    defaults = { result = { ocid = "" } }
+  }
+}
 override_module {
   target = module.github_environment
 }

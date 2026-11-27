@@ -353,6 +353,72 @@ def terraform_environment(directory, credentials, values):
     return result
 
 
+# Only repository-defined addresses and public SDK operation names may enter CI logs.
+_DEV_ADDRESSES = {
+    "oci_kms_key.application_software",
+    "oci_kms_vault.application",
+    "module.atlas_sso.oci_identity_group.users",
+    "module.atlas_sso.data.oci_identity_domains_groups.atlas_users",
+    "module.atlas_sso.oci_identity_domains_app.atlas_sso",
+    "module.atlas_sso.oci_identity_domains_grant.atlas_assignment",
+    *(
+        f'module.atlas_sso.module.atlas_policies.oci_identity_domains_{kind}.atlas["{key}"]'
+        for kind in ("condition", "rule")
+        for key in ("discover", "allow", "deny")
+    ),
+    *(
+        f"module.atlas_sso.module.atlas_policies.oci_identity_domains_policy.{name}"
+        for name in ("idp", "signon")
+    ),
+}
+_DEV_READS = {
+    "GetGroup",
+    "ListGroups",
+    "GetApp",
+    "GetGrant",
+    "GetRule",
+    "GetPolicy",
+    "GetCondition",
+    "GetVault",
+    "GetKey",
+    "ListKeyVersions",
+    "GetKeyVersion",
+}
+
+
+# Read Terraform JSON UI events individually so parallel resource failures retain their addresses.
+# Unknown fields and entire provider messages stay private, even for malformed diagnostics.
+def plan_diagnostics(output):
+    rows = set()
+    for line in output.splitlines():
+        try:
+            event = json.loads(line)
+        except (ValueError, RecursionError):
+            continue
+        if not isinstance(event, dict) or event.get("type") != "diagnostic":
+            continue
+        diag = event.get("diagnostic")
+        if not isinstance(diag, dict) or diag.get("severity") != "error":
+            continue
+        message = "\n".join(
+            value for key in ("summary", "detail") if isinstance(value := diag.get(key), str)
+        )
+        operation = re.search(r"(?m)^Operation Name:[ \t]*(\w+)[ \t]*$", message)
+        status = re.search(r"(?m)^([45][0-9]{2})-|Http Status Code: ([45][0-9]{2})[.]", message)
+        addr = diag.get("address")
+        rows.add(
+            (
+                addr if isinstance(addr, str) and addr in _DEV_ADDRESSES else "unknown",
+                operation[1] if operation and operation[1] in _DEV_READS else "unknown",
+                int(status[1] or status[2]) if status else 0,
+            )
+        )
+    return [
+        {"resource": addr, "operation": op, "http_status": code or None}
+        for addr, op, code in sorted(rows)
+    ]
+
+
 # Never stream plans/provider errors to public CI logs; each command shares one bounded plan budget.
 def terraform(command, arguments, root, environment, directory, deadline):
     remaining = int(deadline - time.monotonic())
@@ -371,6 +437,8 @@ def terraform(command, arguments, root, environment, directory, deadline):
         machine_output = len(arguments) > 1 and arguments[1] == "-json"
         stream.write((b"" if machine_output else result.stdout) + result.stderr)
     if result.returncode:
+        if arguments[:2] == ["plan", "-json"]:
+            print(json.dumps({"terraform_plan_errors": plan_diagnostics(result.stdout)}))
         raise ValueError("TERRAFORM_PLAN_COMMAND_FAILED")
     return result.stdout
 
@@ -532,6 +600,71 @@ def plan_object_key(environment, component, run_id, attempt):
     return f"infrastructure-plans/{environment}/{prefix}/{run_id}/{attempt}/plan.tar"
 
 
+# Compare the two directory read paths after a failed adoption plan. Only bounded
+# statuses leave the runner. Each request targets the configured development group.
+def group_read_checks(credentials, target, domain, group):
+    options = {
+        "signer": oci.auth.signers.EphemeralResourcePrincipalSigner(
+            session_token=credentials["OCI_RESOURCE_PRINCIPAL_RPST"],
+            private_key=credentials["OCI_RESOURCE_PRINCIPAL_PRIVATE_PEM"],
+            region=target["region"],
+        ),
+        "timeout": (3, 8),
+        "retry_strategy": oci.retry.NoneRetryStrategy(),
+        "log_requests": False,
+    }
+    config = {"region": target["region"]}
+    name = "otm-development-users"
+    iam = oci.identity.IdentityClient(config, **options)
+    scim = oci.identity_domains.IdentityDomainsClient(config, service_endpoint=domain, **options)
+
+    # Report only whether a read matched the protected input or OCI denied the request.
+    def check(read):
+        try:
+            return "matched" if read() else "mismatch"
+        except oci.exceptions.ServiceError as error:
+            return (
+                error.status
+                if type(error.status) is int and 400 <= error.status <= 599
+                else "error"
+            )
+        except Exception:
+            return "error"
+
+    # Confirm the immutable adoption binding on the point read.
+    def native_get():
+        row = iam.get_group(group).data
+        return row.id == group and row.name == name
+
+    # A collection read has different IAM target context from a get by immutable OCID.
+    def native_list():
+        page = iam.list_groups(target["tenancy_ocid"], name=name, limit=2)
+        return (
+            not page.has_next_page
+            and len(page.data) == 1
+            and page.data[0].id == group
+            and page.data[0].name == name
+        )
+
+    # Project only group identifiers and the display name, excluding member records.
+    def domain_list():
+        result = scim.list_groups(
+            filter=f'ocid eq "{group}"', attributes="id,ocid,displayName", count=2
+        ).data
+        return (
+            result.total_results == 1
+            and len(result.resources) == 1
+            and result.resources[0].ocid == group
+            and result.resources[0].display_name == name
+        )
+
+    return {
+        "native_get_group": check(native_get),
+        "native_list_groups": check(native_list),
+        "domain_list_groups": check(domain_list),
+    }
+
+
 # Generate a plan without applying; shared setup does not introduce a mutable command selector.
 def prepare_plan(environment, component, values):
     with plan_stage("workflow_preflight"):
@@ -557,21 +690,37 @@ def prepare_plan(environment, component, values):
                 directory, root, command, inputs, environment, credentials, values, deadline
             )
             stage = "terraform_plan"
-            terraform(
-                command,
-                [
-                    "plan",
-                    "-input=false",
-                    "-no-color",
-                    "-lock-timeout=60s",
-                    "-out=" + str(directory / "plan.tfplan"),
-                    *["-var-file=" + str(path) for path in files],
-                ],
-                root,
-                child_env,
-                directory,
-                deadline,
-            )
+            try:
+                terraform(
+                    command,
+                    [
+                        "plan",
+                        *(["-json"] if environment == "development" else []),
+                        "-input=false",
+                        "-no-color",
+                        "-lock-timeout=60s",
+                        "-out=" + str(directory / "plan.tfplan"),
+                        *["-var-file=" + str(path) for path in files],
+                    ],
+                    root,
+                    child_env,
+                    directory,
+                    deadline,
+                )
+            except ValueError:
+                group = inputs["atlas_sso"].get("adopt_group_ocid")
+                if environment == "development" and group:
+                    try:
+                        checks = group_read_checks(
+                            credentials,
+                            inputs["target"],
+                            values["OTM_INFRA_IDENTITY_DOMAIN_URL"],
+                            group,
+                        )
+                    except Exception:
+                        checks = {"status": "unavailable"}
+                    print(json.dumps({"group_read_checks": checks}))
+                raise
             stage = "plan_receipt"
             plan = decode_json(
                 terraform(

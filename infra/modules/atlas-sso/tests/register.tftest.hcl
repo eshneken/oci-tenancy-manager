@@ -27,12 +27,12 @@ variables {
   corporate_idp_id    = "dddddddddddddddddddddddddddddddd"
   callback_url        = "https://127.0.0.1:8445/api/auth/sso/callback"
 }
-run "stage_assigned_sso_client" {
+run "enable_assigned_sso_client" {
   command = apply
   assert {
     condition = (
       oci_identity_domains_app.atlas_sso.display_name == "otm-sso-development" &&
-      !oci_identity_domains_app.atlas_sso.active &&
+      oci_identity_domains_app.atlas_sso.active &&
       oci_identity_domains_app.atlas_sso.allow_access_control &&
       oci_identity_domains_app.atlas_sso.login_mechanism == "OIDC" &&
       contains(split(",", oci_identity_domains_app.atlas_sso.attributes), "loginMechanism") &&
@@ -47,7 +47,7 @@ run "stage_assigned_sso_client" {
       one(oci_identity_domains_grant.atlas_assignment.grantee).type == "Group" &&
       one(oci_identity_domains_grant.atlas_assignment.grantee).value == "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     )
-    error_message = "Stage only the inactive, scoped laptop client and its existing group assignment."
+    error_message = "Enable the scoped laptop client with its existing group assignment."
   }
 }
 

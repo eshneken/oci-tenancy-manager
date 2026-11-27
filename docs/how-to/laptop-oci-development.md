@@ -155,8 +155,13 @@ configuration until a separately approved cutover.
    and the existing policy OCID. Require a zero-change plan once the imported policy's live
    statements match the source. Review and approve any scope correction as a separate IAM update.
    OCI policy names are immutable. Replacing a policy requires separate approval.
-3. **Qualify the protected `development` GitHub Environment and bootstrap trust.** Both dispatches
-   require human review. Allow only protected `master` and disable administrator bypass.
+3. **Qualify the protected `development` GitHub Environment and bootstrap trust.** During the
+   authorized maintenance window, temporarily remove the development Environment required-reviewer
+   rule for plan and apply. Keep deployments restricted to protected `master`. The five
+   required Checkpoint checks and PR-only merge protection still govern changes entering
+   `master`. Restore and verify the prior development Environment configuration when the
+   window ends. The bootstrap retains its normal reviewer defaults. Hosted reviewer rules
+   remain in force throughout the window.
    Verify the existing GitHub token-exchange client by GUID and review adoption of its active trust before rollout.
    Qualify the exact repository, workflow, environment and audience
    `otm-infrastructure-development`. Verify propagation of `ext_workflow_ref` and
@@ -174,16 +179,16 @@ configuration until a separately approved cutover.
    (32 lowercase hexadecimal characters). Provide `adopt_group_ocid` only when reconciling the
    exact existing native OCI group. The group and policy bindings come from Terraform.
    The workflow reuses the token-exchange domain URL and fixes the callback to 8445 in HCL.
-   Atlas runtime credentials belong outside this input. The approved policy includes initial Vault
+   Atlas runtime credentials belong outside this input. The compartment policy includes initial Vault
    and key creation in development. Both dispatches share that OCI authority. The planning command
-   does not apply the plan. GitHub review, separate apply enablement, and the exact saved-plan check
-   govern apply. This policy grants no application-secret, cross-environment, or trust-administration
-   access. Verify that effective access is denied. Set `OTM_INFRASTRUCTURE_ENABLED=true` only after
-   approval and setup validation.
+   does not apply the plan. Private saved-plan review, separate apply enablement and the exact
+   plan digest govern apply. Verify the compartment policy's application-Vault and cross-environment
+   denials. The tenancy-root Identity Domains grant has its own qualification.
+   Set `OTM_INFRASTRUCTURE_ENABLED=true` only after approval and setup validation.
    Leave `OTM_INFRASTRUCTURE_APPLY_ENABLED` off until the first apply is separately approved.
 5. **Review the exact plan privately.** In **Actions → Development infrastructure** on `master`,
    select `plan`. The plan can write a lock and a saved plan object in the development bucket.
-   Approve the live dispatch separately. For the retired development HSM key, the Terraform
+   Plan after operator authorization. For the retired development HSM key, the Terraform
    `removed` block prevents recreation and uses `destroy = false` so it leaves the OCI deletion
    schedule in effect. If the old address is still in state, reconcile its state-only retirement
    separately before reviewing the replacement client plan. Expect no retirement action in that plan. Check that the Vault and software key both have no-op actions.
@@ -194,17 +199,47 @@ configuration until a separately approved cutover.
    or replacement. Confirm the exact reviewed effects before approving apply. An interrupted
    apply requires state reconciliation and a fresh plan.
 
-Review the complete ownership plan once both roots implement it. The prior proposal to create
-only an inactive app and its new assignment is superseded. Require the existing group, app
+Review the complete ownership plan across the bootstrap and development roots. Require the existing group, app
 grants, policies and rules to be preserved during Terraform adoption. Review the exact locked
 provider behavior, including whether plans and state exclude client credentials and individual
 memberships. Qualify the workflow principal's exact Identity Domains permissions separately.
 Require the Vault and software key and all unrelated resources to have no changes.
 
-If safe import of the original client remains blocked, qualify an inactive replacement and
-its assignment as part of the complete plan. Verify its actual policy bindings and assignment
-before a separately reviewed activation. Deliver its generated secret directly to private
-runtime custody. Update the private Atlas client, app and assignment references together and
+### Development Atlas browser client activation
+
+The 27 November protected development apply created nine resources, including the replacement App.
+OCI rejected its group-to-app grant with HTTP 400 while the target App was inactive. The
+temporary dynamic group and its Application Administrator role assignment were removed after
+that attempt. The original 8445 client carried sign-in until the later cutover.
+
+Reconcile the successful resource writes with the current development state and generate a fresh
+protected plan. Terraform's desired state now sets the replacement active so OCI can attach its
+group grant. The reviewed change set is one in-place inactive-to-active App update and one
+group-to-app grant create for the exact existing development group, in the same plan. Verify
+the App and grant addresses, exact resource identities and absence of any other changes.
+Preserve the original application, grants and effective access. A fresh active App create
+requires its own qualification.
+Existing group members may see the new App in OCI after the grant. The running 8445
+configuration switches only during the separately approved cutover.
+
+The approved apply and no-change verification used the
+[development domain-role binding](terraform-state-bootstrap.md#temporary-development-application-administrator).
+For any later apply, use the exact reviewed saved plan with separate apply enablement and its digest. Verify the
+replacement's active state, sign-in policies, exact group assignment and preserved original access.
+Inspect private plan/state for credential exclusion. Run a fresh plan using the same workflow
+principal and record zero changes only if the plan confirms that result. Use the bootstrap's
+[named development IAM subject procedure](terraform-state-bootstrap.md#named-development-workflow-subject)
+to adopt the current group and role. Reconcile the private state and provider effects before
+any retry.
+
+In the protected follow-up, restoring the temporary role re-established the workflow's
+`GetCondition` read. The saved plan had 13 managed no-op resources, zero imports and zero
+resource actions. Refresh reported only grant metadata changes in `idcs_last_modified_by`,
+`is_fulfilled` and `meta`. The group and domain role are currently retained for operational
+plans. The subsequent named-policy workflow also confirmed zero resource actions.
+
+During separately approved cutover, deliver the generated secret directly to private runtime
+custody. Update the private Atlas client, app and assignment references together and
 retain the original configuration for rollback. Test 8445 with a fresh browser and an
 existing native OCI session. Atlas manages membership during normal operation. Retire the
 previous client only after a separate approval. The saved 8443 review instance is independent.
@@ -214,11 +249,12 @@ recovery. Development creates no hosted network, compute, database, or child ten
 
 ## Development group adoption proof
 
-An authorized read-only development plan returned **10 creates, one no-op native group import,
+An authorized protected development plan returned **10 creates, one no-op native group import,
 zero updates and zero deletes**. The application Vault and software key had no changes. The
-group import used the exact existing native group OCID. It proposed no membership mutation.
-The plan established that the existing group can be adopted at its intended address with those
-reviewed inputs. It made no state or resource changes.
+successful `GetGroup` condition matched the exact group name and operator-verified native OCID
+inside the existing `inspect groups` statement. Pairing the name with either the target domain
+name or the target domain OCID did not authorize that point read. The plan proposed no
+membership mutation and did not apply the import or any OCI resource change.
 
 The read-only check also verified the effective assignment GUID against the projected directory
 group and found no existing rules, conditions or policies using the proposed names. A separate
@@ -236,15 +272,14 @@ though a projected OCI read returned them. An apparent policy update in such an 
 insufficient evidence of drift. Keep the pilot policies in place during the cutover.
 
 The compartment policy `otm-development-github-infrastructure` covers the Vault, key, state
-and reviewed plan objects. The proposed tenancy-root policy `otm-development-github-identity`
-restricts native group creation, retrieval and update to `Default/otm-development-users`.
-Its separate group-list permission applies to the Default domain because OCI does not expose
-a target group name on list requests. All statements bind the GitHub principal to its domain,
-protected workflow and development environment. This policy has no SCIM App, Grant, Condition,
-Rule or Policy authority. Qualify those operations before running the infrastructure apply.
-Oracle's documented administrative roles can affect other applications in the shared domain.
-Review that scope separately. See [Oracle IAM policy variables](https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/iampolicyreference.htm)
-and [Identity Domains AppRole permissions](https://docs.oracle.com/en-us/iaas/Content/Identity/api-getstarted/RequiredRolePerEndpointExt.htm).
+and reviewed plan objects. Development bootstrap owns the shared non-production
+[tenancy-root identity policy](terraform-state-bootstrap.md#domain-owned-github-identity-policy)
+`otm-github-identity`. Use the same protected `atlas_sso.adopt_group_ocid` for the operator
+metadata check and workflow import. The read qualification left create/update and staging grants
+unchanged. Staging trust activation and dispatch remain held. Fresh-group reads before an
+operator can pin the OCID remain unqualified. The
+[bounded client activation](#development-atlas-browser-client-activation) uses a separately
+authorized temporary domain role. Broad or durable SCIM write access remains unqualified.
 
 The 26 November independent security and adversarial reviews covered the three environment roots,
 the operator bootstrap, the protected workflow, and OCI provider 9.13.0. Development references
@@ -257,10 +292,14 @@ refresh plan. The projected API responses and inspected saved plans and state co
 client secret or secret hash. OCI requires `loginMechanism=OIDC` on update when
 `isLoginTarget=true`; the Atlas module sets and reads both fields. Temporary clients were
 deleted by verified GUID. The existing pilot and exchange trust retained their identities and
-active status. SCIM write authority under the GitHub signer and hosted federation remain open. See the [bootstrap restrictions](terraform-state-bootstrap.md).
+active status. The subsequent protected workflow proved resource creation with a temporary
+domain role and stopped at the inactive-target grant. Hosted federation remains open.
+See the [bootstrap restrictions](terraform-state-bootstrap.md).
 
-GitHub authorization for the complete environment graph, activation and the 8445 cutover remain pending. Recheck the exact protected workflow
-plan and qualify relevant permissions separately before an apply.
+The replacement client was activated and its development assignment and credential exclusion
+were verified. The operator confirmed regular SSO on 8445 with an existing native OCI session.
+The former manually managed browser App and its two policies were removed after that test.
+The protected follow-up confirmed zero planned resource actions under the workflow principal.
 
 ## What is implemented and what comes next
 

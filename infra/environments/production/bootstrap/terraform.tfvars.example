@@ -38,3 +38,6 @@ github_environment = {
 # Enable only after approval of the reviewed hosted runtime IAM statements.
 # allow_runtime_policy_writes = true
 # Set github_delivery.exchange_write_response_qualified only after isolated provider response qualification.
+
+# Set only with separate approval for domain-wide application management.
+# identity_app_management_environments = ["production"]
