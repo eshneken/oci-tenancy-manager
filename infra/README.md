@@ -40,7 +40,7 @@ plan; the script requires that precise lifecycle rejection, rather than acceptin
 No live state backend is initialized. The required Documentation and contracts CI lane runs this
 same command, alongside the existing required application/security lanes.
 
-Terraform's provider dependency is pinned to **oracle/oci 9.13.0**. Commit the generated lockfiles;
+Terraform's provider dependency is pinned to **oracle/oci 9.14.0**. Commit the generated lockfiles;
 they include verified package checksums for Linux AMD64/ARM64 and macOS ARM64. Weekly Dependabot
 proposals group provider updates across these directories. Review/regenerate locks and rerun the
 checks before accepting an update. Terraform CLI upgrades must also update each `required_version`

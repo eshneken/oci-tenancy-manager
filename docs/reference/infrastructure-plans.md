@@ -60,7 +60,7 @@ Planning requests a 60-minute RPST (more than 35 and at most 70 minutes remainin
 No human approval waits inside a live credential window. There is no refresh-token daemon or
 automatic credential fallback. A new job mints a new pair/session. Failures remain visible.
 
-Provider 9.13.0 supports direct `WorkloadIdentityFederation`, but Terraform 1.15.5's native OCI backend
+The pinned OCI provider supports direct `WorkloadIdentityFederation`, but Terraform 1.15.5's native OCI backend
 does not. The common supported boundary is explicit `ResourcePrincipal` for **both**, using:
 
 | Variable | Value passed only to the Terraform child |
@@ -88,7 +88,7 @@ objects, discovery and resource reads to the intended environment. No complete e
 IAM policy is invented by this source checkpoint.
 
 Primary contracts: [OCI JWT-to-RPST exchange](https://docs.oracle.com/en-us/iaas/Content/Identity/api-getstarted/token_exchange_grant_type_workload_id-federation.htm),
-[pinned provider federation](https://github.com/oracle/terraform-provider-oci/blob/v9.13.0/internal/provider/workload_identity_federation.go),
+[pinned provider federation](https://github.com/oracle/terraform-provider-oci/blob/v9.14.0/internal/provider/workload_identity_federation.go),
 [pinned backend authentication](https://github.com/hashicorp/terraform/blob/v1.15.5/internal/backend/remote-state/oci/auth.go),
 [GitHub OIDC claims](https://docs.github.com/en/actions/reference/security/oidc).
 
