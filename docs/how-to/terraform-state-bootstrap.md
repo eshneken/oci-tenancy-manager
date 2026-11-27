@@ -99,7 +99,8 @@ create/update and staging grants as before, and requires no additional policy st
 
 This is evidence for a point read of the existing group. A fresh group's first read without
 an operator-verified OCID and the workflow's SCIM writes for App, Grant, Condition, Rule and
-Policy remain unqualified. Keep apply held.
+Policy remain unqualified. Keep apply disabled until the exact development deployment is
+authorized and hosted qualifications are complete.
 
 The domain-owner bootstrap's `identity_app_management_environments` opt-in defaults to an empty
 set. It adds a `manage domains` grant for each selected workflow using the same domain OCID,
@@ -115,8 +116,9 @@ Session Token. The candidate permission is domain-wide and can affect applicatio
 Oracle also lists native domain lifecycle privileges under `manage domains`. Review the exact
 effective scope, including domain lifecycle operations, unrelated apps, the GitHub exchange client,
 and upstream federation, before any live opt-in. Verify the required SCIM reads and operations with
-the actual workflow principal. Dispatch approval remains separate, and the saved-plan consumer
-continues to reject managed App writes. [Oracle application management](https://docs.oracle.com/en-us/iaas/Content/Identity/applications/overview.htm) ·
+the actual workflow principal. The saved-plan consumer independently gates the
+[bounded inactive development App create](laptop-oci-development.md#inactive-atlas-browser-client-first-apply).
+[Oracle application management](https://docs.oracle.com/en-us/iaas/Content/Identity/applications/overview.htm) ·
 [OCI IAM policy variables and permissions](https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/iampolicyreference.htm) ·
 [Identity Domains AppRole permissions](https://docs.oracle.com/en-us/iaas/Content/Identity/api-getstarted/RequiredRolePerEndpointExt.htm)
 
@@ -139,11 +141,17 @@ to unrelated names, other compartments, and tenancy-root policies before enablin
 
 ## GitHub Environment and protected inputs
 
-Set each root's `github_environment` controls. Provide one to six user or team reviewer IDs in
-total and decide whether to prevent self-review. Terraform restricts the deployment environment
-to `master` and disables administrator bypass. Keep `plan_enabled` and `apply_enabled` false
-until the corresponding qualifications pass. Hosted roots also require the approved exact
-Kubernetes patch and PostgreSQL major.
+Set each root's `github_environment` controls. Provide one to six user or team reviewer IDs
+in total and decide whether to prevent self-review. Terraform retains the `master` deployment
+restriction. The five Checkpoint checks and protected-branch rules remain in force. Apply still
+requires a separate enable flag and the exact digest of the privately reviewed plan. Keep
+`plan_enabled` and `apply_enabled` false until the corresponding qualifications pass.
+Hosted roots also require the approved exact Kubernetes patch and PostgreSQL major.
+
+The [development maintenance window](laptop-oci-development.md#development-infrastructure-through-github-actions)
+temporarily removes the development Environment reviewer for plan and apply. Restore the prior
+Environment configuration at the end of the window. Bootstrap reviewer defaults and hosted
+Environment protections remain in force.
 
 Set `settings_file` to a JSON filename under the checkout's ignored `.local-dev` directory.
 Use one owner-only regular file per environment, mode `0600`, at most 256,000 bytes. For development,

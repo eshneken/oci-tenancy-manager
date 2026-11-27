@@ -21,6 +21,12 @@ MAX_BUNDLE = 64 * 1024 * 1024
 MAX_LOG = 16 * 1024 * 1024
 HASH = re.compile(r"[0-9a-f]{64}")
 NUMBER = re.compile(r"[1-9][0-9]{0,19}")
+ATLAS_APP_ADDRESS = "module.atlas_sso.oci_identity_domains_app.atlas_sso"
+ATLAS_APP_ATTRIBUTES = (
+    "id,ocid,name,displayName,description,schemas,basedOnTemplate,active,allowAccessControl,"
+    "isLoginTarget,loginMechanism,isOAuthClient,isOAuthResource,allowedGrants,clientType,"
+    "redirectUris,trustScope,signonPolicy,idpPolicy"
+)
 PLAN_FIELDS = {
     "status",
     "environment",
@@ -382,7 +388,118 @@ def preserve_recovery_state(client, namespace, bucket, prefix, root):
         return False
 
 
-# Apply exactly one reviewed saved plan; all failures retain the marker and require investigation.
+# Match the qualified App controls against known values in the exact saved plan and reject
+# any unreviewed App configuration, including optional provider fields that can carry secrets.
+def _reviewed_inactive_app(plan, app, identity_domain_url):
+    change = app["change"]
+    if (
+        app.get("address") != ATLAS_APP_ADDRESS
+        or app.get("mode") != "managed"
+        or app.get("provider_name") != "registry.terraform.io/oracle/oci"
+        or change["actions"] != ["create"]
+        or change.get("before") is not None
+        or "importing" in change
+        or "deposed" in app
+        or "previous_address" in app
+    ):
+        return False
+    expected = {
+        "active": False,
+        "allow_access_control": True,
+        "allowed_grants": ["authorization_code"],
+        "attributes": ATLAS_APP_ATTRIBUTES,
+        "client_type": "confidential",
+        "description": "Corporate single sign-on for OCI Tenancy Manager.",
+        "display_name": "otm-sso-development",
+        "idcs_endpoint": identity_domain_url,
+        "is_login_target": True,
+        "is_oauth_client": True,
+        "is_oauth_resource": False,
+        "login_mechanism": "OIDC",
+        "redirect_uris": ["https://127.0.0.1:8445/api/auth/sso/callback"],
+        "schemas": ["urn:ietf:params:scim:schemas:oracle:idcs:App"],
+        "trust_scope": "Explicit",
+    }
+    # Credentials and extra attribute projections must be absent from configuration. Terraform
+    # marks provider-computed credentials unknown before the projected create response.
+    try:
+        module = plan["configuration"]["root_module"]["module_calls"]["atlas_sso"]["module"]
+        (resource,) = [
+            resource
+            for resource in module["resources"]
+            if resource.get("address") == "oci_identity_domains_app.atlas_sso"
+        ]
+        after = change["after"]
+        unknown = change["after_unknown"]
+        expressions = resource["expressions"]
+        if not all(isinstance(mapping, dict) for mapping in (after, unknown, expressions)):
+            return False
+        (template,) = after["based_on_template"]
+        (template_unknown,) = unknown.get("based_on_template", [{}])
+    except (KeyError, TypeError, ValueError):
+        return False
+    # Policy IDs may still be unknown when those policies are created by the same reviewed plan.
+    # Their exact configured references prevent substituting unrelated IDs or private literals.
+    return (
+        expressions.keys() == expected.keys() | {"based_on_template", "signon_policy", "idp_policy"}
+        and expressions["based_on_template"]
+        == [{"value": {"constant_value": "CustomWebAppTemplateId"}}]
+        and all(
+            expressions[key]
+            == [
+                {
+                    "value": {
+                        "references": [f"module.atlas_policies.{key}_id", "module.atlas_policies"]
+                    }
+                }
+            ]
+            for key in ("signon_policy", "idp_policy")
+        )
+        and all(
+            type(after.get(key)) is type(value)
+            and after[key] == value
+            and (
+                unknown.get(key, False) is False
+                or (
+                    isinstance(value, list)
+                    and isinstance(unknown[key], list)
+                    and len(unknown[key]) == 1
+                    and unknown[key][0] is False
+                )
+            )
+            for key, value in expected.items()
+        )
+        and isinstance(template, dict)
+        and template.get("value") == "CustomWebAppTemplateId"
+        and isinstance(template_unknown, dict)
+        and template_unknown.get("value", False) is False
+        and all(
+            after.get(key) is None
+            for key in ("authorization", "client_secret", "hashed_client_secret")
+        )
+        and after.get("attribute_sets") in (None, [])
+        and unknown.get("attribute_sets", False) is False
+        and unknown.get("authorization", False) is False
+    )
+
+
+# Admit a single inactive development App creation. Leave other App writes unconsumed.
+def validate_identity_app_writes(plan, environment, identity_domain_url):
+    writes = [
+        item
+        for item in plan.get("resource_changes", [])
+        if item.get("type") == "oci_identity_domains_app"
+        and item["change"]["actions"] not in (["read"], ["no-op"])
+    ]
+    if writes and (
+        environment != "development"
+        or len(writes) != 1
+        or not _reviewed_inactive_app(plan, writes[0], identity_domain_url)
+    ):
+        raise ValueError("OCI_APP_WORKFLOW_WRITE_UNQUALIFIED")
+
+
+# Apply one reviewed saved plan. Failures after claiming the attempt retain its marker for review.
 def apply_plan(
     environment,
     component,
@@ -453,14 +570,7 @@ def apply_plan(
                 != report["changes"]
             ):
                 raise ValueError("PLAN_CHANGE_SUMMARY_MISMATCH")
-            # The inactive browser client passed operator qualification. Hold CI App writes before
-            # claiming the plan until the workflow signer and deployment are qualified.
-            if any(
-                item.get("type") == "oci_identity_domains_app"
-                and item["change"]["actions"] not in (["read"], ["no-op"])
-                for item in plan.get("resource_changes", [])
-            ):
-                raise ValueError("OCI_APP_WORKFLOW_WRITE_UNQUALIFIED")
+            validate_identity_app_writes(plan, environment, values["OTM_INFRA_IDENTITY_DOMAIN_URL"])
             common = parity(plan, environment)
             if staging is not None and (
                 staging["parity_sha256"] != common

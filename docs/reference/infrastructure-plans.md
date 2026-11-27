@@ -19,8 +19,10 @@ Workflows require deliberate `OTM_INFRASTRUCTURE_ENABLED=true`; absence means fa
 federation. Apply additionally requires `OTM_INFRASTRUCTURE_APPLY_ENABLED=true`. Both variables
 default to false in the workflows; enabling plans does not enable apply. No GitHub environments, secrets, IAM trusts or OCI resources are configured by adding
 these files. Configure and qualify environment protection before enabling either workflow.
-The fixed GitHub Environment must restrict deployment branches to master and require the selected
-human reviewer. An environment name or enable flag alone is not proof of protection or authorization.
+Each fixed GitHub Environment restricts deployments to protected master and normally requires
+Environment reviewers. Development may omit that rule for plan and apply during the authorized
+maintenance window. Restore its prior configuration afterward. The five required Checkpoint
+checks and PR-only branch protection continue to govern protected master.
 
 The apply consumer authenticates the successful producer run and exact attempt/job logs, checks
 current private inputs and the reviewed binary-plan hash, then applies only that environment's saved
@@ -30,8 +32,8 @@ not evidence of configured production approval or an exercised OCI apply. Terraf
 state locking/stale-plan checks; an obsolete plan must be regenerated and reviewed.
 
 Development uses the fixed `infrastructure` root, its own private bucket and state key, and one
-protected GitHub Environment and federated principal. Every dispatch requires approval, and
-apply also requires explicit enablement and an exact reviewed plan without deletion or replacement.
+protected GitHub Environment and federated principal. Apply requires separate enablement and
+the exact reviewed plan digest. The same destructive-change guards apply.
 Once apply permissions are granted, both dispatches use that principal's effective OCI permissions. See the [development setup](../how-to/laptop-oci-development.md#development-infrastructure-through-github-actions).
 
 ## Federation contract
@@ -230,8 +232,13 @@ compatibility or capacity property. No private image OCID is printed in the publ
 
 ### Current deployment qualification
 
-The apply consumer rejects any managed OCI App change beyond read or no-op before claiming
-the saved plan. A live local operator test with released OCI provider 9.13.0 verified creation,
+Before claiming the saved plan, the consumer allows one managed OCI App create at
+`module.atlas_sso.oci_identity_domains_app.atlas_sso` in development. The new client must be
+inactive and use the locked OCI provider, approved domain, confidential authorization-code
+settings, exact 8445 callback, custom web app template, environment-owned sign-on and identity
+provider policy references, and credential-free response projection. App imports, updates,
+replacements and hosted App writes remain guarded.
+A live local operator test with released OCI provider 9.13.0 verified creation,
 description update and a no-change refresh for an inactive Atlas browser client. The projected
 responses and inspected plan/state contained no client secret or secret hash. GitHub's effective
 SCIM write permissions and the deployment of the assigned client still require qualification.
