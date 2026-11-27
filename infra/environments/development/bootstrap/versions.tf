@@ -12,7 +12,7 @@ terraform {
     }
     oci = {
       source  = "oracle/oci"
-      version = "= 9.13.0"
+      version = "= 9.14.0"
     }
   }
   # Bucket creation precedes remote state. Operators must select an explicit private local path.
