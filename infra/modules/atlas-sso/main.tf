@@ -55,8 +55,8 @@ resource "oci_identity_domains_app" "atlas_sso" {
 
   # Oracle returns clientSecret on default reads. Create, update and refresh must use this projection.
   attributes = "id,ocid,name,displayName,description,schemas,basedOnTemplate,active,allowAccessControl,isLoginTarget,loginMechanism,isOAuthClient,isOAuthResource,allowedGrants,clientType,redirectUris,trustScope,signonPolicy,idpPolicy"
-  # The existing laptop client serves during the separately approved development cutover.
-  active               = var.environment != "development"
+  # OCI requires the target App to be active before it can receive its group assignment.
+  active               = true
   allow_access_control = true
   is_login_target      = true
   login_mechanism      = "OIDC"

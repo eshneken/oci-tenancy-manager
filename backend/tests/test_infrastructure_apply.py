@@ -808,15 +808,429 @@ def test_reviewed_group_import(environment, imports, valid):
             module.reviewed_plan(receipt, "infrastructure", receipt["plan_sha256"])
 
 
-# An approved generic apply cannot run an unqualified confidential App write or consume its plan.
-def test_identity_app_write_stops_before_claim(harness):
-    harness.plan["resource_changes"] = [
-        {"type": "oci_identity_domains_app", "change": {"actions": ["create"]}}
-    ]
+# Mirror Terraform's OCI App create plan, including computed credentials and policy references.
+@pytest.fixture
+def inactive_app_plan(harness):
+    after = {
+        "active": False,
+        "allow_access_control": True,
+        "allowed_grants": ["authorization_code"],
+        "attributes": (
+            "id,ocid,name,displayName,description,schemas,basedOnTemplate,active,allowAccessControl,"
+            "isLoginTarget,loginMechanism,isOAuthClient,isOAuthResource,allowedGrants,clientType,"
+            "redirectUris,trustScope,signonPolicy,idpPolicy"
+        ),
+        "based_on_template": [{"value": "CustomWebAppTemplateId"}],
+        "client_type": "confidential",
+        "description": "Corporate single sign-on for OCI Tenancy Manager.",
+        "display_name": "otm-sso-development",
+        "idcs_endpoint": harness.values["OTM_INFRA_IDENTITY_DOMAIN_URL"],
+        "idp_policy": [{}],
+        "is_login_target": True,
+        "is_oauth_client": True,
+        "is_oauth_resource": False,
+        "login_mechanism": "OIDC",
+        "redirect_uris": ["https://127.0.0.1:8445/api/auth/sso/callback"],
+        "schemas": ["urn:ietf:params:scim:schemas:oracle:idcs:App"],
+        "signon_policy": [{}],
+        "trust_scope": "Explicit",
+    }
+    configuration = {
+        "address": "oci_identity_domains_app.atlas_sso",
+        "expressions": {
+            **{key: {} for key in after},
+            "based_on_template": [{"value": {"constant_value": "CustomWebAppTemplateId"}}],
+            "signon_policy": [
+                {
+                    "value": {
+                        "references": [
+                            "module.atlas_policies.signon_policy_id",
+                            "module.atlas_policies",
+                        ]
+                    }
+                }
+            ],
+            "idp_policy": [
+                {
+                    "value": {
+                        "references": [
+                            "module.atlas_policies.idp_policy_id",
+                            "module.atlas_policies",
+                        ]
+                    }
+                }
+            ],
+        },
+    }
+    app = {
+        "address": "module.atlas_sso.oci_identity_domains_app.atlas_sso",
+        "mode": "managed",
+        "provider_name": "registry.terraform.io/oracle/oci",
+        "type": "oci_identity_domains_app",
+        "change": {
+            "actions": ["create"],
+            "before": None,
+            "after": after,
+            "after_unknown": {
+                "based_on_template": [{"last_modified": True, "ref": True, "well_known_id": True}],
+                "client_secret": True,
+                "hashed_client_secret": True,
+                "idp_policy": [{"ref": True, "value": True}],
+                "redirect_uris": [False],
+                "signon_policy": [{"ref": True, "value": True}],
+            },
+        },
+    }
+    harness.plan["resource_changes"] = [app]
+    harness.plan["configuration"] = {
+        "root_module": {"module_calls": {"atlas_sso": {"module": {"resources": [configuration]}}}}
+    }
     harness.receipt["changes"]["create"] = 1
+    return app, configuration
+
+
+# The inactive development App can proceed through the ordinary exact-plan apply and claim.
+@pytest.mark.parametrize("harness", [("development", "infrastructure")], indirect=True)
+def test_inactive_development_app_applies(harness, inactive_app_plan):
+    result = module.apply_plan(
+        "development", "infrastructure", "123", harness.receipt["plan_sha256"], harness.values
+    )
+    assert result["status"] == "applied"
+    assert [call[0] for call in harness.calls] == ["show", "apply"]
+    assert len(harness.objects) == 1
+
+
+# An activation starts from an existing projected App record with a stable SCIM GUID.
+@pytest.fixture
+def activation_app_plan(harness, inactive_app_plan):
+    app, _ = inactive_app_plan
+    change = app["change"]
+    before = {
+        **change["after"],
+        "id": "a" * 32,
+        "signon_policy": [{"value": "b" * 32}],
+        "idp_policy": [{"value": "c" * 32}],
+    }
+    change.update(
+        actions=["update"],
+        before=before,
+        after={**copy.deepcopy(before), "active": True},
+        after_unknown={
+            "based_on_template": [{}],
+            "redirect_uris": [False],
+            "signon_policy": [{"value": False}],
+        },
+    )
+    harness.receipt["changes"].update(create=0, update=1)
+    return change
+
+
+# A reviewed activation takes the ordinary claim/apply path while unchanged resources stay put.
+@pytest.mark.parametrize("harness", [("development", "infrastructure")], indirect=True)
+def test_development_app_activation_applies(harness, activation_app_plan):
+    harness.plan["resource_changes"].extend(
+        [
+            {"type": "oci_kms_key", "mode": "managed", "change": {"actions": ["no-op"]}},
+            {
+                "type": "oci_identity_domains_groups",
+                "mode": "data",
+                "change": {"actions": ["read"]},
+            },
+        ]
+    )
+    result = module.apply_plan(
+        "development", "infrastructure", "123", harness.receipt["plan_sha256"], harness.values
+    )
+    assert result["status"] == "applied"
+    assert [call[0] for call in harness.calls] == ["show", "apply"]
+    assert len(harness.objects) == 1
+
+
+# A same-address update that changes another field or leaves any new unknown stays unconsumed.
+@pytest.mark.parametrize("harness", [("development", "infrastructure")], indirect=True)
+@pytest.mark.parametrize(
+    ("section", "field", "value"),
+    [
+        ("before", "active", True),
+        ("before", "active", None),
+        ("before", "id", None),
+        ("after", "id", "d" * 32),
+        ("after", "description", "A changed description"),
+        ("after", "hashed_client_secret", "synthetic-must-stay-private"),
+        ("after", "signon_policy", [{"value": "d" * 32}]),
+        ("after", "redirect_uris", ["https://127.0.0.1:8443/api/auth/sso/callback"]),
+        ("after_unknown", "client_secret", True),
+        ("after_unknown", "signon_policy", [{"value": True}]),
+    ],
+)
+def test_other_app_update_stops_before_claim(harness, activation_app_plan, section, field, value):
+    activation_app_plan[section][field] = value
+    with pytest.raises(ValueError, match="^OCI_APP_WORKFLOW_WRITE_UNQUALIFIED$"):
+        module.apply_plan(
+            "development", "infrastructure", "123", harness.receipt["plan_sha256"], harness.values
+        )
+    assert not harness.objects
+    assert [call[0] for call in harness.calls] == ["show"]
+
+
+# The activation exception cannot carry changes or state adoption for unrelated resources.
+@pytest.mark.parametrize("fault", ["write", "import", "move", "drift"])
+def test_app_activation_refuses_unrelated_changes(harness, activation_app_plan, fault):
+    unrelated = {"type": "oci_kms_key", "mode": "managed", "change": {"actions": ["no-op"]}}
+    if fault == "write":
+        unrelated["change"]["actions"] = ["update"]
+    elif fault == "import":
+        unrelated["change"]["importing"] = {"id": "synthetic"}
+    elif fault == "move":
+        unrelated["previous_address"] = "oci_kms_key.other"
+    if fault == "drift":
+        harness.plan["resource_drift"] = [unrelated]
+    else:
+        harness.plan["resource_changes"].append(unrelated)
+    with pytest.raises(ValueError, match="^OCI_APP_WORKFLOW_WRITE_UNQUALIFIED$"):
+        module.validate_identity_app_writes(
+            harness.plan, "development", harness.values["OTM_INFRA_IDENTITY_DOMAIN_URL"]
+        )
+
+
+# The prior state binds a metadata-only SCIM result to the unchanged native assignment group.
+@pytest.fixture
+def pending_app_assignment(harness, activation_app_plan):
+    domain = harness.values["OTM_INFRA_IDENTITY_DOMAIN_URL"]
+    group_ocid = "ocid1.group.oc1..synthetic"
+    group_guid = "d" * 32
+    group_name = "otm-development-users"
+    group = {"ocid": group_ocid, "id": group_guid, "display_name": group_name}
+    harness.plan["variables"]["atlas_sso"] = {"value": {"adopt_group_ocid": group_ocid}}
+    lookup = {
+        "total_results": 1,
+        "attributes": "id,ocid,displayName",
+        "idcs_endpoint": domain,
+        "group_filter": f'ocid eq "{group_ocid}"',
+        "groups": [group],
+    }
+    harness.plan["prior_state"] = {
+        "values": {
+            "root_module": {
+                "child_modules": [
+                    {
+                        "address": "module.atlas_sso",
+                        "resources": [
+                            {"address": module.ATLAS_GROUP_READ, "mode": "data", "values": lookup}
+                        ],
+                    }
+                ]
+            }
+        }
+    }
+    after = {
+        "idcs_endpoint": domain,
+        "schemas": ["urn:ietf:params:scim:schemas:oracle:idcs:Grant"],
+        "grant_mechanism": "ADMINISTRATOR_TO_GROUP",
+        "app": [{"value": activation_app_plan["before"]["id"]}],
+        "grantee": [{"type": "Group", "value": group_guid}],
+    }
+    configuration = {
+        "address": "oci_identity_domains_grant.atlas_assignment",
+        "expressions": {
+            **{key: {} for key in after},
+            "app": [
+                {
+                    "value": {
+                        "references": [
+                            "oci_identity_domains_app.atlas_sso.id",
+                            "oci_identity_domains_app.atlas_sso",
+                        ]
+                    }
+                }
+            ],
+            "grantee": [
+                {
+                    "type": {"constant_value": "Group"},
+                    "value": {
+                        "references": [
+                            "data.oci_identity_domains_groups.atlas_users.groups",
+                            "data.oci_identity_domains_groups.atlas_users",
+                        ]
+                    },
+                }
+            ],
+        },
+    }
+    resources = harness.plan["configuration"]["root_module"]["module_calls"]["atlas_sso"]["module"][
+        "resources"
+    ]
+    resources.append(configuration)
+    grant = {
+        "address": module.ATLAS_GRANT_ADDRESS,
+        "type": "oci_identity_domains_grant",
+        "mode": "managed",
+        "provider_name": "registry.terraform.io/oracle/oci",
+        "change": {
+            "actions": ["create"],
+            "before": None,
+            "after": after,
+            "after_unknown": {"app": [{"ref": True}], "grantee": [{"display": True}]},
+        },
+    }
+    harness.plan["resource_changes"].extend(
+        [
+            {
+                "address": module.ATLAS_GROUP_ADDRESS,
+                "type": "oci_identity_group",
+                "mode": "managed",
+                "change": {"actions": ["no-op"], "after": {"name": group_name, "id": group_ocid}},
+            },
+            grant,
+        ]
+    )
+    harness.receipt["changes"]["create"] = 1
+    return grant, lookup, group
+
+
+# Completion can activate the App and create the exact group assignment in the same saved plan.
+@pytest.mark.parametrize("harness", [("development", "infrastructure")], indirect=True)
+def test_development_activation_and_pending_assignment_apply(harness, pending_app_assignment):
+    result = module.apply_plan(
+        "development", "infrastructure", "123", harness.receipt["plan_sha256"], harness.values
+    )
+    assert result["status"] == "applied"
+    assert [call[0] for call in harness.calls] == ["show", "apply"]
+    assert len(harness.objects) == 1
+
+
+# Any unrelated assignment, unknown binding or non-metadata group result blocks activation.
+@pytest.mark.parametrize("harness", [("development", "infrastructure")], indirect=True)
+@pytest.mark.parametrize(
+    ("section", "field", "value"),
+    [
+        ("grant", "address", "module.atlas_sso.oci_identity_domains_grant.other"),
+        ("after", "app", [{"value": "e" * 32}]),
+        ("after", "grant_mechanism", "ADMINISTRATOR_TO_USER"),
+        ("after", "grantee", [{"type": "Group", "value": "e" * 32}]),
+        ("after", "grantee", [{"type": "User", "value": "d" * 32}]),
+        ("after_unknown", "app", [{"value": True}]),
+        ("after_unknown", "grantee", [{"value": True}]),
+        ("group", "members", [{"value": "e" * 32}]),
+        ("group", "ocid", "ocid1.group.oc1..other"),
+        ("group", "display_name", "otm-staging-users"),
+        ("lookup", "groups", []),
+        ("lookup", "total_results", 2),
+        ("inputs", "adopt_group_ocid", "ocid1.group.oc1..other"),
+    ],
+)
+def test_activation_refuses_unqualified_grant(
+    harness, pending_app_assignment, section, field, value
+):
+    grant, lookup, group = pending_app_assignment
+    sections = {
+        "grant": grant,
+        "lookup": lookup,
+        "group": group,
+        "inputs": harness.plan["variables"]["atlas_sso"]["value"],
+        **grant["change"],
+    }
+    sections[section][field] = value
+    with pytest.raises(ValueError, match="^OCI_APP_WORKFLOW_WRITE_UNQUALIFIED$"):
+        module.apply_plan(
+            "development", "infrastructure", "123", harness.receipt["plan_sha256"], harness.values
+        )
+    assert not harness.objects
+    assert [call[0] for call in harness.calls] == ["show"]
+
+
+# Even the otherwise valid development App must stay blocked on a hosted environment.
+def test_hosted_app_write_stops_before_claim(harness, inactive_app_plan):
     with pytest.raises(ValueError, match="OCI_APP_WORKFLOW_WRITE_UNQUALIFIED"):
         module.apply_plan(
             "staging", "infrastructure", "123", harness.receipt["plan_sha256"], harness.values
         )
     assert not harness.objects
     assert [call[0] for call in harness.calls] == ["show"]
+
+
+# Refuse a broader or unknown App control before writing an attempt marker or running apply.
+@pytest.mark.parametrize("harness", [("development", "infrastructure")], indirect=True)
+@pytest.mark.parametrize(
+    ("section", "field", "value"),
+    [
+        ("app", "address", "module.atlas_sso.oci_identity_domains_app.unreviewed"),
+        ("app", "provider_name", "registry.terraform.io/example/oci"),
+        ("app", "previous_address", "module.atlas_sso.oci_identity_domains_app.old"),
+        ("change", "importing", {}),
+        ("change", "before", {"active": False}),
+        ("after", "active", True),
+        ("after", "active", 0),
+        ("after", "allow_access_control", False),
+        ("after", "client_type", "public"),
+        ("after", "allowed_grants", ["authorization_code", "client_credentials"]),
+        ("after", "idcs_endpoint", "https://idcs-other.identity.oraclecloud.com"),
+        ("after", "redirect_uris", ["https://127.0.0.1:8443/api/auth/sso/callback"]),
+        ("after", "attributes", "id,clientSecret"),
+        ("after", "attribute_sets", ["all"]),
+        ("after", "client_secret", "synthetic-must-stay-private"),
+        ("after", "based_on_template", [{"value": "UnreviewedTemplate"}]),
+        ("unknown", "active", True),
+        ("unknown", "attributes", True),
+        ("unknown", "redirect_uris", [True]),
+        ("unknown", "based_on_template", [{"value": True}]),
+        ("unknown", "attribute_sets", True),
+        ("unknown", "authorization", True),
+        ("expressions", "client_secret", {"constant_value": "synthetic-must-stay-private"}),
+        ("expressions", "allowed_scopes", {"references": ["var.unreviewed"]}),
+        (
+            "expressions",
+            "based_on_template",
+            [
+                {
+                    "value": {"constant_value": "CustomWebAppTemplateId"},
+                    "well_known_id": {"constant_value": "unreviewed-template-option"},
+                }
+            ],
+        ),
+        (
+            "expressions",
+            "signon_policy",
+            [{"value": {"constant_value": "synthetic-must-stay-private"}}],
+        ),
+        ("expressions", "idp_policy", [{"value": {"references": ["var.unreviewed"]}}]),
+    ],
+)
+def test_app_scope_violation_stops_before_claim(harness, inactive_app_plan, section, field, value):
+    app, configuration = inactive_app_plan
+    change = app["change"]
+    sections = {
+        "app": app,
+        "change": change,
+        "after": change["after"],
+        "unknown": change["after_unknown"],
+        "expressions": configuration["expressions"],
+    }
+    sections[section][field] = value
+    # The earlier import allowlist rejects an App import before the App-specific check.
+    reason = "OCI_APP_WORKFLOW_WRITE_UNQUALIFIED"
+    if field == "importing":
+        reason = "UNEXPECTED_TERRAFORM_IMPORT"
+    with pytest.raises(ValueError, match=f"^{reason}$"):
+        module.apply_plan(
+            "development", "infrastructure", "123", harness.receipt["plan_sha256"], harness.values
+        )
+    assert not harness.objects
+    assert [call[0] for call in harness.calls] == ["show"]
+
+
+# Resource addresses cannot be reused to authorize an edit, destructive replacement, or second
+# App write. Missing planner configuration must also fail closed.
+@pytest.mark.parametrize("fault", ["update", "replace", "delete", "duplicate", "configuration"])
+def test_other_app_write_remains_unqualified(harness, inactive_app_plan, fault):
+    app, _ = inactive_app_plan
+    if fault == "duplicate":
+        harness.plan["resource_changes"].append(copy.deepcopy(app))
+    elif fault == "configuration":
+        del harness.plan["configuration"]
+    else:
+        app["change"]["actions"] = ["delete", "create"] if fault == "replace" else [fault]
+    with pytest.raises(ValueError, match="^OCI_APP_WORKFLOW_WRITE_UNQUALIFIED$"):
+        module.validate_identity_app_writes(
+            harness.plan, "development", harness.values["OTM_INFRA_IDENTITY_DOMAIN_URL"]
+        )

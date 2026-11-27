@@ -19,8 +19,10 @@ Workflows require deliberate `OTM_INFRASTRUCTURE_ENABLED=true`; absence means fa
 federation. Apply additionally requires `OTM_INFRASTRUCTURE_APPLY_ENABLED=true`. Both variables
 default to false in the workflows; enabling plans does not enable apply. No GitHub environments, secrets, IAM trusts or OCI resources are configured by adding
 these files. Configure and qualify environment protection before enabling either workflow.
-The fixed GitHub Environment must restrict deployment branches to master and require the selected
-human reviewer. An environment name or enable flag alone is not proof of protection or authorization.
+Each fixed GitHub Environment restricts deployments to protected master and normally requires
+Environment reviewers. Development may omit that rule for plan and apply during the authorized
+maintenance window. Restore its prior configuration afterward. The five required Checkpoint
+checks and PR-only branch protection continue to govern protected master.
 
 The apply consumer authenticates the successful producer run and exact attempt/job logs, checks
 current private inputs and the reviewed binary-plan hash, then applies only that environment's saved
@@ -30,8 +32,8 @@ not evidence of configured production approval or an exercised OCI apply. Terraf
 state locking/stale-plan checks; an obsolete plan must be regenerated and reviewed.
 
 Development uses the fixed `infrastructure` root, its own private bucket and state key, and one
-protected GitHub Environment and federated principal. Every dispatch requires approval, and
-apply also requires explicit enablement and an exact reviewed plan without deletion or replacement.
+protected GitHub Environment and federated principal. Apply requires separate enablement and
+the exact reviewed plan digest. The same destructive-change guards apply.
 Once apply permissions are granted, both dispatches use that principal's effective OCI permissions. See the [development setup](../how-to/laptop-oci-development.md#development-infrastructure-through-github-actions).
 
 ## Federation contract
@@ -113,7 +115,9 @@ The JSON `target` has exactly `environment`, `tenancy_ocid`,
 `object_storage_namespace` and `region`. The workflow currently accepts `us-ashburn-1`.
 `atlas_sso.corporate_idp_id` is the verified 32-character lowercase hexadecimal SCIM GUID.
 Development also accepts an optional native group OCID in `atlas_sso.adopt_group_ocid` for
-adoption of the exact existing group. Hosted stages require `atlas_sso.callback_url` with an
+adoption of the exact existing group. The [bootstrap adoption read](../how-to/terraform-state-bootstrap.md#domain-owned-github-identity-policy)
+uses the same protected value after the operator verifies native group metadata.
+Hosted stages require `atlas_sso.callback_url` with an
 exact HTTPS DNS origin plus `/api/auth/sso/callback`, without query, fragment or port.
 
 Hosted JSON also accepts `vcn_cidr`, `oke`, `database_administrator`, `database`,
@@ -128,7 +132,11 @@ uses synthetic HCL rather than JSON. Production still requires qualified staging
 All inputs, keys, tokens, raw Terraform output and the binary plan use a private temporary directory.
 Normal success/failure cleans it and restores the process umask. Hard runner loss/cancellation is
 also a hosted-runner custody qualification item; this is not secure erasure or indefinite token renewal.
-No public log contains the full Terraform plan or provider diagnostics. The workflow uploads no
+During development group adoption, a failed Terraform plan also checks native group get, exact-name list, and the Identity Domains metadata lookup with the same workflow principal. Each check reports only a match result or bounded error status. The plan remains failed and no plan is published.
+
+When the development Terraform plan command exits nonzero, `terraform_plan_errors` summarizes its JSON errors by Terraform address, OCI read operation, and HTTP status. Repeated combinations appear once. Timeouts can occur before this summary is available. Unrecognized addresses and operations appear as `unknown`. A missing status appears as `null`. The subsequent group probes are independent checks.
+
+No public log contains the full Terraform plan or raw provider diagnostics. The workflow uploads no
 GitHub artifacts, database data, source feed, private configuration or state.
 
 After planning with state locking, the source inspects JSON action kinds and creates a two-file tar:
@@ -226,18 +234,40 @@ compatibility or capacity property. No private image OCID is printed in the publ
 
 ### Current deployment qualification
 
-The apply consumer rejects any managed OCI App change beyond read or no-op before claiming
-the saved plan. A live local operator test with released OCI provider 9.13.0 verified creation,
+Before claiming the saved plan, the consumer permits the existing development browser client
+at `module.atlas_sso.oci_identity_domains_app.atlas_sso` to change from inactive to active in
+place. The only additional change it permits alongside activation is the exact pending group
+grant. It checks the locked OCI provider, approved domain, confidential authorization-code
+settings, exact 8445 callback, custom web app template, environment-owned policy references,
+and credential-free response projection. Other App updates, active creates, imports,
+replacements and hosted App writes remain held.
+A live local operator test with released OCI provider 9.13.0 verified creation,
 description update and a no-change refresh for an inactive Atlas browser client. The projected
-responses and inspected plan/state contained no client secret or secret hash. GitHub's effective
-SCIM permissions and the deployment of the assigned client still require qualification. Native group IAM alone does not establish authority for SCIM applications,
-grants or sign-in policies. Hosted workflow IAM also needs approval for the three runtime
+responses and inspected plan/state contained no client secret or secret hash. The protected
+27 November apply then created nine resources with a temporary Application Administrator
+assignment. OCI rejected the application grant because its target was inactive. The subsequent apply activated the client and assigned the environment group.
+The operator verified Corporate SSO on 8445 with an existing native OCI session and retired the
+manual client. A protected plan using the named development workflow dynamic group and its
+Application Administrator grant verified zero planned actions across all 13 managed resources.
+OCI reported computed metadata drift on the assignment.
+A protected development adoption plan verified the existing native group with exact name and
+OCID conditions and proposed ten creates and one no-op import, with no updates or deletes.
+Vault and key were unchanged. This did not exercise a fresh group's first read or apply.
+The
+domain-owner [application management opt-in](../how-to/terraform-state-bootstrap.md#domain-owned-github-identity-policy)
+is empty by default. Oracle documents `manage domains` for group members. Its effective scope
+and authorization for the exchanged workflow principal remain unproven. Hosted workflow IAM also
+needs approval for the three runtime
 reader policies. OCI cannot restrict the contents of a policy by its resource name.
 
 Development owns the GitHub issuer trust in the shared non-production domain. Staging
 declares no duplicate trust and requires its trust activation, plan and apply switches
 to remain false until client-bound federation is qualified. Production uses a separate
-domain. See the [exchange rollout gates](../how-to/terraform-state-bootstrap.md#github-exchange-client-rollout).
+domain. Development and production bootstrap each own the
+[`otm-github-identity` tenancy-root policy](../how-to/terraform-state-bootstrap.md#domain-owned-github-identity-policy)
+for their domains. The development copy covers development and staging with distinct
+workflow/environment and native group bindings. The policy leaves the staging holds in effect.
+See the [exchange rollout gates](../how-to/terraform-state-bootstrap.md#github-exchange-client-rollout).
 Hosted plan and apply stop for migration if either legacy security or platform state object exists.
 
 ### Single attempt and failed-backend recovery

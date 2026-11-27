@@ -123,6 +123,58 @@ class SealInputsTests(unittest.TestCase):
         ):
             helper.development_exchange_metadata(query)
 
+    # Fresh development emits an empty pin and does not contact OCI from the settings reader.
+    def test_no_development_group_adoption(self):
+        settings = {"inputs": {"atlas_sso": {}}}
+        with (
+            patch.object(helper, "read_settings", return_value=settings),
+            patch.object(helper, "invoke") as invoke,
+        ):
+            self.assertEqual(
+                helper.development_group_adoption_pin(self.query), {"ocid": ""}
+            )
+            invoke.assert_not_called()
+
+    # Emit one validated OCID without exposing any other protected settings.
+    def test_development_group_adoption_pin(self):
+        group_ocid = "ocid1.group.oc1..syntheticatlas"
+        settings = {
+            "inputs": {
+                "atlas_sso": {
+                    "adopt_group_ocid": group_ocid,
+                    "corporate_idp_id": "a" * 32,
+                }
+            }
+        }
+        with (
+            patch.object(helper, "read_settings", return_value=settings) as read,
+            patch.object(helper, "invoke") as invoke,
+        ):
+            self.assertEqual(
+                helper.development_group_adoption_pin(self.query), {"ocid": group_ocid}
+            )
+            read.assert_called_once_with(self.query["settings_file"])
+            invoke.assert_not_called()
+
+    # Refuse file shapes or identifiers that cannot be verified by the exact native group read.
+    def test_invalid_development_group_adoption_pin(self):
+        for text in (
+            "",
+            None,
+            "ocid1.group.oc1..bad'name",
+            "ocid1.user.oc1..synthetic",
+        ):
+            with (
+                self.subTest(value=text),
+                patch.object(
+                    helper,
+                    "read_settings",
+                    return_value={"inputs": {"atlas_sso": {"adopt_group_ocid": text}}},
+                ),
+                self.assertRaisesRegex(ValueError, "EXACT_ADOPTION_GROUP_REQUIRED"),
+            ):
+                helper.development_group_adoption_pin(self.query)
+
     # Refuse input-file target overrides before reaching the sensitive OCI GetApp projection.
     def test_wrong_source_target(self):
         self.settings["inputs"]["target"] = {"environment": "staging"}

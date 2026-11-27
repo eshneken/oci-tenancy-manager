@@ -1,10 +1,7 @@
 locals {
   # Bind the OCI authorization path to the same verified workflow and identity-domain claims.
   storage_scope = var.storage_policy == null ? null : join(", ", [
-    "in compartment otm-${var.environment} where all {request.principal.type = 'identityfederateddomainapp'",
-    "request.principal.domain.id = '${var.identity_domain_ocid}'",
-    "request.principal.ext_workflow_ref = '${local.workflow_ref}'",
-    "request.principal.ext_environment = '${var.environment}'",
+    "in compartment otm-${var.environment} where all {${local.workflow_subject}",
     "target.bucket.name = '${var.storage_policy.bucket_name}'",
   ])
   state_object = var.storage_policy == null ? null : "target.object.name = '${var.storage_policy.state_key}'"
@@ -22,14 +19,14 @@ resource "oci_identity_policy" "workflow_storage" {
   name           = "otm-${var.environment}-github-infrastructure"
   description    = "Terraform state and reviewed plan storage for the infrastructure workflow"
   statements = [
-    "Allow any-user to read buckets ${local.storage_scope}, request.operation = 'GetBucket'}",
-    "Allow any-user to inspect objects ${local.storage_scope}, request.operation = 'ListObjects'}",
-    "Allow any-user to read objects ${local.storage_scope}, ${local.state_object}, any {request.operation = 'HeadObject', request.operation = 'GetObject'}}",
-    "Allow any-user to manage objects ${local.storage_scope}, ${local.state_object}, request.operation = 'PutObject', any {request.permission = 'OBJECT_CREATE', request.permission = 'OBJECT_OVERWRITE'}}",
-    "Allow any-user to manage objects ${local.storage_scope}, ${local.lock_object}, any {all {request.operation = 'PutObject', request.permission = 'OBJECT_CREATE'}, all {request.operation = 'GetObject', request.permission = 'OBJECT_READ'}, all {request.operation = 'DeleteObject', request.permission = 'OBJECT_DELETE'}}}",
-    "Allow any-user to manage objects ${local.storage_scope}, ${local.plan_prefix}, ${local.plan_archive}, request.operation = 'PutObject', request.permission = 'OBJECT_CREATE'}",
-    "Allow any-user to read objects ${local.storage_scope}, ${local.plan_prefix}, ${local.plan_archive}, request.operation = 'GetObject', request.permission = 'OBJECT_READ'}",
-    "Allow any-user to manage objects ${local.storage_scope}, ${local.plan_prefix}, ${local.recovery}, request.operation = 'PutObject', request.permission = 'OBJECT_CREATE'}",
+    "Allow ${local.workflow_grantee} to read buckets ${local.storage_scope}, request.operation = 'GetBucket'}",
+    "Allow ${local.workflow_grantee} to inspect objects ${local.storage_scope}, request.operation = 'ListObjects'}",
+    "Allow ${local.workflow_grantee} to read objects ${local.storage_scope}, ${local.state_object}, any {request.operation = 'HeadObject', request.operation = 'GetObject'}}",
+    "Allow ${local.workflow_grantee} to manage objects ${local.storage_scope}, ${local.state_object}, request.operation = 'PutObject', any {request.permission = 'OBJECT_CREATE', request.permission = 'OBJECT_OVERWRITE'}}",
+    "Allow ${local.workflow_grantee} to manage objects ${local.storage_scope}, ${local.lock_object}, any {all {request.operation = 'PutObject', request.permission = 'OBJECT_CREATE'}, all {request.operation = 'GetObject', request.permission = 'OBJECT_READ'}, all {request.operation = 'DeleteObject', request.permission = 'OBJECT_DELETE'}}}",
+    "Allow ${local.workflow_grantee} to manage objects ${local.storage_scope}, ${local.plan_prefix}, ${local.plan_archive}, request.operation = 'PutObject', request.permission = 'OBJECT_CREATE'}",
+    "Allow ${local.workflow_grantee} to read objects ${local.storage_scope}, ${local.plan_prefix}, ${local.plan_archive}, request.operation = 'GetObject', request.permission = 'OBJECT_READ'}",
+    "Allow ${local.workflow_grantee} to manage objects ${local.storage_scope}, ${local.plan_prefix}, ${local.recovery}, request.operation = 'PutObject', request.permission = 'OBJECT_CREATE'}",
   ]
 
   lifecycle {

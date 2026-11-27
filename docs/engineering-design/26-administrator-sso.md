@@ -245,8 +245,8 @@ and its members, existing app assignments, Atlas grants, and the client currentl
 Atlas add, remove and regrant operations remain the normal path for individual membership changes.
 
 The current source manages the state bucket and scoped IAM in bootstrap, and the Vault and
-software key in the development root. Candidate development source also declares the group,
-inactive client, group assignment, app-specific policies and rules, using the existing corporate
+software key in the development root. Development source also declares the group,
+replacement client, group assignment, app-specific policies and rules, using the existing corporate
 IdP reference. Bootstrap declares the compartment, GitHub trust resources and domain setting.
 Adoption and the required live permission and trust checks remain pending. Verify that existing
 resources can be reconciled without replacement,
@@ -254,10 +254,12 @@ disassociation, credential persistence, or membership changes. The prior limited
 plan is superseded. Adopt the [common environment layout](24-environments-and-promotion.md#terraform-layout-for-each-environment)
 without migrating the existing development state key.
 
-An inactive replacement client remains a candidate when provider import would expose the original
-client credentials. Qualify the replacement with the locked provider and the complete ownership
-plan. Activation, private runtime credential handoff, and retirement remain independently
-reviewed steps. Follow the [development runbook](../how-to/laptop-oci-development.md#development-infrastructure-through-github-actions).
+The development replacement is created in Terraform to avoid importing the original confidential
+client. OCI requires an active App for its group grant. Activate the already-managed inactive
+replacement through a reviewed in-place change, then verify the exact group-to-app assignment.
+Fresh active creates need separate qualification. Keep the original client and runtime
+configuration serving 8445. Private runtime credential handoff, cutover and retirement remain
+separately reviewed steps. Follow the [development runbook](../how-to/laptop-oci-development.md#development-atlas-browser-client-activation).
 
 ## Terraform ownership for signing keys
 

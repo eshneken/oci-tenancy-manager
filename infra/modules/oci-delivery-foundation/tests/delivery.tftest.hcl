@@ -2,12 +2,46 @@
 mock_provider "oci" {
   override_during = plan
 
+  mock_data "oci_identity_domains_app_roles" {
+    defaults = {
+      total_results = 1
+      app_roles = [{
+        id           = "cccccccccccccccccccccccccccccccc"
+        display_name = "Application Administrator"
+        admin_role   = true
+        app          = [{ value = "IDCSAppId" }]
+      }]
+    }
+  }
+
+  mock_data "oci_identity_domains_grant" {
+    defaults = {
+      id              = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      schemas         = ["urn:ietf:params:scim:schemas:oracle:idcs:Grant"]
+      grant_mechanism = "ADMINISTRATOR_TO_DYNAMIC_RESOURCE_GROUP"
+      app             = [{ value = "IDCSAppId" }]
+      grantee         = [{ type = "DynamicResourceGroup", value = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }]
+      entitlement     = [{ attribute_name = "appRoles", attribute_value = "cccccccccccccccccccccccccccccccc" }]
+    }
+  }
+
+  mock_resource "oci_identity_dynamic_group" {
+    defaults = {
+      id    = "ocid1.dynamicgroup.oc1..synthetic"
+      state = "ACTIVE"
+    }
+  }
+
+  mock_resource "oci_identity_domains_grant" {
+    defaults = { id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" }
+  }
+
   mock_data "oci_identity_domain" {
     defaults = {
       compartment_id = "ocid1.tenancy.oc1..synthetic"
       state          = "ACTIVE"
       display_name   = "Default"
-      url            = "https://idcs-synthetic.identity.oraclecloud.com/"
+      url            = "https://idcs-synthetic.identity.oraclecloud.com:443/"
     }
   }
 
@@ -75,12 +109,26 @@ run "development_binds_exact_workflow_claims" {
 
   assert {
     condition = (
-      length(oci_identity_policy.github_identity.statements) == 2 &&
-      strcontains(oci_identity_policy.github_identity.statements[0], "target.resource.domain.name = 'Default', target.group.name = 'otm-development-users'") &&
-      !strcontains(oci_identity_policy.github_identity.statements[0], "any {target.group.name") &&
-      !strcontains(oci_identity_policy.github_identity.statements[1], "target.group.name")
+      length(oci_identity_policy.github_identity) == 1 &&
+      oci_identity_policy.github_identity[0].name == "otm-github-identity" &&
+      oci_identity_policy.github_identity[0].compartment_id == var.tenancy_ocid &&
+      length(oci_identity_policy.github_identity[0].statements) == 4 &&
+      alltrue([for idx, statement in oci_identity_policy.github_identity[0].statements :
+        strcontains(statement, "request.principal.domain.id = 'ocid1.domain.oc1..synthetic'") &&
+        strcontains(statement, "target.resource.domain.name = 'Default'") &&
+        strcontains(statement, "request.principal.ext_environment = '${idx < 2 ? "development" : "staging"}'") &&
+        strcontains(statement, "request.principal.ext_workflow_ref = 'example/tenancy-manager/.github/workflows/infra-${idx < 2 ? "development" : "staging"}.yml@refs/heads/master'") &&
+        !strcontains(statement, "manage domains") &&
+        !strcontains(statement, "DeleteGroup")
+      ]) &&
+      strcontains(oci_identity_policy.github_identity[0].statements[0], "target.resource.domain.name = 'Default', target.group.name = 'otm-development-users'") &&
+      !strcontains(oci_identity_policy.github_identity[0].statements[0], "otm-staging") &&
+      !strcontains(oci_identity_policy.github_identity[0].statements[1], "target.group.name") &&
+      strcontains(oci_identity_policy.github_identity[0].statements[2], "any {target.group.name = 'otm-staging-users', target.group.name = 'otm-staging-database-provisioners'}") &&
+      !strcontains(oci_identity_policy.github_identity[0].statements[2], "otm-development") &&
+      !strcontains(oci_identity_policy.github_identity[0].statements[3], "target.group.name")
     )
-    error_message = "Use a direct group name for the singleton development rule and keep list access separate."
+    error_message = "One non-production identity policy must bind each workflow to its own native groups and keep domain management disabled."
   }
 
   assert {
@@ -111,6 +159,7 @@ run "staging_owns_exact_storage_only" {
   assert {
     condition = (
       length(oci_identity_domains_setting.signing_keys) == 0 &&
+      length(oci_identity_policy.github_identity) == 0 &&
       length(oci_identity_domains_identity_propagation_trust.github) == 0 &&
       !oci_identity_domains_app.exchange[0].active &&
       oci_identity_domains_app.exchange[0].display_name == "otm-github-staging" &&
@@ -207,6 +256,19 @@ run "production_owns_its_settings" {
       one(oci_identity_domains_identity_propagation_trust.github[0].client_claim_values) == "otm-infrastructure-production" &&
       oci_identity_policy.workflow_platform[0].name == "otm-production-github-platform" &&
       alltrue([for statement in oci_identity_policy.workflow_platform[0].statements : strcontains(statement, "request.principal.ext_environment = 'production'") && strcontains(statement, "in compartment otm-production")]) &&
+      length(oci_identity_policy.github_identity) == 1 &&
+      oci_identity_policy.github_identity[0].name == "otm-github-identity" &&
+      oci_identity_policy.github_identity[0].compartment_id == var.tenancy_ocid &&
+      length(oci_identity_policy.github_identity[0].statements) == 2 &&
+      alltrue([for statement in oci_identity_policy.github_identity[0].statements :
+        strcontains(statement, "request.principal.domain.id = 'ocid1.domain.oc1..syntheticproduction'") &&
+        strcontains(statement, "request.principal.ext_environment = 'production'") &&
+        strcontains(statement, "/infra-production.yml@refs/heads/master") &&
+        !strcontains(statement, "otm-staging") &&
+        !strcontains(statement, "otm-development") &&
+        !strcontains(statement, "manage domains")
+      ]) &&
+      strcontains(oci_identity_policy.github_identity[0].statements[0], "any {target.group.name = 'otm-production-users', target.group.name = 'otm-production-database-provisioners'}") &&
       length(oci_identity_domains_setting.signing_keys) == 1 &&
       oci_identity_domains_setting.signing_keys[0].signing_cert_public_access
     )
@@ -230,7 +292,12 @@ run "reject_non_default_domain" {
 
   override_data {
     target = data.oci_identity_domain.selected
-    values = { display_name = "Unrelated" }
+    values = {
+      compartment_id = "ocid1.tenancy.oc1..synthetic"
+      display_name   = "Unrelated"
+      state          = "ACTIVE"
+      url            = "https://idcs-synthetic.identity.oraclecloud.com"
+    }
   }
 
   expect_failures = [data.oci_identity_domain.selected]
@@ -264,4 +331,371 @@ run "refuse_unqualified_fresh_app" {
   command = plan
   variables { exchange_write_response_qualified = false }
   expect_failures = [var.exchange_write_response_qualified]
+}
+
+run "nonproduction_domain_management_requires_exact_opt_in" {
+  command = plan
+
+  variables {
+    identity_app_management_environments = ["staging"]
+  }
+
+  assert {
+    condition = one([
+      for statement in oci_identity_policy.github_identity[0].statements :
+      statement if strcontains(statement, "manage domains")
+    ]) == "Allow any-user to manage domains in tenancy where all {request.principal.type = 'identityfederateddomainapp', request.principal.domain.id = 'ocid1.domain.oc1..synthetic', request.principal.ext_workflow_ref = 'example/tenancy-manager/.github/workflows/infra-staging.yml@refs/heads/master', request.principal.ext_environment = 'staging', target.domain.name = 'Default', target.domain.id = 'ocid1.domain.oc1..synthetic'}"
+    error_message = "Explicit staging approval must add exactly one domain management statement with the staging workflow and shared domain ID."
+  }
+}
+
+run "production_domain_management_uses_its_own_domain" {
+  command = plan
+
+  variables {
+    environment                          = "production"
+    identity_domain_ocid                 = "ocid1.domain.oc1..syntheticproduction"
+    identity_app_management_environments = ["production"]
+  }
+
+  assert {
+    condition = one([
+      for statement in oci_identity_policy.github_identity[0].statements :
+      statement if strcontains(statement, "manage domains")
+    ]) == "Allow any-user to manage domains in tenancy where all {request.principal.type = 'identityfederateddomainapp', request.principal.domain.id = 'ocid1.domain.oc1..syntheticproduction', request.principal.ext_workflow_ref = 'example/tenancy-manager/.github/workflows/infra-production.yml@refs/heads/master', request.principal.ext_environment = 'production', target.domain.name = 'Default', target.domain.id = 'ocid1.domain.oc1..syntheticproduction'}"
+    error_message = "Explicit production approval must bind only its protected workflow and independent domain."
+  }
+}
+
+run "nonproduction_cannot_grant_production_domain_management" {
+  command = plan
+
+  variables {
+    identity_app_management_environments = ["production"]
+  }
+
+  expect_failures = [var.identity_app_management_environments]
+}
+
+run "production_cannot_grant_staging_domain_management" {
+  command = plan
+
+  variables {
+    environment                          = "production"
+    identity_app_management_environments = ["staging"]
+  }
+
+  expect_failures = [var.identity_app_management_environments]
+}
+
+run "staging_cannot_grant_domain_management" {
+  command = plan
+
+  variables {
+    environment                          = "staging"
+    identity_app_management_environments = ["staging"]
+  }
+
+  expect_failures = [var.identity_app_management_environments]
+}
+
+run "canonicalize_default_https_port" {
+  command = plan
+
+  override_data {
+    target = data.oci_identity_domain.selected
+    values = {
+      compartment_id = "ocid1.tenancy.oc1..synthetic"
+      display_name   = "Default"
+      state          = "ACTIVE"
+      url            = "https://idcs-synthetic.identity.oraclecloud.com:443"
+    }
+  }
+
+  assert {
+    condition     = output.identity_domain_url == "https://idcs-synthetic.identity.oraclecloud.com"
+    error_message = "Normalize OCI's explicit default HTTPS port before handing the URL to the provider and workflow."
+  }
+}
+
+run "reject_nondefault_domain_port" {
+  command = plan
+
+  override_data {
+    target = data.oci_identity_domain.selected
+    values = {
+      compartment_id = "ocid1.tenancy.oc1..synthetic"
+      display_name   = "Default"
+      state          = "ACTIVE"
+      url            = "https://idcs-synthetic.identity.oraclecloud.com:8444/"
+    }
+  }
+
+  expect_failures = [data.oci_identity_domain.selected]
+}
+
+run "development_adoption_adds_exact_native_read" {
+  command = plan
+
+  variables {
+    development_group_adoption_ocid      = "ocid1.group.oc1..syntheticatlas"
+    identity_app_management_environments = ["development", "staging"]
+  }
+
+  assert {
+    condition = (
+      length(oci_identity_policy.github_identity[0].statements) == 6 &&
+      oci_identity_policy.github_identity[0].statements[1] ==
+      "Allow any-user to inspect groups in tenancy where all {request.principal.type = 'identityfederateddomainapp', request.principal.domain.id = 'ocid1.domain.oc1..synthetic', request.principal.ext_workflow_ref = 'example/tenancy-manager/.github/workflows/infra-development.yml@refs/heads/master', request.principal.ext_environment = 'development', any {all {target.resource.domain.name = 'Default', request.operation = 'ListGroups'}, all {target.group.name = 'otm-development-users', target.group.id = 'ocid1.group.oc1..syntheticatlas', request.operation = 'GetGroup'}}}" &&
+      alltrue([for idx, statement in oci_identity_policy.github_identity[0].statements :
+        !strcontains(statement, "syntheticatlas") if idx != 1
+      ])
+    )
+    error_message = "Successful adoption read must use one exact native name and OCID inside the existing development inspect statement."
+  }
+}
+
+run "hosted_policy_cannot_use_development_adoption_pin" {
+  command = plan
+
+  variables {
+    environment                     = "production"
+    development_group_adoption_ocid = "ocid1.group.oc1..syntheticatlas"
+  }
+
+  expect_failures = [var.development_group_adoption_ocid]
+}
+
+run "verified_dynamic_group_changes_development_subject_only" {
+  command = plan
+
+  variables {
+    development_workflow_dynamic_group = {
+      principal_ocid = "ocid1.identityfederateddomainapp.oc1..synthetic"
+      existing = {
+        group_id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        grant_id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    }
+    development_group_adoption_ocid      = "ocid1.group.oc1..syntheticatlas"
+    identity_app_management_environments = ["development", "staging"]
+    storage_policy = {
+      compartment_ocid = "ocid1.compartment.oc1..syntheticdevelopment"
+      bucket_name      = "otm-development-tfstate"
+      state_key        = "custody/development/terraform.tfstate"
+    }
+  }
+
+  override_data {
+    target = data.oci_identity_domains_dynamic_resource_group.development_workflow[0]
+    values = {
+      id            = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ocid          = "ocid1.dynamicgroup.oc1..synthetic"
+      display_name  = "otm-development-github-identity"
+      domain_ocid   = "ocid1.domain.oc1..synthetic"
+      tenancy_ocid  = "ocid1.tenancy.oc1..synthetic"
+      matching_rule = "resource.id = 'ocid1.identityfederateddomainapp.oc1..synthetic'"
+    }
+  }
+
+  assert {
+    condition = (
+      length(oci_identity_policy.github_identity[0].statements) == 6 &&
+      alltrue([for idx, statement in oci_identity_policy.github_identity[0].statements :
+        contains([0, 1, 4], idx) ? (
+          startswith(statement, "Allow dynamic-group Default/otm-development-github-identity to ") &&
+          !strcontains(statement, "request.principal.domain.id") &&
+          strcontains(statement, "request.principal.type = 'identityfederateddomainapp'") &&
+          strcontains(statement, "request.principal.ext_workflow_ref = 'example/tenancy-manager/.github/workflows/infra-development.yml@refs/heads/master'") &&
+          strcontains(statement, "request.principal.ext_environment = 'development'")
+          ) : (
+          startswith(statement, "Allow any-user to ") &&
+          strcontains(statement, "request.principal.domain.id = 'ocid1.domain.oc1..synthetic'") &&
+          strcontains(statement, "request.principal.ext_environment = 'staging'")
+        )
+      ]) &&
+      strcontains(oci_identity_policy.github_identity[0].statements[1], "target.group.name = 'otm-development-users', target.group.id = 'ocid1.group.oc1..syntheticatlas', request.operation = 'GetGroup'") &&
+      strcontains(oci_identity_policy.github_identity[0].statements[4], "target.domain.name = 'Default', target.domain.id = 'ocid1.domain.oc1..synthetic'") &&
+      length(oci_identity_policy.workflow_platform) == 0 &&
+      length(oci_identity_policy.workflow_storage[0].statements) == 8 &&
+      alltrue([for statement in oci_identity_policy.workflow_storage[0].statements :
+        startswith(statement, "Allow dynamic-group Default/otm-development-github-identity to ") &&
+        !strcontains(statement, "request.principal.domain.id") &&
+        strcontains(statement, "request.principal.type = 'identityfederateddomainapp'") &&
+        strcontains(statement, "request.principal.ext_workflow_ref = 'example/tenancy-manager/.github/workflows/infra-development.yml@refs/heads/master'") &&
+        strcontains(statement, "request.principal.ext_environment = 'development'") &&
+        strcontains(statement, "target.bucket.name = 'otm-development-tfstate'")
+      ])
+    )
+    error_message = "The qualified group changes only the development principal. The workflow claims and exact target pins must stay in place."
+  }
+}
+
+run "reject_broader_development_workflow_group" {
+  command = plan
+
+  variables {
+    development_workflow_dynamic_group = {
+      principal_ocid = "ocid1.identityfederateddomainapp.oc1..synthetic"
+      existing = {
+        group_id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        grant_id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    }
+  }
+
+  override_data {
+    target = data.oci_identity_domains_dynamic_resource_group.development_workflow[0]
+    values = {
+      id            = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ocid          = "ocid1.dynamicgroup.oc1..synthetic"
+      display_name  = "otm-development-github-identity"
+      domain_ocid   = "ocid1.domain.oc1..synthetic"
+      tenancy_ocid  = "ocid1.tenancy.oc1..synthetic"
+      matching_rule = "ANY {resource.id = 'ocid1.identityfederateddomainapp.oc1..synthetic', resource.type = 'instance'}"
+    }
+  }
+
+  expect_failures = [data.oci_identity_domains_dynamic_resource_group.development_workflow]
+}
+
+run "reject_development_workflow_group_from_another_domain" {
+  command = plan
+
+  variables {
+    development_workflow_dynamic_group = {
+      principal_ocid = "ocid1.identityfederateddomainapp.oc1..synthetic"
+      existing = {
+        group_id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        grant_id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    }
+  }
+
+  override_data {
+    target = data.oci_identity_domains_dynamic_resource_group.development_workflow[0]
+    values = {
+      id            = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ocid          = "ocid1.dynamicgroup.oc1..synthetic"
+      display_name  = "otm-development-github-identity"
+      domain_ocid   = "ocid1.domain.oc1..syntheticforeign"
+      tenancy_ocid  = "ocid1.tenancy.oc1..synthetic"
+      matching_rule = "resource.id = 'ocid1.identityfederateddomainapp.oc1..synthetic'"
+    }
+  }
+
+  expect_failures = [data.oci_identity_domains_dynamic_resource_group.development_workflow]
+}
+
+run "reject_development_workflow_group_response_guid_mismatch" {
+  command = plan
+
+  variables {
+    development_workflow_dynamic_group = {
+      principal_ocid = "ocid1.identityfederateddomainapp.oc1..synthetic"
+      existing = {
+        group_id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        grant_id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    }
+  }
+
+  override_data {
+    target = data.oci_identity_domains_dynamic_resource_group.development_workflow[0]
+    values = {
+      id            = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ocid          = "ocid1.dynamicgroup.oc1..synthetic"
+      display_name  = "otm-development-github-identity"
+      domain_ocid   = "ocid1.domain.oc1..synthetic"
+      tenancy_ocid  = "ocid1.tenancy.oc1..synthetic"
+      matching_rule = "resource.id = 'ocid1.identityfederateddomainapp.oc1..synthetic'"
+    }
+  }
+
+  expect_failures = [data.oci_identity_domains_dynamic_resource_group.development_workflow]
+}
+
+run "hosted_policy_cannot_use_development_dynamic_group" {
+  command = plan
+
+  variables {
+    environment = "production"
+    development_workflow_dynamic_group = {
+      principal_ocid = "ocid1.identityfederateddomainapp.oc1..synthetic"
+      existing = {
+        group_id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        grant_id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    }
+  }
+
+  expect_failures = [var.development_workflow_dynamic_group]
+}
+
+run "omitted_adoption_is_not_fresh_creation_approval" {
+  command = plan
+
+  variables {
+    development_workflow_dynamic_group = {
+      principal_ocid = "ocid1.identityfederateddomainapp.oc1..synthetic"
+    }
+  }
+
+  expect_failures = [var.development_workflow_dynamic_group]
+}
+
+run "reject_unverified_application_administrator_role" {
+  command = plan
+
+  variables {
+    development_workflow_dynamic_group = {
+      principal_ocid = "ocid1.identityfederateddomainapp.oc1..synthetic"
+      create_fresh   = true
+    }
+  }
+
+  override_data {
+    target = data.oci_identity_domains_app_roles.application_administrator[0]
+    values = {
+      total_results = 2
+      app_roles     = []
+    }
+  }
+
+  expect_failures = [data.oci_identity_domains_app_roles.application_administrator]
+}
+
+run "reject_adoption_grant_for_a_different_group" {
+  command = plan
+
+  variables {
+    development_workflow_dynamic_group = {
+      principal_ocid = "ocid1.identityfederateddomainapp.oc1..synthetic"
+      existing = {
+        group_id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        grant_id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    }
+  }
+
+  override_data {
+    target = data.oci_identity_domains_dynamic_resource_group.development_workflow[0]
+    values = {
+      id            = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ocid          = "ocid1.dynamicgroup.oc1..synthetic"
+      display_name  = "otm-development-github-identity"
+      domain_ocid   = "ocid1.domain.oc1..synthetic"
+      tenancy_ocid  = "ocid1.tenancy.oc1..synthetic"
+      matching_rule = "resource.id = 'ocid1.identityfederateddomainapp.oc1..synthetic'"
+    }
+  }
+
+  override_data {
+    target = data.oci_identity_domains_grant.development_application_administrator[0]
+    values = {
+      grantee = [{ type = "DynamicResourceGroup", value = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" }]
+    }
+  }
+
+  expect_failures = [data.oci_identity_domains_grant.development_application_administrator]
 }
