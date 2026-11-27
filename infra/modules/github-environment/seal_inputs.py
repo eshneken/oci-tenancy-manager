@@ -156,6 +156,27 @@ def development_exchange_metadata(query):
     return {"id": app["id"], "name": app["name"]}
 
 
+# Export only the optional native group OCID from the protected development settings.
+def development_group_adoption_pin(query):
+    settings = read_settings(query["settings_file"])
+    if (
+        not isinstance(settings, dict)
+        or settings.keys() != {"inputs"}
+        or not isinstance(settings["inputs"], dict)
+        or not isinstance(settings["inputs"].get("atlas_sso"), dict)
+    ):
+        raise ValueError("PRIVATE_CONFIGURATION_REQUIRED")
+    atlas_sso = settings["inputs"]["atlas_sso"]
+    if "adopt_group_ocid" not in atlas_sso:
+        return {"ocid": ""}
+    group_ocid = atlas_sso["adopt_group_ocid"]
+    if not isinstance(group_ocid, str) or not re.fullmatch(
+        r"ocid1\.group\.oc1\.\.[a-z0-9]{1,220}", group_ocid
+    ):
+        raise ValueError("EXACT_ADOPTION_GROUP_REQUIRED")
+    return {"ocid": group_ocid}
+
+
 # Only the sealing path requests a credential and checks the expected OAuth client identifier.
 def exchange_secret(query):
     app = verified_exchange(query, "clientSecret")
@@ -224,6 +245,8 @@ def main():
         query = json.loads(sys.stdin.buffer.read(131_073))
         if sys.argv[1:] == ["--development-exchange-metadata"]:
             result = development_exchange_metadata(query)
+        elif sys.argv[1:] == ["--development-group-adoption-pin"]:
+            result = development_group_adoption_pin(query)
         elif not sys.argv[1:]:
             result = seal(query)
         else:

@@ -113,7 +113,9 @@ The JSON `target` has exactly `environment`, `tenancy_ocid`,
 `object_storage_namespace` and `region`. The workflow currently accepts `us-ashburn-1`.
 `atlas_sso.corporate_idp_id` is the verified 32-character lowercase hexadecimal SCIM GUID.
 Development also accepts an optional native group OCID in `atlas_sso.adopt_group_ocid` for
-adoption of the exact existing group. Hosted stages require `atlas_sso.callback_url` with an
+adoption of the exact existing group. The [bootstrap adoption read](../how-to/terraform-state-bootstrap.md#domain-owned-github-identity-policy)
+uses the same protected value after the operator verifies native group metadata.
+Hosted stages require `atlas_sso.callback_url` with an
 exact HTTPS DNS origin plus `/api/auth/sso/callback`, without query, fragment or port.
 
 Hosted JSON also accepts `vcn_cidr`, `oke`, `database_administrator`, `database`,
@@ -232,7 +234,11 @@ The apply consumer rejects any managed OCI App change beyond read or no-op befor
 the saved plan. A live local operator test with released OCI provider 9.13.0 verified creation,
 description update and a no-change refresh for an inactive Atlas browser client. The projected
 responses and inspected plan/state contained no client secret or secret hash. GitHub's effective
-SCIM permissions and the deployment of the assigned client still require qualification. The
+SCIM write permissions and the deployment of the assigned client still require qualification.
+A protected development adoption plan verified the existing native group with exact name and
+OCID conditions and proposed ten creates and one no-op import, with no updates or deletes.
+Vault and key were unchanged. This did not exercise a fresh group's first read or apply.
+The
 domain-owner [application management opt-in](../how-to/terraform-state-bootstrap.md#domain-owned-github-identity-policy)
 is empty by default. Oracle documents `manage domains` for group members. Its effective scope
 and authorization for the exchanged workflow principal remain unproven. Hosted workflow IAM also

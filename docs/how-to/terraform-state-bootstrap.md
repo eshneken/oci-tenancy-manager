@@ -66,8 +66,9 @@ workflow and environment claims. Oracle documents `request.domain.name` as a gen
 principal variable, but its equivalence for this token exchange is unqualified. Before adopting
 the name for a new grant, test an authorized read-only plan and confirm denial for principals
 outside the exact domain, workflow, and environment. Keep the separate
-`target.resource.domain.name = 'Default'` condition on native group operations. A group name
-can scope get, create, and update. A group list request has no target group name.
+`target.resource.domain.name = 'Default'` condition on the native group create/update and
+list grants. The existing development adoption read uses the separate exact point-read
+condition below. A group list request has no target group name.
 [OCI general variables](https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/policyreference_topic-General_Variables_for_All_Requests.htm) ·
 [OCI IAM policy variables and permissions](https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/iampolicyreference.htm)
 
@@ -80,15 +81,25 @@ Production bootstrap owns a separate policy with the same name in the production
 Environment compartment policies continue to own the respective state and infrastructure access.
 
 Each statement binds the federated principal to the verified domain OCID, exact protected
-workflow and matching environment claim. The development workflow can create, read and
-update only `Default/otm-development-users`. Each hosted workflow can do so for its own
+workflow and matching environment claim. The development workflow's create and update
+grants target only `Default/otm-development-users`. Each hosted workflow's native grants target its own
 `otm-<environment>-users` and `otm-<environment>-database-provisioners` native groups in
 the Default domain. Each workflow has a separate Default-domain `ListGroups` statement
 because that operation has no target group name. Staging's statements preserve its exact
 workflow/group pairing and do not lift the federation and dispatch holds.
 
-The workflow's native group policy does not establish authorization for the SCIM group lookup,
-App, Grant, Condition, Rule, or sign-on and identity-provider Policy calls in the environment graph.
+For development adoption, the `inspect groups` statement also allows `GetGroup` when both
+`target.group.name` and `target.group.id` match the exact existing group. The bootstrap uses
+the same `atlas_sso.adopt_group_ocid` in the operator's protected settings as the workflow.
+Verify the native group metadata against the approved binding. Member information is outside
+that check. Variants requiring the target domain name or target domain OCID with the group
+name did not authorize the point read with this workflow principal. The adopted group
+condition preserves the original principal-domain, workflow and environment claims, leaves
+create/update and staging grants as before, and requires no additional policy statement.
+
+This is evidence for a point read of the existing group. A fresh group's first read without
+an operator-verified OCID and the workflow's SCIM writes for App, Grant, Condition, Rule and
+Policy remain unqualified. Keep apply held.
 
 The domain-owner bootstrap's `identity_app_management_environments` opt-in defaults to an empty
 set. It adds a `manage domains` grant for each selected workflow using the same domain OCID,

@@ -158,9 +158,9 @@ Development bootstrap owns the shared non-production
 [`otm-github-identity` policy](../docs/how-to/terraform-state-bootstrap.md#domain-owned-github-identity-policy);
 its development and staging statements keep separate workflow and group bindings.
 The environment root owns the Vault and key and declares the SSO group, client, app grant,
-policies and rules. A [read-only native group adoption plan](../docs/how-to/laptop-oci-development.md#development-group-adoption-proof)
-verified the group binding and no changes to Vault/key. Live GitHub authorization, bootstrap
-adoption and the exact protected workflow apply remain separate checks.
+policies and rules. A [protected native group adoption plan](../docs/how-to/laptop-oci-development.md#development-group-adoption-proof)
+verified the existing group's exact-name and native-OCID read and no changes to Vault/key.
+Fresh-group reads and SCIM writes remain unqualified. Apply stays held.
 
 ## Hosted workload Vault reads
 

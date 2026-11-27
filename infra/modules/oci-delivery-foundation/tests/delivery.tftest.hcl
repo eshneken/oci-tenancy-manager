@@ -399,3 +399,35 @@ run "reject_nondefault_domain_port" {
 
   expect_failures = [data.oci_identity_domain.selected]
 }
+
+run "development_adoption_adds_exact_native_read" {
+  command = plan
+
+  variables {
+    development_group_adoption_ocid      = "ocid1.group.oc1..syntheticatlas"
+    identity_app_management_environments = ["development", "staging"]
+  }
+
+  assert {
+    condition = (
+      length(oci_identity_policy.github_identity[0].statements) == 6 &&
+      oci_identity_policy.github_identity[0].statements[1] ==
+      "Allow any-user to inspect groups in tenancy where all {request.principal.type = 'identityfederateddomainapp', request.principal.domain.id = 'ocid1.domain.oc1..synthetic', request.principal.ext_workflow_ref = 'example/tenancy-manager/.github/workflows/infra-development.yml@refs/heads/master', request.principal.ext_environment = 'development', any {all {target.resource.domain.name = 'Default', request.operation = 'ListGroups'}, all {target.group.name = 'otm-development-users', target.group.id = 'ocid1.group.oc1..syntheticatlas', request.operation = 'GetGroup'}}}" &&
+      alltrue([for idx, statement in oci_identity_policy.github_identity[0].statements :
+        !strcontains(statement, "syntheticatlas") if idx != 1
+      ])
+    )
+    error_message = "Successful adoption read must use one exact native name and OCID inside the existing development inspect statement."
+  }
+}
+
+run "hosted_policy_cannot_use_development_adoption_pin" {
+  command = plan
+
+  variables {
+    environment                     = "production"
+    development_group_adoption_ocid = "ocid1.group.oc1..syntheticatlas"
+  }
+
+  expect_failures = [var.development_group_adoption_ocid]
+}

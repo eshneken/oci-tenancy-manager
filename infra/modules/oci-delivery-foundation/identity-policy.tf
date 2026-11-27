@@ -11,6 +11,21 @@ variable "identity_app_management_environments" {
   }
 }
 
+# Only existing development adoption adds a native group-OCID read.
+variable "development_group_adoption_ocid" {
+  description = "Operator-verified native OCID of the adopted development Atlas group."
+  type        = string
+  default     = null
+
+  validation {
+    condition = var.development_group_adoption_ocid == null ? true : (
+      var.environment == "development" &&
+      can(regex("^ocid1[.]group[.]oc1[.][.][a-z0-9]{1,220}$", var.development_group_adoption_ocid))
+    )
+    error_message = "The native group read pin is only for an existing development group adoption."
+  }
+}
+
 locals {
   workflow_refs = {
     for environment in ["development", "staging", "production"] :
@@ -37,6 +52,16 @@ locals {
       "any {target.group.name = 'otm-${environment}-users', target.group.name = 'otm-${environment}-database-provisioners'}"
     )
   }
+
+  group_list_condition = "target.resource.domain.name = 'Default', request.operation = 'ListGroups'"
+  group_inspect_targets = {
+    for environment in local.identity_policy_environments :
+    environment => (
+      environment == "development" && var.development_group_adoption_ocid != null ?
+      "any {all {${local.group_list_condition}}, all {target.group.name = 'otm-development-users', target.group.id = '${var.development_group_adoption_ocid}', request.operation = 'GetGroup'}}" :
+      local.group_list_condition
+    )
+  }
 }
 
 # The domain owner's bootstrap attaches the sole native identity policy to the tenancy root.
@@ -50,7 +75,7 @@ resource "oci_identity_policy" "github_identity" {
     flatten([
       for environment in local.identity_policy_environments : [
         "Allow any-user to manage groups in tenancy where all {${local.workflow_subjects[environment]}, target.resource.domain.name = 'Default', ${local.group_targets[environment]}, any {request.operation = 'CreateGroup', request.operation = 'GetGroup', request.operation = 'UpdateGroup'}}",
-        "Allow any-user to inspect groups in tenancy where all {${local.workflow_subjects[environment]}, target.resource.domain.name = 'Default', request.operation = 'ListGroups'}",
+        "Allow any-user to inspect groups in tenancy where all {${local.workflow_subjects[environment]}, ${local.group_inspect_targets[environment]}}",
       ]
     ]),
     [

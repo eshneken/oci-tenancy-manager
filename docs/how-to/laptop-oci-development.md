@@ -214,11 +214,12 @@ recovery. Development creates no hosted network, compute, database, or child ten
 
 ## Development group adoption proof
 
-An authorized read-only development plan returned **10 creates, one no-op native group import,
+An authorized protected development plan returned **10 creates, one no-op native group import,
 zero updates and zero deletes**. The application Vault and software key had no changes. The
-group import used the exact existing native group OCID. It proposed no membership mutation.
-The plan established that the existing group can be adopted at its intended address with those
-reviewed inputs. It made no state or resource changes.
+successful `GetGroup` condition matched the exact group name and operator-verified native OCID
+inside the existing `inspect groups` statement. Pairing the name with either the target domain
+name or the target domain OCID did not authorize that point read. The plan proposed no
+membership mutation and did not apply the import or any OCI resource change.
 
 The read-only check also verified the effective assignment GUID against the projected directory
 group and found no existing rules, conditions or policies using the proposed names. A separate
@@ -238,10 +239,10 @@ insufficient evidence of drift. Keep the pilot policies in place during the cuto
 The compartment policy `otm-development-github-infrastructure` covers the Vault, key, state
 and reviewed plan objects. Development bootstrap owns the shared non-production
 [tenancy-root identity policy](terraform-state-bootstrap.md#domain-owned-github-identity-policy)
-`otm-github-identity`. Its development statement binds that workflow to
-`Default/otm-development-users`. Its staging statements use staging's own workflow and group
-names. Staging trust activation and dispatch remain held. Native group authority supplies no
-Identity Domains AppRole qualification for SCIM reads or writes.
+`otm-github-identity`. Use the same protected `atlas_sso.adopt_group_ocid` for the operator
+metadata check and workflow import. The read qualification left create/update and staging grants
+unchanged. Staging trust activation and dispatch remain held. Fresh-group read before the
+operator can pin its OCID and SCIM writes remain unqualified. Keep apply held.
 
 The 26 November independent security and adversarial reviews covered the three environment roots,
 the operator bootstrap, the protected workflow, and OCI provider 9.13.0. Development references
