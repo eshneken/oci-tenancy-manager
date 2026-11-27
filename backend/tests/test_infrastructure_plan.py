@@ -598,6 +598,13 @@ def test_prepare_full_plan(monkeypatch, environment, component, fault):
         module, "request_json", Mock(side_effect=[{"value": "synthetic-jwt"}, {"token": rpst()}])
     )
     monkeypatch.setattr(module, "signing_pair", lambda: (b"private-synthetic", b"public-synthetic"))
+    probe = Mock(return_value={"native_get_group": 404})
+    monkeypatch.setattr(module, "group_read_checks", probe)
+    group = "ocid1.group.oc1..synthetic"
+    if environment == "development":
+        protected = json.loads(values["OTM_INFRASTRUCTURE_INPUTS_JSON"])
+        protected["atlas_sso"]["adopt_group_ocid"] = group
+        values["OTM_INFRASTRUCTURE_INPUTS_JSON"] = json.dumps(protected)
     calls, directories = [], []
     bucket_preflight = Mock()
     monkeypatch.setattr(module, "plan_storage", bucket_preflight)
@@ -623,7 +630,7 @@ def test_prepare_full_plan(monkeypatch, environment, component, fault):
             ).encode()
         if arguments[0] == "plan":
             if fault == "plan":
-                raise RuntimeError("private provider failure")
+                raise ValueError("TERRAFORM_PLAN_COMMAND_FAILED")
             (directory / "plan.tfplan").write_bytes(b"synthetic-plan")
         if arguments[0] == "show":
             return b'{"resource_changes":[{"change":{"actions":["create"]}}]}'
@@ -662,6 +669,7 @@ def test_prepare_full_plan(monkeypatch, environment, component, fault):
         assert os.umask(0o027) == 0o027
     finally:
         os.umask(old_mask)
+    assert probe.call_count == int(fault == "plan" and environment == "development")
     assert directories and not any(path.exists() for path in directories)
 
 
@@ -962,3 +970,42 @@ def test_protected_development_group_adoption(value, valid):
     else:
         with pytest.raises(ValueError, match="ATLAS_SSO_REFERENCES_REQUIRED"):
             module.context("development", "infrastructure", values)
+
+
+# Verify that OCI comparisons emit only bounded results and cannot read member details or write.
+def test_group_read_checks(monkeypatch):
+    iam, scim = Mock(), Mock()
+    monkeypatch.setattr(module.oci.identity, "IdentityClient", Mock(return_value=iam))
+    monkeypatch.setattr(
+        module.oci.identity_domains, "IdentityDomainsClient", Mock(return_value=scim)
+    )
+    monkeypatch.setattr(module.oci.auth.signers, "EphemeralResourcePrincipalSigner", Mock())
+    group = "ocid1.group.oc1..synthetic"
+    name = "otm-development-users"
+    credentials = {
+        "OCI_RESOURCE_PRINCIPAL_RPST": "token",
+        "OCI_RESOURCE_PRINCIPAL_PRIVATE_PEM": "key",
+    }
+    target = {"region": "us-ashburn-1", "tenancy_ocid": TENANCY}
+    domain = "https://idcs-synthetic.identity.oraclecloud.com"
+    iam.get_group.side_effect = module.oci.exceptions.ServiceError(
+        404, "NotFound", {}, "private error"
+    )
+    iam.list_groups.return_value.has_next_page = False
+    iam.list_groups.return_value.data = [SimpleNamespace(id=group, name=name)]
+    scim.list_groups.return_value.data = SimpleNamespace(
+        total_results=1, resources=[SimpleNamespace(ocid=group, display_name=name)]
+    )
+    assert module.group_read_checks(credentials, target, domain, group) == {
+        "native_get_group": 404,
+        "native_list_groups": "matched",
+        "domain_list_groups": "matched",
+    }
+    iam.list_groups.assert_called_once_with(TENANCY, name=name, limit=2)
+    scim.list_groups.assert_called_once_with(
+        filter=f'ocid eq "{group}"', attributes="id,ocid,displayName", count=2
+    )
+    iam.list_groups.side_effect = TimeoutError("private endpoint")
+    scim.list_groups.return_value.data.resources = []
+    checks = module.group_read_checks(credentials, target, domain, group)
+    assert checks["native_list_groups"] == "error" and checks["domain_list_groups"] == "mismatch"

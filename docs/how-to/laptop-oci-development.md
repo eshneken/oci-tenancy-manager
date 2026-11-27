@@ -214,11 +214,12 @@ recovery. Development creates no hosted network, compute, database, or child ten
 
 ## Development group adoption proof
 
-An authorized read-only development plan returned **10 creates, one no-op native group import,
+An authorized protected development plan returned **10 creates, one no-op native group import,
 zero updates and zero deletes**. The application Vault and software key had no changes. The
-group import used the exact existing native group OCID. It proposed no membership mutation.
-The plan established that the existing group can be adopted at its intended address with those
-reviewed inputs. It made no state or resource changes.
+successful `GetGroup` condition matched the exact group name and operator-verified native OCID
+inside the existing `inspect groups` statement. Pairing the name with either the target domain
+name or the target domain OCID did not authorize that point read. The plan proposed no
+membership mutation and did not apply the import or any OCI resource change.
 
 The read-only check also verified the effective assignment GUID against the projected directory
 group and found no existing rules, conditions or policies using the proposed names. A separate
@@ -236,15 +237,12 @@ though a projected OCI read returned them. An apparent policy update in such an 
 insufficient evidence of drift. Keep the pilot policies in place during the cutover.
 
 The compartment policy `otm-development-github-infrastructure` covers the Vault, key, state
-and reviewed plan objects. The proposed tenancy-root policy `otm-development-github-identity`
-restricts native group creation, retrieval and update to `Default/otm-development-users`.
-Its separate group-list permission applies to the Default domain because OCI does not expose
-a target group name on list requests. All statements bind the GitHub principal to its domain,
-protected workflow and development environment. This policy has no SCIM App, Grant, Condition,
-Rule or Policy authority. Qualify those operations before running the infrastructure apply.
-Oracle's documented administrative roles can affect other applications in the shared domain.
-Review that scope separately. See [Oracle IAM policy variables](https://docs.oracle.com/en-us/iaas/Content/Identity/policyreference/iampolicyreference.htm)
-and [Identity Domains AppRole permissions](https://docs.oracle.com/en-us/iaas/Content/Identity/api-getstarted/RequiredRolePerEndpointExt.htm).
+and reviewed plan objects. Development bootstrap owns the shared non-production
+[tenancy-root identity policy](terraform-state-bootstrap.md#domain-owned-github-identity-policy)
+`otm-github-identity`. Use the same protected `atlas_sso.adopt_group_ocid` for the operator
+metadata check and workflow import. The read qualification left create/update and staging grants
+unchanged. Staging trust activation and dispatch remain held. Fresh-group read before the
+operator can pin its OCID and SCIM writes remain unqualified. Keep apply held.
 
 The 26 November independent security and adversarial reviews covered the three environment roots,
 the operator bootstrap, the protected workflow, and OCI provider 9.13.0. Development references

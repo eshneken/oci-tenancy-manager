@@ -30,13 +30,23 @@ variable "github_delivery" {
   }
 }
 
+# Optional domain-wide App administration. Set only for independently approved workflow environments.
+variable "identity_app_management_environments" {
+  description = "Protected environments authorized to manage their shared identity domain for application provisioning."
+  type        = set(string)
+  default     = []
+  nullable    = false
+}
+
 module "delivery" {
-  source                            = "../../../modules/oci-delivery-foundation"
-  environment                       = "development"
-  tenancy_ocid                      = var.target.tenancy_ocid
-  identity_domain_ocid              = var.github_identity_domain_ocid
-  trust_active                      = var.github_delivery.trust_active
-  exchange_write_response_qualified = var.github_delivery.exchange_write_response_qualified
+  source                               = "../../../modules/oci-delivery-foundation"
+  environment                          = "development"
+  tenancy_ocid                         = var.target.tenancy_ocid
+  development_group_adoption_ocid      = one(data.oci_identity_group.group_adoption[*].id)
+  identity_app_management_environments = var.identity_app_management_environments
+  identity_domain_ocid                 = var.github_identity_domain_ocid
+  trust_active                         = var.github_delivery.trust_active
+  exchange_write_response_qualified    = var.github_delivery.exchange_write_response_qualified
 
   existing_exchange = var.github_delivery.existing_exchange_app_id == null ? null : {
     id   = var.github_delivery.existing_exchange_app_id
@@ -98,5 +108,31 @@ data "external" "exchange_metadata" {
     app_id      = var.github_delivery.existing_exchange_app_id
     oci_profile = var.oci_profile
     oci_auth    = "APIKey"
+  }
+}
+
+
+# Keep the policy and workflow adoption pins aligned through the same owner-only settings file.
+data "external" "group_adoption_pin" {
+  program = ["uv", "run", "--locked", "--project", "${path.module}/../../../modules/github-environment", "python", "-I",
+  "${path.module}/../../../modules/github-environment/seal_inputs.py", "--development-group-adoption-pin"]
+  query = { settings_file = var.github_environment.settings_file }
+}
+
+# The native IAM read resolves one Default-domain group without returning membership.
+data "oci_identity_group" "group_adoption" {
+  count    = data.external.group_adoption_pin.result["ocid"] == "" ? 0 : 1
+  group_id = data.external.group_adoption_pin.result["ocid"]
+
+  lifecycle {
+    postcondition {
+      condition = (
+        self.id == data.external.group_adoption_pin.result["ocid"] &&
+        self.name == "otm-development-users" &&
+        self.compartment_id == var.target.tenancy_ocid &&
+        self.state == "ACTIVE"
+      )
+      error_message = "Expected the active native development Atlas group in the selected tenancy."
+    }
   }
 }

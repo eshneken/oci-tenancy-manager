@@ -113,7 +113,9 @@ The JSON `target` has exactly `environment`, `tenancy_ocid`,
 `object_storage_namespace` and `region`. The workflow currently accepts `us-ashburn-1`.
 `atlas_sso.corporate_idp_id` is the verified 32-character lowercase hexadecimal SCIM GUID.
 Development also accepts an optional native group OCID in `atlas_sso.adopt_group_ocid` for
-adoption of the exact existing group. Hosted stages require `atlas_sso.callback_url` with an
+adoption of the exact existing group. The [bootstrap adoption read](../how-to/terraform-state-bootstrap.md#domain-owned-github-identity-policy)
+uses the same protected value after the operator verifies native group metadata.
+Hosted stages require `atlas_sso.callback_url` with an
 exact HTTPS DNS origin plus `/api/auth/sso/callback`, without query, fragment or port.
 
 Hosted JSON also accepts `vcn_cidr`, `oke`, `database_administrator`, `database`,
@@ -128,6 +130,8 @@ uses synthetic HCL rather than JSON. Production still requires qualified staging
 All inputs, keys, tokens, raw Terraform output and the binary plan use a private temporary directory.
 Normal success/failure cleans it and restores the process umask. Hard runner loss/cancellation is
 also a hosted-runner custody qualification item; this is not secure erasure or indefinite token renewal.
+During development group adoption, a failed Terraform plan also checks native group get, exact-name list, and the Identity Domains metadata lookup with the same workflow principal. Each check reports only a match result or bounded error status. The plan remains failed and no plan is published.
+
 No public log contains the full Terraform plan or provider diagnostics. The workflow uploads no
 GitHub artifacts, database data, source feed, private configuration or state.
 
@@ -230,14 +234,25 @@ The apply consumer rejects any managed OCI App change beyond read or no-op befor
 the saved plan. A live local operator test with released OCI provider 9.13.0 verified creation,
 description update and a no-change refresh for an inactive Atlas browser client. The projected
 responses and inspected plan/state contained no client secret or secret hash. GitHub's effective
-SCIM permissions and the deployment of the assigned client still require qualification. Native group IAM alone does not establish authority for SCIM applications,
-grants or sign-in policies. Hosted workflow IAM also needs approval for the three runtime
+SCIM write permissions and the deployment of the assigned client still require qualification.
+A protected development adoption plan verified the existing native group with exact name and
+OCID conditions and proposed ten creates and one no-op import, with no updates or deletes.
+Vault and key were unchanged. This did not exercise a fresh group's first read or apply.
+The
+domain-owner [application management opt-in](../how-to/terraform-state-bootstrap.md#domain-owned-github-identity-policy)
+is empty by default. Oracle documents `manage domains` for group members. Its effective scope
+and authorization for the exchanged workflow principal remain unproven. Hosted workflow IAM also
+needs approval for the three runtime
 reader policies. OCI cannot restrict the contents of a policy by its resource name.
 
 Development owns the GitHub issuer trust in the shared non-production domain. Staging
 declares no duplicate trust and requires its trust activation, plan and apply switches
 to remain false until client-bound federation is qualified. Production uses a separate
-domain. See the [exchange rollout gates](../how-to/terraform-state-bootstrap.md#github-exchange-client-rollout).
+domain. Development and production bootstrap each own the
+[`otm-github-identity` tenancy-root policy](../how-to/terraform-state-bootstrap.md#domain-owned-github-identity-policy)
+for their domains. The development copy covers development and staging with distinct
+workflow/environment and native group bindings. The policy leaves the staging holds in effect.
+See the [exchange rollout gates](../how-to/terraform-state-bootstrap.md#github-exchange-client-rollout).
 Hosted plan and apply stop for migration if either legacy security or platform state object exists.
 
 ### Single attempt and failed-backend recovery

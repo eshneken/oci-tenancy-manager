@@ -30,7 +30,13 @@ override_resource {
 }
 
 mock_provider "github" {}
-mock_provider "external" {}
+mock_provider "external" {
+  override_during = plan
+
+  mock_data "external" {
+    defaults = { result = { ocid = "" } }
+  }
+}
 override_module {
   target = module.github_environment
 }
@@ -71,6 +77,10 @@ variables {
 }
 run "development_backend_is_separate" {
   command = plan
+  assert {
+    condition     = length(data.oci_identity_group.group_adoption) == 0
+    error_message = "A fresh bootstrap must skip the native adoption lookup."
+  }
   assert {
     condition     = output.state_backend.bucket == "otm-development-tfstate" && output.state_backend.key == "custody/development/terraform.tfstate"
     error_message = "Development uses its own bucket and custody key."
@@ -215,4 +225,53 @@ run "reject_unrelated_compartment_adoption" {
     values          = { name = "unrelated", state = "ACTIVE" }
   }
   expect_failures = [data.oci_identity_compartment.adoption]
+}
+
+run "verify_existing_native_adoption_group" {
+  command = plan
+
+  override_data {
+    target          = data.external.group_adoption_pin
+    override_during = plan
+    values          = { result = { ocid = "ocid1.group.oc1..atlasadoption" } }
+  }
+
+  override_data {
+    target          = data.oci_identity_group.group_adoption[0]
+    override_during = plan
+    values = {
+      id             = "ocid1.group.oc1..atlasadoption"
+      name           = "otm-development-users"
+      compartment_id = "ocid1.tenancy.oc1..synthetic"
+      state          = "ACTIVE"
+    }
+  }
+
+  assert {
+    condition     = one(data.oci_identity_group.group_adoption).group_id == data.external.group_adoption_pin.result["ocid"]
+    error_message = "The operator must read the same exact native group the workflow adopts."
+  }
+}
+
+run "reject_adoption_group_in_unrelated_tenancy" {
+  command = plan
+
+  override_data {
+    target          = data.external.group_adoption_pin
+    override_during = plan
+    values          = { result = { ocid = "ocid1.group.oc1..atlasadoption" } }
+  }
+
+  override_data {
+    target          = data.oci_identity_group.group_adoption[0]
+    override_during = plan
+    values = {
+      id             = "ocid1.group.oc1..atlasadoption"
+      name           = "otm-development-users"
+      compartment_id = "ocid1.tenancy.oc1..unrelated"
+      state          = "ACTIVE"
+    }
+  }
+
+  expect_failures = [data.oci_identity_group.group_adoption]
 }
