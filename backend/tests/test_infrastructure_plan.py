@@ -1009,3 +1009,43 @@ def test_group_read_checks(monkeypatch):
     scim.list_groups.return_value.data.resources = []
     checks = module.group_read_checks(credentials, target, domain, group)
     assert checks["native_list_groups"] == "error" and checks["domain_list_groups"] == "mismatch"
+
+
+# A failed development plan exposes only recognized metadata across concurrent provider errors.
+def test_sanitized_plan_failure(tmp_path, monkeypatch, capsys):
+    address = "module.atlas_sso.oci_identity_domains_grant.atlas_assignment"
+    diagnostics = [
+        (address, "403-Forbidden, private value", "Operation Name: GetGrant "),
+        ("unpublished-address", "Http Status Code: 404. private", "Operation Name: Unpublished"),
+    ]
+    events = [
+        json.dumps(
+            {
+                "type": "diagnostic",
+                "diagnostic": {
+                    "severity": "error",
+                    "summary": summary,
+                    "detail": detail,
+                    "address": addr,
+                },
+            }
+        ).encode()
+        for addr, summary, detail in diagnostics
+    ]
+    output = b"\n".join([b"private-invalid-json", b"null", b'{"type":"diagnostic"}', *events])
+    monkeypatch.setattr(
+        module.subprocess,
+        "run",
+        Mock(return_value=SimpleNamespace(stdout=output, stderr=b"private-stderr", returncode=1)),
+    )
+    with pytest.raises(ValueError, match="TERRAFORM_PLAN_COMMAND_FAILED"):
+        module.terraform(
+            "terraform", ["plan", "-json"], tmp_path, {}, tmp_path, time.monotonic() + 5
+        )
+    assert json.loads(capsys.readouterr().out) == {
+        "terraform_plan_errors": [
+            {"resource": address, "operation": "GetGrant", "http_status": 403},
+            {"resource": "unknown", "operation": "unknown", "http_status": 404},
+        ]
+    }
+    assert (tmp_path / "terraform.log").read_bytes() == b"private-stderr"

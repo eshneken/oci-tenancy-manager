@@ -353,6 +353,72 @@ def terraform_environment(directory, credentials, values):
     return result
 
 
+# Only repository-defined addresses and public SDK operation names may enter CI logs.
+_DEV_ADDRESSES = {
+    "oci_kms_key.application_software",
+    "oci_kms_vault.application",
+    "module.atlas_sso.oci_identity_group.users",
+    "module.atlas_sso.data.oci_identity_domains_groups.atlas_users",
+    "module.atlas_sso.oci_identity_domains_app.atlas_sso",
+    "module.atlas_sso.oci_identity_domains_grant.atlas_assignment",
+    *(
+        f'module.atlas_sso.module.atlas_policies.oci_identity_domains_{kind}.atlas["{key}"]'
+        for kind in ("condition", "rule")
+        for key in ("discover", "allow", "deny")
+    ),
+    *(
+        f"module.atlas_sso.module.atlas_policies.oci_identity_domains_policy.{name}"
+        for name in ("idp", "signon")
+    ),
+}
+_DEV_READS = {
+    "GetGroup",
+    "ListGroups",
+    "GetApp",
+    "GetGrant",
+    "GetRule",
+    "GetPolicy",
+    "GetCondition",
+    "GetVault",
+    "GetKey",
+    "ListKeyVersions",
+    "GetKeyVersion",
+}
+
+
+# Read Terraform JSON UI events individually so parallel resource failures retain their addresses.
+# Unknown fields and entire provider messages stay private, even for malformed diagnostics.
+def plan_diagnostics(output):
+    rows = set()
+    for line in output.splitlines():
+        try:
+            event = json.loads(line)
+        except (ValueError, RecursionError):
+            continue
+        if not isinstance(event, dict) or event.get("type") != "diagnostic":
+            continue
+        diag = event.get("diagnostic")
+        if not isinstance(diag, dict) or diag.get("severity") != "error":
+            continue
+        message = "\n".join(
+            value for key in ("summary", "detail") if isinstance(value := diag.get(key), str)
+        )
+        operation = re.search(r"(?m)^Operation Name:[ \t]*(\w+)[ \t]*$", message)
+        status = re.search(r"(?m)^([45][0-9]{2})-|Http Status Code: ([45][0-9]{2})[.]", message)
+        addr = diag.get("address")
+        rows.add(
+            (
+                addr if isinstance(addr, str) and addr in _DEV_ADDRESSES else "unknown",
+                operation[1] if operation and operation[1] in _DEV_READS else "unknown",
+                int(status[1] or status[2]) if status else 0,
+            )
+        )
+    return [
+        {"resource": addr, "operation": op, "http_status": code or None}
+        for addr, op, code in sorted(rows)
+    ]
+
+
 # Never stream plans/provider errors to public CI logs; each command shares one bounded plan budget.
 def terraform(command, arguments, root, environment, directory, deadline):
     remaining = int(deadline - time.monotonic())
@@ -371,6 +437,8 @@ def terraform(command, arguments, root, environment, directory, deadline):
         machine_output = len(arguments) > 1 and arguments[1] == "-json"
         stream.write((b"" if machine_output else result.stdout) + result.stderr)
     if result.returncode:
+        if arguments[:2] == ["plan", "-json"]:
+            print(json.dumps({"terraform_plan_errors": plan_diagnostics(result.stdout)}))
         raise ValueError("TERRAFORM_PLAN_COMMAND_FAILED")
     return result.stdout
 
@@ -627,6 +695,7 @@ def prepare_plan(environment, component, values):
                     command,
                     [
                         "plan",
+                        *(["-json"] if environment == "development" else []),
                         "-input=false",
                         "-no-color",
                         "-lock-timeout=60s",

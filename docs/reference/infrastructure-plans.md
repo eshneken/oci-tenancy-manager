@@ -134,7 +134,9 @@ Normal success/failure cleans it and restores the process umask. Hard runner los
 also a hosted-runner custody qualification item; this is not secure erasure or indefinite token renewal.
 During development group adoption, a failed Terraform plan also checks native group get, exact-name list, and the Identity Domains metadata lookup with the same workflow principal. Each check reports only a match result or bounded error status. The plan remains failed and no plan is published.
 
-No public log contains the full Terraform plan or provider diagnostics. The workflow uploads no
+When the development Terraform plan command exits nonzero, `terraform_plan_errors` summarizes its JSON errors by Terraform address, OCI read operation, and HTTP status. Repeated combinations appear once. Timeouts can occur before this summary is available. Unrecognized addresses and operations appear as `unknown`. A missing status appears as `null`. The subsequent group probes are independent checks.
+
+No public log contains the full Terraform plan or raw provider diagnostics. The workflow uploads no
 GitHub artifacts, database data, source feed, private configuration or state.
 
 After planning with state locking, the source inspects JSON action kinds and creates a two-file tar:
