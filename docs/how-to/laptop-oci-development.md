@@ -205,21 +205,31 @@ provider behavior, including whether plans and state exclude client credentials 
 memberships. Qualify the workflow principal's exact Identity Domains permissions separately.
 Require the Vault and software key and all unrelated resources to have no changes.
 
-### Inactive Atlas browser client first apply
+### Development Atlas browser client activation
 
-The development workflow can accept one managed App create for the inactive Atlas browser client
-in its exact saved plan. Check the confidential authorization-code client and exact 8445 callback.
-Keep the original app, assignments and effective access in place.
-Review the full plan and verify the intended environment, the inactive App creation, the
-existing group adoption and the effects on policy and grant resources. Confirm there are no
-unexpected changes. Leave apply disabled until the exact plan and its live effects are authorized.
+The 27 November protected development apply created nine resources, including the replacement App.
+OCI rejected its group-to-app grant with HTTP 400 while the target App was inactive. The
+temporary dynamic group and its Application Administrator role assignment were removed after
+that attempt. The original 8445 client and runtime configuration remain in use.
 
-The local operator already qualified the pinned provider against an inactive, unassigned
-client. The approved development workflow still needs live proof of SCIM write authority
-and credential exclusion. After an approved apply, verify the actual policy, group assignment
-and inactive status. Inspect private plan/state evidence for credential exclusion and record
-only sanitized results. Activation, runtime secret delivery and the 8445 switchover remain
-separate steps.
+Reconcile the successful resource writes with the current development state and generate a fresh
+protected plan. Terraform's desired state now sets the replacement active so OCI can attach its
+group grant. The reviewed change set is one in-place inactive-to-active App update and one
+group-to-app grant create for the exact existing development group, in the same plan. Verify
+the App and grant addresses, exact resource identities and absence of any other changes.
+Preserve the original application, grants and effective access. A fresh active App create
+requires its own qualification.
+Existing group members may see the new App in OCI after the grant. The running 8445
+configuration continues to use the original client.
+
+For the approved apply and no-change verification, re-establish the same
+[temporary domain-role binding](terraform-state-bootstrap.md#temporary-development-application-administrator).
+Run the exact reviewed saved plan with separate apply enablement and its digest. Verify the
+replacement's active state, sign-in policies, exact group assignment and preserved original access.
+Inspect private plan/state for credential exclusion. Run a fresh plan using the same workflow
+principal and record zero changes only if the plan confirms that result. Remove the temporary
+role and dynamic group after success or failure, including failed follow-up verification, and
+verify both removals. Reconcile the private state and provider effects before any retry.
 
 During separately approved cutover, deliver the generated secret directly to private runtime
 custody. Update the private Atlas client, app and assignment references together and
@@ -259,10 +269,10 @@ and reviewed plan objects. Development bootstrap owns the shared non-production
 [tenancy-root identity policy](terraform-state-bootstrap.md#domain-owned-github-identity-policy)
 `otm-github-identity`. Use the same protected `atlas_sso.adopt_group_ocid` for the operator
 metadata check and workflow import. The read qualification left create/update and staging grants
-unchanged. Staging trust activation and dispatch remain held. Fresh-group read before the
-operator can pin its OCID and SCIM writes remain unqualified. Keep general apply held while
-the [bounded inactive-client deployment](#inactive-atlas-browser-client-first-apply) awaits
-its own live evidence.
+unchanged. Staging trust activation and dispatch remain held. Fresh-group reads before an
+operator can pin the OCID remain unqualified. The
+[bounded client activation](#development-atlas-browser-client-activation) uses a separately
+authorized temporary domain role. Broad or durable SCIM write access remains unqualified.
 
 The 26 November independent security and adversarial reviews covered the three environment roots,
 the operator bootstrap, the protected workflow, and OCI provider 9.13.0. Development references
@@ -275,10 +285,12 @@ refresh plan. The projected API responses and inspected saved plans and state co
 client secret or secret hash. OCI requires `loginMechanism=OIDC` on update when
 `isLoginTarget=true`; the Atlas module sets and reads both fields. Temporary clients were
 deleted by verified GUID. The existing pilot and exchange trust retained their identities and
-active status. SCIM write authority under the GitHub signer and hosted federation remain open. See the [bootstrap restrictions](terraform-state-bootstrap.md).
+active status. The subsequent protected workflow proved resource creation with a temporary
+domain role and stopped at the inactive-target grant. Hosted federation remains open.
+See the [bootstrap restrictions](terraform-state-bootstrap.md).
 
-GitHub authorization for the complete environment graph, activation and the 8445 cutover remain pending. Recheck the exact protected workflow
-plan and qualify relevant permissions separately before an apply.
+Successful activation and assignment, no-change verification under the workflow principal, and
+the 8445 cutover remain pending.
 
 ## What is implemented and what comes next
 

@@ -232,16 +232,20 @@ compatibility or capacity property. No private image OCID is printed in the publ
 
 ### Current deployment qualification
 
-Before claiming the saved plan, the consumer allows one managed OCI App create at
-`module.atlas_sso.oci_identity_domains_app.atlas_sso` in development. The new client must be
-inactive and use the locked OCI provider, approved domain, confidential authorization-code
-settings, exact 8445 callback, custom web app template, environment-owned sign-on and identity
-provider policy references, and credential-free response projection. App imports, updates,
-replacements and hosted App writes remain guarded.
+Before claiming the saved plan, the consumer permits the existing development browser client
+at `module.atlas_sso.oci_identity_domains_app.atlas_sso` to change from inactive to active in
+place. The only additional change it permits alongside activation is the exact pending group
+grant. It checks the locked OCI provider, approved domain, confidential authorization-code
+settings, exact 8445 callback, custom web app template, environment-owned policy references,
+and credential-free response projection. Other App updates, active creates, imports,
+replacements and hosted App writes remain held.
 A live local operator test with released OCI provider 9.13.0 verified creation,
 description update and a no-change refresh for an inactive Atlas browser client. The projected
-responses and inspected plan/state contained no client secret or secret hash. GitHub's effective
-SCIM write permissions and the deployment of the assigned client still require qualification.
+responses and inspected plan/state contained no client secret or secret hash. The protected
+27 November apply then created nine resources with a temporary Application Administrator
+assignment. OCI rejected the application grant because its target was inactive. Successful
+activation, assignment and a no-change verification remain pending. The original 8445 client
+remains in use.
 A protected development adoption plan verified the existing native group with exact name and
 OCID conditions and proposed ten creates and one no-op import, with no updates or deletes.
 Vault and key were unchanged. This did not exercise a fresh group's first read or apply.

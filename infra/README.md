@@ -160,8 +160,9 @@ its development and staging statements keep separate workflow and group bindings
 The environment root owns the Vault and key and declares the SSO group, client, app grant,
 policies and rules. A [protected native group adoption plan](../docs/how-to/laptop-oci-development.md#development-group-adoption-proof)
 verified the existing group's exact-name and native-OCID read and no changes to Vault/key.
-Fresh-group reads and SCIM writes remain unqualified. The bounded inactive-client create
-awaits [protected workflow proof](../docs/how-to/laptop-oci-development.md#inactive-atlas-browser-client-first-apply).
+Fresh-group reads remain unqualified. The protected workflow created the inactive replacement,
+then OCI rejected its grant. [In-place activation and assignment](../docs/how-to/laptop-oci-development.md#development-atlas-browser-client-activation)
+remain pending and the original 8445 client remains in use.
 
 ## Hosted workload Vault reads
 
