@@ -128,6 +128,8 @@ uses synthetic HCL rather than JSON. Production still requires qualified staging
 All inputs, keys, tokens, raw Terraform output and the binary plan use a private temporary directory.
 Normal success/failure cleans it and restores the process umask. Hard runner loss/cancellation is
 also a hosted-runner custody qualification item; this is not secure erasure or indefinite token renewal.
+During development group adoption, a failed Terraform plan also checks native group get, exact-name list, and the Identity Domains metadata lookup with the same workflow principal. Each check reports only a match result or bounded error status. The plan remains failed and no plan is published.
+
 No public log contains the full Terraform plan or provider diagnostics. The workflow uploads no
 GitHub artifacts, database data, source feed, private configuration or state.
 
