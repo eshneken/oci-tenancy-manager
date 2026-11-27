@@ -16,8 +16,8 @@ data "oci_identity_domain" "selected" {
       condition = (
         self.compartment_id == var.tenancy_ocid &&
         self.state == "ACTIVE" &&
-        self.display_name == "Default" &&
-        can(regex("^https://idcs-[a-z0-9]+[.]identity[.]oraclecloud[.]com$", trimsuffix(self.url, "/")))
+        self.display_name == local.identity_domain_name &&
+        can(regex("^https://idcs-[a-z0-9]+[.]identity[.]oraclecloud[.]com(:443)?$", trimsuffix(self.url, "/")))
       )
       error_message = "Expected the active Default identity domain at the selected tenancy root."
     }
@@ -25,11 +25,12 @@ data "oci_identity_domain" "selected" {
 }
 
 locals {
-  domain_url    = trimsuffix(data.oci_identity_domain.selected.url, "/")
+  identity_domain_name = "Default"
+  # OCI can report the default HTTPS port; downstream endpoints use a canonical origin.
+  domain_url    = trimsuffix(trimsuffix(data.oci_identity_domain.selected.url, "/"), ":443")
   display_name  = "otm-github-${var.environment}"
   exchange_name = var.existing_exchange == null ? oci_identity_domains_app.exchange[0].name : var.existing_exchange.name
   exchange_id   = var.existing_exchange == null ? oci_identity_domains_app.exchange[0].id : var.existing_exchange.id
-  workflow_ref  = "${var.github.repository}/.github/workflows/infra-${var.environment}.yml@refs/heads/master"
 
   # Request metadata only. Native creation requires separate evidence that OCI honors this projection
   # on write responses with the pinned provider. Import uses an unprojected initial read.

@@ -52,7 +52,7 @@ locals {
   ]
   hosted_network_statements = [
     for operations in local.hosted_network_operation_groups :
-    "Allow any-user to manage virtual-network-family ${local.hosted_scope}, any {${join(", ", [for operation in operations : "request.operation = '${operation}'"])}}}"
+    "Allow ${local.workflow_grantee} to manage virtual-network-family ${local.hosted_scope}, any {${join(", ", [for operation in operations : "request.operation = '${operation}'"])}}}"
   ]
 }
 
@@ -65,44 +65,44 @@ resource "oci_identity_policy" "workflow_platform" {
   description    = "Provision environment infrastructure from the protected GitHub workflow"
 
   statements = concat(local.hosted_network_statements, [
-    "Allow any-user to inspect compartments ${local.hosted_scope}, any {request.operation = 'GetCompartment', request.operation = 'ListAvailabilityDomains', request.operation = 'ListFaultDomains'}}",
-    "Allow any-user to read virtual-network-family ${local.hosted_scope}}",
+    "Allow ${local.workflow_grantee} to inspect compartments ${local.hosted_scope}, any {request.operation = 'GetCompartment', request.operation = 'ListAvailabilityDomains', request.operation = 'ListFaultDomains'}}",
+    "Allow ${local.workflow_grantee} to read virtual-network-family ${local.hosted_scope}}",
 
     # OKE uses instance-family authorization during managed node pool operations. The workflow
     # cannot call the underlying Compute mutation APIs directly through this grant.
-    "Allow any-user to manage instance-family ${local.hosted_scope}, any {request.operation = 'CreateNodePool', request.operation = 'UpdateNodePool'}}",
-    "Allow any-user to inspect instances ${local.hosted_scope}, request.operation = 'GetNodePoolOptions'}",
-    "Allow any-user to read instance-images ${local.hosted_scope}, request.operation = 'ListImages'}",
-    "Allow any-user to read clusters ${local.hosted_scope}, any {request.operation = 'GetCluster', request.operation = 'GetClusterOptions', request.operation = 'GetWorkRequest', request.operation = 'ListWorkRequestErrors'}}",
-    "Allow any-user to manage clusters ${local.hosted_scope}, any {request.operation = 'CreateCluster', request.operation = 'UpdateCluster', request.operation = 'UpdateClusterEndpointConfig'}}",
-    "Allow any-user to read cluster-node-pools ${local.hosted_scope}, any {request.operation = 'GetNodePool', request.operation = 'GetWorkRequest', request.operation = 'ListWorkRequestErrors'}}",
-    "Allow any-user to manage cluster-node-pools ${local.hosted_scope}, any {request.operation = 'CreateNodePool', request.operation = 'UpdateNodePool'}}",
-    "Allow any-user to read cluster-work-requests ${local.hosted_scope}, any {request.operation = 'GetWorkRequest', request.operation = 'ListWorkRequestErrors'}}",
+    "Allow ${local.workflow_grantee} to manage instance-family ${local.hosted_scope}, any {request.operation = 'CreateNodePool', request.operation = 'UpdateNodePool'}}",
+    "Allow ${local.workflow_grantee} to inspect instances ${local.hosted_scope}, request.operation = 'GetNodePoolOptions'}",
+    "Allow ${local.workflow_grantee} to read instance-images ${local.hosted_scope}, request.operation = 'ListImages'}",
+    "Allow ${local.workflow_grantee} to read clusters ${local.hosted_scope}, any {request.operation = 'GetCluster', request.operation = 'GetClusterOptions', request.operation = 'GetWorkRequest', request.operation = 'ListWorkRequestErrors'}}",
+    "Allow ${local.workflow_grantee} to manage clusters ${local.hosted_scope}, any {request.operation = 'CreateCluster', request.operation = 'UpdateCluster', request.operation = 'UpdateClusterEndpointConfig'}}",
+    "Allow ${local.workflow_grantee} to read cluster-node-pools ${local.hosted_scope}, any {request.operation = 'GetNodePool', request.operation = 'GetWorkRequest', request.operation = 'ListWorkRequestErrors'}}",
+    "Allow ${local.workflow_grantee} to manage cluster-node-pools ${local.hosted_scope}, any {request.operation = 'CreateNodePool', request.operation = 'UpdateNodePool'}}",
+    "Allow ${local.workflow_grantee} to read cluster-work-requests ${local.hosted_scope}, any {request.operation = 'GetWorkRequest', request.operation = 'ListWorkRequestErrors'}}",
 
-    "Allow any-user to read postgres-db-systems ${local.hosted_scope}, any {request.operation = 'GetDbSystem', request.operation = 'GetConnectionDetails'}}",
-    "Allow any-user to manage postgres-db-systems ${local.hosted_scope}, any {request.operation = 'CreateDbSystem', request.operation = 'UpdateDbSystem', request.operation = 'PatchDbSystem', request.operation = 'UpdateManagementPolicy'}}",
-    "Allow any-user to read postgres-configurations ${local.hosted_scope}, any {request.operation = 'ListDefaultConfigurations', request.operation = 'GetDefaultConfiguration', request.operation = 'GetConfiguration'}}",
-    "Allow any-user to read postgres-work-requests ${local.hosted_scope}, any {request.operation = 'GetWorkRequest', request.operation = 'ListWorkRequestErrors'}}",
+    "Allow ${local.workflow_grantee} to read postgres-db-systems ${local.hosted_scope}, any {request.operation = 'GetDbSystem', request.operation = 'GetConnectionDetails'}}",
+    "Allow ${local.workflow_grantee} to manage postgres-db-systems ${local.hosted_scope}, any {request.operation = 'CreateDbSystem', request.operation = 'UpdateDbSystem', request.operation = 'PatchDbSystem', request.operation = 'UpdateManagementPolicy'}}",
+    "Allow ${local.workflow_grantee} to read postgres-configurations ${local.hosted_scope}, any {request.operation = 'ListDefaultConfigurations', request.operation = 'GetDefaultConfiguration', request.operation = 'GetConfiguration'}}",
+    "Allow ${local.workflow_grantee} to read postgres-work-requests ${local.hosted_scope}, any {request.operation = 'GetWorkRequest', request.operation = 'ListWorkRequestErrors'}}",
 
-    "Allow any-user to read vaults ${local.hosted_scope}, request.operation = 'GetVault'}",
-    "Allow any-user to manage vaults ${local.hosted_scope}, all {request.operation = 'CreateVault', request.permission = 'VAULT_CREATE'}}",
-    "Allow any-user to read keys ${local.hosted_scope}, request.operation = 'GetKey'}",
-    "Allow any-user to use vaults ${local.hosted_scope}, all {request.operation = 'CreateKey', request.permission = 'VAULT_CREATE_KEY'}}",
-    "Allow any-user to manage keys ${local.hosted_scope}, all {request.operation = 'CreateKey', request.permission = 'KEY_CREATE'}}",
+    "Allow ${local.workflow_grantee} to read vaults ${local.hosted_scope}, request.operation = 'GetVault'}",
+    "Allow ${local.workflow_grantee} to manage vaults ${local.hosted_scope}, all {request.operation = 'CreateVault', request.permission = 'VAULT_CREATE'}}",
+    "Allow ${local.workflow_grantee} to read keys ${local.hosted_scope}, request.operation = 'GetKey'}",
+    "Allow ${local.workflow_grantee} to use vaults ${local.hosted_scope}, all {request.operation = 'CreateKey', request.permission = 'VAULT_CREATE_KEY'}}",
+    "Allow ${local.workflow_grantee} to manage keys ${local.hosted_scope}, all {request.operation = 'CreateKey', request.permission = 'KEY_CREATE'}}",
 
     # CreateSecret requires encrypt and decrypt authorization on the key. Bind them to the
     # control-plane CreateSecret request so they cannot be used for standalone cryptography.
-    "Allow any-user to use vaults ${local.hosted_scope}, all {request.operation = 'CreateSecret', request.permission = 'VAULT_CREATE_SECRET'}}",
-    "Allow any-user to use keys ${local.hosted_scope}, request.operation = 'CreateSecret', any {request.permission = 'KEY_ENCRYPT', request.permission = 'KEY_DECRYPT'}}",
-    "Allow any-user to manage secrets ${local.hosted_scope}, ${local.database_admin_secret}, request.operation = 'CreateSecret', request.permission = 'SECRET_CREATE'}",
-    "Allow any-user to read secrets ${local.hosted_scope}, ${local.database_admin_secret}, request.operation = 'GetSecret'}",
+    "Allow ${local.workflow_grantee} to use vaults ${local.hosted_scope}, all {request.operation = 'CreateSecret', request.permission = 'VAULT_CREATE_SECRET'}}",
+    "Allow ${local.workflow_grantee} to use keys ${local.hosted_scope}, request.operation = 'CreateSecret', any {request.permission = 'KEY_ENCRYPT', request.permission = 'KEY_DECRYPT'}}",
+    "Allow ${local.workflow_grantee} to manage secrets ${local.hosted_scope}, ${local.database_admin_secret}, request.operation = 'CreateSecret', request.permission = 'SECRET_CREATE'}",
+    "Allow ${local.workflow_grantee} to read secrets ${local.hosted_scope}, ${local.database_admin_secret}, request.operation = 'GetSecret'}",
     # Qualify the service-linked authorization in staging before allowing PostgreSQL creation.
-    "Allow any-user to read secret-bundles ${local.hosted_scope}, ${local.database_admin_secret}, request.operation = 'CreateDbSystem'}",
+    "Allow ${local.workflow_grantee} to read secret-bundles ${local.hosted_scope}, ${local.database_admin_secret}, request.operation = 'CreateDbSystem'}",
 
-    "Allow any-user to inspect policies ${local.application_policy_scope}, request.operation = 'GetPolicy'}",
+    "Allow ${local.workflow_grantee} to inspect policies ${local.application_policy_scope}, request.operation = 'GetPolicy'}",
     ], var.allow_runtime_policy_writes ? [
-    "Allow any-user to manage policies ${local.application_policy_scope}, request.operation = 'CreatePolicy', request.permission = 'POLICY_CREATE'}",
-    "Allow any-user to manage policies ${local.application_policy_scope}, request.operation = 'UpdatePolicy', request.permission = 'POLICY_UPDATE'}",
+    "Allow ${local.workflow_grantee} to manage policies ${local.application_policy_scope}, request.operation = 'CreatePolicy', request.permission = 'POLICY_CREATE'}",
+    "Allow ${local.workflow_grantee} to manage policies ${local.application_policy_scope}, request.operation = 'UpdatePolicy', request.permission = 'POLICY_UPDATE'}",
   ] : [])
 
   lifecycle {
